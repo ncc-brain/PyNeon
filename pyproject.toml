@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["pyneon"]
+
+[project]
+name = "pyneon"
+version = "0.1.0"
+description = "A Python library for reading, preprocessing and exporting Pupil Labs Neon data"
+readme = "README.md"
+authors = [
+    { name = "Qian Chu", email = "qianchu99@gmail.com" },
+    { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" }
+]
+dependencies = [
+    "pandas",
+    "numpy"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "numpydoc",
+    "codespell",
+    "pre-commit",
+]
+doc = [
+    "sphinx",
+    "pydata-sphinx-theme",
+]
