@@ -1,9 +1,11 @@
 from pathlib import Path
 from typing import Union
 import pandas as pd
+import numpy as np
 import json
 
 from .data import NeonGaze, NeonIMU, NeonEyeStates
+from .preprocess import concat_channels
 
 
 def _check_file(dir_path: Path, stem: str):
@@ -39,13 +41,13 @@ class NeonRecording:
         self._gaze = None
         self._imu = None
 
-        self.get_contents()
+        self._get_contents()
 
     def __repr__(self) -> str:
         contents_to_print = self.contents.drop(columns="path", inplace=False)
         return f"NeonRecording | {self.recording_id}\n{contents_to_print.to_string()}"
 
-    def get_contents(self):
+    def _get_contents(self):
         contents = pd.DataFrame(
             index=[
                 "3d_eye_states",
@@ -61,9 +63,11 @@ class NeonRecording:
             ],
             columns=["exist", "filename", "path"],
         )
+        # Check for CSV files
         for stem in contents.index:
             contents.loc[stem, :] = _check_file(self.recording_dir, stem)
 
+        # Check for scene video
         if len(video_path := list(self.recording_dir.glob("*.mp4"))) == 1:
             contents.loc["scene_video", :] = (True, video_path[0].name, video_path[0])
             if (camera_info := self.recording_dir / "scene_camera.json").is_file():
@@ -71,47 +75,74 @@ class NeonRecording:
                     self.camera_info = json.load(f)
             else:
                 raise FileNotFoundError(
-                    "Video has no accompanying scene_camera.json in "
+                    "Scene video has no accompanying scene_camera.json in "
                     f"{self.recording_dir}"
                 )
         elif len(video_path) > 1:
             raise FileNotFoundError(
-                f"Multiple video files found in {self.recording_dir}"
+                f"Multiple scene video files found in {self.recording_dir}"
             )
-
         self.contents = contents
 
+    @property
     def gaze(self):
         """Returns a NeonGaze object.
 
         Loads gaze data if not already loaded.
         """
-        if self._gaze is None and self.contents.loc["gaze", "exist"]:
-            gaze_file = self.contents.loc["gaze", "path"]
-            self._gaze = NeonGaze(gaze_file)
+        if self._gaze is None:
+            if self.contents.loc["gaze", "exist"]:
+                gaze_file = self.contents.loc["gaze", "path"]
+                self._gaze = NeonGaze(gaze_file)
+            else:
+                raise UserWarning(
+                    "Gaze data not loaded because no recording was found."
+                )
         return self._gaze
 
+    @property
     def imu(self):
         """Returns a NeonIMU object.
 
         Loads IMU data if not already loaded.
         """
-        if self._imu is None and self.contents.loc["imu", "exist"]:
-            imu_file = self.contents.loc["imu", "path"]
-            self._imu = NeonIMU(imu_file)
+        if self._imu is None:
+            if self.contents.loc["imu", "exist"]:
+                imu_file = self.contents.loc["imu", "path"]
+                self._imu = NeonIMU(imu_file)
+            else:
+                raise UserWarning("IMU data not loaded because no recording was found.")
         return self._imu
 
+    @property
     def eye_states(self):
         """Returns a NeonEyeStates object.
 
         Loads 3D eye states data if not already loaded.
         """
-        if self._eye_states is None and self.contents.loc["3d_eye_states", "exist"]:
-            eye_states_file = self.contents.loc["3d_eye_states", "path"]
-            self._eye_states = NeonEyeStates(eye_states_file)
+        if self._eye_states is None:
+            if self.contents.loc["3d_eye_states", "exist"]:
+                eye_states_file = self.contents.loc["3d_eye_states", "path"]
+                self._eye_states = NeonEyeStates(eye_states_file)
+            else:
+                raise UserWarning(
+                    "3D eye states data not loaded because no recording was found."
+                )
         return self._eye_states
 
     def load(self):
-        self.gaze()
-        self.imu()
-        self.eye_states()
+        self.gaze
+        self.imu
+        self.eye_states
+
+    def concat_channels(
+        self,
+        ch_names: list[str],
+        resamp_float_kind: str = "linear",
+        resamp_other_kind: str = "nearest",
+    ):
+        """Returns a single dataframe under common timestamps.
+
+        This will require interpolation of all signals to the same timestamps.
+        """
+        return concat_channels(self, ch_names, resamp_float_kind, resamp_other_kind)

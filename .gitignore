@@ -1,5 +1,6 @@
 # Test data
 tests/data/
+tests/outputs/
 
 # Ruff
 .ruff_cache/

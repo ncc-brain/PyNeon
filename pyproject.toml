@@ -14,9 +14,12 @@ authors = [
     { name = "Qian Chu", email = "qianchu99@gmail.com" },
     { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" }
 ]
+requires-python = ">=3.9"
 dependencies = [
     "pandas",
-    "numpy"
+    "numpy",
+    "scipy",
+    "typeguard",
 ]
 
 [project.optional-dependencies]
