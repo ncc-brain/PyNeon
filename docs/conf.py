@@ -31,7 +31,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/NCCLabMPI/pyneon",
+            "url": "https://github.com/NCCLabMPI/PyNeon",
             "icon": "fa-brands fa-square-github",
             "type": "fontawesome",
         },
