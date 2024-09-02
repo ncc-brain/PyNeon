@@ -10,31 +10,31 @@ if TYPE_CHECKING:
 
 def resample(
     new_ts: np.ndarray,
-    old_df: pd.DataFrame,
+    old_data: pd.DataFrame,
     float_kind: str = "linear",
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     # Check that 'timestamp [ns]' is in the columns
-    if "timestamp [ns]" not in old_df.columns:
-        raise ValueError("old_df must contain a 'timestamp [ns]' column")
+    if "timestamp [ns]" not in old_data.columns:
+        raise ValueError("old_data must contain a 'timestamp [ns]' column")
     # Check that new_ts is monotonicically increasing
     if np.any(np.diff(new_ts) < 0):
         raise ValueError("new_ts must be monotonically increasing")
     # Create a new dataframe with the new timestamps
     resamp_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     resamp_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
-    for col in old_df.columns:
+    for col in old_data.columns:
         if col == "timestamp [ns]" or col == "time [s]":
             continue
-        if pd.api.types.is_float_dtype(old_df[col]):
+        if pd.api.types.is_float_dtype(old_data[col]):
             resamp_data[col] = interpolate.interp1d(
-                old_df["timestamp [ns]"], old_df[col], kind=float_kind
+                old_data["timestamp [ns]"], old_data[col], kind=float_kind
             )(new_ts)
         else:
             resamp_data[col] = interpolate.interp1d(
-                old_df["timestamp [ns]"], old_df[col], kind=other_kind
+                old_data["timestamp [ns]"], old_data[col], kind=other_kind
             )(new_ts)
-        resamp_data[col] = resamp_data[col].astype(old_df[col].dtype)
+        resamp_data[col] = resamp_data[col].astype(old_data[col].dtype)
     return resamp_data
 
 
@@ -48,7 +48,7 @@ def concat_channels(
     resamp_float_kind: str = "linear",
     resamp_other_kind: str = "nearest",
 ) -> pd.DataFrame:
-    """Combine multiple channels into a single dataframe.
+    """Combine multiple channels' data into a single dataframe.
 
     Resampling is necessary to align all signals to the same timestamps.
     If channels have different sampling rates, the lowest sampling rate is used.

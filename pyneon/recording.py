@@ -20,6 +20,12 @@ def _check_file(dir_path: Path, stem: str):
 
 
 class NeonRecording:
+    """
+    NeonRecording object for various modalities of data from a single recording.
+    Specific data modalities can be accessed as attributes, such as `gaze`, `imu`,
+    and `eye_states`. These attributes are loaded lazily, meaning that the data
+    is only loaded when the attribute is accessed for the first time.
+    """
     def __init__(self, recording_dir: Union[str, Path]):
         recording_dir = Path(recording_dir)
         if not recording_dir.is_dir():
@@ -86,8 +92,8 @@ class NeonRecording:
 
     @property
     def gaze(self):
-        """Returns a NeonGaze object.
-
+        """
+        Returns a `NeonGaze` object.
         Loads gaze data if not already loaded.
         """
         if self._gaze is None:
@@ -102,8 +108,8 @@ class NeonRecording:
 
     @property
     def imu(self):
-        """Returns a NeonIMU object.
-
+        """
+        Returns a `NeonIMU` object.
         Loads IMU data if not already loaded.
         """
         if self._imu is None:
@@ -116,8 +122,8 @@ class NeonRecording:
 
     @property
     def eye_states(self):
-        """Returns a NeonEyeStates object.
-
+        """
+        Returns a `NeonEyeStates` object.
         Loads 3D eye states data if not already loaded.
         """
         if self._eye_states is None:
@@ -142,8 +148,21 @@ class NeonRecording:
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
     ) -> pd.DataFrame:
-        """Returns a single dataframe under common timestamps.
-
-        This will require interpolation of all signals to the same timestamps.
+        """
+        Returns a single `pd.DataFrame` under common timestamps.
+        This will require interpolation of all signals to the same timestamps. See
+        `pyneon.preprocess.concat_channels` for more details.
+        
+        Parameters
+        ----------
+        ch_names : list[str]
+            List of channel names to concatenate. Channel names can only be one of
+            {"gaze", "imu", "eye_states", "3d_eye_states"}.
+        downsample : bool, optional
+            Whether to downsample the signals to the gaze timestamps, by default True.
+        resamp_float_kind : str, optional
+            Resampling method for columns of float type, by default "linear".   
+        resamp_other_kind : str, optional
+            Resampling method for columns of other types, by default "nearest".
         """
         return concat_channels(self, ch_names, resamp_float_kind, resamp_other_kind)

@@ -7,7 +7,9 @@ from .recording import NeonRecording
 
 
 class NeonDataset:
-    """Holder for a dataset of multiple recordings."""
+    """
+    NeonDataset object for multiple recordings.
+    """
 
     def __init__(self, dataset_dir: Union[str, Path]):
         dataset_dir = Path(dataset_dir)
