@@ -2,12 +2,17 @@
 
 .. module:: pyneon
 
-PyNeon documentation
-====================
+Welcome to PyNeon documentation
+===============================
 
 PyNeon is a light-weight library to work with Neon (Pupil Labs) multi-modal
-eye-tracking data. It is originally developed by Qian Chu and Jan-Gabriel
-Hartel from the Max Planck Institute for Empirical Aesthetics.
+eye-tracking data. It is a community-driven effort to provide a versatile set
+of tools to work with the rich data (gaze, eye states, IMU, events, etc.)
+provided by Neon.
+
+PyNeon is licensed under the MIT License.
+
+Here we provide tutorials and API reference to help you get started with PyNeon.
 
 Installation
 ============
@@ -27,6 +32,11 @@ Data format
 PyNeon works with the "Timeseries Data" or "Timeseries Data + Scene Video" formats 
 as exported from Pupil Clouds. The data could be from a single recording or from a 
 project with multiple recordings.
+
+Credits
+=======
+
+PyNeon was inspired by https://github.com/pupil-labs/pl-neon-recording/
 
 .. toctree::
    :maxdepth: 1

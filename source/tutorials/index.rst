@@ -3,8 +3,13 @@
 PyNeon Tutorials
 ================
 
+Here you can find tutorials in the form of Jupyter notebooks to help you get
+started with PyNeon.
+
 .. toctree::
     :maxdepth: 1
 
     load_recording
     load_dataset
+    resample_and_concat
+    export_to_bids

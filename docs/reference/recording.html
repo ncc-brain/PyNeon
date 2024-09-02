@@ -38,6 +38,7 @@
     <script src="../_static/documentation_options.js?v=01f34227"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/recording';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -405,7 +406,7 @@ This will require interpolation of all signals to the same timestamps. See
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of channel names to concatenate. Channel names can only be one of
+<li><p><strong>ch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of channel names to concatenate. Channel names must be one of
 {“gaze”, “imu”, “eye_states”, “3d_eye_states”}.</p></li>
 <li><p><strong>downsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to downsample the signals to the gaze timestamps, by default True.</p></li>
 <li><p><strong>resamp_float_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – Resampling method for columns of float type, by default “linear”.</p></li>
