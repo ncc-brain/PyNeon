@@ -13,7 +13,7 @@ Installation
 ============
 
 To install PyNeon, clone the PyNeon repository from
-https://github.com/NCCLabMPI/pyneon and run:
+https://github.com/NCCLabMPI/PyNeon and run:
 
 .. code-block:: bash
 
@@ -24,7 +24,9 @@ PyPI and conda releases are planned for the future.
 Data format
 ===========
 
-PyNeon works with the "Timeseries" data format as exported from Pupil Clouds. The data could be from a single recording or from a project with multiple recordings.
+PyNeon works with the "Timeseries Data" or "Timeseries Data + Scene Video" formats 
+as exported from Pupil Clouds. The data could be from a single recording or from a 
+project with multiple recordings.
 
 .. toctree::
    :maxdepth: 1

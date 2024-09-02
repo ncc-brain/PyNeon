@@ -164,5 +164,10 @@ class NeonRecording:
             Resampling method for columns of float type, by default "linear".   
         resamp_other_kind : str, optional
             Resampling method for columns of other types, by default "nearest".
+        
+        Returns
+        -------
+        concat_data : pd.DataFrame
+            Concatenated data.
         """
         return concat_channels(self, ch_names, resamp_float_kind, resamp_other_kind)
