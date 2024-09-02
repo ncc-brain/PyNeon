@@ -124,10 +124,10 @@ def concat_channels(
     # Lowest sampling rate
     if downsample:
         sf = ch_info["sf"].min()
-        sf_type = 'Lowest'
+        sf_type = "Lowest"
     else:
         sf = ch_info["sf"].max()
-        sf_type = 'Highest'
+        sf_type = "Highest"
     sf_name = ch_info.loc[ch_info["sf"] == sf, "name"].values
     print(f"{sf_type} sampling rate: {sf} Hz ({sf_name})")
 

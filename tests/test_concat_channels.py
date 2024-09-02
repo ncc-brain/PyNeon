@@ -3,10 +3,7 @@ from pyneon import NeonRecording
 from matplotlib import pyplot as plt
 
 recording_dir = (
-    Path(__file__).parent
-    / "data"
-    / "Timeseries Data + Scene Video"
-    / "walk2-93b8c234"
+    Path(__file__).parent / "data" / "Timeseries Data + Scene Video" / "walk2-93b8c234"
 )
 test_output_dir = Path(__file__).parent / "outputs"
 test_output_dir.mkdir(exist_ok=True)
