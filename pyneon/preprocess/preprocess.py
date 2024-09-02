@@ -44,6 +44,7 @@ _VALID_CHANNELS = ["3d_eye_states", "eye_states", "gaze", "imu"]
 def concat_channels(
     rec: "NeonRecording",
     ch_names: list[str],
+    downsample: bool = True,
     resamp_float_kind: str = "linear",
     resamp_other_kind: str = "nearest",
 ) -> pd.DataFrame:
@@ -121,9 +122,14 @@ def concat_channels(
         print("\tIMU")
 
     # Lowest sampling rate
-    min_sf = ch_info["sf"].min()
-    min_sf_name = ch_info.loc[ch_info["sf"] == min_sf, "name"].values
-    print(f"Lowest sampling rate: {min_sf} Hz ({min_sf_name})")
+    if downsample:
+        sf = ch_info["sf"].min()
+        sf_type = 'Lowest'
+    else:
+        sf = ch_info["sf"].max()
+        sf_type = 'Highest'
+    sf_name = ch_info.loc[ch_info["sf"] == sf, "name"].values
+    print(f"{sf_type} sampling rate: {sf} Hz ({sf_name})")
 
     max_first_ts = ch_info["first_ts"].max()
     max_first_ts_name = ch_info.loc[ch_info["first_ts"] == max_first_ts, "name"].values
@@ -136,7 +142,7 @@ def concat_channels(
     new_ts = np.arange(
         max_first_ts,
         min_last_ts,
-        int(1e9 / min_sf),
+        int(1e9 / sf),
         dtype=np.int64,
     )
 

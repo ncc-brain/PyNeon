@@ -138,9 +138,10 @@ class NeonRecording:
     def concat_channels(
         self,
         ch_names: list[str],
+        downsample: bool = True,
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
-    ):
+    ) -> pd.DataFrame:
         """Returns a single dataframe under common timestamps.
 
         This will require interpolation of all signals to the same timestamps.
