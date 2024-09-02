@@ -26,6 +26,7 @@ class NeonRecording:
     and `eye_states`. These attributes are loaded lazily, meaning that the data
     is only loaded when the attribute is accessed for the first time.
     """
+
     def __init__(self, recording_dir: Union[str, Path]):
         recording_dir = Path(recording_dir)
         if not recording_dir.is_dir():
@@ -152,19 +153,19 @@ class NeonRecording:
         Returns a single `pd.DataFrame` under common timestamps.
         This will require interpolation of all signals to the same timestamps. See
         `pyneon.preprocess.concat_channels` for more details.
-        
+
         Parameters
         ----------
         ch_names : list[str]
-            List of channel names to concatenate. Channel names can only be one of
+            List of channel names to concatenate. Channel names must be one of
             {"gaze", "imu", "eye_states", "3d_eye_states"}.
         downsample : bool, optional
             Whether to downsample the signals to the gaze timestamps, by default True.
         resamp_float_kind : str, optional
-            Resampling method for columns of float type, by default "linear".   
+            Resampling method for columns of float type, by default "linear".
         resamp_other_kind : str, optional
             Resampling method for columns of other types, by default "nearest".
-        
+
         Returns
         -------
         concat_data : pd.DataFrame

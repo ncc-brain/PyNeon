@@ -33,4 +33,5 @@ dev = [
 doc = [
     "sphinx",
     "pydata-sphinx-theme",
+    "nbsphinx"
 ]
