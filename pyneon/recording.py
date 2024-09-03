@@ -21,10 +21,11 @@ def _check_file(dir_path: Path, stem: str):
 
 class NeonRecording:
     """
-    NeonRecording object for various modalities of data from a single recording.
-    Specific data modalities can be accessed as attributes, such as `gaze`, `imu`,
-    and `eye_states`. These attributes are loaded lazily, meaning that the data
-    is only loaded when the attribute is accessed for the first time.
+    Data from a single recording. The recording directory could be downloaded from
+    either a single recording or a project on Pupil Cloud. In either case, the directory
+    must contain an ``info.json`` file. Channels, events, (and scene video) will be
+    located but not loaded until accessed as attributes such as ``gaze``, ``imu``,
+    and ``eye_states``.
     """
 
     def __init__(self, recording_dir: Union[str, Path]):
@@ -150,7 +151,7 @@ class NeonRecording:
         resamp_other_kind: str = "nearest",
     ) -> pd.DataFrame:
         """
-        Returns a single `pd.DataFrame` under common timestamps.
+        Returns a single pandas.DataFrame under common timestamps.
         This will require interpolation of all signals to the same timestamps. See
         `pyneon.preprocess.concat_channels` for more details.
 
@@ -160,7 +161,9 @@ class NeonRecording:
             List of channel names to concatenate. Channel names must be one of
             {"gaze", "imu", "eye_states", "3d_eye_states"}.
         downsample : bool, optional
-            Whether to downsample the signals to the gaze timestamps, by default True.
+            If True, downsample the signals to the lowest sampling rate of the selected
+            channels. If False, the signals will be resampled to the highest sampling
+            rate. By default True.
         resamp_float_kind : str, optional
             Resampling method for columns of float type, by default "linear".
         resamp_other_kind : str, optional
@@ -168,7 +171,7 @@ class NeonRecording:
 
         Returns
         -------
-        concat_data : pd.DataFrame
+        concat_data : DataFrame
             Concatenated data.
         """
         return concat_channels(self, ch_names, resamp_float_kind, resamp_other_kind)

@@ -372,7 +372,73 @@ document.write(`
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.NeonDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">NeonDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonDataset" title="Link to this definition">#</a></dt>
-<dd><p>NeonDataset object for multiple recordings.</p>
+<dd><p>Holder for multiple recordings. It reads from a directory containing a <strong>project</strong>
+downloaded from Pupil Cloud with the <strong>Timeseries CSV</strong> or <strong>Timeseries CSV and
+Scene Video</strong> option. For example, a dataset with 2 recordings would have the
+following folder structure:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
+├── recording_dir_1/
+│   ├── info.json
+│   ├── gaze.csv
+|   └── ...
+├── recording_dir_2/
+│   ├── info.json
+│   ├── gaze.csv
+|   └── ...
+├── ...
+├── enrichment_info.txt
+└── sections.csv
+</pre></div>
+</div>
+<p>Individual recordings will be read into NeonRecording objects based on
+<code class="docutils literal notranslate"><span class="pre">sections.csv</span></code>. They are accessible through the <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataset_dir</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the directory containing the dataset.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonDataset.dataset_dir">
+<span class="sig-name descname"><span class="pre">dataset_dir</span></span><a class="headerlink" href="#pyneon.NeonDataset.dataset_dir" title="Link to this definition">#</a></dt>
+<dd><p>Path to the directory containing the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonDataset.recordings">
+<span class="sig-name descname"><span class="pre">recordings</span></span><a class="headerlink" href="#pyneon.NeonDataset.recordings" title="Link to this definition">#</a></dt>
+<dd><p>List of NeonRecording objects for each recording in the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of <a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording">NeonRecording</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonDataset.sections">
+<span class="sig-name descname"><span class="pre">sections</span></span><a class="headerlink" href="#pyneon.NeonDataset.sections" title="Link to this definition">#</a></dt>
+<dd><p>DataFrame containing the sections of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.NeonDataset.load_enrichment">
+<span class="sig-name descname"><span class="pre">load_enrichment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enrichment_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonDataset.load_enrichment" title="Link to this definition">#</a></dt>
+<dd><p>Load enrichment information from an enrichment directory. The directory must
+contain an enrichment_info.txt file. Enrichment data will be parsed for each
+recording ID and added to NeonRecording object in the dataset.</p>
+<p>The method is currently being developed and is not yet implemented.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -423,7 +489,13 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset"><code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset"><code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.dataset_dir"><code class="docutils literal notranslate"><span class="pre">NeonDataset.dataset_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.recordings"><code class="docutils literal notranslate"><span class="pre">NeonDataset.recordings</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.sections"><code class="docutils literal notranslate"><span class="pre">NeonDataset.sections</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.load_enrichment"><code class="docutils literal notranslate"><span class="pre">NeonDataset.load_enrichment()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

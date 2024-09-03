@@ -372,10 +372,11 @@ document.write(`
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.NeonRecording">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">NeonRecording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonRecording" title="Link to this definition">#</a></dt>
-<dd><p>NeonRecording object for various modalities of data from a single recording.
-Specific data modalities can be accessed as attributes, such as <cite>gaze</cite>, <cite>imu</cite>,
-and <cite>eye_states</cite>. These attributes are loaded lazily, meaning that the data
-is only loaded when the attribute is accessed for the first time.</p>
+<dd><p>Data from a single recording. The recording directory could be downloaded from
+either a single recording or a project on Pupil Cloud. In either case, the directory
+must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file. Channels, events, (and scene video) will be
+located but not loaded until accessed as attributes such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.gaze">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><a class="headerlink" href="#pyneon.NeonRecording.gaze" title="Link to this definition">#</a></dt>
@@ -400,7 +401,7 @@ Loads 3D eye states data if not already loaded.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.concat_channels">
 <span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#pyneon.NeonRecording.concat_channels" title="Link to this definition">#</a></dt>
-<dd><p>Returns a single <cite>pd.DataFrame</cite> under common timestamps.
+<dd><p>Returns a single pandas.DataFrame under common timestamps.
 This will require interpolation of all signals to the same timestamps. See
 <cite>pyneon.preprocess.concat_channels</cite> for more details.</p>
 <dl class="field-list simple">
@@ -408,7 +409,9 @@ This will require interpolation of all signals to the same timestamps. See
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of channel names to concatenate. Channel names must be one of
 {“gaze”, “imu”, “eye_states”, “3d_eye_states”}.</p></li>
-<li><p><strong>downsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to downsample the signals to the gaze timestamps, by default True.</p></li>
+<li><p><strong>downsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, downsample the signals to the lowest sampling rate of the selected
+channels. If False, the signals will be resampled to the highest sampling
+rate. By default True.</p></li>
 <li><p><strong>resamp_float_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – Resampling method for columns of float type, by default “linear”.</p></li>
 <li><p><strong>resamp_other_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – Resampling method for columns of other types, by default “nearest”.</p></li>
 </ul>
@@ -417,7 +420,7 @@ This will require interpolation of all signals to the same timestamps. See
 <dd class="field-even"><p><strong>concat_data</strong> – Concatenated data.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p>DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
