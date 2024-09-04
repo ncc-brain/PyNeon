@@ -124,20 +124,20 @@ def concat_channels(
     # Lowest sampling rate
     if downsample:
         sf = ch_info["sf"].min()
-        sf_type = "Lowest"
+        sf_type = "lowest"
     else:
         sf = ch_info["sf"].max()
-        sf_type = "Highest"
+        sf_type = "highest"
     sf_name = ch_info.loc[ch_info["sf"] == sf, "name"].values
-    print(f"{sf_type} sampling rate: {sf} Hz ({sf_name})")
+    print(f"Using {sf_type} sampling rate: {sf} Hz ({sf_name})")
 
     max_first_ts = ch_info["first_ts"].max()
     max_first_ts_name = ch_info.loc[ch_info["first_ts"] == max_first_ts, "name"].values
-    print(f"Latest start timestamp: {max_first_ts} ({max_first_ts_name})")
+    print(f"Using latest start timestamp: {max_first_ts} ({max_first_ts_name})")
 
     min_last_ts = ch_info["last_ts"].min()
     min_last_ts_name = ch_info.loc[ch_info["last_ts"] == min_last_ts, "name"].values
-    print(f"Earliest last timestamp: {min_last_ts} ({min_last_ts_name})")
+    print(f"Using earliest last timestamp: {min_last_ts} ({min_last_ts_name})")
 
     new_ts = np.arange(
         max_first_ts,

@@ -10,6 +10,7 @@ This is the referencce for classes and functions in PyNeon.
     :hidden:
     :titlesonly:
 
-    pyneon.NeonDataset <dataset>
-    pyneon.NeonRecording <recording>
-    pyneon.preprocess <preprocess>
+    dataset
+    recording
+    data
+    preprocess

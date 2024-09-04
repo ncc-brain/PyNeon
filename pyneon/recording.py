@@ -24,7 +24,7 @@ class NeonRecording:
     Data from a single recording. The recording directory could be downloaded from
     either a single recording or a project on Pupil Cloud. In either case, the directory
     must contain an ``info.json`` file. Channels, events, (and scene video) will be
-    located but not loaded until accessed as attributes such as ``gaze``, ``imu``,
+    located but not loaded until accessed as  attributes such as ``gaze``, ``imu``,
     and ``eye_states``.
     """
 
@@ -93,10 +93,9 @@ class NeonRecording:
         self.contents = contents
 
     @property
-    def gaze(self):
+    def gaze(self) -> NeonGaze:
         """
-        Returns a `NeonGaze` object.
-        Loads gaze data if not already loaded.
+        Returns a NeonGaze object or None if no gaze data is found.
         """
         if self._gaze is None:
             if self.contents.loc["gaze", "exist"]:
@@ -109,10 +108,9 @@ class NeonRecording:
         return self._gaze
 
     @property
-    def imu(self):
+    def imu(self) -> NeonIMU:
         """
-        Returns a `NeonIMU` object.
-        Loads IMU data if not already loaded.
+        Returns a NeonIMU object or None if no IMU data is found.
         """
         if self._imu is None:
             if self.contents.loc["imu", "exist"]:
@@ -123,10 +121,9 @@ class NeonRecording:
         return self._imu
 
     @property
-    def eye_states(self):
+    def eye_states(self) -> NeonEyeStates:
         """
-        Returns a `NeonEyeStates` object.
-        Loads 3D eye states data if not already loaded.
+        Returns a NeonEyeStates object or None if no eye states data is found.
         """
         if self._eye_states is None:
             if self.contents.loc["3d_eye_states", "exist"]:
@@ -165,13 +162,17 @@ class NeonRecording:
             channels. If False, the signals will be resampled to the highest sampling
             rate. By default True.
         resamp_float_kind : str, optional
-            Resampling method for columns of float type, by default "linear".
+            The kind of interpolation applied on columns of float type,
+            by default "linear". See `scipy.interpolate.interp1d` for more details.
         resamp_other_kind : str, optional
-            Resampling method for columns of other types, by default "nearest".
+            The kind of interpolation applied on columns of other types,
+            by default "nearest".
 
         Returns
         -------
         concat_data : DataFrame
             Concatenated data.
         """
-        return concat_channels(self, ch_names, resamp_float_kind, resamp_other_kind)
+        return concat_channels(
+            self, ch_names, downsample, resamp_float_kind, resamp_other_kind
+        )

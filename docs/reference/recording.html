@@ -42,7 +42,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/recording';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="pyneon.preprocess" href="preprocess.html" />
+    <link rel="next" title="pyneon.data" href="data.html" />
     <link rel="prev" title="pyneon.NeonDataset" href="dataset.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -309,7 +309,10 @@ document.write(`
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">pyneon.NeonRecording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">pyneon.data</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+</ul>
+</details></li>
 </ul>
 </div>
 </nav></div>
@@ -375,27 +378,24 @@ document.write(`
 <dd><p>Data from a single recording. The recording directory could be downloaded from
 either a single recording or a project on Pupil Cloud. In either case, the directory
 must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file. Channels, events, (and scene video) will be
-located but not loaded until accessed as attributes such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>,
+located but not loaded until accessed as  attributes such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>,
 and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.gaze">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><a class="headerlink" href="#pyneon.NeonRecording.gaze" title="Link to this definition">#</a></dt>
-<dd><p>Returns a <cite>NeonGaze</cite> object.
-Loads gaze data if not already loaded.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="data.html#pyneon.data.NeonGaze" title="pyneon.data.NeonGaze"><span class="pre">NeonGaze</span></a></em><a class="headerlink" href="#pyneon.NeonRecording.gaze" title="Link to this definition">#</a></dt>
+<dd><p>Returns a NeonGaze object or None if no gaze data is found.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.imu">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu</span></span><a class="headerlink" href="#pyneon.NeonRecording.imu" title="Link to this definition">#</a></dt>
-<dd><p>Returns a <cite>NeonIMU</cite> object.
-Loads IMU data if not already loaded.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="data.html#pyneon.data.NeonIMU" title="pyneon.data.NeonIMU"><span class="pre">NeonIMU</span></a></em><a class="headerlink" href="#pyneon.NeonRecording.imu" title="Link to this definition">#</a></dt>
+<dd><p>Returns a NeonIMU object or None if no IMU data is found.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.eye_states">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_states</span></span><a class="headerlink" href="#pyneon.NeonRecording.eye_states" title="Link to this definition">#</a></dt>
-<dd><p>Returns a <cite>NeonEyeStates</cite> object.
-Loads 3D eye states data if not already loaded.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_states</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="data.html#pyneon.data.NeonEyeStates" title="pyneon.data.NeonEyeStates"><span class="pre">NeonEyeStates</span></a></em><a class="headerlink" href="#pyneon.NeonRecording.eye_states" title="Link to this definition">#</a></dt>
+<dd><p>Returns a NeonEyeStates object or None if no eye states data is found.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -412,8 +412,10 @@ This will require interpolation of all signals to the same timestamps. See
 <li><p><strong>downsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, downsample the signals to the lowest sampling rate of the selected
 channels. If False, the signals will be resampled to the highest sampling
 rate. By default True.</p></li>
-<li><p><strong>resamp_float_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – Resampling method for columns of float type, by default “linear”.</p></li>
-<li><p><strong>resamp_other_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – Resampling method for columns of other types, by default “nearest”.</p></li>
+<li><p><strong>resamp_float_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of float type,
+by default “linear”. See <cite>scipy.interpolate.interp1d</cite> for more details.</p></li>
+<li><p><strong>resamp_other_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of other types,
+by default “nearest”.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -449,11 +451,11 @@ rate. By default True.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="preprocess.html"
+       href="data.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">pyneon.preprocess</p>
+        <p class="prev-next-title">pyneon.data</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

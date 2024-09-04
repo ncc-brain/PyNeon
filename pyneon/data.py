@@ -6,7 +6,10 @@ from .preprocess import resample, concat_channels
 
 
 class NeonData:
-    """Holder for all formats Neon tabular data."""
+    """
+    Holder for Neon tabular data. It reads from a CSV file and stores the data
+    as a pandas DataFrame (with section and recording IDs removed).
+    """
 
     def __init__(self, file: Path):
         self.file = file
@@ -26,7 +29,9 @@ class NeonData:
 
 
 class NeonSignal(NeonData):
-    """Holder for continuous signals."""
+    """
+    Continuous Neon signals. It must contain a ``timestamp [ns]`` column.
+    """
 
     def __init__(self, file):
         super().__init__(file)
@@ -34,15 +39,9 @@ class NeonSignal(NeonData):
         self.data.sort_values(by=["timestamp [ns]"], inplace=True)
         self.data["time [s]"] = self.to_seconds()
 
-    def to_seconds(self) -> np.ndarray:
-        """Converts the timestamps to seconds."""
-        return (
-            self.data["timestamp [ns]"] - self.data["timestamp [ns]"][0]
-        ).to_numpy() / 1e9
-
     @property
     def timestamps(self) -> np.ndarray:
-        """Returns the timestamps of the stream in nanoseconds."""
+        """Returns the timestamps of the signal in nanoseconds."""
         return self.data["timestamp [ns]"].to_numpy()
 
     @property
@@ -52,28 +51,34 @@ class NeonSignal(NeonData):
 
     @property
     def first_ts(self) -> int:
-        """Returns the first timestamp of the stream in nanoseconds."""
+        """Returns the first timestamp of the signal in nanoseconds."""
         return int(self.ts[0])
 
     @property
     def last_ts(self) -> int:
-        """Returns the last timestamp of the stream in nanoseconds."""
+        """Returns the last timestamp of the signal in nanoseconds."""
         return int(self.ts[-1])
 
     @property
     def times(self) -> np.ndarray:
-        """Returns the timestamps of the stream in seconds."""
+        """Returns the timestamps of the signal in seconds."""
         return self.data["time [s]"].to_numpy()
 
     @property
     def duration(self) -> float:
-        """Returns the duration of the stream in seconds."""
+        """Returns the duration of the signal in seconds."""
         return float(self.times[-1] - self.times[0])
 
     @property
     def sampling_freq_effective(self) -> float:
-        """Returns the effective sampling frequency of the stream in Hz."""
+        """Returns the effective sampling frequency of the signal in Hz."""
         return self.data.shape[0] / self.duration()
+
+    def to_seconds(self) -> np.ndarray:
+        """Converts the timestamps to seconds."""
+        return (
+            self.data["timestamp [ns]"] - self.data["timestamp [ns]"][0]
+        ).to_numpy() / 1e9
 
     def resample(
         self,
@@ -81,9 +86,25 @@ class NeonSignal(NeonData):
         float_kind="linear",
         other_kind="nearest",
     ) -> pd.DataFrame:
-        """Resample the signal to a new set of timestamps.
+        """
+        Resample the signal to a new set of timestamps.
 
-        If no new timestamps are provided, the signal is resampled to the nominal sampling rate.
+        Parameters
+        ----------
+        new_ts : np.ndarray, optional
+            New timestamps to resample the signal to. If None, the signal is resampled
+            to the nominal sampling rate.
+        float_kind : str, optional
+            The kind of interpolation applied on columns of float type,
+            by default "linear". See `scipy.interpolate.interp1d` for more details.
+        other_kind : str, optional
+            The kind of interpolation applied on columns of other types,
+            by default "nearest".
+
+        Returns
+        -------
+        pandas.DataFrame
+            Resampled data.
         """
         # If new_ts is not provided, generate a evenly spaced array of timestamps
         if new_ts is None:
@@ -95,9 +116,21 @@ class NeonSignal(NeonData):
 
 
 class NeonGaze(NeonSignal):
+    """
+    Gaze data.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing the eye states data. Columns are of the
+        appropriate data types (float, int, bool).
+    sampling_rate_nominal : int
+        Nominal sampling rate of the gaze data (200 Hz).
+    """
+
     def __init__(self, file):
         super().__init__(file)
-        self.sampling_rate_nominal = 200
+        self.sampling_rate_nominal = int(200)
         self.data = self.data.astype(
             {
                 "timestamp [ns]": "Int64",
@@ -113,32 +146,19 @@ class NeonGaze(NeonSignal):
         )
 
 
-class NeonIMU(NeonSignal):
-    def __init__(self, file):
-        super().__init__(file)
-        self.sampling_rate_nominal = 120
-        self.data = self.data.astype(
-            {
-                "timestamp [ns]": "Int64",
-                "gyro x [deg/s]": float,
-                "gyro y [deg/s]": float,
-                "gyro z [deg/s]": float,
-                "acceleration x [g]": float,
-                "acceleration y [g]": float,
-                "acceleration z [g]": float,
-                "roll [deg]": float,
-                "pitch [deg]": float,
-                "yaw [deg]": float,
-                "quaternion w": float,
-                "quaternion x": float,
-                "quaternion y": float,
-                "quaternion z": float,
-                "time [s]": float,
-            }
-        )
-
-
 class NeonEyeStates(NeonSignal):
+    """
+    3D eye states data.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing the eye states data. Columns are of the
+        appropriate data types (float, int, bool).
+    sampling_rate_nominal : int
+        Nominal sampling rate of the eye states data (200 Hz).
+    """
+
     def __init__(self, file):
         super().__init__(file)
         self.sampling_rate_nominal = 200
@@ -164,21 +184,58 @@ class NeonEyeStates(NeonSignal):
         )
 
 
-class NeonEvents(NeonData):
+class NeonIMU(NeonSignal):
+    """
+    IMU data.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing the eye states data. Columns are of the
+        appropriate data types (float, int, bool).
+    sampling_rate_nominal : int
+        Nominal sampling rate of the gaze data (120 Hz).
+    """
+
     def __init__(self, file):
         super().__init__(file)
+        self.sampling_rate_nominal = int(120)
+        self.data = self.data.astype(
+            {
+                "timestamp [ns]": "Int64",
+                "gyro x [deg/s]": float,
+                "gyro y [deg/s]": float,
+                "gyro z [deg/s]": float,
+                "acceleration x [g]": float,
+                "acceleration y [g]": float,
+                "acceleration z [g]": float,
+                "roll [deg]": float,
+                "pitch [deg]": float,
+                "yaw [deg]": float,
+                "quaternion w": float,
+                "quaternion x": float,
+                "quaternion y": float,
+                "quaternion z": float,
+                "time [s]": float,
+            }
+        )
 
 
-class NeonBlinks(NeonEvents):
-    def __init__(self, file):
-        super().__init__(file)
+# class NeonEvents(NeonData):
+#     def __init__(self, file):
+#         super().__init__(file)
 
 
-class NeonFixations(NeonData):
-    def __init__(self, file):
-        super().__init__(file)
+# class NeonBlinks(NeonEvents):
+#     def __init__(self, file):
+#         super().__init__(file)
 
 
-class NeonLabels(NeonData):
-    def __init__(self, file):
-        super().__init__(file)
+# class NeonFixations(NeonData):
+#     def __init__(self, file):
+#         super().__init__(file)
+
+
+# class NeonLabels(NeonData):
+#     def __init__(self, file):
+#         super().__init__(file)
