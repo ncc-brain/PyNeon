@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from typing import Union
-from .preprocess import resample, concat_channels
+from .preprocess import resample
 
 
 class NeonData:
@@ -33,7 +33,7 @@ class NeonSignal(NeonData):
     Continuous Neon signals. It must contain a ``timestamp [ns]`` column.
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Path):
         super().__init__(file)
         # Enforce that the data is sorted by timestamp
         self.data.sort_values(by=["timestamp [ns]"], inplace=True)
@@ -92,8 +92,8 @@ class NeonSignal(NeonData):
         Parameters
         ----------
         new_ts : np.ndarray, optional
-            New timestamps to resample the signal to. If None, the signal is resampled
-            to the nominal sampling rate.
+            New timestamps to resample the signal to. If ``None``,
+            the signal is resampled to the nominal sampling rate.
         float_kind : str, optional
             The kind of interpolation applied on columns of float type,
             by default "linear". See `scipy.interpolate.interp1d` for more details.
@@ -128,7 +128,7 @@ class NeonGaze(NeonSignal):
         Nominal sampling rate of the gaze data (200 Hz).
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Path):
         super().__init__(file)
         self.sampling_rate_nominal = int(200)
         self.data = self.data.astype(
@@ -159,7 +159,7 @@ class NeonEyeStates(NeonSignal):
         Nominal sampling rate of the eye states data (200 Hz).
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Path):
         super().__init__(file)
         self.sampling_rate_nominal = 200
         self.data = self.data.astype(
@@ -197,7 +197,7 @@ class NeonIMU(NeonSignal):
         Nominal sampling rate of the gaze data (120 Hz).
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Path):
         super().__init__(file)
         self.sampling_rate_nominal = int(120)
         self.data = self.data.astype(

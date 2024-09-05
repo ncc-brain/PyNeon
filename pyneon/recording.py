@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import Union
 import pandas as pd
-import numpy as np
 import json
 
 from .data import NeonGaze, NeonIMU, NeonEyeStates
 from .preprocess import concat_channels
+from .io import export_motion_bids, exports_eye_bids
 
 
 def _check_file(dir_path: Path, stem: str):
@@ -26,6 +26,22 @@ class NeonRecording:
     must contain an ``info.json`` file. Channels, events, (and scene video) will be
     located but not loaded until accessed as  attributes such as ``gaze``, ``imu``,
     and ``eye_states``.
+
+    Parameters
+    ----------
+    recording_dir : str or :class:`pathlib.Path`
+        Path to the directory containing the recording.
+
+    Attributes
+    ----------
+    recording_id : str
+        Recording ID.
+    recording_dir : :class:`pathlib.Path`
+        Path to the recording directory.
+    info : dict
+        Information about the recording. Read from ``info.json``.
+    contents : :class:`pandas.DataFrame`
+        DataFrame containing the contents of the recording directory.
     """
 
     def __init__(self, recording_dir: Union[str, Path]):
@@ -154,7 +170,7 @@ class NeonRecording:
 
         Parameters
         ----------
-        ch_names : list[str]
+        ch_names : list of str
             List of channel names to concatenate. Channel names must be one of
             {"gaze", "imu", "eye_states", "3d_eye_states"}.
         downsample : bool, optional
@@ -170,9 +186,73 @@ class NeonRecording:
 
         Returns
         -------
-        concat_data : DataFrame
+        concat_data : :class:`pandas.DataFrame`
             Concatenated data.
         """
         return concat_channels(
             self, ch_names, downsample, resamp_float_kind, resamp_other_kind
         )
+
+    def to_motion_bids(
+        self,
+        output_dir: Union[str, Path],
+        prefix: str = "sub-XX_task-YY_tracksys-NeonIMU",
+    ):
+        """
+        Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
+        file and metadata (with template fields) are saved to a .json file.
+        Users should later edit the metadata file according to the experiment to make
+        it BIDS-compliant.
+
+        Parameters
+        ----------
+        output_dir : str or :class:`pathlib.Path`
+            Output directory to save the Motion-BIDS formatted data.
+        prefix : str, optional
+            Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
+            The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
+            (Fields in [] are optional). Files will be saved as
+            ``{prefix}_motion.<tsv|json>``.
+
+        Notes
+        -----
+        Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
+        standardize the organization of motion data for reproducible research [1]_.
+        For more information, see
+        https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html.
+
+        References
+        ----------
+        .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
+        """
+        export_motion_bids(self, output_dir)
+
+    def to_eye_bids(
+        self,
+        output_dir: Union[str, Path],
+        prefix: str = "sub-XX_task-YY_tracksys-NeonGaze",
+    ):
+        """
+        Export eye-tracking data to Eye-tracking-BIDS format. Continuous samples
+        and events are saved to .tsv.gz files with accompanying .json metadata files.
+        Users should later edit the metadata files according to the experiment.
+
+        Parameters
+        ----------
+
+        output_dir : str or :class:`pathlib.Path`
+            Output directory to save the Eye-tracking-BIDS formatted data.
+        prefix : str, optional
+            Prefix for the BIDS filenames, by default "sub-XX_recording-eye".
+            The format should be `<matches>[_recording-<label>]_<physio|physioevents>.<tsv.gz|json>`
+            (Fields in [] are optional). Files will be saved as
+            ``{prefix}_physio.<tsv.gz|json>`` and ``{prefix}_physioevents.<tsv.gz|json>``.
+
+        Notes
+        -----
+        Eye-tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
+        standardize the organization of eye-tracking data for reproducible research.
+        The extension is still being finialized. This method follows the latest standards
+        outlined in https://github.com/bids-standard/bids-specification/pull/1128.
+        """
+        exports_eye_bids(self, output_dir)

@@ -33,16 +33,16 @@ class NeonDataset:
 
     Parameters
     ----------
-    dataset_dir : str or Path
+    dataset_dir : str or :class:`pathlib.Path`
         Path to the directory containing the dataset.
 
     Attributes
     ----------
-    dataset_dir : Path
+    dataset_dir : :class:`pathlib.Path`
         Path to the directory containing the dataset.
     recordings : list of NeonRecording
         List of NeonRecording objects for each recording in the dataset.
-    sections : pandas.DataFrame
+    sections : :class:`pandas.DataFrame`
         DataFrame containing the sections of the dataset.
     """
 
@@ -98,5 +98,10 @@ class NeonDataset:
         recording ID and added to NeonRecording object in the dataset.
 
         The method is currently being developed and is not yet implemented.
+
+        Parameters
+        ----------
+        enrichment_dir : str or :class:`pathlib.Path`
+            Path to the directory containing the enrichment information.
         """
         pass
