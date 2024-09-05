@@ -309,9 +309,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">pyneon.NeonRecording</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data.html">pyneon.data</a></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">pyneon.preprocess</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
-</ul>
-</details></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">pyneon.preprocess</a></li>
 </ul>
 </div>
 </nav></div>
@@ -371,9 +369,15 @@ document.write(`
                   
   <section id="pyneon-preprocess">
 <h1>pyneon.preprocess<a class="headerlink" href="#pyneon-preprocess" title="Link to this heading">#</a></h1>
-<p>The <a class="reference internal" href="#module-pyneon.preprocess" title="pyneon.preprocess"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pyneon.preprocess</span></code></a> module provides utilities for preprocessing data.</p>
-<div class="toctree-wrapper compound" id="module-pyneon.preprocess">
-</div>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyneon.preprocess</span></code> module provides utilities for preprocessing data.</p>
+<dl class="py function" id="module-pyneon.preprocess.preprocess">
+<dt class="sig sig-object py" id="pyneon.preprocess.preprocess.concat_channels">
+<span class="sig-prename descclassname"><span class="pre">pyneon.preprocess.preprocess.</span></span><span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><span class="pre">NeonRecording</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.preprocess.preprocess.concat_channels" title="Link to this definition">#</a></dt>
+<dd><p>Combine multiple channels’ data into a single dataframe.</p>
+<p>Resampling is necessary to align all signals to the same timestamps.
+If channels have different sampling rates, the lowest sampling rate is used.</p>
+</dd></dl>
+
 </section>
 
 
@@ -404,6 +408,18 @@ document.write(`
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.preprocess.preprocess.concat_channels"><code class="docutils literal notranslate"><span class="pre">concat_channels()</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 

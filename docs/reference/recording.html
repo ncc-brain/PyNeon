@@ -374,12 +374,61 @@ document.write(`
 <h1>pyneon.NeonRecording<a class="headerlink" href="#pyneon-neonrecording" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.NeonRecording">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">NeonRecording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonRecording" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">NeonRecording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonRecording" title="Link to this definition">#</a></dt>
 <dd><p>Data from a single recording. The recording directory could be downloaded from
 either a single recording or a project on Pupil Cloud. In either case, the directory
 must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file. Channels, events, (and scene video) will be
 located but not loaded until accessed as  attributes such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>,
 and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>recording_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the directory containing the recording.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.recording_id">
+<span class="sig-name descname"><span class="pre">recording_id</span></span><a class="headerlink" href="#pyneon.NeonRecording.recording_id" title="Link to this definition">#</a></dt>
+<dd><p>Recording ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.recording_dir">
+<span class="sig-name descname"><span class="pre">recording_dir</span></span><a class="headerlink" href="#pyneon.NeonRecording.recording_dir" title="Link to this definition">#</a></dt>
+<dd><p>Path to the recording directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.info">
+<span class="sig-name descname"><span class="pre">info</span></span><a class="headerlink" href="#pyneon.NeonRecording.info" title="Link to this definition">#</a></dt>
+<dd><p>Information about the recording. Read from <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.contents">
+<span class="sig-name descname"><span class="pre">contents</span></span><a class="headerlink" href="#pyneon.NeonRecording.contents" title="Link to this definition">#</a></dt>
+<dd><p>DataFrame containing the contents of the recording directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.gaze">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="data.html#pyneon.data.NeonGaze" title="pyneon.data.NeonGaze"><span class="pre">NeonGaze</span></a></em><a class="headerlink" href="#pyneon.NeonRecording.gaze" title="Link to this definition">#</a></dt>
@@ -400,21 +449,21 @@ and <code class="docutils literal notranslate"><span class="pre">eye_states</spa
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.concat_channels">
-<span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#pyneon.NeonRecording.concat_channels" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.NeonRecording.concat_channels" title="Link to this definition">#</a></dt>
 <dd><p>Returns a single pandas.DataFrame under common timestamps.
 This will require interpolation of all signals to the same timestamps. See
 <cite>pyneon.preprocess.concat_channels</cite> for more details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of channel names to concatenate. Channel names must be one of
+<li><p><strong>ch_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – List of channel names to concatenate. Channel names must be one of
 {“gaze”, “imu”, “eye_states”, “3d_eye_states”}.</p></li>
-<li><p><strong>downsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, downsample the signals to the lowest sampling rate of the selected
+<li><p><strong>downsample</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, downsample the signals to the lowest sampling rate of the selected
 channels. If False, the signals will be resampled to the highest sampling
 rate. By default True.</p></li>
-<li><p><strong>resamp_float_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of float type,
+<li><p><strong>resamp_float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of float type,
 by default “linear”. See <cite>scipy.interpolate.interp1d</cite> for more details.</p></li>
-<li><p><strong>resamp_other_kind</strong> (<em>str</em><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of other types,
+<li><p><strong>resamp_other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of other types,
 by default “nearest”.</p></li>
 </ul>
 </dd>
@@ -422,9 +471,65 @@ by default “nearest”.</p></li>
 <dd class="field-even"><p><strong>concat_data</strong> – Concatenated data.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>DataFrame</p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.to_motion_bids">
+<span class="sig-name descname"><span class="pre">to_motion_bids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sub-XX_task-YY_tracksys-NeonIMU'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonRecording.to_motion_bids" title="Link to this definition">#</a></dt>
+<dd><p>Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
+file and metadata (with template fields) are saved to a .json file.
+Users should later edit the metadata file according to the experiment to make
+it BIDS-compliant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Output directory to save the Motion-BIDS formatted data.</p></li>
+<li><p><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Prefix for the BIDS filenames, by default “sub-XX_task-YY_tracksys-NeonIMU”.
+The format should be <cite>sub-&lt;label&gt;[_ses-&lt;label&gt;]_task-&lt;label&gt;_tracksys-&lt;label&gt;[_acq-&lt;label&gt;][_run-&lt;index&gt;]</cite>
+(Fields in [] are optional). Files will be saved as
+<code class="docutils literal notranslate"><span class="pre">{prefix}_motion.&lt;tsv|json&gt;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
+standardize the organization of motion data for reproducible research <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
+For more information, see
+<a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html</a>.</p>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., … &amp; Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. <em>Scientific Data</em>, 11(1), 716.</p>
+</aside>
+</aside>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.to_eye_bids">
+<span class="sig-name descname"><span class="pre">to_eye_bids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sub-XX_task-YY_tracksys-NeonGaze'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonRecording.to_eye_bids" title="Link to this definition">#</a></dt>
+<dd><p>Export eye-tracking data to Eye-tracking-BIDS format. Continuous samples
+and events are saved to .tsv.gz files with accompanying .json metadata files.
+Users should later edit the metadata files according to the experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Output directory to save the Eye-tracking-BIDS formatted data.</p></li>
+<li><p><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Prefix for the BIDS filenames, by default “sub-XX_recording-eye”.
+The format should be <cite>&lt;matches&gt;[_recording-&lt;label&gt;]_&lt;physio|physioevents&gt;.&lt;tsv.gz|json&gt;</cite>
+(Fields in [] are optional). Files will be saved as
+<code class="docutils literal notranslate"><span class="pre">{prefix}_physio.&lt;tsv.gz|json&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">{prefix}_physioevents.&lt;tsv.gz|json&gt;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Eye-tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
+standardize the organization of eye-tracking data for reproducible research.
+The extension is still being finialized. This method follows the latest standards
+outlined in <a class="github reference external" href="https://github.com/bids-standard/bids-specification/pull/1128">bids-standard/bids-specification#1128</a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -478,10 +583,16 @@ by default “nearest”.</p></li>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording"><code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.recording_id"><code class="docutils literal notranslate"><span class="pre">NeonRecording.recording_id</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.recording_dir"><code class="docutils literal notranslate"><span class="pre">NeonRecording.recording_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.info"><code class="docutils literal notranslate"><span class="pre">NeonRecording.info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.contents"><code class="docutils literal notranslate"><span class="pre">NeonRecording.contents</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.gaze"><code class="docutils literal notranslate"><span class="pre">NeonRecording.gaze</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.imu"><code class="docutils literal notranslate"><span class="pre">NeonRecording.imu</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.eye_states"><code class="docutils literal notranslate"><span class="pre">NeonRecording.eye_states</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.concat_channels"><code class="docutils literal notranslate"><span class="pre">NeonRecording.concat_channels()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.to_motion_bids"><code class="docutils literal notranslate"><span class="pre">NeonRecording.to_motion_bids()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.to_eye_bids"><code class="docutils literal notranslate"><span class="pre">NeonRecording.to_eye_bids()</span></code></a></li>
 </ul>
 </li>
 </ul>

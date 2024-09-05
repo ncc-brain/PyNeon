@@ -310,9 +310,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">pyneon.NeonRecording</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data.html">pyneon.data</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
-</ul>
-</details></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a></li>
 </ul>
 </div>
 </nav></div>
@@ -371,6 +369,69 @@ document.write(`
 <span id="id1"></span><h1>PyNeon API<a class="headerlink" href="#pyneon-api" title="Link to this heading">#</a></h1>
 <p>This is the referencce for classes and functions in PyNeon.</p>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#pyneon.NeonDataset"><code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#pyneon.NeonDataset.dataset_dir"><code class="docutils literal notranslate"><span class="pre">NeonDataset.dataset_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#pyneon.NeonDataset.recordings"><code class="docutils literal notranslate"><span class="pre">NeonDataset.recordings</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#pyneon.NeonDataset.sections"><code class="docutils literal notranslate"><span class="pre">NeonDataset.sections</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#pyneon.NeonDataset.load_enrichment"><code class="docutils literal notranslate"><span class="pre">NeonDataset.load_enrichment()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="recording.html">pyneon.NeonRecording</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="recording.html#pyneon.NeonRecording"><code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.recording_id"><code class="docutils literal notranslate"><span class="pre">NeonRecording.recording_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.recording_dir"><code class="docutils literal notranslate"><span class="pre">NeonRecording.recording_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.info"><code class="docutils literal notranslate"><span class="pre">NeonRecording.info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.contents"><code class="docutils literal notranslate"><span class="pre">NeonRecording.contents</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.gaze"><code class="docutils literal notranslate"><span class="pre">NeonRecording.gaze</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.imu"><code class="docutils literal notranslate"><span class="pre">NeonRecording.imu</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.eye_states"><code class="docutils literal notranslate"><span class="pre">NeonRecording.eye_states</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.concat_channels"><code class="docutils literal notranslate"><span class="pre">NeonRecording.concat_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.to_motion_bids"><code class="docutils literal notranslate"><span class="pre">NeonRecording.to_motion_bids()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="recording.html#pyneon.NeonRecording.to_eye_bids"><code class="docutils literal notranslate"><span class="pre">NeonRecording.to_eye_bids()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">pyneon.data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.data.NeonData"><code class="docutils literal notranslate"><span class="pre">NeonData</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.data.NeonSignal"><code class="docutils literal notranslate"><span class="pre">NeonSignal</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.timestamps"><code class="docutils literal notranslate"><span class="pre">NeonSignal.timestamps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.ts"><code class="docutils literal notranslate"><span class="pre">NeonSignal.ts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.first_ts"><code class="docutils literal notranslate"><span class="pre">NeonSignal.first_ts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.last_ts"><code class="docutils literal notranslate"><span class="pre">NeonSignal.last_ts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.times"><code class="docutils literal notranslate"><span class="pre">NeonSignal.times</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.duration"><code class="docutils literal notranslate"><span class="pre">NeonSignal.duration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.sampling_freq_effective"><code class="docutils literal notranslate"><span class="pre">NeonSignal.sampling_freq_effective</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.to_seconds"><code class="docutils literal notranslate"><span class="pre">NeonSignal.to_seconds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonSignal.resample"><code class="docutils literal notranslate"><span class="pre">NeonSignal.resample()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.data.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonGaze.data"><code class="docutils literal notranslate"><span class="pre">NeonGaze.data</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonGaze.sampling_rate_nominal"><code class="docutils literal notranslate"><span class="pre">NeonGaze.sampling_rate_nominal</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.data.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonEyeStates.data"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates.data</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonEyeStates.sampling_rate_nominal"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates.sampling_rate_nominal</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.data.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonIMU.data"><code class="docutils literal notranslate"><span class="pre">NeonIMU.data</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#pyneon.data.NeonIMU.sampling_rate_nominal"><code class="docutils literal notranslate"><span class="pre">NeonIMU.sampling_rate_nominal</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="preprocess.html#pyneon.preprocess.preprocess.concat_channels"><code class="docutils literal notranslate"><span class="pre">concat_channels()</span></code></a></li>
+</ul>
+</li>
+</ul>
 </div>
 </section>
 

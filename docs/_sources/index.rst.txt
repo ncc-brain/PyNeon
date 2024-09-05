@@ -39,7 +39,7 @@ Credits
 PyNeon was inspired by https://github.com/pupil-labs/pl-neon-recording/
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
    Tutorials <tutorials/index>

@@ -5,10 +5,10 @@ PyNeon API
 
 This is the referencce for classes and functions in PyNeon.
 
+
+
 .. toctree::
-    :maxdepth: 2
-    :hidden:
-    :titlesonly:
+    :maxdepth: 3
 
     dataset
     recording
