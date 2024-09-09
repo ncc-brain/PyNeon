@@ -1,5 +1,5 @@
-pyneon.data
-===========
+Classes for individual data types
+=================================
 
 .. automodule:: pyneon.data
     :members:

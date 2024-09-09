@@ -1,8 +1,7 @@
-pyneon.preprocess
-=================
+Preprocessing module
+====================
 
-The :mod:`pyneon.preprocess` module provides utilities for preprocessing data.
-
-.. automodule:: pyneon.preprocess.preprocess
-    :members:
-    :show-inheritance:
+.. automodule:: pyneon.preprocess
+   :members:
+   :undoc-members:
+   :show-inheritance:

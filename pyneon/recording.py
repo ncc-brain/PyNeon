@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Union
 import pandas as pd
 import json
+from datetime import datetime
 
 from .data import NeonGaze, NeonIMU, NeonEyeStates
 from .preprocess import concat_channels
@@ -23,9 +24,27 @@ class NeonRecording:
     """
     Data from a single recording. The recording directory could be downloaded from
     either a single recording or a project on Pupil Cloud. In either case, the directory
-    must contain an ``info.json`` file. Channels, events, (and scene video) will be
-    located but not loaded until accessed as  attributes such as ``gaze``, ``imu``,
-    and ``eye_states``.
+    must contain an ``info.json`` file. For example, a recording directory could have the
+    following structure:
+
+    .. code-block:: text
+
+        recording_dir/
+        ├── info.json (REQUIRED)
+        ├── gaze.csv
+        ├── 3d_eye_states.csv
+        ├── imu.csv
+        ├── blinks.csv
+        ├── fixations.csv
+        ├── saccades.csv
+        ├── events.csv
+        ├── labels.csv
+        ├── world_timestamps.csv
+        ├── scene_camera.json
+        └── <scene_video>.mp4 (if present)
+
+    Channels, events, (and scene video) will be located but not loaded until
+    accessed as attributes such as ``gaze``, ``imu``, and ``eye_states``.
 
     Parameters
     ----------
@@ -39,21 +58,27 @@ class NeonRecording:
     recording_dir : :class:`pathlib.Path`
         Path to the recording directory.
     info : dict
-        Information about the recording. Read from ``info.json``.
+        Information about the recording. Read from ``info.json``. For details, see
+        https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json.
+    start_datetime : :class:`datetime.datetime`
+        Start time of the recording as in ``info.json``.
+        May not match the start time of each data channel.
     contents : :class:`pandas.DataFrame`
-        DataFrame containing the contents of the recording directory.
+        Contents of the recording directory. Each index is a channel or event name
+        (e.g. ``gaze`` or ``imu``) and columns are ``exist`` (bool),
+        ``filename`` (str), and ``path`` (Path).
     """
 
     def __init__(self, recording_dir: Union[str, Path]):
         recording_dir = Path(recording_dir)
         if not recording_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {recording_dir}")
-
-        if (info_path := recording_dir / "info.json").is_file():
-            with open(info_path) as f:
-                self.info = json.load(f)
-        else:
+        if not (info_path := recording_dir / "info.json").is_file():
             raise FileNotFoundError(f"info.json not found in {recording_dir}")
+
+        with open(info_path) as f:
+            self.info = json.load(f)
+        self.start_datetime = datetime.fromtimestamp(self.info["start_time"] / 1e9)
 
         self.recording_id = self.info["recording_id"]
         self.recording_dir = recording_dir
@@ -68,8 +93,14 @@ class NeonRecording:
         self._get_contents()
 
     def __repr__(self) -> str:
-        contents_to_print = self.contents.drop(columns="path", inplace=False)
-        return f"NeonRecording | {self.recording_id}\n{contents_to_print.to_string()}"
+        return f"""
+Recording ID: {self.recording_id}
+Wearer ID: {self.info['wearer_id']}
+Wearer name: {self.info['wearer_name']}
+Recording start time: {self.start_datetime}
+Recording duration: {self.info["duration"] / 1e9} s
+{self.contents.to_string()}
+"""
 
     def _get_contents(self):
         contents = pd.DataFrame(
@@ -151,38 +182,42 @@ class NeonRecording:
                 )
         return self._eye_states
 
-    def load(self):
-        self.gaze
-        self.imu
-        self.eye_states
-
     def concat_channels(
         self,
         ch_names: list[str],
-        downsample: bool = True,
+        sampling_freq: Union[float, int, str] = "min",
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
+        inplace: bool = False,
     ) -> pd.DataFrame:
         """
-        Returns a single pandas.DataFrame under common timestamps.
-        This will require interpolation of all signals to the same timestamps. See
-        `pyneon.preprocess.concat_channels` for more details.
+        Concatenate data from different channels under common timestamps.
+        Since the signals may have different timestamps and sampling frequencies,
+        resampling of all signals to a set of common timestamps is performed.
+        The latest start timestamp and earliest last timestamp of the selected channels
+        are used to define the common timestamps.
 
         Parameters
         ----------
         ch_names : list of str
-            List of channel names to concatenate. Channel names must be one of
-            {"gaze", "imu", "eye_states", "3d_eye_states"}.
-        downsample : bool, optional
-            If True, downsample the signals to the lowest sampling rate of the selected
-            channels. If False, the signals will be resampled to the highest sampling
-            rate. By default True.
+            List of channel names to concatenate. Channel names must be in
+            ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
+        sampling_freq : float or int or str, optional
+            Sampling frequency to resample the signals to.
+            If numeric, the signals will be resampled to this frequency.
+            If ``"min"``, the lowest nominal sampling frequency
+            of the selected channels will be used.
+            If ``"max"``, the highest nominal sampling frequency will be used.
+            Defaults to ``"min"``.
         resamp_float_kind : str, optional
-            The kind of interpolation applied on columns of float type,
-            by default "linear". See `scipy.interpolate.interp1d` for more details.
+            Kind of interpolation applied on columns of float type,
+            Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
         resamp_other_kind : str, optional
-            The kind of interpolation applied on columns of other types,
-            by default "nearest".
+            Kind of interpolation applied on columns of other types.
+            Defaults to ``"nearest"``.
+        inplace : bool, optional
+            Replace selected signal data with resampled data during concatenation\
+            if ``True``. Defaults to ``False``.
 
         Returns
         -------
@@ -190,7 +225,7 @@ class NeonRecording:
             Concatenated data.
         """
         return concat_channels(
-            self, ch_names, downsample, resamp_float_kind, resamp_other_kind
+            self, ch_names, sampling_freq, resamp_float_kind, resamp_other_kind, inplace
         )
 
     def to_motion_bids(

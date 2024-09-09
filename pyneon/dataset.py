@@ -28,7 +28,7 @@ class NeonDataset:
         ├── enrichment_info.txt
         └── sections.csv
 
-    Individual recordings will be read into NeonRecording objects based on
+    Individual recordings will be read into :class:`NeonRecording` objects based on
     ``sections.csv``. They are accessible through the ``recordings`` attribute.
 
     Parameters

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from scipy import interpolate
 
 if TYPE_CHECKING:
@@ -14,6 +14,30 @@ def resample(
     float_kind: str = "linear",
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
+    """
+    Resample the signal to a new set of timestamps.
+
+    Parameters
+    ----------
+    new_ts : np.ndarray, optional
+        New timestamps to resample the signal to. If ``None``,
+        the signal is resampled to its nominal sampling frequency according to
+        https://pupil-labs.com/products/neon/specs.
+    old_data : pd.DataFrame
+        Data to resample. Must contain a monotonically increasing
+        ``timestamp [ns]`` column.
+    float_kind : str, optional
+        Kind of interpolation applied on columns of float type,
+        by default "linear". For details see :class:`scipy.interpolate.interp1d`.
+    other_kind : str, optional
+        Kind of interpolation applied on columns of other types,
+        by default "nearest".
+
+    Returns
+    -------
+    pandas.DataFrame
+        Resampled data.
+    """
     # Check that 'timestamp [ns]' is in the columns
     if "timestamp [ns]" not in old_data.columns:
         raise ValueError("old_data must contain a 'timestamp [ns]' column")
@@ -44,14 +68,46 @@ _VALID_CHANNELS = ["3d_eye_states", "eye_states", "gaze", "imu"]
 def concat_channels(
     rec: "NeonRecording",
     ch_names: list[str],
-    downsample: bool = True,
+    sampling_freq: Union[float, int, str] = "min",
     resamp_float_kind: str = "linear",
     resamp_other_kind: str = "nearest",
+    inplace: bool = False,
 ) -> pd.DataFrame:
-    """Combine multiple channels' data into a single dataframe.
+    """
+    Concatenate data from different channels under common timestamps.
+    Since the signals may have different timestamps and sampling frequencies,
+    resampling of all signals to a set of common timestamps is performed.
+    The latest start timestamp and earliest last timestamp of the selected channels
+    are used to define the common timestamps.
 
-    Resampling is necessary to align all signals to the same timestamps.
-    If channels have different sampling rates, the lowest sampling rate is used.
+    Parameters
+    ----------
+    rec : :class:`NeonRecording`
+        NeonRecording object containing the signals to concatenate.
+    ch_names : list of str
+        List of channel names to concatenate. Channel names must be in
+        ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
+    sampling_freq : float or int or str, optional
+        Sampling frequency to resample the signals to.
+        If numeric, the signals will be resampled to this frequency.
+        If ``"min"``, the lowest nominal sampling frequency
+        of the selected channels will be used.
+        If ``"max"``, the highest nominal sampling frequency will be used.
+        Defaults to ``"min"``.
+    resamp_float_kind : str, optional
+        Kind of interpolation applied on columns of float type,
+        Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
+    resamp_other_kind : str, optional
+        Kind of interpolation applied on columns of other types.
+        Defaults to ``"nearest"``.
+    inplace : bool, optional
+        Replace selected signal data with resampled data during concatenation
+        if ``True``. Defaults to ``False``.
+
+    Returns
+    -------
+    concat_data : :class:`pandas.DataFrame`
+        Concatenated data.
     """
     if len(ch_names) <= 1:
         raise ValueError("Must provide at least two channels to concatenate.")
@@ -64,6 +120,8 @@ def concat_channels(
     ch_info = pd.DataFrame(columns=["signal", "name", "sf", "first_ts", "last_ts"])
     print("Concatenating channels:")
     if "gaze" in ch_names:
+        if rec.gaze is None:
+            raise ValueError("Cannnot load gaze data.")
         ch_info = pd.concat(
             [
                 ch_info,
@@ -71,7 +129,7 @@ def concat_channels(
                     {
                         "signal": rec.gaze,
                         "name": "gaze",
-                        "sf": rec.gaze.sampling_rate_nominal,
+                        "sf": rec.gaze.sampling_freq_nominal,
                         "first_ts": rec.gaze.first_ts,
                         "last_ts": rec.gaze.last_ts,
                     }
@@ -83,6 +141,8 @@ def concat_channels(
         )
         print("\tGaze")
     if "3d_eye_states" in ch_names or "eye_states" in ch_names:
+        if rec.eye_states is None:
+            raise ValueError("Cannnot load eye states data.")
         ch_info = pd.concat(
             [
                 ch_info,
@@ -90,7 +150,7 @@ def concat_channels(
                     {
                         "signal": rec.eye_states,
                         "name": "3d_eye_states",
-                        "sf": rec.eye_states.sampling_rate_nominal,
+                        "sf": rec.eye_states.sampling_freq_nominal,
                         "first_ts": rec.eye_states.first_ts,
                         "last_ts": rec.eye_states.last_ts,
                     }
@@ -102,6 +162,8 @@ def concat_channels(
         )
         print("\t3D eye states")
     if "imu" in ch_names:
+        if rec.imu is None:
+            raise ValueError("Cannnot load IMU data.")
         ch_info = pd.concat(
             [
                 ch_info,
@@ -109,7 +171,7 @@ def concat_channels(
                     {
                         "signal": rec.imu,
                         "name": "imu",
-                        "sf": rec.imu.sampling_rate_nominal,
+                        "sf": rec.imu.sampling_freq_nominal,
                         "first_ts": rec.imu.first_ts,
                         "last_ts": rec.imu.last_ts,
                     }
@@ -122,12 +184,17 @@ def concat_channels(
         print("\tIMU")
 
     # Lowest sampling rate
-    if downsample:
+    if sampling_freq == "min":
         sf = ch_info["sf"].min()
         sf_type = "lowest"
-    else:
+    elif sampling_freq == "max":
         sf = ch_info["sf"].max()
         sf_type = "highest"
+    elif isinstance(sampling_freq, (int, float)):
+        sf = sampling_freq
+        sf_type = "customized"
+    else:
+        raise ValueError("Invalid sampling_freq, must be 'min', 'max', or numeric")
     sf_name = ch_info.loc[ch_info["sf"] == sf, "name"].values
     print(f"Using {sf_type} sampling rate: {sf} Hz ({sf_name})")
 
@@ -149,7 +216,9 @@ def concat_channels(
     concat_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     concat_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
     for ch in ch_info["signal"]:
-        resamp_df = resample(new_ts, ch.data, resamp_float_kind, resamp_other_kind)
+        resamp_df = ch.resample(
+            new_ts, resamp_float_kind, resamp_other_kind, inplace=inplace
+        )
         assert concat_data.shape[0] == resamp_df.shape[0]
         assert concat_data["timestamp [ns]"].equals(resamp_df["timestamp [ns]"])
         concat_data = pd.merge(

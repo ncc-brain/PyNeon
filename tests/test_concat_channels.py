@@ -31,7 +31,7 @@ ax.plot(
 ax.legend()
 fig.savefig(test_output_dir / "concat_gaze_eye_states.png")
 
-concat_df = recording.concat_channels(["gaze", "eye_states", "IMU"], downsample=False)
+concat_df = recording.concat_channels(["gaze", "eye_states", "IMU"], sampling_freq=1000)
 concat_df.to_csv(test_output_dir / "concat_gaze_eye_states_imu.csv", index=False)
 fig, ax = plt.subplots()
 ax.plot(
