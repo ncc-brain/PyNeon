@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>pyneon.NeonRecording &#8212; PyNeon 0.1.0 documentation</title>
+    <title>NeonRecording class &#8212; PyNeon 0.1.0 documentation</title>
   
   
   
@@ -42,8 +42,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/recording';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="pyneon.data" href="data.html" />
-    <link rel="prev" title="pyneon.NeonDataset" href="dataset.html" />
+    <link rel="next" title="Classes for individual data types" href="data.html" />
+    <link rel="prev" title="NeonDataset class" href="dataset.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -307,12 +307,10 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">pyneon.NeonRecording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data.html">pyneon.data</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
-</ul>
-</details></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">NeonRecording class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Classes for individual data types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
 </ul>
 </div>
 </nav></div>
@@ -353,7 +351,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">pyneon.NeonRecording</li>
+    <li class="breadcrumb-item active" aria-current="page">NeonRecording class</li>
   </ul>
 </nav>
 </div>
@@ -370,16 +368,32 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="pyneon-neonrecording">
-<h1>pyneon.NeonRecording<a class="headerlink" href="#pyneon-neonrecording" title="Link to this heading">#</a></h1>
+  <section id="neonrecording-class">
+<h1>NeonRecording class<a class="headerlink" href="#neonrecording-class" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.NeonRecording">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">NeonRecording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonRecording" title="Link to this definition">#</a></dt>
 <dd><p>Data from a single recording. The recording directory could be downloaded from
 either a single recording or a project on Pupil Cloud. In either case, the directory
-must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file. Channels, events, (and scene video) will be
-located but not loaded until accessed as  attributes such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
+must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file. For example, a recording directory could have the
+following structure:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>recording_dir/
+├── info.json (REQUIRED)
+├── gaze.csv
+├── 3d_eye_states.csv
+├── imu.csv
+├── blinks.csv
+├── fixations.csv
+├── saccades.csv
+├── events.csv
+├── labels.csv
+├── world_timestamps.csv
+├── scene_camera.json
+└── &lt;scene_video&gt;.mp4 (if present)
+</pre></div>
+</div>
+<p>Channels, events, (and scene video) will be located but not loaded until
+accessed as attributes such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>, and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>recording_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the directory containing the recording.</p>
@@ -410,7 +424,8 @@ and <code class="docutils literal notranslate"><span class="pre">eye_states</spa
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.info">
 <span class="sig-name descname"><span class="pre">info</span></span><a class="headerlink" href="#pyneon.NeonRecording.info" title="Link to this definition">#</a></dt>
-<dd><p>Information about the recording. Read from <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.</p>
+<dd><p>Information about the recording. Read from <code class="docutils literal notranslate"><span class="pre">info.json</span></code>. For details, see
+<a class="reference external" href="https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json">https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json</a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)">dict</a></p>
@@ -419,9 +434,23 @@ and <code class="docutils literal notranslate"><span class="pre">eye_states</spa
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.NeonRecording.start_datetime">
+<span class="sig-name descname"><span class="pre">start_datetime</span></span><a class="headerlink" href="#pyneon.NeonRecording.start_datetime" title="Link to this definition">#</a></dt>
+<dd><p>Start time of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
+May not match the start time of each data channel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.contents">
 <span class="sig-name descname"><span class="pre">contents</span></span><a class="headerlink" href="#pyneon.NeonRecording.contents" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the contents of the recording directory.</p>
+<dd><p>Contents of the recording directory. Each index is a channel or event name
+(e.g. <code class="docutils literal notranslate"><span class="pre">gaze</span></code> or <code class="docutils literal notranslate"><span class="pre">imu</span></code>) and columns are <code class="docutils literal notranslate"><span class="pre">exist</span></code> (bool),
+<code class="docutils literal notranslate"><span class="pre">filename</span></code> (str), and <code class="docutils literal notranslate"><span class="pre">path</span></code> (Path).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
@@ -449,22 +478,28 @@ and <code class="docutils literal notranslate"><span class="pre">eye_states</spa
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.concat_channels">
-<span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.NeonRecording.concat_channels" title="Link to this definition">#</a></dt>
-<dd><p>Returns a single pandas.DataFrame under common timestamps.
-This will require interpolation of all signals to the same timestamps. See
-<cite>pyneon.preprocess.concat_channels</cite> for more details.</p>
+<span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.NeonRecording.concat_channels" title="Link to this definition">#</a></dt>
+<dd><p>Concatenate data from different channels under common timestamps.
+Since the signals may have different timestamps and sampling frequencies,
+resampling of all signals to a set of common timestamps is performed.
+The latest start timestamp and earliest last timestamp of the selected channels
+are used to define the common timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ch_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – List of channel names to concatenate. Channel names must be one of
-{“gaze”, “imu”, “eye_states”, “3d_eye_states”}.</p></li>
-<li><p><strong>downsample</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, downsample the signals to the lowest sampling rate of the selected
-channels. If False, the signals will be resampled to the highest sampling
-rate. By default True.</p></li>
-<li><p><strong>resamp_float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of float type,
-by default “linear”. See <cite>scipy.interpolate.interp1d</cite> for more details.</p></li>
-<li><p><strong>resamp_other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of other types,
-by default “nearest”.</p></li>
+<li><p><strong>ch_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – List of channel names to concatenate. Channel names must be in
+<code class="docutils literal notranslate"><span class="pre">{&quot;gaze&quot;,</span> <span class="pre">&quot;imu&quot;,</span> <span class="pre">&quot;eye_states&quot;,</span> <span class="pre">&quot;3d_eye_states&quot;}</span></code>.</p></li>
+<li><p><strong>sampling_freq</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Sampling frequency to resample the signals to.
+If numeric, the signals will be resampled to this frequency.
+If <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>, the lowest nominal sampling frequency
+of the selected channels will be used.
+If <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, the highest nominal sampling frequency will be used.
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>.</p></li>
+<li><p><strong>resamp_float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+<li><p><strong>resamp_other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types.
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Replace selected signal data with resampled data during concatenation            if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -552,7 +587,7 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">pyneon.NeonDataset</p>
+        <p class="prev-next-title">NeonDataset class</p>
       </div>
     </a>
     <a class="right-next"
@@ -560,7 +595,7 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">pyneon.data</p>
+        <p class="prev-next-title">Classes for individual data types</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -586,6 +621,7 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.recording_id"><code class="docutils literal notranslate"><span class="pre">NeonRecording.recording_id</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.recording_dir"><code class="docutils literal notranslate"><span class="pre">NeonRecording.recording_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.info"><code class="docutils literal notranslate"><span class="pre">NeonRecording.info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.start_datetime"><code class="docutils literal notranslate"><span class="pre">NeonRecording.start_datetime</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.contents"><code class="docutils literal notranslate"><span class="pre">NeonRecording.contents</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.gaze"><code class="docutils literal notranslate"><span class="pre">NeonRecording.gaze</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.imu"><code class="docutils literal notranslate"><span class="pre">NeonRecording.imu</span></code></a></li>

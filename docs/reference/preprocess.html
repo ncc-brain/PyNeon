@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>pyneon.preprocess &#8212; PyNeon 0.1.0 documentation</title>
+    <title>Preprocessing module &#8212; PyNeon 0.1.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/preprocess';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="pyneon.data" href="data.html" />
+    <link rel="prev" title="Classes for individual data types" href="data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -306,10 +306,10 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recording.html">pyneon.NeonRecording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data.html">pyneon.data</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">pyneon.preprocess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Classes for individual data types</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Preprocessing module</a></li>
 </ul>
 </div>
 </nav></div>
@@ -350,7 +350,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">pyneon.preprocess</li>
+    <li class="breadcrumb-item active" aria-current="page">Preprocessing module</li>
   </ul>
 </nav>
 </div>
@@ -367,15 +367,70 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="pyneon-preprocess">
-<h1>pyneon.preprocess<a class="headerlink" href="#pyneon-preprocess" title="Link to this heading">#</a></h1>
-<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">pyneon.preprocess</span></code> module provides utilities for preprocessing data.</p>
-<dl class="py function" id="module-pyneon.preprocess.preprocess">
-<dt class="sig sig-object py" id="pyneon.preprocess.preprocess.concat_channels">
-<span class="sig-prename descclassname"><span class="pre">pyneon.preprocess.preprocess.</span></span><span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><span class="pre">NeonRecording</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.preprocess.preprocess.concat_channels" title="Link to this definition">#</a></dt>
-<dd><p>Combine multiple channels’ data into a single dataframe.</p>
-<p>Resampling is necessary to align all signals to the same timestamps.
-If channels have different sampling rates, the lowest sampling rate is used.</p>
+  <section id="module-pyneon.preprocess">
+<span id="preprocessing-module"></span><h1>Preprocessing module<a class="headerlink" href="#module-pyneon.preprocess" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.preprocess.resample">
+<span class="sig-prename descclassname"><span class="pre">pyneon.preprocess.</span></span><span class="sig-name descname"><span class="pre">resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.preprocess.resample" title="Link to this definition">#</a></dt>
+<dd><p>Resample the signal to a new set of timestamps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_ts</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – New timestamps to resample the signal to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the signal is resampled to its nominal sampling frequency according to
+<a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>.</p></li>
+<li><p><strong>old_data</strong> (<em>pd.DataFrame</em>) – Data to resample. Must contain a monotonically increasing
+<code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column.</p></li>
+<li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
+by default “linear”. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+<li><p><strong>other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types,
+by default “nearest”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resampled data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.preprocess.concat_channels">
+<span class="sig-prename descclassname"><span class="pre">pyneon.preprocess.</span></span><span class="sig-name descname"><span class="pre">concat_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><span class="pre">NeonRecording</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ch_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.preprocess.concat_channels" title="Link to this definition">#</a></dt>
+<dd><p>Concatenate data from different channels under common timestamps.
+Since the signals may have different timestamps and sampling frequencies,
+resampling of all signals to a set of common timestamps is performed.
+The latest start timestamp and earliest last timestamp of the selected channels
+are used to define the common timestamps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rec</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonRecording</span></code>) – NeonRecording object containing the signals to concatenate.</p></li>
+<li><p><strong>ch_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – List of channel names to concatenate. Channel names must be in
+<code class="docutils literal notranslate"><span class="pre">{&quot;gaze&quot;,</span> <span class="pre">&quot;imu&quot;,</span> <span class="pre">&quot;eye_states&quot;,</span> <span class="pre">&quot;3d_eye_states&quot;}</span></code>.</p></li>
+<li><p><strong>sampling_freq</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Sampling frequency to resample the signals to.
+If numeric, the signals will be resampled to this frequency.
+If <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>, the lowest nominal sampling frequency
+of the selected channels will be used.
+If <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, the highest nominal sampling frequency will be used.
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>.</p></li>
+<li><p><strong>resamp_float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+<li><p><strong>resamp_other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types.
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Replace selected signal data with resampled data during concatenation
+if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>concat_data</strong> – Concatenated data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -396,7 +451,7 @@ If channels have different sampling rates, the lowest sampling rate is used.</p>
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">pyneon.data</p>
+        <p class="prev-next-title">Classes for individual data types</p>
       </div>
     </a>
 </div>
@@ -417,7 +472,8 @@ If channels have different sampling rates, the lowest sampling rate is used.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.preprocess.preprocess.concat_channels"><code class="docutils literal notranslate"><span class="pre">concat_channels()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.preprocess.resample"><code class="docutils literal notranslate"><span class="pre">resample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.preprocess.concat_channels"><code class="docutils literal notranslate"><span class="pre">concat_channels()</span></code></a></li>
 </ul>
   </nav></div>
 

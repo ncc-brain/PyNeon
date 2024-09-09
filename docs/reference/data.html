@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>pyneon.data &#8212; PyNeon 0.1.0 documentation</title>
+    <title>Classes for individual data types &#8212; PyNeon 0.1.0 documentation</title>
   
   
   
@@ -42,8 +42,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/data';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="pyneon.preprocess" href="preprocess.html" />
-    <link rel="prev" title="pyneon.NeonRecording" href="recording.html" />
+    <link rel="next" title="Preprocessing module" href="preprocess.html" />
+    <link rel="prev" title="NeonRecording class" href="recording.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -307,12 +307,10 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="dataset.html">pyneon.NeonDataset</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recording.html">pyneon.NeonRecording</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">pyneon.data</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="preprocess.html">pyneon.preprocess</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
-</ul>
-</details></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Classes for individual data types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
 </ul>
 </div>
 </nav></div>
@@ -353,7 +351,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">pyneon.data</li>
+    <li class="breadcrumb-item active" aria-current="page">Classes for...</li>
   </ul>
 </nav>
 </div>
@@ -371,12 +369,12 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="module-pyneon.data">
-<span id="pyneon-data"></span><h1>pyneon.data<a class="headerlink" href="#module-pyneon.data" title="Link to this heading">#</a></h1>
+<span id="classes-for-individual-data-types"></span><h1>Classes for individual data types<a class="headerlink" href="#module-pyneon.data" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.data.NeonData">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonData" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Holder for Neon tabular data. It reads from a CSV file and stores the data
+<p>Base for Neon tabular data. It reads from a CSV file and stores the data
 as a pandas DataFrame (with section and recording IDs removed).</p>
 </dd></dl>
 
@@ -384,68 +382,130 @@ as a pandas DataFrame (with section and recording IDs removed).</p>
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonSignal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonSignal" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonData" title="pyneon.data.NeonData"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonData</span></code></a></p>
-<p>Continuous Neon signals. It must contain a <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column.</p>
-<dl class="py property">
+<p>Base for Neon continuous signals (gaze, eye states, IMU).
+It must contain a <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the CSV file containing the signal data.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.data.NeonSignal.data">
+<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.data" title="Link to this definition">#</a></dt>
+<dd><p>DataFrame containing the signal data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.timestamps">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">timestamps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.timestamps" title="Link to this definition">#</a></dt>
-<dd><p>Returns the timestamps of the signal in nanoseconds.</p>
+<span class="sig-name descname"><span class="pre">timestamps</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.timestamps" title="Link to this definition">#</a></dt>
+<dd><p>Timestamps of the signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.ts">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.ts" title="Link to this definition">#</a></dt>
-<dd><p>An alias for timestamps.</p>
+<span class="sig-name descname"><span class="pre">ts</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.ts" title="Link to this definition">#</a></dt>
+<dd><p>Alias for timestamps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.first_ts">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">first_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.first_ts" title="Link to this definition">#</a></dt>
-<dd><p>Returns the first timestamp of the signal in nanoseconds.</p>
+<span class="sig-name descname"><span class="pre">first_ts</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.first_ts" title="Link to this definition">#</a></dt>
+<dd><p>First timestamp of the signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.last_ts">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.last_ts" title="Link to this definition">#</a></dt>
-<dd><p>Returns the last timestamp of the signal in nanoseconds.</p>
+<span class="sig-name descname"><span class="pre">last_ts</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.last_ts" title="Link to this definition">#</a></dt>
+<dd><p>Last timestamp of the signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.times">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">times</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.times" title="Link to this definition">#</a></dt>
-<dd><p>Returns the timestamps of the signal in seconds.</p>
+<span class="sig-name descname"><span class="pre">times</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.times" title="Link to this definition">#</a></dt>
+<dd><p>Timestamps converted to seconds relative to signal start.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.duration">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">duration</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.duration" title="Link to this definition">#</a></dt>
-<dd><p>Returns the duration of the signal in seconds.</p>
+<span class="sig-name descname"><span class="pre">duration</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.duration" title="Link to this definition">#</a></dt>
+<dd><p>Duration of the signal in seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)">float</a></p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.sampling_freq_effective">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sampling_freq_effective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="headerlink" href="#pyneon.data.NeonSignal.sampling_freq_effective" title="Link to this definition">#</a></dt>
-<dd><p>Returns the effective sampling frequency of the signal in Hz.</p>
+<span class="sig-name descname"><span class="pre">sampling_freq_effective</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.sampling_freq_effective" title="Link to this definition">#</a></dt>
+<dd><p>Effective sampling frequency of the signal
+(number of time points divided by duration).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)">float</a></p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.data.NeonSignal.to_seconds">
-<span class="sig-name descname"><span class="pre">to_seconds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span></span><a class="headerlink" href="#pyneon.data.NeonSignal.to_seconds" title="Link to this definition">#</a></dt>
-<dd><p>Converts the timestamps to seconds.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.data.NeonSignal.sampling_freq_nominal">
+<span class="sig-name descname"><span class="pre">sampling_freq_nominal</span></span><a class="headerlink" href="#pyneon.data.NeonSignal.sampling_freq_nominal" title="Link to this definition">#</a></dt>
+<dd><p>Nominal sampling frequency of the signal as specified by Pupil Labs
+(<a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.data.NeonSignal.resample">
-<span class="sig-name descname"><span class="pre">resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.data.NeonSignal.resample" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.data.NeonSignal.resample" title="Link to this definition">#</a></dt>
 <dd><p>Resample the signal to a new set of timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>new_ts</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – New timestamps to resample the signal to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the signal is resampled to the nominal sampling rate.</p></li>
-<li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of float type,
-by default “linear”. See <cite>scipy.interpolate.interp1d</cite> for more details.</p></li>
-<li><p><strong>other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – The kind of interpolation applied on columns of other types,
+the signal is resampled to its nominal sampling frequency according to
+<a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>.</p></li>
+<li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
+by default “linear”. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+<li><p><strong>other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types,
 by default “nearest”.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Replace signal data with resampled data if <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+by default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -464,29 +524,6 @@ by default “nearest”.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonGaze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonGaze" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonSignal" title="pyneon.data.NeonSignal"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonSignal</span></code></a></p>
 <p>Gaze data.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.data.NeonGaze.data">
-<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.data.NeonGaze.data" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the eye states data. Columns are of the
-appropriate data types (float, int, bool).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)">pandas.DataFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.data.NeonGaze.sampling_rate_nominal">
-<span class="sig-name descname"><span class="pre">sampling_rate_nominal</span></span><a class="headerlink" href="#pyneon.data.NeonGaze.sampling_rate_nominal" title="Link to this definition">#</a></dt>
-<dd><p>Nominal sampling rate of the gaze data (200 Hz).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -494,29 +531,6 @@ appropriate data types (float, int, bool).</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonEyeStates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonEyeStates" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonSignal" title="pyneon.data.NeonSignal"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonSignal</span></code></a></p>
 <p>3D eye states data.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.data.NeonEyeStates.data">
-<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.data.NeonEyeStates.data" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the eye states data. Columns are of the
-appropriate data types (float, int, bool).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)">pandas.DataFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.data.NeonEyeStates.sampling_rate_nominal">
-<span class="sig-name descname"><span class="pre">sampling_rate_nominal</span></span><a class="headerlink" href="#pyneon.data.NeonEyeStates.sampling_rate_nominal" title="Link to this definition">#</a></dt>
-<dd><p>Nominal sampling rate of the eye states data (200 Hz).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -524,29 +538,6 @@ appropriate data types (float, int, bool).</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonIMU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonIMU" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonSignal" title="pyneon.data.NeonSignal"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonSignal</span></code></a></p>
 <p>IMU data.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.data.NeonIMU.data">
-<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.data.NeonIMU.data" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the eye states data. Columns are of the
-appropriate data types (float, int, bool).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)">pandas.DataFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.data.NeonIMU.sampling_rate_nominal">
-<span class="sig-name descname"><span class="pre">sampling_rate_nominal</span></span><a class="headerlink" href="#pyneon.data.NeonIMU.sampling_rate_nominal" title="Link to this definition">#</a></dt>
-<dd><p>Nominal sampling rate of the gaze data (120 Hz).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>
@@ -567,7 +558,7 @@ appropriate data types (float, int, bool).</p>
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">pyneon.NeonRecording</p>
+        <p class="prev-next-title">NeonRecording class</p>
       </div>
     </a>
     <a class="right-next"
@@ -575,7 +566,7 @@ appropriate data types (float, int, bool).</p>
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">pyneon.preprocess</p>
+        <p class="prev-next-title">Preprocessing module</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -599,6 +590,7 @@ appropriate data types (float, int, bool).</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonData"><code class="docutils literal notranslate"><span class="pre">NeonData</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal"><code class="docutils literal notranslate"><span class="pre">NeonSignal</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.data"><code class="docutils literal notranslate"><span class="pre">NeonSignal.data</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.timestamps"><code class="docutils literal notranslate"><span class="pre">NeonSignal.timestamps</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.ts"><code class="docutils literal notranslate"><span class="pre">NeonSignal.ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.first_ts"><code class="docutils literal notranslate"><span class="pre">NeonSignal.first_ts</span></code></a></li>
@@ -606,25 +598,13 @@ appropriate data types (float, int, bool).</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.times"><code class="docutils literal notranslate"><span class="pre">NeonSignal.times</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.duration"><code class="docutils literal notranslate"><span class="pre">NeonSignal.duration</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.sampling_freq_effective"><code class="docutils literal notranslate"><span class="pre">NeonSignal.sampling_freq_effective</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.to_seconds"><code class="docutils literal notranslate"><span class="pre">NeonSignal.to_seconds()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.sampling_freq_nominal"><code class="docutils literal notranslate"><span class="pre">NeonSignal.sampling_freq_nominal</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonSignal.resample"><code class="docutils literal notranslate"><span class="pre">NeonSignal.resample()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonGaze.data"><code class="docutils literal notranslate"><span class="pre">NeonGaze.data</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonGaze.sampling_rate_nominal"><code class="docutils literal notranslate"><span class="pre">NeonGaze.sampling_rate_nominal</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonEyeStates.data"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates.data</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonEyeStates.sampling_rate_nominal"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates.sampling_rate_nominal</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonIMU.data"><code class="docutils literal notranslate"><span class="pre">NeonIMU.data</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonIMU.sampling_rate_nominal"><code class="docutils literal notranslate"><span class="pre">NeonIMU.sampling_rate_nominal</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a></li>
 </ul>
   </nav></div>
 

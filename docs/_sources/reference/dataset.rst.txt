@@ -1,5 +1,5 @@
-pyneon.NeonDataset
-==================
+NeonDataset class
+=================
 
 .. autoclass:: pyneon.NeonDataset
     :members:

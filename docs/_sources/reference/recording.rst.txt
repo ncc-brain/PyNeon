@@ -1,5 +1,5 @@
-pyneon.NeonRecording
-====================
+NeonRecording class
+===================
 
 .. autoclass:: pyneon.NeonRecording
     :members:
