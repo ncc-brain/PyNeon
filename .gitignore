@@ -1,5 +1,5 @@
 # Test data
-tests/data/
+data/
 tests/outputs/
 
 # Ruff

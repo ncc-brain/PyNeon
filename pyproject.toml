@@ -20,6 +20,7 @@ dependencies = [
     "numpy",
     "scipy",
     "typeguard",
+    "requests",
 ]
 
 [project.optional-dependencies]
