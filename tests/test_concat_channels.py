@@ -2,10 +2,14 @@ from pathlib import Path
 from pyneon import NeonRecording
 from matplotlib import pyplot as plt
 
-recording_dir = (
-    Path(__file__).parent / "data" / "Timeseries Data + Scene Video" / "walk2-93b8c234"
-)
-test_output_dir = Path(__file__).parent / "outputs"
+from pyneon import get_sample_data
+
+# all paths are relative to the location of the notebook
+dataset_path = get_sample_data('OfficeWalk')
+recording_dir = dataset_path / 'Timeseries Data' /'walk1-e116e606'
+
+
+test_output_dir = 'data/outputs'
 test_output_dir.mkdir(exist_ok=True)
 
 recording = NeonRecording(recording_dir)
