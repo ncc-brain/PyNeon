@@ -62,12 +62,12 @@ def resample(
     return resamp_data
 
 
-_VALID_STREAMS = ["3d_eye_states", "eye_states", "gaze", "imu"]
+_VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
 def concat_streams(
     rec: "NeonRecording",
-    stream_names: list[str],
+    stream_names: Union[str, list[str]] = "all",
     sampling_freq: Union[float, int, str] = "min",
     resamp_float_kind: str = "linear",
     resamp_other_kind: str = "nearest",
@@ -84,8 +84,9 @@ def concat_streams(
     ----------
     rec : :class:`NeonRecording`
         NeonRecording object containing the streams to concatenate.
-    stream_names : list of str
-        List of stream names to concatenate. Stream names must be in
+    stream_names : str or list of str
+        Stream names to concatenate. If "all", then all streams will be used.
+        If a list, items must be in
         ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
     sampling_freq : float or int or str, optional
         Sampling frequency to resample the streams to.
@@ -109,13 +110,21 @@ def concat_streams(
     concat_data : :class:`pandas.DataFrame`
         Concatenated data.
     """
+    if isinstance(stream_names, str):
+        if stream_names == "all":
+            stream_names = list(_VALID_STREAMS).remove("eye_states")
+        else:
+            raise ValueError(
+                "Invalid stream_names, must be 'all' or a list of stream names."
+            )
+
     if len(stream_names) <= 1:
         raise ValueError("Must provide at least two streams to concatenate.")
 
     stream_names = [ch.lower() for ch in stream_names]
     # Check if all streams are valid
     if not all([ch in _VALID_STREAMS for ch in stream_names]):
-        raise ValueError(f"Invalid stream name, can only be {_VALID_STREAMS}")
+        raise ValueError(f"Invalid stream name, can only one of {_VALID_STREAMS}")
 
     ch_info = pd.DataFrame(columns=["stream", "name", "sf", "first_ts", "last_ts"])
     print("Concatenating streams:")
@@ -226,3 +235,45 @@ def concat_streams(
         )
         assert concat_data.shape[0] == resamp_df.shape[0]
     return concat_data
+
+
+VALID_EVENTS = {"blinks", "fixations", "saccades", "events"}
+
+
+def concat_events(
+    rec: "NeonRecording",
+    event_names: Union[str, list[str]],
+) -> pd.DataFrame:
+    """
+    Concatenate events from different streams under common timestamps.
+    The latest start timestamp and earliest last timestamp of the selected events
+    are used to define the common timestamps.
+
+    Parameters
+    ----------
+    rec : :class:`NeonRecording`
+        NeonRecording object containing the events to concatenate.
+    event_names : list of str
+        List of event names to concatenate. Event names must be in
+        ``{"blinks", "fixations", "saccades", "events"}``.
+
+    Returns
+    -------
+    concat_events : :class:`pandas.DataFrame`
+        Concatenated events.
+    """
+    if isinstance(event_names, str):
+        if event_names == "all":
+            event_names = list(VALID_EVENTS)
+        else:
+            raise ValueError(
+                "Invalid event_names, must be 'all' or a list of event names."
+            )
+
+    if len(event_names) <= 1:
+        raise ValueError("Must provide at least two events to concatenate.")
+
+    event_names = [ev.lower() for ev in event_names]
+    # Check if all events are valid
+    if not all([ev in VALID_EVENTS for ev in event_names]):
+        raise ValueError(f"Invalid event name, can only be {VALID_EVENTS}")

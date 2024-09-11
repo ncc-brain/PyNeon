@@ -10,7 +10,10 @@ eye-tracking data. It is a community-driven effort to provide a versatile set
 of tools to work with the rich data (gaze, eye states, IMU, events, etc.)
 provided by Neon.
 
-PyNeon is licensed under the MIT License.
+PyNeon works with the cloud-processed data from Pupil Cloud instead of
+"native" data from the Companion app. To read data in the "native" format, please
+see ``pl-neon-recording`` https://github.com/pupil-labs/pl-neon-recording/
+(which also inspired PyNeon).
 
 Here we provide tutorials and API reference to help you get started with PyNeon.
 
@@ -33,10 +36,11 @@ PyNeon works with the "Timeseries Data" or "Timeseries Data + Scene Video" forma
 as exported from Pupil Clouds. The data could be from a single recording or from a 
 project with multiple recordings.
 
-Credits
+License
 =======
 
-PyNeon was inspired by https://github.com/pupil-labs/pl-neon-recording/
+.. literalinclude:: ../LICENSE
+   :language: none
 
 .. toctree::
    :maxdepth: 2

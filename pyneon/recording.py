@@ -3,9 +3,18 @@ from typing import Union
 import pandas as pd
 import json
 from datetime import datetime
+import warnings
 
-from .data import NeonGaze, NeonIMU, NeonEyeStates
-from .preprocess import concat_streams
+from .data import (
+    NeonGaze,
+    NeonIMU,
+    NeonEyeStates,
+    NeonBlinks,
+    NeonFixations,
+    NeonSaccades,
+    NeonEvents,
+)
+from .preprocess import concat_streams, concat_events
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -83,12 +92,13 @@ class NeonRecording:
         self.recording_id = self.info["recording_id"]
         self.recording_dir = recording_dir
 
-        self._eye_states = None
-        self._blinks = None
-        self._events = None
-        self._fixations = None
         self._gaze = None
+        self._eye_states = None
         self._imu = None
+        self._blinks = None
+        self._fixations = None
+        self._saccades = None
+        self._events = None
 
         self._get_contents()
 
@@ -140,7 +150,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         self.contents = contents
 
     @property
-    def gaze(self) -> NeonGaze:
+    def gaze(self) -> Union[NeonGaze, None]:
         """
         Returns a NeonGaze object or None if no gaze data is found.
         """
@@ -149,13 +159,11 @@ Recording duration: {self.info["duration"] / 1e9} s
                 gaze_file = self.contents.loc["gaze", "path"]
                 self._gaze = NeonGaze(gaze_file)
             else:
-                raise UserWarning(
-                    "Gaze data not loaded because no recording was found."
-                )
+                warnings.warn("Gaze data not loaded because no recording was found.")
         return self._gaze
 
     @property
-    def imu(self) -> NeonIMU:
+    def imu(self) -> Union[NeonIMU, None]:
         """
         Returns a NeonIMU object or None if no IMU data is found.
         """
@@ -164,11 +172,11 @@ Recording duration: {self.info["duration"] / 1e9} s
                 imu_file = self.contents.loc["imu", "path"]
                 self._imu = NeonIMU(imu_file)
             else:
-                raise UserWarning("IMU data not loaded because no recording was found.")
+                warnings.warn("IMU data not loaded because no recording was found.")
         return self._imu
 
     @property
-    def eye_states(self) -> NeonEyeStates:
+    def eye_states(self) -> Union[NeonEyeStates, None]:
         """
         Returns a NeonEyeStates object or None if no eye states data is found.
         """
@@ -177,14 +185,70 @@ Recording duration: {self.info["duration"] / 1e9} s
                 eye_states_file = self.contents.loc["3d_eye_states", "path"]
                 self._eye_states = NeonEyeStates(eye_states_file)
             else:
-                raise UserWarning(
+                warnings.warn(
                     "3D eye states data not loaded because no recording was found."
                 )
         return self._eye_states
 
+    @property
+    def blinks(self) -> Union[NeonBlinks, None]:
+        """
+        Returns a NeonBlinks object or None if no blinks data is found.
+        """
+        if self._blinks is None:
+            if self.contents.loc["blinks", "exist"]:
+                blinks_file = self.contents.loc["blinks", "path"]
+                self._blinks = NeonBlinks(blinks_file)
+            else:
+                warnings.warn("Blinks data not loaded because no recording was found.")
+        return self._blinks
+
+    @property
+    def fixations(self) -> Union[NeonFixations, None]:
+        """
+        Returns a NeonFixations object or None if no fixations data is found.
+        """
+        if self._fixations is None:
+            if self.contents.loc["fixations", "exist"]:
+                fixations_file = self.contents.loc["fixations", "path"]
+                self._fixations = NeonFixations(fixations_file)
+            else:
+                warnings.warn(
+                    "Fixations data not loaded because no recording was found."
+                )
+        return self._fixations
+
+    @property
+    def saccades(self) -> Union[NeonSaccades, None]:
+        """
+        Returns a NeonSaccades object or None if no saccades data is found.
+        """
+        if self._saccades is None:
+            if self.contents.loc["saccades", "exist"]:
+                saccades_file = self.contents.loc["saccades", "path"]
+                self._saccades = NeonSaccades(saccades_file)
+            else:
+                warnings.warn(
+                    "Saccades data not loaded because no recording was found."
+                )
+        return self._saccades
+
+    @property
+    def events(self) -> Union[NeonEvents, None]:
+        """
+        Returns a NeonEvents object or None if no events data is found.
+        """
+        if self._events is None:
+            if self.contents.loc["events", "exist"]:
+                events_file = self.contents.loc["events", "path"]
+                self._events = NeonEvents(events_file)
+            else:
+                warnings.warn("Events data not loaded because no recording was found.")
+        return self._events
+
     def concat_streams(
         self,
-        stream_names: list[str],
+        stream_names: Union[str, list[str]],
         sampling_freq: Union[float, int, str] = "min",
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
@@ -199,8 +263,9 @@ Recording duration: {self.info["duration"] / 1e9} s
 
         Parameters
         ----------
-        stream_names : list of str
-            List of stream names to concatenate. Stream names must be in
+        stream_names : str or list of str
+            Stream names to concatenate. If "all", then all streams will be used.
+            If a list, items must be in
             ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
         sampling_freq : float or int or str, optional
             Sampling frequency to resample the streams to.
@@ -232,6 +297,23 @@ Recording duration: {self.info["duration"] / 1e9} s
             resamp_other_kind,
             inplace,
         )
+
+    def concat_events(self, event_names: list[str]) -> pd.DataFrame:
+        """
+        Concatenate types of events and return a DataFrame with all events.
+
+        Parameters
+        ----------
+        event_names : list of str
+            List of event names to concatenate. Event names must be in
+            ``{"blinks", "fixations", "saccades", "events"}``.
+
+        Returns
+        -------
+        concat_events : :class:`pandas.DataFrame`
+            Concatenated events.
+        """
+        return concat_events(self, event_names)
 
     def to_motion_bids(
         self,

@@ -17,12 +17,16 @@ class NeonData:
             data = pd.read_csv(file)
         else:  # TODO: Implement reading native data formats
             pass
-        # Assert that all section id are the same
-        if data["section id"].nunique() > 1:
-            raise ValueError(f"{file.name} contains multiple section IDs")
+
         if data["recording id"].nunique() > 1:
             raise ValueError(f"{file.name} contains multiple recording IDs")
-        self.data = data.drop(columns=["section id", "recording id"])
+        self.data = data.drop(columns=["recording id"])
+
+        # Every data file except events.csv has a section id column
+        if "section id" in self.data.columns:
+            if data["section id"].nunique() > 1:
+                raise ValueError(f"{file.name} contains multiple section IDs")
+            self.data.drop(columns=["section id"], inplace=True)
 
     def __len__(self) -> int:
         return self.data.shape[0]
@@ -206,21 +210,89 @@ class NeonIMU(NeonStream):
         )
 
 
-# class NeonEvents(NeonData):
-#     def __init__(self, file):
-#         super().__init__(file)
+class NeonEV(NeonData):
+    """
+    Base for Neon event data (blinks, fixations, saccades, messages).
+    """
+
+    def __init__(self, file):
+        super().__init__(file)
+
+    def __getitem__(self, index) -> pd.Series:
+        """Get an event timeseries by index."""
+        return self.data.iloc[index]
+
+    # def _get_attributes(self):
+    #     """
+    #     Get attributes given self.data DataFrame.
+    #     """
+    #     # If there is a timestamp [ns] column, rename it to start timestamp [ns]
+    #     if "timestamp [ns]" in self.data.columns:
+    #         self.data.rename(
+    #             columns={"timestamp [ns]": "start timestamp [ns]"}, inplace=True
+    #         )
+    #         self.data["end timestamp [ns]"] = self.data["start timestamp [ns]"]
+    #     self.data.sort_values(by=["start timestamp [ns]"], inplace=True)
+    #     self.start_timestamps = self.data["start timestamp [ns]"].to_numpy()
+    #     self.start_ts = self.start_timestamps
+    #     self.end_timestamps = self.data["end timestamp [ns]"].to_numpy()
+    #     self.end_ts = self.end_timestamps
 
 
-# class NeonBlinks(NeonEvents):
-#     def __init__(self, file):
-#         super().__init__(file)
+class NeonBlinks(NeonEV):
+    def __init__(self, file):
+        super().__init__(file)
+        self.data = self.data.astype(
+            {
+                "blink id": "Int32",
+                "start timestamp [ns]": "Int64",
+                "end timestamp [ns]": "Int64",
+                "duration [ms]": "Int64",
+            }
+        )
 
 
-# class NeonFixations(NeonData):
-#     def __init__(self, file):
-#         super().__init__(file)
+class NeonFixations(NeonEV):
+    def __init__(self, file):
+        super().__init__(file)
+        self.data = self.data.astype(
+            {
+                "fixation id": "Int32",
+                "start timestamp [ns]": "Int64",
+                "end timestamp [ns]": "Int64",
+                "duration [ms]": "Int64",
+                "fixation x [px]": float,
+                "fixation y [px]": float,
+                "azimuth [deg]": float,
+                "elevation [deg]": float,
+            }
+        )
 
 
-# class NeonLabels(NeonData):
-#     def __init__(self, file):
-#         super().__init__(file)
+class NeonSaccades(NeonEV):
+    def __init__(self, file):
+        super().__init__(file)
+        self.data = self.data.astype(
+            {
+                "saccade id": "Int32",
+                "start timestamp [ns]": "Int64",
+                "end timestamp [ns]": "Int64",
+                "duration [ms]": "Int64",
+                "amplitude [px]": float,
+                "amplitude [deg]": float,
+                "mean velocity [px/s]": float,
+                "peak velocity [px/s]": float,
+            }
+        )
+
+
+class NeonEvents(NeonEV):
+    def __init__(self, file):
+        super().__init__(file)
+        self.data = self.data.astype(
+            {
+                "timestamp [ns]": "Int64",
+                "name": str,
+                "type": str,
+            }
+        )

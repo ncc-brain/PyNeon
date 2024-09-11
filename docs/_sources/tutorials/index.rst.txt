@@ -9,7 +9,6 @@ started with PyNeon.
 .. toctree::
     :maxdepth: 1
 
-    load_recording
-    load_dataset
+    read_recording
     resample_and_concat
     export_to_bids
