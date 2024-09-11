@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 
 from .data import NeonGaze, NeonIMU, NeonEyeStates
-from .preprocess import concat_channels
+from .preprocess import concat_streams
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -43,8 +43,8 @@ class NeonRecording:
         ├── scene_camera.json
         └── <scene_video>.mp4 (if present)
 
-    Channels, events, (and scene video) will be located but not loaded until
-    accessed as attributes such as ``gaze``, ``imu``, and ``eye_states``.
+    Streams, events, (and scene video) will be located but not loaded until
+    accessed as properties such as ``gaze``, ``imu``, and ``eye_states``.
 
     Parameters
     ----------
@@ -62,9 +62,9 @@ class NeonRecording:
         https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json.
     start_datetime : :class:`datetime.datetime`
         Start time of the recording as in ``info.json``.
-        May not match the start time of each data channel.
+        May not match the start time of each data stream.
     contents : :class:`pandas.DataFrame`
-        Contents of the recording directory. Each index is a channel or event name
+        Contents of the recording directory. Each index is a stream or event name
         (e.g. ``gaze`` or ``imu``) and columns are ``exist`` (bool),
         ``filename`` (str), and ``path`` (Path).
     """
@@ -182,31 +182,31 @@ Recording duration: {self.info["duration"] / 1e9} s
                 )
         return self._eye_states
 
-    def concat_channels(
+    def concat_streams(
         self,
-        ch_names: list[str],
+        stream_names: list[str],
         sampling_freq: Union[float, int, str] = "min",
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
         inplace: bool = False,
     ) -> pd.DataFrame:
         """
-        Concatenate data from different channels under common timestamps.
-        Since the signals may have different timestamps and sampling frequencies,
-        resampling of all signals to a set of common timestamps is performed.
-        The latest start timestamp and earliest last timestamp of the selected channels
+        Concatenate data from different streams under common timestamps.
+        Since the streams may have different timestamps and sampling frequencies,
+        resampling of all streams to a set of common timestamps is performed.
+        The latest start timestamp and earliest last timestamp of the selected sreams
         are used to define the common timestamps.
 
         Parameters
         ----------
-        ch_names : list of str
-            List of channel names to concatenate. Channel names must be in
+        stream_names : list of str
+            List of stream names to concatenate. Stream names must be in
             ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
         sampling_freq : float or int or str, optional
-            Sampling frequency to resample the signals to.
-            If numeric, the signals will be resampled to this frequency.
+            Sampling frequency to resample the streams to.
+            If numeric, the streams will be resampled to this frequency.
             If ``"min"``, the lowest nominal sampling frequency
-            of the selected channels will be used.
+            of the selected streams will be used.
             If ``"max"``, the highest nominal sampling frequency will be used.
             Defaults to ``"min"``.
         resamp_float_kind : str, optional
@@ -216,16 +216,21 @@ Recording duration: {self.info["duration"] / 1e9} s
             Kind of interpolation applied on columns of other types.
             Defaults to ``"nearest"``.
         inplace : bool, optional
-            Replace selected signal data with resampled data during concatenation\
-            if ``True``. Defaults to ``False``.
+            Replace selected stream data with resampled data during concatenation
+            if``True``. Defaults to ``False``.
 
         Returns
         -------
         concat_data : :class:`pandas.DataFrame`
             Concatenated data.
         """
-        return concat_channels(
-            self, ch_names, sampling_freq, resamp_float_kind, resamp_other_kind, inplace
+        return concat_streams(
+            self,
+            stream_names,
+            sampling_freq,
+            resamp_float_kind,
+            resamp_other_kind,
+            inplace,
         )
 
     def to_motion_bids(

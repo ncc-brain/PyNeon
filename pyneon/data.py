@@ -28,37 +28,37 @@ class NeonData:
         return self.data.shape[0]
 
 
-class NeonSignal(NeonData):
+class NeonStream(NeonData):
     """
-    Base for Neon continuous signals (gaze, eye states, IMU).
+    Base for Neon continuous data (gaze, eye states, IMU).
     It must contain a ``timestamp [ns]`` column.
 
     Parameters
     ----------
     file : :class:`pathlib.Path`
-        Path to the CSV file containing the signal data.
+        Path to the CSV file containing the stream data.
 
     Attributes
     ----------
     data : pandas.DataFrame
-        DataFrame containing the signal data.
+        DataFrame containing the stream data.
     timestamps : np.ndarray
-        Timestamps of the signal.
+        Timestamps of the stream.
     ts : np.ndarray
         Alias for timestamps.
     first_ts : int
-        First timestamp of the signal.
+        First timestamp of the stream.
     last_ts : int
-        Last timestamp of the signal.
+        Last timestamp of the stream.
     times : np.ndarray
-        Timestamps converted to seconds relative to signal start.
+        Timestamps converted to seconds relative to stream start.
     duration : float
-        Duration of the signal in seconds.
+        Duration of the stream in seconds.
     sampling_freq_effective : float
-        Effective sampling frequency of the signal
+        Effective sampling frequency of the stream
         (number of time points divided by duration).
     sampling_freq_nominal : int
-        Nominal sampling frequency of the signal as specified by Pupil Labs
+        Nominal sampling frequency of the stream as specified by Pupil Labs
         (https://pupil-labs.com/products/neon/specs).
     """
 
@@ -88,13 +88,13 @@ class NeonSignal(NeonData):
         inplace: bool = False,
     ) -> pd.DataFrame:
         """
-        Resample the signal to a new set of timestamps.
+        Resample the stream to a new set of timestamps.
 
         Parameters
         ----------
         new_ts : np.ndarray, optional
-            New timestamps to resample the signal to. If ``None``,
-            the signal is resampled to its nominal sampling frequency according to
+            New timestamps to resample the stream to. If ``None``,
+            the stream is resampled to its nominal sampling frequency according to
             https://pupil-labs.com/products/neon/specs.
         float_kind : str, optional
             Kind of interpolation applied on columns of float type,
@@ -103,7 +103,7 @@ class NeonSignal(NeonData):
             Kind of interpolation applied on columns of other types,
             by default "nearest".
         inplace : bool, optional
-            Replace signal data with resampled data if ``True``,
+            Replace stream data with resampled data if ``True``,
             by default ``False``.
 
         Returns
@@ -124,7 +124,7 @@ class NeonSignal(NeonData):
         return resamp_data
 
 
-class NeonGaze(NeonSignal):
+class NeonGaze(NeonStream):
     """
     Gaze data.
     """
@@ -147,7 +147,7 @@ class NeonGaze(NeonSignal):
         )
 
 
-class NeonEyeStates(NeonSignal):
+class NeonEyeStates(NeonStream):
     """
     3D eye states data.
     """
@@ -177,7 +177,7 @@ class NeonEyeStates(NeonSignal):
         )
 
 
-class NeonIMU(NeonSignal):
+class NeonIMU(NeonStream):
     """
     IMU data.
     """

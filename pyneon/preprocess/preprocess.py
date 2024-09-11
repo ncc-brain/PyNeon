@@ -15,13 +15,13 @@ def resample(
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
-    Resample the signal to a new set of timestamps.
+    Resample the stream to a new set of timestamps.
 
     Parameters
     ----------
     new_ts : np.ndarray, optional
-        New timestamps to resample the signal to. If ``None``,
-        the signal is resampled to its nominal sampling frequency according to
+        New timestamps to resample the stream to. If ``None``,
+        the stream is resampled to its nominal sampling frequency according to
         https://pupil-labs.com/products/neon/specs.
     old_data : pd.DataFrame
         Data to resample. Must contain a monotonically increasing
@@ -62,36 +62,36 @@ def resample(
     return resamp_data
 
 
-_VALID_CHANNELS = ["3d_eye_states", "eye_states", "gaze", "imu"]
+_VALID_STREAMS = ["3d_eye_states", "eye_states", "gaze", "imu"]
 
 
-def concat_channels(
+def concat_streams(
     rec: "NeonRecording",
-    ch_names: list[str],
+    stream_names: list[str],
     sampling_freq: Union[float, int, str] = "min",
     resamp_float_kind: str = "linear",
     resamp_other_kind: str = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
     """
-    Concatenate data from different channels under common timestamps.
-    Since the signals may have different timestamps and sampling frequencies,
-    resampling of all signals to a set of common timestamps is performed.
-    The latest start timestamp and earliest last timestamp of the selected channels
+    Concatenate data from different streams under common timestamps.
+    Since the streams may have different timestamps and sampling frequencies,
+    resampling of all streams to a set of common timestamps is performed.
+    The latest start timestamp and earliest last timestamp of the selected streams
     are used to define the common timestamps.
 
     Parameters
     ----------
     rec : :class:`NeonRecording`
-        NeonRecording object containing the signals to concatenate.
-    ch_names : list of str
-        List of channel names to concatenate. Channel names must be in
+        NeonRecording object containing the streams to concatenate.
+    stream_names : list of str
+        List of stream names to concatenate. Stream names must be in
         ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
     sampling_freq : float or int or str, optional
-        Sampling frequency to resample the signals to.
-        If numeric, the signals will be resampled to this frequency.
+        Sampling frequency to resample the streams to.
+        If numeric, the streams will be resampled to this frequency.
         If ``"min"``, the lowest nominal sampling frequency
-        of the selected channels will be used.
+        of the selected streams will be used.
         If ``"max"``, the highest nominal sampling frequency will be used.
         Defaults to ``"min"``.
     resamp_float_kind : str, optional
@@ -101,25 +101,25 @@ def concat_channels(
         Kind of interpolation applied on columns of other types.
         Defaults to ``"nearest"``.
     inplace : bool, optional
-        Replace selected signal data with resampled data during concatenation
-        if ``True``. Defaults to ``False``.
+        Replace selected stream data with resampled data during concatenation
+        if``True``. Defaults to ``False``.
 
     Returns
     -------
     concat_data : :class:`pandas.DataFrame`
         Concatenated data.
     """
-    if len(ch_names) <= 1:
-        raise ValueError("Must provide at least two channels to concatenate.")
+    if len(stream_names) <= 1:
+        raise ValueError("Must provide at least two streams to concatenate.")
 
-    ch_names = [ch.lower() for ch in ch_names]
-    # Check if all channels are valid
-    if not all([ch in _VALID_CHANNELS for ch in ch_names]):
-        raise ValueError(f"Invalid channel name, can only be {_VALID_CHANNELS}")
+    stream_names = [ch.lower() for ch in stream_names]
+    # Check if all streams are valid
+    if not all([ch in _VALID_STREAMS for ch in stream_names]):
+        raise ValueError(f"Invalid stream name, can only be {_VALID_STREAMS}")
 
-    ch_info = pd.DataFrame(columns=["signal", "name", "sf", "first_ts", "last_ts"])
-    print("Concatenating channels:")
-    if "gaze" in ch_names:
+    ch_info = pd.DataFrame(columns=["stream", "name", "sf", "first_ts", "last_ts"])
+    print("Concatenating streams:")
+    if "gaze" in stream_names:
         if rec.gaze is None:
             raise ValueError("Cannnot load gaze data.")
         ch_info = pd.concat(
@@ -127,7 +127,7 @@ def concat_channels(
                 ch_info,
                 pd.Series(
                     {
-                        "signal": rec.gaze,
+                        "stream": rec.gaze,
                         "name": "gaze",
                         "sf": rec.gaze.sampling_freq_nominal,
                         "first_ts": rec.gaze.first_ts,
@@ -140,7 +140,7 @@ def concat_channels(
             ignore_index=True,
         )
         print("\tGaze")
-    if "3d_eye_states" in ch_names or "eye_states" in ch_names:
+    if "3d_eye_states" in stream_names or "eye_states" in stream_names:
         if rec.eye_states is None:
             raise ValueError("Cannnot load eye states data.")
         ch_info = pd.concat(
@@ -148,7 +148,7 @@ def concat_channels(
                 ch_info,
                 pd.Series(
                     {
-                        "signal": rec.eye_states,
+                        "stream": rec.eye_states,
                         "name": "3d_eye_states",
                         "sf": rec.eye_states.sampling_freq_nominal,
                         "first_ts": rec.eye_states.first_ts,
@@ -161,7 +161,7 @@ def concat_channels(
             ignore_index=True,
         )
         print("\t3D eye states")
-    if "imu" in ch_names:
+    if "imu" in stream_names:
         if rec.imu is None:
             raise ValueError("Cannnot load IMU data.")
         ch_info = pd.concat(
@@ -169,7 +169,7 @@ def concat_channels(
                 ch_info,
                 pd.Series(
                     {
-                        "signal": rec.imu,
+                        "stream": rec.imu,
                         "name": "imu",
                         "sf": rec.imu.sampling_freq_nominal,
                         "first_ts": rec.imu.first_ts,
@@ -215,7 +215,7 @@ def concat_channels(
 
     concat_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     concat_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
-    for ch in ch_info["signal"]:
+    for ch in ch_info["stream"]:
         resamp_df = ch.resample(
             new_ts, resamp_float_kind, resamp_other_kind, inplace=inplace
         )
