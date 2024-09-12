@@ -19,6 +19,7 @@ dependencies = [
     "pandas",
     "numpy",
     "scipy",
+    "opencv-python",
     "typeguard",
     "requests",
 ]
@@ -34,5 +35,5 @@ dev = [
 doc = [
     "sphinx",
     "pydata-sphinx-theme",
-    "nbsphinx"
+    "nbsphinx",
 ]

@@ -2,6 +2,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from typing import Union
+import cv2
+
 from .preprocess import resample
 
 
@@ -297,7 +299,43 @@ class NeonEvents(NeonEV):
             }
         )
 
-class NeonVideo():
-    def __init__(self, timestamps_file, video_file):
-        self.timestamps = pd.read_csv(timestamps_file)["timestamp [ns]"].to_numpy()
-        self.video = video_file
+
+class NeonVideo(cv2.VideoCapture):
+    """
+    Loaded video file with timestamps.
+
+    Parameters
+    ----------
+    video_file : :class:`pathlib.Path`
+        Path to the video file.
+    timestamps_file : :class:`pathlib.Path`
+        Path to the timestamps file.
+
+    Attributes
+    ----------
+    timestamps : np.ndarray
+        Timestamps of the video frames.
+    ts : np.ndarray
+        Alias for timestamps.
+    fps : float
+        Frames per second of the video.
+    width : int
+        Width of the video frames in pixels.
+    height : int
+        Height of the video frames in pixels.
+    """
+
+    def __init__(self, video_file, timestamps_file):
+        super().__init__(video_file)
+        self.timestamps = (
+            pd.read_csv(timestamps_file)["timestamp [ns]"].to_numpy().dtype(np.int64)
+        )
+        self.ts = self.timestamps
+        assert len(self.timestamps) == self.get(cv2.CAP_PROP_FRAME_COUNT), (
+            f"Number of timestamps ({len(self.timestamps)}) does not match "
+            f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
+        )
+
+        self.fps = self.get(cv2.CAP_PROP_FPS)
+        self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
