@@ -296,3 +296,8 @@ class NeonEvents(NeonEV):
                 "type": str,
             }
         )
+
+class NeonVideo():
+    def __init__(self, timestamps_file, video_file):
+        self.timestamps = pd.read_csv(timestamps_file)["timestamp [ns]"].to_numpy()
+        self.video = video_file

@@ -4,6 +4,8 @@ import pandas as pd
 import json
 from datetime import datetime
 import warnings
+import numpy as np
+import cv2
 
 from .data import (
     NeonGaze,
@@ -13,6 +15,7 @@ from .data import (
     NeonFixations,
     NeonSaccades,
     NeonEvents,
+    NeonVideo,
 )
 from .preprocess import concat_streams, concat_events
 from .io import export_motion_bids, exports_eye_bids
@@ -99,6 +102,7 @@ class NeonRecording:
         self._fixations = None
         self._saccades = None
         self._events = None
+        self._video = None
 
         self._get_contents()
 
@@ -245,6 +249,20 @@ Recording duration: {self.info["duration"] / 1e9} s
             else:
                 warnings.warn("Events data not loaded because no recording was found.")
         return self._events
+    
+    @property
+    def video(self) -> Union[NeonVideo, None]:
+        """
+        Returns a NeonVideo object or None if no scene video is found.
+        """
+        if self._video is None:
+            if self.contents.loc["scene_video", "exist"] and self.contents.loc["world_timestamps", "exist"]:
+                video_file = self.contents.loc["scene_video", "path"]
+                timestamp_file = self.contents.loc["world_timestamps", "path"]
+                self._video = NeonVideo(timestamp_file, video_file)
+            else:
+                warnings.warn("Scene video not loaded because no recording was found.")
+        return self._video
 
     def concat_streams(
         self,
@@ -314,6 +332,244 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
+    
+    def map_gaze_to_video(self, output_pkl: Union[str, Path] = "data/gaze_mapped_to_video.pkl"):
+        """
+        Tracks fixations across video frames using gaze data and world timestamps.
+
+        Parameters
+        ----------
+        output_pkl : str or :class:pathlib.Path, optional
+            Path to save the pickle file with fixations per frame, by default 'fixations_per_frame.pkl'.
+        """
+        # Load the scene video if present
+        if not self.contents.loc["scene_video", "exist"]:
+            raise FileNotFoundError("Scene video file not found in the recording directory.")
+        
+        if not self.contents.loc["world_timestamps", "exist"]:
+            raise FileNotFoundError("World timestamps file not found in the recording directory.")
+        
+        if not self.contents.loc["gaze", "exist"]:
+            raise FileNotFoundError("Gaze data file not found in the recording directory.")
+
+        # Read world timestamps and gaze data
+        world_data = self.video.timestamps * 1e-9
+        gaze_data = self.gaze.data
+        gaze_data['time'] = gaze_data['timestamp [ns]'] * 1e-9
+
+        # Initialize a DataFrame to store fixations for each frame
+        mapped_gaze = pd.DataFrame(columns=['frame', 'fixations'])
+
+        video_path = self.contents.loc["scene_video", "path"]
+        cap = cv2.VideoCapture(str(video_path))
+
+        # Read the first frame to get the initial grayscale image
+        ret, first_frame = cap.read()
+        if not ret:
+            raise ValueError("Unable to read the first frame of the video.")
+        prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
+
+        # Initialize current fixation tracking variables
+        current_id = 0
+
+        # Process each frame according to world timestamps
+        for frame_idx, frame_time in enumerate(world_data):
+            last_id = current_id
+
+            # Find the closest gaze data point to the current frame time
+            gaze_idx = np.argmin(np.abs(gaze_data['time'] - frame_time))
+            active_gaze = gaze_data.iloc[gaze_idx]
+            gaze_x = active_gaze['gaze x [px]']
+            gaze_y = active_gaze['gaze y [px]']
+            active_fixation = active_gaze['fixation id']
+
+            # Determine fixation status based on the fixation id
+            if not pd.isna(active_fixation):
+                current_id = int(active_fixation)
+            else:
+                current_id = 0
+
+            # Determine the status of the fixation
+            if current_id > last_id:
+                flag = 'onset'
+                fixation_id = current_id
+            elif current_id < last_id:
+                flag = 'offset'
+                fixation_id = last_id
+            elif current_id == last_id:
+                if current_id == 0:
+                    flag = 'lost'
+                    fixation_id = None
+                else:
+                    flag = 'active'
+                    fixation_id = current_id
+
+            fixation_list = [fixation_id, gaze_x, gaze_y, flag]
+            fixation_df = pd.DataFrame([fixation_list], columns=['fixation_id', 'x', 'y', 'status'])
+
+            if not fixation_df.empty:
+                mapped_gaze = mapped_gaze._append(
+                    {'frame': frame_idx, 'fixations': fixation_df}, 
+                    ignore_index=True
+                )
+        
+        # Save the fixations DataFrame to a CSV and pickle file
+        mapped_gaze.to_pickle(output_pkl)
+
+        self.mapped_gaze = mapped_gaze
+        cap.release()
+        cv2.destroyAllWindows()
+    
+
+    def track_fixations_with_optical_flow(self, updated_pkl: Union[str, Path] = "data/past_fixations_mapped_to_video.pkl"):
+        """
+        Applies optical flow to track fixations across frames in the video and update their positions.
+        """
+        # Load the fixations DataFrame from the previously saved pkl file
+        if self.mapped_gaze is None:
+            #run the map_gaze_to_video method to generate the fixations DataFrame
+            self.map_gaze_to_video()
+
+        mapped_gaze = self.mapped_gaze.copy()   
+
+        if not self.contents.loc["scene_video", "exist"]:
+            raise FileNotFoundError("Scene video file not found in the recording directory.")
+        
+        video_path = self.contents.loc["scene_video", "path"]
+        cap = cv2.VideoCapture(str(video_path))
+
+        # Initialize parameters for Lucas-Kanade Optical Flow
+        lk_params = dict(winSize=(15, 15),
+                         maxLevel=2,
+                         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+
+        prev_frame = None
+
+        # Iterate over each frame and corresponding fixations data
+        for idx in range(len(mapped_gaze)):
+            # Read the current frame from the video
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            curr_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            if idx >= 1:
+                # Access previous frame fixations and filter by status
+                prev_fixations = mapped_gaze.at[idx - 1, 'fixations']
+                prev_fixations = prev_fixations[
+                    (prev_fixations['status'] == 'offset') | (prev_fixations['status'] == 'tracked')]
+
+                if not prev_fixations.empty:
+                    # Prepare points for tracking
+                    prev_pts = np.array(prev_fixations[['x', 'y']].dropna().values, dtype=np.float32).reshape(-1, 1, 2)
+                    prev_ids = prev_fixations['fixation_id'].values
+
+                    # Calculate optical flow to find new positions of the points
+                    curr_pts, status, err = cv2.calcOpticalFlowPyrLK(prev_frame, curr_frame, prev_pts, None, **lk_params)
+
+                    # Update fixations for the current frame
+                    curr_fixations = mapped_gaze.at[idx, 'fixations'].copy()
+
+                    # Append new or updated fixation points
+                    for i, (pt, s, e) in enumerate(zip(curr_pts, status, err)):
+                        if s[0]:  # Check if the point was successfully tracked
+                            x, y = pt.ravel()
+                            add_fixation = pd.DataFrame([{'fixation_id': prev_ids[i], 'x': x, 'y': y, 'status': 'tracked'}])
+                            if not curr_fixations.empty and not add_fixation.empty:
+                                curr_fixations = pd.concat([curr_fixations, add_fixation], ignore_index=True)
+                        else:
+                            # Handle cases where the point could not be tracked
+                            add_fixation = pd.DataFrame([{'fixation_id': prev_ids[i], 'x': None, 'y': None, 'status': 'lost'}])
+                            if not curr_fixations.empty and not add_fixation.empty:
+                                curr_fixations = pd.concat([curr_fixations, add_fixation], ignore_index=True)
+
+                    # Update the DataFrame with the modified fixations
+                    mapped_gaze.at[idx, 'fixations'] = curr_fixations
+
+            # Update the previous frame for the next iteration
+            prev_frame = curr_frame
+
+        self.tracked_past_fixations = mapped_gaze
+
+        # Release resources
+        cap.release()
+        cv2.destroyAllWindows()
+
+        # Save the updated DataFrame to pickle
+        mapped_gaze.to_pickle(updated_pkl)
+
+    def overlay_fixations_on_video(self, output_path: Union[str, Path] = "data/fixations_overlayed_video.mp4"):
+        """
+        Overlays fixation data on the video and saves the result to a new video file.
+
+        Parameters
+        ----------
+        input_pkl : str or :class:pathlib.Path
+            Path to the pickle file containing the updated fixation data.
+        output_path : str or :class:pathlib.Path
+            Path to save the video file with overlaid fixations.
+        """
+        #check if tracked_past_fixations is available
+        if self.tracked_past_fixations is None:
+            #run the track_fixations_with_optical_flow method to generate the tracked_past_fixations DataFrame
+            self.track_fixations_with_optical_flow()
+        
+        df = self.tracked_past_fixations
+
+        # Initialize video capture
+        video_path = self.contents.loc["scene_video", "path"]
+        cap = cv2.VideoCapture(str(video_path))
+
+        # Set up video writer to save the overlayed video
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(str(output_path), fourcc, fps, (frame_width, frame_height))
+
+        # Iterate over each frame and corresponding fixations data
+        for idx in df.index:
+            # Read the current frame from the video
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Get the fixations for the current frame
+            fixations = df.at[idx, 'fixations']
+
+            # Draw fixations on the frame
+            for _, fixation in fixations.iterrows():
+                x, y = fixation['x'], fixation['y']
+                status = fixation['status']
+                if status == 'tracked':
+                    color = (0, 255, 0)
+                elif status == 'lost':
+                    color = (0, 0, 255)
+                else:
+                    color = (255, 0, 0)
+
+                # Only draw if coordinates are valid
+                if pd.notna(x) and pd.notna(y):
+                    # Draw a circle at the fixation point
+                    cv2.circle(frame, (int(x), int(y)), radius=10, color=color, thickness=-1)
+
+                    # Optionally, add text showing fixation status and ID
+                    cv2.putText(frame, f"ID: {fixation['fixation_id']} Status: {status}", 
+                                (int(x) + 10, int(y)), cv2.FONT_HERSHEY_PLAIN, 1, color, 1)
+
+            # Display the frame with overlays (Optional)
+            cv2.imshow('Fixations Overlay', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            # Write the frame to the output video
+            out.write(frame)
+
+        # Release resources
+        cap.release()
+        out.release()
+        cv2.destroyAllWindows()
 
     def to_motion_bids(
         self,
@@ -378,3 +634,4 @@ Recording duration: {self.info["duration"] / 1e9} s
         outlined in https://github.com/bids-standard/bids-specification/pull/1128.
         """
         exports_eye_bids(self, output_dir)
+
