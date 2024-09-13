@@ -18,6 +18,7 @@ requires-python = ">=3.9"
 dependencies = [
     "pandas",
     "numpy",
+    "matplotlib",
     "scipy",
     "opencv-python",
     "typeguard",

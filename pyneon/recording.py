@@ -7,17 +7,10 @@ import warnings
 import numpy as np
 import cv2
 
-from .data import (
-    NeonGaze,
-    NeonIMU,
-    NeonEyeStates,
-    NeonBlinks,
-    NeonFixations,
-    NeonSaccades,
-    NeonEvents,
-    NeonVideo,
-)
-from .preprocess import concat_streams, concat_events
+from .stream import NeonGaze, NeonIMU, NeonEyeStates
+from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
+from .video import NeonVideo
+from .preprocess import concat_streams, concat_events, map_gaze_to_video
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -335,74 +328,14 @@ Recording duration: {self.info["duration"] / 1e9} s
         return concat_events(self, event_names)
 
     def map_gaze_to_video(
-        self, output_pkl: Union[str, Path] = "data/gaze_mapped_to_video.pkl"
-    ):
+        self,
+        resamp_float_kind: str = "linear",
+        resamp_other_kind: str = "nearest",
+    ) -> pd.DataFrame:
         """
-        Tracks fixations across video frames using gaze data and world timestamps.
-
-        Parameters
-        ----------
-        output_pkl : str or :class:pathlib.Path, optional
-            Path to save the pickle file with fixations per frame, by default 'fixations_per_frame.pkl'.
+        Map gaze data to video frames.
         """
-
-        # Read the first frame to get the initial grayscale image
-        ret, first_frame = cap.read()
-        if not ret:
-            raise ValueError("Unable to read the first frame of the video.")
-        prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
-
-        # Initialize current fixation tracking variables
-        current_id = 0
-
-        # Process each frame according to world timestamps
-        for frame_idx, frame_time in enumerate(world_data):
-            last_id = current_id
-
-            # Find the closest gaze data point to the current frame time
-            gaze_idx = np.argmin(np.abs(gaze_data["time"] - frame_time))
-            active_gaze = gaze_data.iloc[gaze_idx]
-            gaze_x = active_gaze["gaze x [px]"]
-            gaze_y = active_gaze["gaze y [px]"]
-            active_fixation = active_gaze["fixation id"]
-
-            # Determine fixation status based on the fixation id
-            if not pd.isna(active_fixation):
-                current_id = int(active_fixation)
-            else:
-                current_id = 0
-
-            # Determine the status of the fixation
-            if current_id > last_id:
-                flag = "onset"
-                fixation_id = current_id
-            elif current_id < last_id:
-                flag = "offset"
-                fixation_id = last_id
-            elif current_id == last_id:
-                if current_id == 0:
-                    flag = "lost"
-                    fixation_id = None
-                else:
-                    flag = "active"
-                    fixation_id = current_id
-
-            fixation_list = [fixation_id, gaze_x, gaze_y, flag]
-            fixation_df = pd.DataFrame(
-                [fixation_list], columns=["fixation_id", "x", "y", "status"]
-            )
-
-            if not fixation_df.empty:
-                mapped_gaze = mapped_gaze._append(
-                    {"frame": frame_idx, "fixations": fixation_df}, ignore_index=True
-                )
-
-        # Save the fixations DataFrame to a CSV and pickle file
-        mapped_gaze.to_pickle(output_pkl)
-
-        self.mapped_gaze = mapped_gaze
-        cap.release()
-        cv2.destroyAllWindows()
+        return map_gaze_to_video(self, resamp_float_kind, resamp_other_kind)
 
     def track_fixations_with_optical_flow(
         self, updated_pkl: Union[str, Path] = "data/past_fixations_mapped_to_video.pkl"
@@ -410,28 +343,6 @@ Recording duration: {self.info["duration"] / 1e9} s
         """
         Applies optical flow to track fixations across frames in the video and update their positions.
         """
-        # Load the fixations DataFrame from the previously saved pkl file
-        if self.mapped_gaze is None:
-            # run the map_gaze_to_video method to generate the fixations DataFrame
-            self.map_gaze_to_video()
-
-        mapped_gaze = self.mapped_gaze.copy()
-
-        if not self.contents.loc["scene_video", "exist"]:
-            raise FileNotFoundError(
-                "Scene video file not found in the recording directory."
-            )
-
-        video_path = self.contents.loc["scene_video", "path"]
-        cap = cv2.VideoCapture(str(video_path))
-
-        # Initialize parameters for Lucas-Kanade Optical Flow
-        lk_params = dict(
-            winSize=(15, 15),
-            maxLevel=2,
-            criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
-        )
-
         prev_frame = None
 
         # Iterate over each frame and corresponding fixations data
@@ -447,7 +358,7 @@ Recording duration: {self.info["duration"] / 1e9} s
                 # Access previous frame fixations and filter by status
                 prev_fixations = mapped_gaze.at[idx - 1, "fixations"]
                 prev_fixations = prev_fixations[
-                    (prev_fixations["status"] == "offset")
+                    (prev_fixations["status"] == "end")
                     | (prev_fixations["status"] == "tracked")
                 ]
 
