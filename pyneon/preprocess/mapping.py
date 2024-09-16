@@ -20,9 +20,9 @@ def map_gaze_to_video(
     video = rec.video
 
     if gaze is None:
-        raise ValueError("No gaze data found.")
+        raise ValueError("No gaze data available.")
     if video is None:
-        raise ValueError("No video data found.")
+        raise ValueError("No video data available.")
 
     # Resample the gaze data to the video timestamps
     mapped_gaze = gaze.resample(

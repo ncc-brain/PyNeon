@@ -1,16 +1,18 @@
 from pathlib import Path
-from typing import Union
+from typing import Union, Literal
 import pandas as pd
 import json
 from datetime import datetime
 import warnings
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .video import NeonVideo
 from .preprocess import concat_streams, concat_events, map_gaze_to_video
+from .vis import plot_distribution
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -511,6 +513,28 @@ Recording duration: {self.info["duration"] / 1e9} s
         cap.release()
         out.release()
         cv2.destroyAllWindows()
+
+    def plot_distribution(
+        self,
+        heatmap_source: Literal["gaze", "fixations", None] = "gaze",
+        scatter_source: Literal["gaze", "fixations", None] = "fixations",
+        step_size: int = 10,
+        sigma: Union[float, None] = 2,
+        width_height: Union[tuple[int, int], None] = None,
+        cmap: Union[str, None] = "inferno",
+        ax: Union[plt.Axes, None] = None,
+    ):
+        """ """
+        return plot_distribution(
+            self,
+            heatmap_source,
+            scatter_source,
+            step_size,
+            sigma,
+            width_height,
+            cmap,
+            ax,
+        )
 
     def to_motion_bids(
         self,
