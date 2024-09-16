@@ -1,8 +1,11 @@
 import cv2
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from typing import Union
 import matplotlib.pyplot as plt
+
+from .vis import plot_frame
 
 
 class NeonVideo(cv2.VideoCapture):
@@ -32,8 +35,10 @@ class NeonVideo(cv2.VideoCapture):
         Height of the video frames in pixels.
     """
 
-    def __init__(self, video_file, timestamps_file):
+    def __init__(self, video_file: Path, timestamps_file: Path):
         super().__init__(video_file)
+        self.video_file = video_file
+        self.timestamps_file = timestamps_file
         self.timestamps = (
             pd.read_csv(timestamps_file)["timestamp [ns]"].to_numpy().astype(np.int64)
         )
@@ -50,30 +55,32 @@ class NeonVideo(cv2.VideoCapture):
     def __len__(self) -> int:
         return int(len(self.ts))
 
+    def plot_frame(
+        self,
+        index: int = 0,
+        ax: Union[plt.Axes, None] = None,
+        auto_title: bool = True,
+    ):
+        """
+        Plot a frame from the video on a matplotlib axis.
 
-def plot_frame(self, index: int = 0, ax: Union[plt.Axes, None] = None):
-    """
-    Plot a frame from the video.
+        Parameters
+        ----------
+        index : int
+            Index of the frame to plot.
+        ax : :class:`matplotlib.pyplot.Axes` or None
+            Axis to plot the frame on. If ``None``, a new figure is created.
+            Defaults to ``None``.
+        auto_title : bool
+            Whether to automatically set the title of the axis.
+            The automatic title includes the video file name and the frame index.
+            Defaults to ``True``.
 
-    Parameters
-    ----------
-    index : int
-        Index of the frame to plot.
-    """
-    if index >= len(self.ts):
-        raise IndexError(f"Frame index {index} out of range")
-
-    # Prepare axes
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
-
-    self.set(cv2.CAP_PROP_POS_FRAMES, index)
-    ret, frame = self.read()
-    if ret:
-        ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        ax.set_title(f"Frame {index} ({self.ts[index]})")
-        ax.axis("off")
-    else:
-        raise RuntimeError(f"Could not read frame {index}")
+        Returns
+        -------
+        fig : :class:`matplotlib.pyplot.Figure`
+            Figure object containing the plot.
+        ax : :class:`matplotlib.pyplot.Axes`
+            Axis object containing the plot.
+        """
+        return plot_frame(self, index, ax, auto_title)

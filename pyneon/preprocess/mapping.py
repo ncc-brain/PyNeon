@@ -24,14 +24,9 @@ def map_gaze_to_video(
     if video is None:
         raise ValueError("No video data found.")
 
-    # Only select video timestamps that are later than the first gaze timestamp
-    # and earlier than the last gaze timestamp
-    valid_video_ts = video.ts[video.ts >= gaze.first_ts]
-    valid_video_ts = valid_video_ts[valid_video_ts <= gaze.last_ts]
-
     # Resample the gaze data to the video timestamps
     mapped_gaze = gaze.resample(
-        valid_video_ts, float_kind=resamp_float_kind, other_kind=resamp_other_kind
+        video.ts, float_kind=resamp_float_kind, other_kind=resamp_other_kind
     )
 
     # Mark the fixation status of each frame
