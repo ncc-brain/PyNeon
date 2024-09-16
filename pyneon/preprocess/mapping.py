@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import cv2
+import warnings
 
 from typing import TYPE_CHECKING, Union
 
@@ -15,6 +16,15 @@ def map_gaze_to_video(
 ) -> pd.DataFrame:
     """
     Map gaze data to video frames.
+
+    Parameters:
+    -----------
+    rec : NeonRecording
+        Recording object containing gaze and video data.
+    resamp_float_kind : str
+        Interpolation method for float columns.
+    resamp_other_kind : str
+        Interpolation method for non-float columns.
     """
     gaze = rec.gaze
     video = rec.video
@@ -47,21 +57,46 @@ def map_gaze_to_video(
         # Assign end last to enforce that the last frame is always marked as end
         mapped_gaze.at[end_idx, "fixation status"] = "end"
 
+    rec.mapped_gaze = mapped_gaze
+
     return mapped_gaze
 
 
-def estimate_past_fixations(
+def estimate_scanpath(
     rec: "NeonRecording",
     lk_params: Union[None, dict] = None,
 ) -> pd.DataFrame:
     """
     Map fixations to video frames.
+
+    Parameters:
+    -----------
+    rec : NeonRecording
+        Recording object containing gaze and video data.
+    lk_params : dict
+        Parameters for the Lucas-Kanade optical flow algorithm.
     """
-    mapped_gaze = map_gaze_to_video(rec)
-    # create a new dataframe to store the relevant fixations
-    tracked_fixations = pd.DataFrame(columns=["ts", "fixations"])
+
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+
+
+    # check if rec.mapped_gaze exists, if not, create it
+    if not hasattr(rec, "mapped_gaze") or rec.mapped_gaze is None:
+        mapped_gaze = map_gaze_to_video(rec)
+    else:
+        mapped_gaze = rec.mapped_gaze
+
+    # create a new dataframe of dataframes that stores the relevant data for each fixation
+    mapped_gaze.rename(columns={"time [s]": "time", "gaze x [px]": "x", "gaze y [px]": "y"}, inplace=True)
+    estimated_scanpath = pd.DataFrame(columns=["time", "fixations"])
+
     for idx in range(mapped_gaze.shape[0]):
-        fixations = pd.todf
+        estimated_scanpath = estimated_scanpath._append(
+            {'time': mapped_gaze.loc[idx, "time"], 
+            'fixations': mapped_gaze.loc[[idx], ["fixation id", "x", "y", "fixation status"]]}, 
+            ignore_index=True)
+        
+    
     video = rec.video
 
     # Taken from Neon
@@ -72,13 +107,158 @@ def estimate_past_fixations(
             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03),
         )
 
-    ret, frame = video.read()
-    prev_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    for idx in range(1, mapped_gaze.shape[0]):
+    prev_frame = None
+    prev_fix = None
+
+    for idx in estimated_scanpath.index:
+    # Read the current frame from the video
         ret, frame = video.read()
+        if not ret:
+            break
+
         curr_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        prev_fixations = mapped_gaze.loc[idx - 1, "fixations on screen"]
-        prev_fixations = prev_fixations[
-            (prev_fixations["fixation status"] == "end")
-            | (prev_fixations["fixation status"] == "tracked")
-        ]
+
+        if idx >= 1:
+            # Access previous frame fixations and filter by status
+            prev_fixations = estimated_scanpath.at[idx-1, 'fixations']
+            prev_fixations = prev_fixations[(prev_fixations['fixation status'] == 'end') | 
+                                            (prev_fixations['fixation status'] == 'tracked')]
+
+            if not prev_fixations.empty:
+                # Prepare points for tracking
+                prev_pts = np.array(prev_fixations[['x', 'y']].dropna().values, dtype=np.float32).reshape(-1, 1, 2)
+                prev_ids = prev_fixations['fixation id'].values
+
+                # Calculate optical flow to find new positions of the points
+                curr_pts, status, err = cv2.calcOpticalFlowPyrLK(prev_frame, curr_frame, prev_pts, None, **lk_params)
+
+                # Update fixations for the current frame
+                curr_fixations = estimated_scanpath.at[idx, 'fixations'].copy()
+
+                # Append new or updated fixation points
+                for i, (pt, s, e) in enumerate(zip(curr_pts, status, err)):
+                    if s[0]:  # Check if the point was successfully tracked
+                        x, y = pt.ravel()
+                        curr_fixations = curr_fixations._append({'fixation id': prev_ids[i], 'x': x, 'y': y, 'fixation status': 'tracked'}, ignore_index=True)
+                    else:
+                        # Handle cases where the point could not be tracked
+                        curr_fixations = curr_fixations._append({'fixation id': prev_ids[i], 'x': None, 'y': None, 'fixation status': 'lost'}, ignore_index=True)
+                
+                # drop nas
+                curr_fixations = curr_fixations.dropna()
+                # Update the DataFrame with the modified fixations
+                estimated_scanpath.at[idx, 'fixations'] = curr_fixations
+
+        # Update the previous frame for the next iteration
+        prev_frame = curr_frame
+
+    rec.estimated_scanpath = estimated_scanpath
+
+    return estimated_scanpath
+
+def overlay_scanpath_on_video(
+    rec: "NeonRecording", 
+    video_output_path: str = "sacnpath_overlay_video.mp4",
+    circle_radius: int = 10, 
+    line_thickness: int = 2,
+    show_video: bool = False 
+) -> None:
+    """
+    Overlay fixations and gaze data on video frames and save the resulting video.
+
+    Parameters:
+    -----------
+    rec : NeonRecording
+        Recording object containing gaze and video data.
+    video_output_path : str
+        Path where the video with fixations will be saved.
+    circle_radius : int
+        Radius of the circle used to represent fixations.
+    line_thickness : int
+        Thickness of the lines connecting successive fixations.
+    show_video : bool
+        Flag to display the video with fixations overlaid in
+    """
+
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+
+    if rec.video:
+        video = rec.video
+    else:
+        raise ValueError("No video data found.")
+    
+    if not hasattr(rec, "estimated_scanpath") or rec.estimated_scanpath is None:
+        df = estimate_scanpath(rec)
+    else:
+        df = rec.estimated_scanpath
+    
+    
+    # Initialize video capture and writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(video_output_path, fourcc, video.fps, (video.width, video.height))
+
+    # Iterate through each row in the tracked fixations DataFrame
+    prev_x, prev_y = None, None  # Track previous fixation point for drawing lines
+    for idx, row in df.iterrows():
+
+        # Read the current frame from the video
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        # Extract fixations and gaze data
+        fixations = row['fixations']
+        prev_x, prev_y = None, None
+
+
+        for i in range(len(fixations)):
+
+            fixation_x, fixation_y = fixations.iloc[i]['x'], fixations.iloc[i]['y']
+            status = fixations.iloc[i]['fixation status']
+            id = fixations.iloc[i]['fixation id']
+            
+            #pass if status or id are nan
+            if pd.isna(status) or pd.isna(id):
+                continue
+            else:
+                # Set color based on fixation status
+                if status == 'tracked':
+                    color = (0, 255, 0)  # Green for tracked
+                elif status == 'lost':
+                    color = (0, 0, 255)  # Red for lost
+                else:
+                    color = (255, 0, 0)  # Blue for other statuses
+
+
+                # Draw fixation circles and connecting lines
+                if pd.notna(fixation_x) and pd.notna(fixation_y):
+
+                    cv2.circle(frame, (int(fixation_x), int(fixation_y)), radius=circle_radius, color=color, thickness=-1)
+
+                    # Optionally add text showing fixation status and ID
+                    cv2.putText(frame, f"ID: {id} Status: {status}",
+                                (int(fixation_x) + 10, int(fixation_y)), cv2.FONT_HERSHEY_PLAIN, 1, color, 1)
+
+                    # Draw line connecting the previous fixation to the current one
+                    if pd.notna(prev_x) and pd.notna(prev_y):
+                        cv2.line(frame, (int(prev_x), int(prev_y)), (int(fixation_x), int(fixation_y)), color, line_thickness)
+
+                    # Update the previous fixation point
+                    prev_x, prev_y = fixation_x, fixation_y
+
+        # Display the frame with overlays (Optional)
+        if show_video:
+            cv2.imshow('Fixations Overlay', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        # Write the frame with overlays to the output video
+        out.write(frame)
+
+    # Release resources
+    video.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
+
