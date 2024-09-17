@@ -35,9 +35,7 @@ def map_gaze_to_video(
         raise ValueError("No video data available.")
 
     # Resample the gaze data to the video timestamps
-    mapped_gaze = gaze.resample(
-        video.ts, float_kind=resamp_float_kind, other_kind=resamp_other_kind
-    )
+    mapped_gaze = rec.roll_gaze_on_video()
 
     # Mark the fixation status of each frame
     mapped_gaze["fixation status"] = pd.NA
@@ -205,6 +203,9 @@ def overlay_scanpath_on_video(
         fixations = row['fixations']
         prev_x, prev_y = None, None
 
+        #chek if fixations is empty
+        if fixations.empty:
+            continue
 
         for i in range(len(fixations)):
 

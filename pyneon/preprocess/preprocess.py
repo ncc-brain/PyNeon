@@ -13,7 +13,6 @@ def resample(
     old_data: pd.DataFrame,
     float_kind: str = "linear",
     other_kind: str = "nearest",
-    pooled_downsample: bool = False,
 ) -> pd.DataFrame:
     """
     Resample the stream to a new set of timestamps.
@@ -48,21 +47,12 @@ def resample(
     # Create a new dataframe with the new timestamps
     resamp_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     resamp_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
-    dt = np.median(np.diff(new_ts))
 
     for col in old_data.columns:
         if col == "timestamp [ns]" or col == "time [s]":
             continue
         if pd.api.types.is_float_dtype(old_data[col]):
-            if pooled_downsample:
-                resamp_data[col] = np.array([
-                    old_data[(old_data["timestamp [ns]"] >= (ts - dt/ 2)) &
-                    (old_data["timestamp [ns]"] <= (ts + dt / 2))][col].mean()
-                    for ts in new_ts
-                ])
-
-            else:
-                resamp_data[col] = interpolate.interp1d(
+            resamp_data[col] = interpolate.interp1d(
                 old_data["timestamp [ns]"],
                 old_data[col],
                 kind=float_kind,
@@ -78,9 +68,80 @@ def resample(
         resamp_data[col] = resamp_data[col].astype(old_data[col].dtype)
     return resamp_data
 
+def rolling_average(
+    new_ts: np.ndarray,
+    old_data: pd.DataFrame,
+    time_column: str = "timestamp [ns]",
+) -> pd.DataFrame:
+    """
+    Apply rolling average over a time window to resampled data.
+    
+    Parameters
+    ----------
+    new_ts : np.ndarray
+        New timestamps to resample the stream to.
+    old_data : pd.DataFrame
+        Data to apply rolling average to.
+    time_column : str, optional
+        Name of the time column in the data, by default "timestamp [ns]".
+    
+    Returns
+    -------
+    pd.DataFrame
+        Data with rolling averages applied.
+    """
+    # Assert that 'timestamp [ns]' is present and monotonic
+    if "timestamp [ns]" not in old_data.columns:
+        raise ValueError("old_data must contain a 'timestamp [ns]' column")
+    
+    if not np.all(np.diff(old_data["timestamp [ns]"]) > 0):
+        # call resample function to ensure monotonicity
+        old_data = resample(None, old_data)
+
+    # assert that the new_ts has a lower sampling frequency than the old data
+    if np.mean(np.diff(new_ts)) < np.mean(np.diff(old_data[time_column])):
+        raise ValueError("new_ts must have a lower sampling frequency than the old data")
+
+    # Create a new DataFrame for the downsampled data
+    downsampled_data = pd.DataFrame(data=new_ts, columns=[time_column], dtype="Int64")
+    downsampled_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
+
+    # Convert window_size to nanoseconds
+    window_size = np.mean(np.diff(new_ts))
+
+    # Loop through each column (excluding time columns) to compute the downsampling
+    for col in old_data.columns:
+        if col == time_column or col == "time [s]":
+            continue
+        
+        # Initialize an empty list to store the downsampled values
+        downsampled_values = []
+
+        # Loop through each new timestamp
+        for ts in new_ts:
+            # Define the time window around the current new timestamp
+            lower_bound = ts - window_size / 2
+            upper_bound = ts + window_size / 2
+
+            # Select rows from old_data that fall within the time window
+            window_data = old_data[(old_data[time_column] >= lower_bound) & (old_data[time_column] <= upper_bound)]
+
+            # Compute the average of the data within this window
+            if not window_data.empty:
+                mean_value = window_data[col].mean()
+            else:
+                mean_value = np.nan
+
+            # Append the averaged value to the list
+            downsampled_values.append(mean_value)
+        
+        # Assign the downsampled values to the new DataFrame
+        downsampled_data[col] = downsampled_values
+    
+    return downsampled_data
+
 
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
-
 
 def concat_streams(
     rec: "NeonRecording",

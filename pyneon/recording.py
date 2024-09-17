@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from .stream import NeonGaze, NeonIMU, NeonEyeStates
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .video import NeonVideo
-from .preprocess import concat_streams, concat_events, map_gaze_to_video, estimate_scanpath, overlay_scanpath_on_video
+from .preprocess import concat_streams, concat_events, rolling_average, map_gaze_to_video, estimate_scanpath, overlay_scanpath_on_video
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -327,6 +327,14 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
+    
+    def roll_gaze_on_video(
+        self,
+    ) -> pd.DataFrame:
+        """
+        Apply rolling average over a time window to gaze data.
+        """
+        return rolling_average(self.video.ts, self.gaze.data)
 
     def map_gaze_to_video(
         self,
