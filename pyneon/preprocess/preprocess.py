@@ -13,6 +13,7 @@ def resample(
     old_data: pd.DataFrame,
     float_kind: str = "linear",
     other_kind: str = "nearest",
+    pooled_downsample: bool = False,
 ) -> pd.DataFrame:
     """
     Resample the stream to a new set of timestamps.
@@ -47,11 +48,21 @@ def resample(
     # Create a new dataframe with the new timestamps
     resamp_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     resamp_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
+    dt = np.median(np.diff(new_ts))
+
     for col in old_data.columns:
         if col == "timestamp [ns]" or col == "time [s]":
             continue
         if pd.api.types.is_float_dtype(old_data[col]):
-            resamp_data[col] = interpolate.interp1d(
+            if pooled_downsample:
+                resamp_data[col] = np.array([
+                    old_data[(old_data["timestamp [ns]"] >= (ts - dt/ 2)) &
+                    (old_data["timestamp [ns]"] <= (ts + dt / 2))][col].mean()
+                    for ts in new_ts
+                ])
+
+            else:
+                resamp_data[col] = interpolate.interp1d(
                 old_data["timestamp [ns]"],
                 old_data[col],
                 kind=float_kind,

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from .stream import NeonGaze, NeonIMU, NeonEyeStates
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .video import NeonVideo
-from .preprocess import concat_streams, concat_events, map_gaze_to_video
+from .preprocess import concat_streams, concat_events, map_gaze_to_video, estimate_scanpath, overlay_scanpath_on_video
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -364,93 +364,33 @@ Recording duration: {self.info["duration"] / 1e9} s
         return estimate_scanpath(self, lk_params)
     
     def overlay_scanpath_on_video(
-        self,
-        output_dir: Union[str, Path],
-        circle_radius: int = 10,
-        line_thickness: int = 2,
-        show_video: bool = False
+    rec: "NeonRecording", 
+    video_output_path: str = "scanpath_overlay_video.mp4",
+    circle_radius: int = 10, 
+    line_thickness: int = 2,
+    show_video: bool = False 
     ) -> None:
+        
         """
-        Overlay scanpath on the scene video and save the resulting video.
+        Overlay fixations and gaze data on video frames and save the resulting video.
 
-        Parameters
-        ----------
-        input_pkl : str or :class:pathlib.Path
-            Path to the pickle file containing the updated fixation data.
-        output_path : str or :class:pathlib.Path
-            Path to save the video file with overlaid fixations.
+        Parameters:
+        -----------
+        rec : NeonRecording
+            Recording object containing gaze and video data.
+        video_output_path : str
+            Path where the video with fixations will be saved.
+        circle_radius : int
+            Radius of the circle used to represent fixations.
+        line_thickness : int
+            Thickness of the lines connecting successive fixations.
+        show_video : bool
+            Flag to display the video with fixations overlaid in
         """
-        # check if tracked_past_fixations is available
-        if self.tracked_past_fixations is None:
-            # run the track_fixations_with_optical_flow method to generate the tracked_past_fixations DataFrame
-            self.track_fixations_with_optical_flow()
 
-        df = self.tracked_past_fixations
+        return overlay_scanpath_on_video(rec, video_output_path, circle_radius, line_thickness, show_video)
 
-        # Initialize video capture
-        video_path = self.contents.loc["scene_video", "path"]
-        cap = cv2.VideoCapture(str(video_path))
-
-        # Set up video writer to save the overlayed video
-        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        out = cv2.VideoWriter(
-            str(output_path), fourcc, fps, (frame_width, frame_height)
-        )
-
-        # Iterate over each frame and corresponding fixations data
-        for idx in df.index:
-            # Read the current frame from the video
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            # Get the fixations for the current frame
-            fixations = df.at[idx, "fixations"]
-
-            # Draw fixations on the frame
-            for _, fixation in fixations.iterrows():
-                x, y = fixation["x"], fixation["y"]
-                status = fixation["status"]
-                if status == "tracked":
-                    color = (0, 255, 0)
-                elif status == "lost":
-                    color = (0, 0, 255)
-                else:
-                    color = (255, 0, 0)
-
-                # Only draw if coordinates are valid
-                if pd.notna(x) and pd.notna(y):
-                    # Draw a circle at the fixation point
-                    cv2.circle(
-                        frame, (int(x), int(y)), radius=10, color=color, thickness=-1
-                    )
-
-                    # Optionally, add text showing fixation status and ID
-                    cv2.putText(
-                        frame,
-                        f"ID: {fixation['fixation_id']} Status: {status}",
-                        (int(x) + 10, int(y)),
-                        cv2.FONT_HERSHEY_PLAIN,
-                        1,
-                        color,
-                        1,
-                    )
-
-            # Display the frame with overlays (Optional)
-            cv2.imshow("Fixations Overlay", frame)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-            # Write the frame to the output video
-            out.write(frame)
-
-        # Release resources
-        cap.release()
-        out.release()
-        cv2.destroyAllWindows()
+    
 
     def to_motion_bids(
         self,
