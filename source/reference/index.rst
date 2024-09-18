@@ -10,3 +10,5 @@ PyNeon API
     recording
     data
     preprocess
+    vis
+    export

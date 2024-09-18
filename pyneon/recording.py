@@ -19,7 +19,7 @@ from .preprocess import (
     estimate_scanpath,
     overlay_scanpath_on_video,
 )
-from .io import export_motion_bids, exports_eye_bids
+from .export import export_motion_bids, exports_eye_bids
 
 
 def _check_file(dir_path: Path, stem: str):
