@@ -286,8 +286,8 @@ Recording duration: {self.info["duration"] / 1e9} s
         ----------
         stream_names : str or list of str
             Stream names to concatenate. If "all", then all streams will be used.
-            If a list, items must be in
-            ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
+            If a list, items must be in ``{"gaze", "imu", "eye_states"}``
+            (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
         sampling_freq : float or int or str, optional
             Sampling frequency to resample the streams to.
             If numeric, the streams will be resampled to this frequency.
@@ -321,13 +321,19 @@ Recording duration: {self.info["duration"] / 1e9} s
 
     def concat_events(self, event_names: list[str]) -> pd.DataFrame:
         """
-        Concatenate types of events and return a DataFrame with all events.
+        Concatenate different events. All columns in the selected event type will be
+        present in the final DataFrame. An additional ``"type"`` column denotes the event
+        type. If ``event_names`` is selected, its ``"timestamp [ns]"`` column will be 
+        renamed to ``"start timestamp [ns]"``, and the ``"name`` and ``"type"`` columns will
+        be renamed to ``"message name"`` and ``"message type"`` respectively to provide
+        a more readable output.
 
         Parameters
         ----------
         event_names : list of str
             List of event names to concatenate. Event names must be in
-            ``{"blinks", "fixations", "saccades", "events"}``.
+            ``{"blinks", "fixations", "saccades", "events"}``
+            (singular forms are tolerated).
 
         Returns
         -------

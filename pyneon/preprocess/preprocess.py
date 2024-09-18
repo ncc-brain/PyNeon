@@ -171,8 +171,8 @@ def concat_streams(
         NeonRecording object containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all", then all streams will be used.
-        If a list, items must be in
-        ``{"gaze", "imu", "eye_states", "3d_eye_states"}``.
+        If a list, items must be in ``{"gaze", "imu", "eye_states"}``
+        (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
     sampling_freq : float or int or str, optional
         Sampling frequency to resample the streams to.
         If numeric, the streams will be resampled to this frequency.
@@ -326,7 +326,16 @@ def concat_streams(
     return concat_data
 
 
-VALID_EVENTS = {"blinks", "fixations", "saccades", "events"}
+VALID_EVENTS = {
+    "blink",
+    "blinks",
+    "fixation",
+    "fixations",
+    "saccade",
+    "saccades",
+    "event",
+    "events",
+}
 
 
 def concat_events(
@@ -334,9 +343,12 @@ def concat_events(
     event_names: Union[str, list[str]],
 ) -> pd.DataFrame:
     """
-    Concatenate events from different streams under common timestamps.
-    The latest start timestamp and earliest last timestamp of the selected events
-    are used to define the common timestamps.
+    Concatenate different events. All columns in the selected event type will be
+    present in the final DataFrame. An additional ``"type"`` column denotes the event
+    type. If ``event_names`` is selected, its ``"timestamp [ns]"`` column will be 
+    renamed to ``"start timestamp [ns]"``, and the ``"name`` and ``"type"`` columns will
+    be renamed to ``"message name"`` and ``"message type"`` respectively to provide
+    a more readable output.
 
     Parameters
     ----------
@@ -344,7 +356,8 @@ def concat_events(
         NeonRecording object containing the events to concatenate.
     event_names : list of str
         List of event names to concatenate. Event names must be in
-        ``{"blinks", "fixations", "saccades", "events"}``.
+        ``{"blinks", "fixations", "saccades", "events"}``
+        (singular forms are tolerated).
 
     Returns
     -------
@@ -366,3 +379,47 @@ def concat_events(
     # Check if all events are valid
     if not all([ev in VALID_EVENTS for ev in event_names]):
         raise ValueError(f"Invalid event name, can only be {VALID_EVENTS}")
+
+    concat_data = pd.DataFrame(
+        {
+            "type": pd.Series(dtype="str"),
+            "start timestamp [ns]": pd.Series(dtype="Int64"),
+            "end timestamp [ns]": pd.Series(dtype="Int64"),
+            "duration [ms]": pd.Series(dtype="float64"),
+        }
+    )
+    print("Concatenating events:")
+    if "blinks" in event_names or "blink" in event_names:
+        if rec.blinks is None:
+            raise ValueError("Cannnot load blink data.")
+        data = rec.blinks.data
+        data["type"] = "blink"
+        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        print("\tBlinks")
+    if "fixations" in event_names or "fixation" in event_names:
+        if rec.fixations is None:
+            raise ValueError("Cannnot load fixation data.")
+        data = rec.fixations.data
+        data["type"] = "fixation"
+        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        print("\tFixations")
+    if "saccades" in event_names or "saccade" in event_names:
+        if rec.saccades is None:
+            raise ValueError("Cannnot load saccade data.")
+        data = rec.saccades.data
+        data["type"] = "saccade"
+        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        print("\tSaccades")
+    if "events" in event_names or "event" in event_names:
+        if rec.events is None:
+            raise ValueError("Cannnot load event data.")
+        data = rec.events.data
+        data.rename(
+            columns={"name": "message name", "type": "message type"}, inplace=True
+        )
+        data["type"] = "event"
+        data.rename(columns={"timestamp [ns]": "start timestamp [ns]"}, inplace=True)
+        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        print("\tEvents")
+    concat_data.sort_values("start timestamp [ns]", inplace=True)
+    return concat_data
