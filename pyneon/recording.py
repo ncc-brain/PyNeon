@@ -11,7 +11,14 @@ import matplotlib.pyplot as plt
 from .stream import NeonGaze, NeonIMU, NeonEyeStates
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .video import NeonVideo
-from .preprocess import concat_streams, concat_events, rolling_average, map_gaze_to_video, estimate_scanpath, overlay_scanpath_on_video
+from .preprocess import (
+    concat_streams,
+    concat_events,
+    rolling_average,
+    map_gaze_to_video,
+    estimate_scanpath,
+    overlay_scanpath_on_video,
+)
 from .io import export_motion_bids, exports_eye_bids
 
 
@@ -327,7 +334,7 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
-    
+
     def roll_gaze_on_video(
         self,
     ) -> pd.DataFrame:
@@ -356,9 +363,9 @@ Recording duration: {self.info["duration"] / 1e9} s
         return map_gaze_to_video(self, resamp_float_kind, resamp_other_kind)
 
     def estimate_scanpath(
-            self,
-            lk_params: Union[None, dict] = None,
-        ) -> pd.DataFrame:
+        self,
+        lk_params: Union[None, dict] = None,
+    ) -> pd.DataFrame:
         """
         Map fixations to video frames.
 
@@ -370,16 +377,16 @@ Recording duration: {self.info["duration"] / 1e9} s
             Parameters for the Lucas-Kanade optical flow algorithm.
         """
         return estimate_scanpath(self, lk_params)
-    
+
     def overlay_scanpath_on_video(
         self,
-        video_output_path: str = "sacnpath_overlay_video.mp4",
-        circle_radius: int = 10, 
+        video_output_path: Union[Path, str] = "sacnpath_overlay_video.mp4",
+        circle_radius: int = 10,
         show_lines: bool = True,
         line_thickness: int = 2,
-        show_video: bool = False, 
+        show_video: bool = False,
         max_fixations: int = 10,
-        ) -> None:
+    ) -> None:
         """
         Overlay fixations and gaze data on video frames and save the resulting video.
 
@@ -396,16 +403,21 @@ Recording duration: {self.info["duration"] / 1e9} s
         show_video : bool
             Flag to display the video with fixations overlaid in
         """
-        overlay_scanpath_on_video(self, video_output_path, circle_radius, show_lines, line_thickness, show_video, max_fixations)
-        
-       
-
-    
+        overlay_scanpath_on_video(
+            self,
+            video_output_path,
+            circle_radius,
+            show_lines,
+            line_thickness,
+            show_video,
+            max_fixations,
+        )
 
     def to_motion_bids(
         self,
-        output_dir: Union[str, Path],
-        prefix: str = "sub-XX_task-YY_tracksys-NeonIMU",
+        motion_dir: Union[str, Path],
+        prefix: str = "",
+        extra_metadata: dict = {},
     ):
         """
         Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
@@ -415,7 +427,7 @@ Recording duration: {self.info["duration"] / 1e9} s
 
         Parameters
         ----------
-        output_dir : str or :class:`pathlib.Path`
+        motion_dir : str or :class:`pathlib.Path`
             Output directory to save the Motion-BIDS formatted data.
         prefix : str, optional
             Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
@@ -434,7 +446,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         ----------
         .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
         """
-        export_motion_bids(self, output_dir)
+        export_motion_bids(self, motion_dir, prefix, extra_metadata)
 
     def to_eye_bids(
         self,

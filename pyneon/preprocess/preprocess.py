@@ -68,6 +68,7 @@ def resample(
         resamp_data[col] = resamp_data[col].astype(old_data[col].dtype)
     return resamp_data
 
+
 def rolling_average(
     new_ts: np.ndarray,
     old_data: pd.DataFrame,
@@ -75,7 +76,7 @@ def rolling_average(
 ) -> pd.DataFrame:
     """
     Apply rolling average over a time window to resampled data.
-    
+
     Parameters
     ----------
     new_ts : np.ndarray
@@ -84,7 +85,7 @@ def rolling_average(
         Data to apply rolling average to.
     time_column : str, optional
         Name of the time column in the data, by default "timestamp [ns]".
-    
+
     Returns
     -------
     pd.DataFrame
@@ -93,14 +94,16 @@ def rolling_average(
     # Assert that 'timestamp [ns]' is present and monotonic
     if "timestamp [ns]" not in old_data.columns:
         raise ValueError("old_data must contain a 'timestamp [ns]' column")
-    
+
     if not np.all(np.diff(old_data["timestamp [ns]"]) > 0):
         # call resample function to ensure monotonicity
         old_data = resample(None, old_data)
 
     # assert that the new_ts has a lower sampling frequency than the old data
     if np.mean(np.diff(new_ts)) < np.mean(np.diff(old_data[time_column])):
-        raise ValueError("new_ts must have a lower sampling frequency than the old data")
+        raise ValueError(
+            "new_ts must have a lower sampling frequency than the old data"
+        )
 
     # Create a new DataFrame for the downsampled data
     downsampled_data = pd.DataFrame(data=new_ts, columns=[time_column], dtype="Int64")
@@ -113,7 +116,7 @@ def rolling_average(
     for col in old_data.columns:
         if col == time_column or col == "time [s]":
             continue
-        
+
         # Initialize an empty list to store the downsampled values
         downsampled_values = []
 
@@ -124,7 +127,10 @@ def rolling_average(
             upper_bound = ts + window_size / 2
 
             # Select rows from old_data that fall within the time window
-            window_data = old_data[(old_data[time_column] >= lower_bound) & (old_data[time_column] <= upper_bound)]
+            window_data = old_data[
+                (old_data[time_column] >= lower_bound)
+                & (old_data[time_column] <= upper_bound)
+            ]
 
             # Compute the average of the data within this window
             if not window_data.empty:
@@ -134,14 +140,15 @@ def rolling_average(
 
             # Append the averaged value to the list
             downsampled_values.append(mean_value)
-        
+
         # Assign the downsampled values to the new DataFrame
         downsampled_data[col] = downsampled_values
-    
+
     return downsampled_data
 
 
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
+
 
 def concat_streams(
     rec: "NeonRecording",

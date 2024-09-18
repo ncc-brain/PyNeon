@@ -126,7 +126,6 @@ def plot_distribution(
             extent=[0, width_height[0], 0, width_height[1]],
             origin="lower",
         )
-        # Colorbar
         plt.colorbar(h, ax=ax, label="Density")
     if scatter_source is not None:
         ax.scatter(scatter_x, scatter_y, color="white", s=10, alpha=0.3, edgecolors="k")
