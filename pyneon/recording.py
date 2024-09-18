@@ -372,13 +372,14 @@ Recording duration: {self.info["duration"] / 1e9} s
         return estimate_scanpath(self, lk_params)
     
     def overlay_scanpath_on_video(
-    rec: "NeonRecording", 
-    video_output_path: str = "scanpath_overlay_video.mp4",
-    circle_radius: int = 10, 
-    line_thickness: int = 2,
-    show_video: bool = False 
-    ) -> None:
-        
+        self,
+        video_output_path: str = "sacnpath_overlay_video.mp4",
+        circle_radius: int = 10, 
+        show_lines: bool = True,
+        line_thickness: int = 2,
+        show_video: bool = False, 
+        max_fixations: int = 10,
+        ) -> None:
         """
         Overlay fixations and gaze data on video frames and save the resulting video.
 
@@ -395,8 +396,9 @@ Recording duration: {self.info["duration"] / 1e9} s
         show_video : bool
             Flag to display the video with fixations overlaid in
         """
-
-        return overlay_scanpath_on_video(rec, video_output_path, circle_radius, line_thickness, show_video)
+        overlay_scanpath_on_video(self, video_output_path, circle_radius, show_lines, line_thickness, show_video, max_fixations)
+        
+       
 
     
 

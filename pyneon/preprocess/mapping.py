@@ -91,6 +91,8 @@ def estimate_scanpath(
         
     
     video = rec.video
+    #reset video to the beginning
+    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     # Taken from Neon
     if lk_params is None:
@@ -137,8 +139,6 @@ def estimate_scanpath(
                         # Handle cases where the point could not be tracked
                         curr_fixations = curr_fixations._append({'fixation id': prev_ids[i], 'x': None, 'y': None, 'fixation status': 'lost'}, ignore_index=True)
                 
-                # drop nas
-                curr_fixations = curr_fixations.dropna()
                 # Update the DataFrame with the modified fixations
                 estimated_scanpath.at[idx, 'fixations'] = curr_fixations
 
@@ -153,9 +153,11 @@ def overlay_scanpath_on_video(
     rec: "NeonRecording", 
     video_output_path: str = "sacnpath_overlay_video.mp4",
     circle_radius: int = 10, 
+    show_lines: bool = True,
     line_thickness: int = 2,
-    show_video: bool = False 
-) -> None:
+    show_video: bool = False, 
+    max_fixations: int = 10,
+    ) -> None:
     """
     Overlay fixations and gaze data on video frames and save the resulting video.
 
@@ -181,11 +183,14 @@ def overlay_scanpath_on_video(
         raise ValueError("No video data found.")
     
     if not hasattr(rec, "estimated_scanpath") or rec.estimated_scanpath is None:
+        print("Estimating scanpath...")
         df = estimate_scanpath(rec)
     else:
         df = rec.estimated_scanpath
-    
-    
+
+    #reset video to the beginning
+    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
     # Initialize video capture and writer
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(video_output_path, fourcc, video.fps, (video.width, video.height))
@@ -197,13 +202,14 @@ def overlay_scanpath_on_video(
         # Read the current frame from the video
         ret, frame = video.read()
         if not ret:
+            print("End of video")
             break
 
         # Extract fixations and gaze data
         fixations = row['fixations']
         prev_x, prev_y = None, None
 
-        #chek if fixations is empty
+        #check if fixations is empty
         if fixations.empty:
             continue
 
@@ -214,8 +220,9 @@ def overlay_scanpath_on_video(
             id = fixations.iloc[i]['fixation id']
             
             #pass if status or id are nan
-            if pd.isna(status) or pd.isna(id):
+            if pd.isna(status) or pd.isna(id) or i > max_fixations:
                 continue
+
             else:
                 # Set color based on fixation status
                 if status == 'tracked':
@@ -236,7 +243,7 @@ def overlay_scanpath_on_video(
                                 (int(fixation_x) + 10, int(fixation_y)), cv2.FONT_HERSHEY_PLAIN, 1, color, 1)
 
                     # Draw line connecting the previous fixation to the current one
-                    if pd.notna(prev_x) and pd.notna(prev_y):
+                    if pd.notna(prev_x) and pd.notna(prev_y) and show_lines:
                         cv2.line(frame, (int(prev_x), int(prev_y)), (int(fixation_x), int(fixation_y)), color, line_thickness)
 
                     # Update the previous fixation point
