@@ -15,6 +15,7 @@ def plot_frame(
     index: int = 0,
     ax: Union[plt.Axes, None] = None,
     auto_title: bool = True,
+    show: bool = True,
 ):
     """
     Plot a frame from the video on a matplotlib axis.
@@ -55,6 +56,8 @@ def plot_frame(
         ax.axis("off")
     else:
         raise RuntimeError(f"Could not read frame {index}")
+    if show:
+        plt.show()
     return fig, ax
 
 
@@ -64,18 +67,49 @@ def plot_distribution(
     scatter_source: Literal["gaze", "fixations", None] = "fixations",
     step_size: int = 10,
     sigma: Union[float, None] = 2,
-    width_height: Union[tuple[int, int], None] = None,
+    width_height: tuple[int, int] = (1600, 1200),
     cmap: Union[str, None] = "inferno",
     ax: Union[plt.Axes, None] = None,
+    show: bool = True,
 ):
     """
-    Plot a heatmap of all gaze and fixation data on a matplotlib axis.
+    Plot a heatmap of gaze or fixation data on a matplotlib axis.
+    Users can flexibly choose to generate a smoothed heatmap and/or scatter plot and
+    the source of the data (gaze or fixation).
 
     Parameters
     ----------
     rec : :class:`NeonRecording`
         Recording object containing the gaze and video data.
+    heatmap_source : {'gaze', 'fixations', None}
+        Source of the data to plot as a heatmap. If None, no heatmap is plotted.
+        Defaults to 'gaze'.
+    scatter_source : {'gaze', 'fixations', None}
+        Source of the data to plot as a scatter plot. If None, no scatter plot is plotted.
+        Defaults to 'fixations'. Gaze data is typically more dense and thus less suitable
+        for scatter plots.
+    step_size : int
+        Size of the grid cells in pixels. Defaults to 10.
+    sigma : float or None
+        Standard deviation of the Gaussian kernel used to smooth the heatmap.
+        If None or 0, no smoothing is applied. Defaults to 2.
+    width_height : tuple[int, int]
+        If video is not available, the width and height of the scene camera frames to
+        specify the heatmap dimensions. Defaults to (1600, 1200).
+    cmap : str or None
+        Colormap to use for the heatmap. Defaults to 'inferno'.
+    ax : :class:`matplotlib.pyplot.Axes` or None
+        Axis to plot the frame on. If ``None``, a new figure is created.
+        Defaults to ``None``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
 
+    Returns
+    -------
+    fig : :class:`matplotlib.pyplot.Figure`
+        Figure object containing the plot.
+    ax : :class:`matplotlib.pyplot.Axes`
+        Axis object containing the plot.
     """
     if heatmap_source is None and scatter_source is None:
         raise ValueError(
@@ -117,7 +151,8 @@ def plot_distribution(
     scatter_y = gaze_y if scatter_source == "gaze" else fix_y
 
     heatmap, _, _ = np.histogram2d(heatmap_x, heatmap_y, bins=(x_edges, y_edges))
-    heatmap = gaussian_filter(heatmap, sigma=sigma)
+    if sigma is not None or sigma > 0:
+        heatmap = gaussian_filter(heatmap, sigma=sigma)
 
     if heatmap_source is not None:
         h = ax.imshow(
@@ -134,5 +169,7 @@ def plot_distribution(
     ax.set_aspect("equal", "box")
     ax.set_xlabel("Scene camera x [px]")
     ax.set_ylabel("Scene camera y [px]")
+    if show:
+        plt.show()
 
     return fig, ax

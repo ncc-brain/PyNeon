@@ -60,6 +60,7 @@ class NeonVideo(cv2.VideoCapture):
         index: int = 0,
         ax: Union[plt.Axes, None] = None,
         auto_title: bool = True,
+        show: bool = True,
     ):
         """
         Plot a frame from the video on a matplotlib axis.
@@ -83,4 +84,4 @@ class NeonVideo(cv2.VideoCapture):
         ax : :class:`matplotlib.pyplot.Axes`
             Axis object containing the plot.
         """
-        return plot_frame(self, index, ax, auto_title)
+        return plot_frame(self, index, ax, auto_title, show)

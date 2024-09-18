@@ -19,6 +19,7 @@ from .preprocess import (
     estimate_scanpath,
     overlay_scanpath_on_video,
 )
+from .vis import plot_distribution
 from .export import export_motion_bids, exports_eye_bids
 
 
@@ -334,6 +335,68 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
+
+    def plot_distribution(
+        self,
+        heatmap_source: Literal["gaze", "fixations", None] = "gaze",
+        scatter_source: Literal["gaze", "fixations", None] = "fixations",
+        step_size: int = 10,
+        sigma: Union[float, None] = 2,
+        width_height: tuple[int, int] = (1600, 1200),
+        cmap: Union[str, None] = "inferno",
+        ax: Union[plt.Axes, None] = None,
+        show: bool = True,
+    ):
+        """
+        Plot a heatmap of gaze or fixation data on a matplotlib axis.
+        Users can flexibly choose to generate a smoothed heatmap and/or scatter plot and
+        the source of the data (gaze or fixation).
+
+        Parameters
+        ----------
+        rec : :class:`NeonRecording`
+            Recording object containing the gaze and video data.
+        heatmap_source : {'gaze', 'fixations', None}
+            Source of the data to plot as a heatmap. If None, no heatmap is plotted.
+            Defaults to 'gaze'.
+        scatter_source : {'gaze', 'fixations', None}
+            Source of the data to plot as a scatter plot. If None, no scatter plot is plotted.
+            Defaults to 'fixations'. Gaze data is typically more dense and thus less suitable
+            for scatter plots.
+        step_size : int
+            Size of the grid cells in pixels. Defaults to 10.
+        sigma : float or None
+            Standard deviation of the Gaussian kernel used to smooth the heatmap.
+            If None or 0, no smoothing is applied. Defaults to 2.
+        width_height : tuple[int, int]
+            If video is not available, the width and height of the scene camera frames to
+            specify the heatmap dimensions. Defaults to (1600, 1200).
+        cmap : str or None
+            Colormap to use for the heatmap. Defaults to 'inferno'.
+        ax : :class:`matplotlib.pyplot.Axes` or None
+            Axis to plot the frame on. If ``None``, a new figure is created.
+            Defaults to ``None``.
+        show : bool
+            Show the figure if ``True``. Defaults to True.
+
+        Returns
+        -------
+        fig : :class:`matplotlib.pyplot.Figure`
+            Figure object containing the plot.
+        ax : :class:`matplotlib.pyplot.Axes`
+            Axis object containing the plot.
+        """
+        return plot_distribution(
+            self,
+            heatmap_source,
+            scatter_source,
+            step_size,
+            sigma,
+            width_height,
+            cmap,
+            ax,
+            show,
+        )
 
     def roll_gaze_on_video(
         self,
