@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Union
 import matplotlib.pyplot as plt
+import json
 
 from .vis import plot_frame
 
@@ -35,10 +36,13 @@ class NeonVideo(cv2.VideoCapture):
         Height of the video frames in pixels.
     """
 
-    def __init__(self, video_file: Path, timestamps_file: Path):
+    def __init__(self, video_file: Path, timestamps_file: Path, info_file: Path):
         super().__init__(video_file)
         self.video_file = video_file
         self.timestamps_file = timestamps_file
+        self.info_file = info_file
+        with open(info_file) as f:
+            self.info = json.load(f)
         self.timestamps = (
             pd.read_csv(timestamps_file)["timestamp [ns]"].to_numpy().astype(np.int64)
         )

@@ -130,6 +130,7 @@ Recording duration: {self.info["duration"] / 1e9} s
                 "labels",
                 "saccades",
                 "world_timestamps",
+                "scene_video_info",
                 "scene_video",
             ],
             columns=["exist", "filename", "path"],
@@ -142,8 +143,11 @@ Recording duration: {self.info["duration"] / 1e9} s
         if len(video_path := list(self.recording_dir.glob("*.mp4"))) == 1:
             contents.loc["scene_video", :] = (True, video_path[0].name, video_path[0])
             if (camera_info := self.recording_dir / "scene_camera.json").is_file():
-                with open(camera_info) as f:
-                    self.camera_info = json.load(f)
+                contents.loc["scene_video_info", :] = (
+                    True,
+                    camera_info.name,
+                    camera_info,
+                )
             else:
                 raise FileNotFoundError(
                     "Scene video has no accompanying scene_camera.json in "
@@ -257,10 +261,12 @@ Recording duration: {self.info["duration"] / 1e9} s
             if (
                 self.contents.loc["scene_video", "exist"]
                 and self.contents.loc["world_timestamps", "exist"]
+                and self.contents.loc["scene_video_info", "exist"]
             ):
                 video_file = self.contents.loc["scene_video", "path"]
                 timestamp_file = self.contents.loc["world_timestamps", "path"]
-                self._video = NeonVideo(video_file, timestamp_file)
+                video_info_file = self.contents.loc["scene_video_info", "path"]
+                self._video = NeonVideo(video_file, timestamp_file, video_info_file)
             else:
                 warnings.warn(
                     "Scene video not loaded because no video or video timestamps file was found."
@@ -323,7 +329,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         """
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional ``"type"`` column denotes the event
-        type. If ``event_names`` is selected, its ``"timestamp [ns]"`` column will be 
+        type. If ``events`` is selected, its ``"timestamp [ns]"`` column will be
         renamed to ``"start timestamp [ns]"``, and the ``"name`` and ``"type"`` columns will
         be renamed to ``"message name"`` and ``"message type"`` respectively to provide
         a more readable output.

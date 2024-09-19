@@ -105,7 +105,9 @@ def rolling_average(
         )
 
     # Create a new DataFrame for the downsampled data
-    downsampled_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
+    downsampled_data = pd.DataFrame(
+        data=new_ts, columns=["timestamp [ns]"], dtype="Int64"
+    )
     downsampled_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
 
     # Convert window_size to nanoseconds
@@ -344,7 +346,7 @@ def concat_events(
     """
     Concatenate different events. All columns in the selected event type will be
     present in the final DataFrame. An additional ``"type"`` column denotes the event
-    type. If ``event_names`` is selected, its ``"timestamp [ns]"`` column will be 
+    type. If ``events`` is selected, its ``"timestamp [ns]"`` column will be
     renamed to ``"start timestamp [ns]"``, and the ``"name`` and ``"type"`` columns will
     be renamed to ``"message name"`` and ``"message type"`` respectively to provide
     a more readable output.
