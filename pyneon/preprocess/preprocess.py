@@ -72,7 +72,6 @@ def resample(
 def rolling_average(
     new_ts: np.ndarray,
     old_data: pd.DataFrame,
-    time_column: str = "timestamp [ns]",
 ) -> pd.DataFrame:
     """
     Apply rolling average over a time window to resampled data.
@@ -100,13 +99,13 @@ def rolling_average(
         old_data = resample(None, old_data)
 
     # assert that the new_ts has a lower sampling frequency than the old data
-    if np.mean(np.diff(new_ts)) < np.mean(np.diff(old_data[time_column])):
+    if np.mean(np.diff(new_ts)) < np.mean(np.diff(old_data["timestamp [ns]"])):
         raise ValueError(
             "new_ts must have a lower sampling frequency than the old data"
         )
 
     # Create a new DataFrame for the downsampled data
-    downsampled_data = pd.DataFrame(data=new_ts, columns=[time_column], dtype="Int64")
+    downsampled_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     downsampled_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
 
     # Convert window_size to nanoseconds
@@ -114,7 +113,7 @@ def rolling_average(
 
     # Loop through each column (excluding time columns) to compute the downsampling
     for col in old_data.columns:
-        if col == time_column or col == "time [s]":
+        if col == "timestamp [ns]" or col == "time [s]":
             continue
 
         # Initialize an empty list to store the downsampled values
@@ -128,8 +127,8 @@ def rolling_average(
 
             # Select rows from old_data that fall within the time window
             window_data = old_data[
-                (old_data[time_column] >= lower_bound)
-                & (old_data[time_column] <= upper_bound)
+                (old_data["timestamp [ns]"] >= lower_bound)
+                & (old_data["timestamp [ns]"] <= upper_bound)
             ]
 
             # Compute the average of the data within this window

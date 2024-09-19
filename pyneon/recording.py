@@ -520,7 +520,8 @@ Recording duration: {self.info["duration"] / 1e9} s
     def to_eye_bids(
         self,
         output_dir: Union[str, Path],
-        prefix: str = "sub-XX_task-YY_tracksys-NeonGaze",
+        prefix: str = "",
+        extra_metadata: dict = {},
     ):
         """
         Export eye-tracking data to Eye-tracking-BIDS format. Continuous samples
@@ -545,4 +546,4 @@ Recording duration: {self.info["duration"] / 1e9} s
         The extension is still being finialized. This method follows the latest standards
         outlined in https://github.com/bids-standard/bids-specification/pull/1128.
         """
-        exports_eye_bids(self, output_dir)
+        exports_eye_bids(self, output_dir, prefix, extra_metadata)

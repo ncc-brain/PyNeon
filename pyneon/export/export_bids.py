@@ -16,6 +16,35 @@ def export_motion_bids(
     prefix: str = "",
     extra_metadata: dict = {},
 ):
+    """
+    Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
+    file and metadata (with template fields) are saved to a .json file.
+    Users should later edit the metadata file according to the experiment to make
+    it BIDS-compliant.
+
+    Parameters
+    ----------
+    rec : :class:`NeonRecording`
+        Recording object containing the IMU data.
+    motion_dir : str or :class:`pathlib.Path`
+        Output directory to save the Motion-BIDS formatted data.
+    prefix : str, optional
+        Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
+        The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
+        (Fields in [] are optional). Files will be saved as
+        ``{prefix}_motion.<tsv|json>``.
+
+    Notes
+    -----
+    Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
+    standardize the organization of motion data for reproducible research [1]_.
+    For more information, see
+    https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html.
+
+    References
+    ----------
+    .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
+    """
     info = rec.info
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():

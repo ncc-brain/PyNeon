@@ -12,8 +12,6 @@ if TYPE_CHECKING:
 
 def map_gaze_to_video(
     rec: "NeonRecording",
-    resamp_float_kind: str = "linear",
-    resamp_other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
     Map gaze data to video frames.
