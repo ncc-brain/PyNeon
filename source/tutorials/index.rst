@@ -11,4 +11,5 @@ started with PyNeon.
 
     read_recording
     resample_and_concat
+    video
     export_to_bids

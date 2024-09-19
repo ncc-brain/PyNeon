@@ -21,7 +21,7 @@ Installation
 ============
 
 To install PyNeon, clone the PyNeon repository from
-https://github.com/NCCLabMPI/PyNeon and run:
+https://github.com/ncc-brain/PyNeon and run:
 
 .. code-block:: bash
 

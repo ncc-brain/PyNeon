@@ -423,4 +423,5 @@ def concat_events(
         concat_data = pd.concat([concat_data, data], ignore_index=True)
         print("\tEvents")
     concat_data.sort_values("start timestamp [ns]", inplace=True)
+    concat_data.reset_index(drop=True, inplace=True)
     return concat_data
