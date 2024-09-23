@@ -61,8 +61,8 @@ def estimate_scanpath(
     """
     Map fixations to video frames.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     rec : NeonRecording
         Recording object containing gaze and video data.
     lk_params : dict
@@ -189,8 +189,8 @@ def overlay_scanpath_on_video(
     """
     Overlay fixations and gaze data on video frames and save the resulting video.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     rec : NeonRecording
         Recording object containing gaze and video data.
     video_output_path : str

@@ -30,7 +30,6 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
-    "cv2": ("https://docs.opencv.org/master/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------

@@ -345,10 +345,10 @@ def concat_events(
 ) -> pd.DataFrame:
     """
     Concatenate different events. All columns in the selected event type will be
-    present in the final DataFrame. An additional ``"type"`` column denotes the event
-    type. If ``events`` is selected, its ``"timestamp [ns]"`` column will be
-    renamed to ``"start timestamp [ns]"``, and the ``"name`` and ``"type"`` columns will
-    be renamed to ``"message name"`` and ``"message type"`` respectively to provide
+    present in the final DataFrame. An additional ``type`` column denotes the event
+    type. If ``"events"`` is in ``event_names``, its ``timestamp [ns]`` column will be
+    renamed to ``start timestamp [ns]``, and the ``name`` and ``type`` columns will
+    be renamed to ``message name`` and ``message type`` respectively to provide
     a more readable output.
 
     Parameters
