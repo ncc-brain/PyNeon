@@ -425,3 +425,4 @@ def concat_events(
     concat_data.sort_values("start timestamp [ns]", inplace=True)
     concat_data.reset_index(drop=True, inplace=True)
     return concat_data
+

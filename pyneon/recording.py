@@ -16,6 +16,8 @@ from .preprocess import (
     map_gaze_to_video,
     estimate_scanpath,
     overlay_scanpath_on_video,
+    create_epoch,
+    extract_event_times,
 )
 from .vis import plot_distribution
 from .export import export_motion_bids, exports_eye_bids
@@ -345,6 +347,53 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
+    
+
+    def create_epoch(
+        self,
+        event_data: pd.DataFrame,
+        ref_time_data: Union[pd.DataFrame, str] = None,
+        global_ref_time: Union[int, float] = None,
+        t_before: float = 0.5,
+        t_after: float = 0.5,
+        time_unit: str = "ns",
+    ) -> pd.DataFrame:
+        """
+        Create epochs around events in the data stream.
+
+        Parameters
+        ----------
+        event_data : :class:`pandas.DataFrame`, optional
+            Event data to create epochs around. Must contain a 'timestamp [ns]' column.
+            If ``None``, the events from the recording are used.
+        global_ref_time : int or float, optional
+            Global reference time to use for the epochs. If None, the first timestamp
+            of the first event is used. Defaults to None.
+
+        Returns
+        -------
+        epochs : :class:`pandas.DataFrame`
+            DataFrame containing the epochs.
+        """
+
+
+
+        #check if ref_time_data is str, call extract_event_times with the event_data
+        if isinstance(ref_time_data, str):
+            ref_time_data = extract_event_times(self, t_before, t_after, ref_time_data)
+
+        #check if ref time data is a df and whether is has the message column
+        elif isinstance(ref_time_data, pd.DataFrame): 
+            if 'message' in ref_time_data.columns:
+                ref_time_data = ref_time_data   
+            else:
+                ref_time_data = 
+
+
+
+
+        return create_epoch(ref_time_data, event_data, global_ref_time)
+
 
     def plot_distribution(
         self,
