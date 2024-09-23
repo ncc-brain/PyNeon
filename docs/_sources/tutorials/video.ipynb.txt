@@ -1,0 +1,292 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Mapping Scanpath to video\n",
+    "\n",
+    "In this tutorial, we will map gaze data from an eye-tracking recording to video frames, estimate a scanpath, and overlay the gaze fixations on the video. We will use the `pyneon` library to work with Neon eye-tracking recordings, which contain video and event data, including gaze information.\n",
+    "\n",
+    "---\n",
+    "\n",
+    "## 1. Setup: Loading a Neon Recording\n",
+    "\n",
+    "First, we load the Neon recording, which contains video and gaze data. Ensure that you have installed the required libraries such as `pyneon` and have the recording dataset available.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "Recording ID: 9265f7c1-e3ce-4108-9dd1-639305591f79\n",
+      "Wearer ID: 990a3de0-5a1a-4f07-bf9b-d82369213dbf\n",
+      "Wearer name: Qian\n",
+      "Recording start time: 2024-07-24 16:31:22.223000\n",
+      "Recording duration: 96.226 s\n",
+      "                 exist              filename                                              path\n",
+      "3d_eye_states     True     3d_eye_states.csv     ..\\..\\data\\OpticalFlow\\data\\3d_eye_states.csv\n",
+      "blinks            True            blinks.csv            ..\\..\\data\\OpticalFlow\\data\\blinks.csv\n",
+      "events            True            events.csv            ..\\..\\data\\OpticalFlow\\data\\events.csv\n",
+      "fixations         True         fixations.csv         ..\\..\\data\\OpticalFlow\\data\\fixations.csv\n",
+      "gaze              True              gaze.csv              ..\\..\\data\\OpticalFlow\\data\\gaze.csv\n",
+      "imu               True               imu.csv               ..\\..\\data\\OpticalFlow\\data\\imu.csv\n",
+      "labels            True            labels.csv            ..\\..\\data\\OpticalFlow\\data\\labels.csv\n",
+      "saccades          True          saccades.csv          ..\\..\\data\\OpticalFlow\\data\\saccades.csv\n",
+      "world_timestamps  True  world_timestamps.csv  ..\\..\\data\\OpticalFlow\\data\\world_timestamps.csv\n",
+      "scene_video       True             video.mp4             ..\\..\\data\\OpticalFlow\\data\\video.mp4\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Import necessary libraries\n",
+    "import sys\n",
+    "import numpy as np\n",
+    "from pyneon import NeonDataset, NeonRecording\n",
+    "import pandas as pd\n",
+    "\n",
+    "# Define path to the recording directory\n",
+    "recording_dir = \"../../data/OpticalFlow/data\"\n",
+    "\n",
+    "# Load the recording\n",
+    "recording = NeonRecording(recording_dir)\n",
+    "\n",
+    "# Print recording details\n",
+    "print(recording)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "\n",
+    "## 2. Mapping Gaze Data to Video Frames\n",
+    "\n",
+    "In Neon recordings, gaze events are not naturally synchronized with the video. To map gaze data to specific video frames, we can use the `map_gaze_to_video` method. This method requires the `pyneon.video` object for determination of video timestamps, the `pyneon.fixations` object to make use of PupilLabs fixation detection pipeline and the `pyneon.gaze` object for improved time resolution of gaze estimation.\n",
+    "\n",
+    "By default, Neon reports fixations with a single coordinate. This is computed as average between all gaze coordinates over the interval dennoted as a fixation. However, this clashes with the funcional definition of a fixation as _tracking a fixed point in space_, used by Neon.\n",
+    "\n",
+    "Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilised. As such, taking an average gaze coordinate over the enntire duration will not correspond to the location of the sign, or the fixation, ar any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.\n",
+    "\n",
+    "Therefore, we use partial averages of gaze locations around the respective frame's timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimisation, by averaging over microsaccades around the actual fixation target as well as random errors."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "           timestamp [ns]   time [s]  gaze x [px]  gaze y [px]  worn  \\\n",
+      "2848  1721831578297311111  96.074311   844.910429   846.663286   1.0   \n",
+      "2849  1721831578330655555  96.107656   839.472833   850.990000   1.0   \n",
+      "2850  1721831578364000000  96.141000   836.362571   855.123286   1.0   \n",
+      "2851  1721831578397344444  96.174344   838.284857   851.882143   1.0   \n",
+      "2852  1721831578430688888  96.207689   839.350333   851.466333   1.0   \n",
+      "\n",
+      "     fixation id blink id  azimuth [deg]  elevation [deg] fixation status  \n",
+      "2848       219.0     <NA>       1.945823       -15.279611          during  \n",
+      "2849       219.0     <NA>       1.588790       -15.557944          during  \n",
+      "2850       219.0     <NA>       1.384917       -15.823291          during  \n",
+      "2851       219.0     <NA>       1.510761       -15.615347          during  \n",
+      "2852       219.0     <NA>       1.580948       -15.588490             end  \n"
+     ]
+    }
+   ],
+   "source": [
+    "# Map gaze data to the video timestamps\n",
+    "recording.map_gaze_to_video()\n",
+    "\n",
+    "# Inspect the mapped gaze data\n",
+    "print(recording.mapped_gaze.tail())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Above, we can see that each frame gets a current gaze position as well as a fixation status. Currently, three types of fixation status are used:\n",
+    "\n",
+    "1. `start` denoting the first frame corresponding to a fixation\n",
+    "2. `during` corresponding to intermediate frames of the same fixation\n",
+    "3. `end` denoting the last frame of the fixation\n",
+    "\n",
+    "This determination will become relevant for tracking the scanpath with optical flow. After all, while a fixation is still active, we get up-to-date gaze information. Only after its end, tracking becomes necessary."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "\n",
+    "## 3. Estimating the Scanpath\n",
+    "\n",
+    "Having matched every frame with a gaze coordinate, we can now get into the meat of the scanpath estimation. In dynamic scenes, the same object will not occupy the same scene-camera location over time. Therefore, we need to continuously map past fixation points as long as they are still visible in the frame.\n",
+    "\n",
+    "The `estimate_scanpath` method achieves this by feeding fixation point denoted as `end` into a Lucas-Kanade sparse optical flow algorithm. This algorithm compares the video in vicinity of the point with the subsequent frame, updating the location in dependence of its movement. While a point is tracked, its status is flagged as `tracked`. In practice, many scene frames will have multiple simultaneously present past fixations. Our implementation carries them and repeately performs an optical flow estimation for each point. Only when they can no longer be tracked, will they be flagged as `lost` and subsequently dropped for the next frame.\n",
+    "\n",
+    "It should be noted that this algorithm is not optimised for performance and that it will take a considerable amount of time to run on limited hardware. For our computers, the algorithm takes roughly half the time of the video, though this benchmark heavily depends on the density of past fixation points and computational ressources\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "   time                                          fixations\n",
+      "0  0.00    fixation id   x   y fixation status\n",
+      "0       ...\n",
+      "1  0.05    fixation id   x   y fixation status\n",
+      "1       ...\n",
+      "2  0.10    fixation id   x   y fixation status\n",
+      "2       ...\n",
+      "3  0.15    fixation id   x   y fixation status\n",
+      "3       ...\n",
+      "4  0.20    fixation id   x   y fixation status\n",
+      "4       ...\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Estimate the scanpath based on the mapped gaze data\n",
+    "recording.estimate_scanpath()\n",
+    "\n",
+    "# Save the estimated scanpath as a pickle and CSV\n",
+    "recording.estimated_scanpath.to_pickle(\"estimated_scanpath.pkl\")\n",
+    "recording.estimated_scanpath.to_csv(\"estimated_scanpath.csv\")\n",
+    "\n",
+    "# Inspect the estimated scanpath\n",
+    "print(recording.estimated_scanpath.head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We should take a moment to understand the format of the `estimated_scanpath` property. As we care about getting a scanpath mapped on every single video-frame, we create it as a dataframe of dataframes. As such, every row carries the timestamp of the unnderlying video and saves a dataframe in the `fixations` cell. In this dataframe, every present fixation is provided with an id, coordinates and a fixation status, as seen below. The benefit of treating is a dataframe is the possibility to use intuitive pandas indexing, allowing us, for example, to get a list of fixations at frame 1334. This frame corresponds to a turn with a lot of lost fixations.\n",
+    "\n",
+    "As a quirk of Neon taking some time to start up, the first frames will usually not yield any usable results. Still, we carry them for consistency. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "   fixation id            x           y fixation status\n",
+      "0        102.0  1195.487429  495.576714          during\n",
+      "1         98.0    28.327660  473.548737         tracked\n",
+      "2         97.0   621.986206  691.748291         tracked\n",
+      "3         96.0   154.725586  919.655640         tracked\n",
+      "4         93.0   258.866272  648.244324         tracked\n",
+      "5         91.0    24.861883  335.163666         tracked\n",
+      "6         88.0          NaN         NaN            lost\n",
+      "7         81.0    88.962830  318.220032         tracked\n",
+      "8         80.0    11.042568  376.608856         tracked\n",
+      "9         79.0          NaN         NaN            lost\n",
+      "10        78.0          NaN         NaN            lost\n",
+      "11        74.0          NaN         NaN            lost\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(recording.estimated_scanpath[\"fixations\"][1334])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "\n",
+    "## 4. Understanding Fixation Status\n",
+    "\n",
+    "Each fixation is assigned a status that indicates its lifecycle:\n",
+    "\n",
+    "- **start**: first frame of fixation\n",
+    "- **during**: intermediate frames of fixation\n",
+    "- **end**: last frame of fixation\n",
+    "- **tracked**: Optical flow algorithm tracks fixation\n",
+    "- **lost**: Tracking is lost, fixation is no longer tracked and gets dropped\n",
+    "\n",
+    "---\n",
+    "\n",
+    "## 5. Overlaying Fixations on the Video\n",
+    "\n",
+    "Now that we have the scanpath, we can overlay the gaze fixations on the video. This creates a video output with overlaid fixations, where:\n",
+    "\n",
+    "- A **blue dot** represents the current gaze location.\n",
+    "- **Green dots** represent tracked fixations.\n",
+    "- A **red dot** indicates no fixation (saccades or blinks).\n",
+    "\n",
+    "Further, we draw connecting lines between past fixations to show the scanpath for the current video. The show_video option creates a live-output of the video rendering, but also increases the runtime."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Overlay the scanpath on the video and show the output\n",
+    "recording.overlay_scanpath_on_video(\"../../data/OpticalFlow/test.mp4\", show_video=True)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "\n",
+    "## Summary\n",
+    "\n",
+    "- **Mapping Gaze to Video**: We used the `map_gaze_to_video` method to match gaze data with video frames based on timestamps.\n",
+    "- **Estimating Scanpath**: The scanpath was estimated using `estimate_scanpath`, which tracks fixations and uses optical flow to follow past fixations across scene changes.\n",
+    "- **Overlaying Fixations**: The fixations were visualized on the video by calling `overlay_fixations_on_video`.\n",
+    "\n",
+    "This workflow can be used to process eye-tracking data, align it with video frames, and visualize gaze movements within video recordings.\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "pyneon",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

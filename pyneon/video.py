@@ -23,7 +23,7 @@ class NeonVideo(cv2.VideoCapture):
     Attributes
     ----------
     timestamps : np.ndarray
-        Timestamps of the video frames.
+        Timestamps of the video frames in nanoseconds.
     ts : np.ndarray
         Alias for timestamps.
     n_frames : int
