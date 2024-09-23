@@ -405,7 +405,7 @@ It must contain a <code class="docutils literal notranslate"><span class="pre">t
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.timestamps">
 <span class="sig-name descname"><span class="pre">timestamps</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.timestamps" title="Link to this definition">#</a></dt>
-<dd><p>Timestamps of the stream.</p>
+<dd><p>Timestamps of the stream in nanoseconds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
@@ -525,52 +525,56 @@ by default <code class="docutils literal notranslate"><span class="pre">False</s
 <dt class="sig sig-object py" id="pyneon.stream.NeonGaze">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonGaze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonGaze" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a></p>
-<p>Gaze data.</p>
+<p>Gaze data that inherits attributes and methods from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.stream.NeonEyeStates">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonEyeStates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonEyeStates" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a></p>
-<p>3D eye states data.</p>
+<p>3D eye states data that inherits attributes and methods from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.stream.NeonIMU">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonIMU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonIMU" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a></p>
-<p>IMU data.</p>
+<p>IMU data that inherits attributes and methods from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class" id="module-pyneon.events">
 <dt class="sig sig-object py" id="pyneon.events.NeonEV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonEV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonEV" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonData" title="pyneon.data.NeonData"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonData</span></code></a></p>
-<p>Base for Neon event data (blinks, fixations, saccades, messages).</p>
+<p>Base for Neon event data (blinks, fixations, saccades, “events” messages).</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.events.NeonBlinks">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonBlinks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonBlinks" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
+<p>Blink data.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.events.NeonFixations">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonFixations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonFixations" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
+<p>Fixation data.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.events.NeonSaccades">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonSaccades</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonSaccades" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
+<p>Saccade data.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.events.NeonEvents">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonEvents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonEvents" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
+<p>Event data.</p>
 </dd></dl>
 
 <dl class="py class" id="module-pyneon.video">
@@ -589,7 +593,7 @@ by default <code class="docutils literal notranslate"><span class="pre">False</s
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.video.NeonVideo.timestamps">
 <span class="sig-name descname"><span class="pre">timestamps</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.timestamps" title="Link to this definition">#</a></dt>
-<dd><p>Timestamps of the video frames.</p>
+<dd><p>Timestamps of the video frames in nanoseconds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>

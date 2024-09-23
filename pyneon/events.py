@@ -4,7 +4,7 @@ import pandas as pd
 
 class NeonEV(NeonData):
     """
-    Base for Neon event data (blinks, fixations, saccades, messages).
+    Base for Neon event data (blinks, fixations, saccades, "events" messages).
     """
 
     def __init__(self, file):
@@ -16,6 +16,8 @@ class NeonEV(NeonData):
 
 
 class NeonBlinks(NeonEV):
+    """Blink data."""
+
     def __init__(self, file):
         super().__init__(file)
         self.data = self.data.astype(
@@ -29,6 +31,8 @@ class NeonBlinks(NeonEV):
 
 
 class NeonFixations(NeonEV):
+    """Fixation data."""
+
     def __init__(self, file):
         super().__init__(file)
         self.data = self.data.astype(
@@ -46,6 +50,8 @@ class NeonFixations(NeonEV):
 
 
 class NeonSaccades(NeonEV):
+    """Saccade data."""
+
     def __init__(self, file):
         super().__init__(file)
         self.data = self.data.astype(
@@ -63,6 +69,8 @@ class NeonSaccades(NeonEV):
 
 
 class NeonEvents(NeonEV):
+    """Event data."""
+
     def __init__(self, file):
         super().__init__(file)
         self.data = self.data.astype(

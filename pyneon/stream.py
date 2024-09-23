@@ -22,7 +22,7 @@ class NeonStream(NeonData):
     data : pandas.DataFrame
         DataFrame containing the stream data.
     timestamps : np.ndarray
-        Timestamps of the stream.
+        Timestamps of the stream in nanoseconds.
     ts : np.ndarray
         Alias for timestamps.
     first_ts : int
@@ -105,7 +105,7 @@ class NeonStream(NeonData):
 
 class NeonGaze(NeonStream):
     """
-    Gaze data.
+    Gaze data that inherits attributes and methods from :class:`NeonStream`.
     """
 
     def __init__(self, file: Path):
@@ -128,7 +128,7 @@ class NeonGaze(NeonStream):
 
 class NeonEyeStates(NeonStream):
     """
-    3D eye states data.
+    3D eye states data that inherits attributes and methods from :class:`NeonStream`.
     """
 
     def __init__(self, file: Path):
@@ -158,7 +158,7 @@ class NeonEyeStates(NeonStream):
 
 class NeonIMU(NeonStream):
     """
-    IMU data.
+    IMU data that inherits attributes and methods from :class:`NeonStream`.
     """
 
     def __init__(self, file: Path):
