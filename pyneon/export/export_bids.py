@@ -59,18 +59,18 @@ def export_motion_bids(
     imu = rec.imu
     if imu is None:
         raise ValueError("No IMU data found in the recording.")
-    resamp_data = imu.resample()
-    motion_first_ts = resamp_data.loc[0, "timestamp [ns]"]
+    interp_data = imu.interpolate()
+    motion_first_ts = interp_data.loc[0, "timestamp [ns]"]
     motion_acq_time = datetime.datetime.fromtimestamp(motion_first_ts / 1e9).strftime(
         "%Y-%m-%dT%H:%M:%S.%f"
     )
-    resamp_data = resamp_data.drop(columns=["timestamp [ns]", "time [s]"])
+    interp_data = interp_data.drop(columns=["timestamp [ns]", "time [s]"])
 
-    resamp_data.to_csv(
+    interp_data.to_csv(
         motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a"
     )
 
-    ch_names = resamp_data.columns
+    ch_names = interp_data.columns
     ch_names = [re.sub(r"\s\[[^\]]*\]", "", ch) for ch in ch_names]
     channels = pd.DataFrame(
         {

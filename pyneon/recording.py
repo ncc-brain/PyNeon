@@ -12,7 +12,7 @@ from .video import NeonVideo
 from .preprocess import (
     concat_streams,
     concat_events,
-    rolling_average,
+    window_average,
     map_gaze_to_video,
     estimate_scanpath,
     overlay_scanpath_on_video,
@@ -265,13 +265,10 @@ Recording duration: {self.info["duration"] / 1e9} s
         """
         if self._video is None:
             if (
-                self.contents.loc["scene_video", "exist"]
-                and self.contents.loc["world_timestamps", "exist"]
-                and self.contents.loc["scene_video_info", "exist"]
+                (video_file := self.contents.loc["scene_video", "path"])
+                and (timestamp_file := self.contents.loc["world_timestamps", "path"])
+                and (video_info_file := self.contents.loc["scene_video_info", "path"])
             ):
-                video_file = self.contents.loc["scene_video", "path"]
-                timestamp_file = self.contents.loc["world_timestamps", "path"]
-                video_info_file = self.contents.loc["scene_video_info", "path"]
                 self._video = NeonVideo(video_file, timestamp_file, video_info_file)
             else:
                 warnings.warn(
@@ -428,13 +425,13 @@ Recording duration: {self.info["duration"] / 1e9} s
             show,
         )
 
-    def roll_gaze_on_video(
+    def gaze_on_video(
         self,
     ) -> pd.DataFrame:
         """
-        Apply rolling average over a time window to gaze data.
+        Apply window average over video timestamps to gaze data.
         """
-        return rolling_average(self.video.ts, self.gaze.data)
+        return window_average(self.video.ts, self.gaze.data)
 
     def map_gaze_to_video(
         self,

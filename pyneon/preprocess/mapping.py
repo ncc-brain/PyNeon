@@ -34,7 +34,7 @@ def map_gaze_to_video(
         raise ValueError("No video data available.")
 
     # Resample the gaze data to the video timestamps
-    mapped_gaze = rec.roll_gaze_on_video()
+    mapped_gaze = rec.gaze_on_video()
 
     # Mark the fixation status of each frame
     mapped_gaze["fixation status"] = pd.NA

@@ -4,7 +4,7 @@ import numpy as np
 from typing import Union
 
 from .data import NeonData
-from .preprocess import resample
+from .preprocess import interpolate
 
 
 class NeonStream(NeonData):
@@ -59,7 +59,7 @@ class NeonStream(NeonData):
         self.duration = float(self.times[-1] - self.times[0])
         self.sampling_freq_effective = self.data.shape[0] / self.duration
 
-    def resample(
+    def interpolate(
         self,
         new_ts: Union[None, np.ndarray] = None,
         float_kind: str = "linear",
@@ -67,28 +67,28 @@ class NeonStream(NeonData):
         inplace: bool = False,
     ) -> pd.DataFrame:
         """
-        Resample the stream to a new set of timestamps.
+        Interpolate the stream to a new set of timestamps.
 
         Parameters
         ----------
         new_ts : np.ndarray, optional
-            New timestamps to resample the stream to. If ``None``,
-            the stream is resampled to its nominal sampling frequency according to
-            https://pupil-labs.com/products/neon/specs.
+            New timestamps to evaluate the interpolant at. If ``None``, new timestamps
+            are generated according to the nominal sampling frequency of the stream as
+            specified by Pupil Labs: https://pupil-labs.com/products/neon/specs.
+        data : pd.DataFrame
+            Data to interpolate. Must contain a monotonically increasing
+            ``timestamp [ns]`` column.
         float_kind : str, optional
             Kind of interpolation applied on columns of float type,
             by default "linear". For details see :class:`scipy.interpolate.interp1d`.
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
             by default "nearest".
-        inplace : bool, optional
-            Replace stream data with resampled data if ``True``,
-            by default ``False``.
 
         Returns
         -------
         pandas.DataFrame
-            Resampled data.
+            Interpolated data.
         """
         # If new_ts is not provided, generate a evenly spaced array of timestamps
         if new_ts is None:
@@ -96,11 +96,11 @@ class NeonStream(NeonData):
             new_ts = np.arange(self.first_ts, self.last_ts, step_size, dtype=np.int64)
             assert new_ts[0] == self.first_ts
             assert np.all(np.diff(new_ts) == step_size)
-        resamp_data = resample(new_ts, self.data, float_kind, other_kind)
+        new_data = interpolate(new_ts, self.data, float_kind, other_kind)
         if inplace:
-            self.data = resamp_data
+            self.data = new_data
             self._get_attributes()
-        return resamp_data
+        return new_data
 
 
 class NeonGaze(NeonStream):
