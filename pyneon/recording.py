@@ -16,8 +16,6 @@ from .preprocess import (
     map_gaze_to_video,
     estimate_scanpath,
     overlay_scanpath_on_video,
-    create_epoch,
-    extract_event_times,
 )
 from .vis import plot_distribution
 from .export import export_motion_bids, exports_eye_bids
@@ -55,7 +53,9 @@ class NeonRecording:
         ├── labels.csv
         ├── world_timestamps.csv
         ├── scene_camera.json
-        └── <scene_video>.mp4 (if present)
+        ├── <scene_video>.mp4 (if present)
+        ├── scanpath.pkl (after executing `estimate_scanpath`)
+        └── video_with_scanpath.mp4 (after executing `overlay_scanpath_on_video`)
 
     Streams, events, (and scene video) will be located but not loaded until
     accessed as properties such as ``gaze``, ``imu``, and ``eye_states``.
@@ -109,6 +109,8 @@ class NeonRecording:
         self._saccades = None
         self._events = None
         self._video = None
+
+        self._scanpath = None
 
         self._get_contents()
 
@@ -277,6 +279,18 @@ Recording duration: {self.info["duration"] / 1e9} s
                 )
         return self._video
 
+    @property
+    def scanpath(self) -> Union[pd.DataFrame, None]:
+        """
+        Returns the scanpath data if it exists, otherwise None.
+        """
+        if self._scanpath is None:
+            if (scanpath_file := self.recording_dir / "scanpath.pkl").is_file():
+                self._scanpath = pd.read_pickle(scanpath_file)
+            else:  # compute scanpath
+                self._scanpath = self.estimate_scanpath()
+        return self._scanpath
+
     def concat_streams(
         self,
         stream_names: Union[str, list[str]],
@@ -351,8 +365,6 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
-    
-
 
     def plot_distribution(
         self,
