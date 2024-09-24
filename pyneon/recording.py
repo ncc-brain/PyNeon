@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import warnings
 import matplotlib.pyplot as plt
+from numbers import Number
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
@@ -291,7 +292,7 @@ Recording duration: {self.info["duration"] / 1e9} s
     def concat_streams(
         self,
         stream_names: Union[str, list[str]],
-        sampling_freq: Union[float, int, str] = "min",
+        sampling_freq: Union[Number, str] = "min",
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
         inplace: bool = False,

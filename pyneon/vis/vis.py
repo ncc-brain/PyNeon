@@ -3,6 +3,7 @@ from scipy.ndimage import gaussian_filter
 import cv2
 import matplotlib.pyplot as plt
 
+from numbers import Number
 from typing import TYPE_CHECKING, Union, Literal
 
 if TYPE_CHECKING:
@@ -66,7 +67,7 @@ def plot_distribution(
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
     scatter_source: Literal["gaze", "fixations", None] = "fixations",
     step_size: int = 10,
-    sigma: Union[float, None] = 2,
+    sigma: Union[Number, None] = 2,
     width_height: tuple[int, int] = (1600, 1200),
     cmap: Union[str, None] = "inferno",
     ax: Union[plt.Axes, None] = None,

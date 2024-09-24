@@ -4,6 +4,8 @@ import numpy as np
 from typing import TYPE_CHECKING, Union
 from scipy.interpolate import interp1d
 
+from numbers import Number
+
 if TYPE_CHECKING:
     from ..recording import NeonRecording
 
@@ -125,13 +127,11 @@ def window_average(
                 (data["timestamp [ns]"] >= lower_bound)
                 & (data["timestamp [ns]"] <= upper_bound)
             ]
-            # Compute the average of the data within this window
+            # Append data within this window
             if not window_data.empty:
-                mean_value = window_data[col].mean()
+                new_values.append(window_data[col].mean())
             else:
-                mean_value = np.nan
-            # Append the averaged value to the list
-            new_values.append(mean_value)
+                new_values.append(np.nan)
         # Assign the downsampled values to the new DataFrame
         new_data[col] = new_values
 
@@ -144,7 +144,7 @@ _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 def concat_streams(
     rec: "NeonRecording",
     stream_names: Union[str, list[str]] = "all",
-    sampling_freq: Union[float, int, str] = "min",
+    sampling_freq: Union[Number, str] = "min",
     interp_float_kind: str = "linear",
     interp_other_kind: str = "nearest",
     inplace: bool = False,
