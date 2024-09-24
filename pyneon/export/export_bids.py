@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import json
 import datetime
+import re
 from typing import Union, TYPE_CHECKING
 
 from ._bids_parameters import MOTION_META_DEFAULT
@@ -32,7 +33,9 @@ def export_motion_bids(
         Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
         The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
         (Fields in [] are optional). Files will be saved as
-        ``{prefix}_motion.<tsv|json>``.
+        ``{prefix}_motion.<tsv|json>`` and ``{prefix}_channels.tsv``.
+    extra_metadata : dict, optional
+        Additional metadata to include in the JSON file. Defaults to an empty dict.
 
     Notes
     -----
@@ -45,7 +48,7 @@ def export_motion_bids(
     ----------
     .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
     """
-    info = rec.info
+
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():
         raise FileNotFoundError(f"Directory not found: {motion_dir}")
@@ -67,17 +70,20 @@ def export_motion_bids(
         motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a"
     )
 
+    ch_names = resamp_data.columns
+    ch_names = [re.sub(r"\s\[[^\]]*\]", "", ch) for ch in ch_names]
     channels = pd.DataFrame(
         {
-            "name": resamp_data.columns,
+            "name": ch_names,
             "component": ["x", "y", "z"] * 3 + ["w", "x", "y", "z"],
             "type": ["GYRO"] * 3 + ["ACCEL"] * 3 + ["ORNT"] * 7,
-            "placement": ["glasses frame"] * 13,
-            "units": ["deg/s"] * 3 + ["g"] * 3 + ["deg"] * 4 + ["arbitrary"] * 3,
+            "placement": ["head-mounted frame"] * 13,
+            "units": ["deg/s"] * 3 + ["g"] * 3 + ["deg"] * 3 + ["arbitrary"] * 4,
         }
     )
     channels.to_csv(channels_tsv_path, sep="\t", index=False)
 
+    info = rec.info
     metadata = MOTION_META_DEFAULT
     metadata.update(
         {
@@ -107,7 +113,12 @@ def export_motion_bids(
         scans = pd.read_csv(scans_path, sep="\t")
         scans = pd.concat([scans, new_scan], ignore_index=True)
     else:
-        scans_path = scans_dir / "sub-XXX_scans.tsv"
+        match = re.search(r"(sub-\d+)(_ses-\d+)?", prefix)
+        if match:
+            scan_prefix = match.group(0)
+        else:
+            scan_prefix = "sub-XX_ses-YY"
+        scans_path = scans_dir / f"{scan_prefix}_scans.tsv"
         scans = new_scan
     scans.to_csv(scans_path, sep="\t", index=False)
 
