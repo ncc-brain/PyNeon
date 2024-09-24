@@ -142,7 +142,6 @@ def extract_event_times(
             message = 'saccade'
         elif 'blink id' in event_data.columns:
             message = 'blink'
-        else:
 
         event_times = event_data[['start timestamp [ns]']].copy()
         event_times.rename(columns={'start timestamp [ns]': 'ref_time'}, inplace=True)

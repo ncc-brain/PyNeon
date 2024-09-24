@@ -74,8 +74,11 @@ class NeonRecording:
     info : dict
         Information about the recording. Read from ``info.json``. For details, see
         https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json.
+    start_time : int
+        Start time (in ns) of the recording as in ``info.json``.
+        May not match the start time of each data stream.
     start_datetime : :class:`datetime.datetime`
-        Start time of the recording as in ``info.json``.
+        Start time (datetime) of the recording as in ``info.json``.
         May not match the start time of each data stream.
     contents : :class:`pandas.DataFrame`
         Contents of the recording directory. Each index is a stream or event name
@@ -92,7 +95,8 @@ class NeonRecording:
 
         with open(info_path) as f:
             self.info = json.load(f)
-        self.start_datetime = datetime.fromtimestamp(self.info["start_time"] / 1e9)
+        self.start_time = int(self.info["start_time"])
+        self.start_datetime = datetime.fromtimestamp(self.start_time / 1e9)
 
         self.recording_id = self.info["recording_id"]
         self.recording_dir = recording_dir
@@ -348,51 +352,6 @@ Recording duration: {self.info["duration"] / 1e9} s
         """
         return concat_events(self, event_names)
     
-
-    def create_epoch(
-        self,
-        event_data: pd.DataFrame,
-        ref_time_data: Union[pd.DataFrame, str] = None,
-        global_ref_time: Union[int, float] = None,
-        t_before: float = 0.5,
-        t_after: float = 0.5,
-        time_unit: str = "ns",
-    ) -> pd.DataFrame:
-        """
-        Create epochs around events in the data stream.
-
-        Parameters
-        ----------
-        event_data : :class:`pandas.DataFrame`, optional
-            Event data to create epochs around. Must contain a 'timestamp [ns]' column.
-            If ``None``, the events from the recording are used.
-        global_ref_time : int or float, optional
-            Global reference time to use for the epochs. If None, the first timestamp
-            of the first event is used. Defaults to None.
-
-        Returns
-        -------
-        epochs : :class:`pandas.DataFrame`
-            DataFrame containing the epochs.
-        """
-
-
-
-        #check if ref_time_data is str, call extract_event_times with the event_data
-        if isinstance(ref_time_data, str):
-            ref_time_data = extract_event_times(self, t_before, t_after, ref_time_data)
-
-        #check if ref time data is a df and whether is has the message column
-        elif isinstance(ref_time_data, pd.DataFrame): 
-            if 'message' in ref_time_data.columns:
-                ref_time_data = ref_time_data   
-            else:
-                ref_time_data = 
-
-
-
-
-        return create_epoch(ref_time_data, event_data, global_ref_time)
 
 
     def plot_distribution(
