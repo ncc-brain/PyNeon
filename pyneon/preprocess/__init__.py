@@ -10,6 +10,6 @@ __all__ = [
     "map_gaze_to_video",
     "estimate_scanpath",
     "overlay_scanpath_on_video",
-    "create_epoch"
-    "extract_event_times"
+    "create_epoch",
+    "extract_event_times",
 ]

@@ -2,7 +2,7 @@ from pathlib import Path
 import requests
 import zipfile
 
-data_dir = Path(__file__).parent.parent / "data"
+data_dir = Path(__file__).parent.parent.parent / "data"
 
 data_url_dict = {
     "OfficeWalk": "https://osf.io/download/3gvyp/",

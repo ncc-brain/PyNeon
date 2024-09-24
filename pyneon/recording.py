@@ -16,8 +16,6 @@ from .preprocess import (
     map_gaze_to_video,
     estimate_scanpath,
     overlay_scanpath_on_video,
-    create_epoch,
-    extract_event_times,
 )
 from .vis import plot_distribution
 from .export import export_motion_bids, exports_eye_bids
@@ -351,8 +349,6 @@ Recording duration: {self.info["duration"] / 1e9} s
             Concatenated events.
         """
         return concat_events(self, event_names)
-    
-
 
     def plot_distribution(
         self,
