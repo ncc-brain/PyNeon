@@ -105,12 +105,12 @@ class Epoch:
 
 def create_epoch(
     data: pd.DataFrame,
+    times_df: Union[pd.DataFrame, None] = None,
     t_ref: Union[np.ndarray, None] = None,
     t_before: Union[np.ndarray, Number, None] = None,
     t_after: Union[np.ndarray, Number, None] = None,
     description: Union[np.ndarray, None] = None,
-    times_df: Union[pd.DataFrame, None] = None,
-):
+    ):
     """
     Create epochs in the data stream(s) based on the input epochs dataframe.
 
@@ -290,12 +290,11 @@ def extract_event_times(
     return event_times
 
 
-# create a function to create event times from a list or array of ref times, a fixed t_before, t_after, and message, plus an optional global_t_ref
 def construct_event_times(
     t_refs: Union[list, np.ndarray],
-    t_before: float,
-    t_after: float,
-    description: str,
+    t_before: Union[np.ndarray, float, None],
+    t_after: Union[np.ndarray, float, None],
+    description: Union[np.ndarray, str],
     global_t_ref: Union[int, float] = 0,
     time_unit: str = "ns",
 ) -> pd.DataFrame:
@@ -306,28 +305,58 @@ def construct_event_times(
     ----------
     t_refs : list or np.ndarray
         List or array of reference times.
-    t_before : float
+    t_before : float or np.ndarray
         Time before the reference time to start the epoch, in seconds.
-    t_after : float
+    t_after : float or np.ndarray
         Time after the reference time to end the epoch, in seconds.
-    description : str
+    description : str or np.ndarray
         Description or label associated with the epoch.
     global_t_ref : int or float, optional
         Global reference time to be added to each reference time, by default None.
+    time_unit : str, optional
+        Unit of time for the reference times ('ns' or 's'), by default "ns".
 
     Returns
     -------
     event_times : pd.DataFrame
         DataFrame containing the constructed event times.
     """
-    if time_unit == "s":
-        factor = 1e9
-    else:
-        factor = 1
 
+    # Check the input reference times
+    if not isinstance(t_refs, (list, np.ndarray)):
+        raise ValueError("t_refs must be a list or numpy array of reference times")
+
+    n_epoch = len(t_refs)
+
+    # Set conversion factor based on time unit
+    if time_unit == "s":
+        factor = 1e9  # Convert seconds to nanoseconds
+    else:
+        factor = 1  # Assume times are already in nanoseconds
+
+    # Apply global_t_ref if provided
     if global_t_ref is not None:
         t_refs = [rt * factor + global_t_ref for rt in t_refs]
 
+    # Handle t_before, t_after, and description
+    other_info = []
+
+    # Check each of the parameters (t_before, t_after, description) for correct length and type
+    for x, name in zip([t_before, t_after, description], ["t_before", "t_after", "description"]):
+        if isinstance(x, np.ndarray):
+            # Ensure it's the same length as t_refs
+            if len(x) != n_epoch:
+                raise ValueError(f"{name} must have the same length as t_refs")
+            other_info.append(x)
+        elif isinstance(x, (int, float, str)):
+            # If a single value or string is provided, repeat it for each epoch
+            other_info.append(np.repeat(x, n_epoch))
+        else:
+            raise ValueError(f"{name} must be a single value, a list, or a numpy array")
+
+    t_before, t_after, description = other_info
+
+    # Construct the event times DataFrame
     event_times = pd.DataFrame(
         {
             "t_ref": t_refs,
