@@ -5,102 +5,88 @@ from numbers import Number
 from typing import TYPE_CHECKING, Union
 
 
+import numpy as np
+import pandas as pd
+
 class Epoch:
     def __init__(self, data: pd.DataFrame, times: pd.DataFrame):
         self.data = data
         self.times = times
-        
-        ts_diff = data["timestamp [ns]"].diff().unique()
-        if ts_diff.shape[0] == 1:
-            self.uniform_data = True
-        else:
-            self.uniform_data = False
 
+        # Check if data is uniformly sampled
+        ts_diff = data["timestamp [ns]"].diff().dropna().unique()
+        self.uniform_data = len(ts_diff) == 1
+
+        # Create epochs
         self.epochs, self.data = create_epoch(data, times)
 
-        # check if all epochs have the same length
-        data_len = self.epochs["data"].apply(lambda x: x.shape[0])
+        # Check epoch lengths
+        data_len = self.epochs["epoch data"].apply(lambda x: x.shape[0])
         self.min_len = data_len.min()
         self.max_len = data_len.max()
-        
-        unique_data_len = data_len.unique()
-        if unique_data_len.shape[0] == 1:
-            self.equal_times = True
-        else:
-            self.equal_times = False
-            
-        # Why do we need to check for equal distribution of t_ref?
-        if self.epochs["t_ref"].diff().unique().shape[0] == 1:
-            self.equal_dist = True
-        else:
-            self.equal_dist = False
+        self.equal_times = data_len.nunique() == 1
 
-        if (
-            self.epochs["t_before"].unique().shape[0] == 1
-            and self.epochs["t_after"].unique().shape[0] == 1
-        ):
-            self.equal_length = True
-            self.window_length = (
-                self.epochs["t_before"].unique()[0] + self.epochs["t_after"].unique()[0]
-            )
-        else:
-            self.equal_length = False
+        # Check if t_ref differences are equal
+        t_ref_diff = self.epochs["t_ref"].diff().dropna().unique()
+        self.equal_dist = len(t_ref_diff) == 1
 
-    def to_numpy(self):
+        # Check if t_before and t_after are the same across epochs
+        self.equal_length = (
+            self.epochs["t_before"].nunique() == 1 and self.epochs["t_after"].nunique() == 1
+        )
+        if self.equal_length:
+            self.window_length = self.epochs["t_before"].iloc[0] + self.epochs["t_after"].iloc[0]
+
+
+    def to_numpy(self, sampling_rate=100):
         """
-        Follows the MNE Epoch data format (n_epochs, n_channels, n_times)
-        
+        Converts epochs into a NumPy array with dimensions (n_epochs, n_times, n_channels).
+        Resamples epochs to a fixed sampling rate.
         """
-        # check if all epochs have the same length
-        if not self.equal_times:
-            if not self.equal_length or not self.equal_dist:
-                raise ValueError(
-                    "Epochs must have the same length, reference time, and time before/after values to convert to numpy array."
+        # Ensure there are epochs to process
+        if len(self.epochs) == 0:
+            raise ValueError("No epochs with data to convert to NumPy array.")
+
+        # Remove epochs with empty data
+        self.epochs = self.epochs[self.epochs['epoch data'].apply(len) > 0].reset_index(drop=True)
+        n_epochs = len(self.epochs)
+
+        # Define the common time grid
+        t_before = self.epochs['t_before'].iloc[0]
+        t_after = self.epochs['t_after'].iloc[0]
+        total_duration = t_after + t_before
+        n_times = int(total_duration /1e9 * sampling_rate) + 1
+        common_times = np.linspace(-t_before, t_after, n_times)
+
+        # Assume all epochs have the same data columns (excluding 't_rel')
+        data_columns = self.epochs.iloc[0]['epoch data'].columns.drop('t_rel')
+        n_channels = len(data_columns)
+
+        # Initialize the NumPy array
+        epochs_np = np.full((n_epochs, n_times, n_channels), np.nan)
+
+        # Interpolate each epoch onto the common time grid
+        for i, (_, epoch) in enumerate(self.epochs.iterrows()):
+            epoch_data = epoch['epoch data'].copy()
+            t_rel = epoch_data['t_rel'].values
+            for idx, col in enumerate(data_columns):
+                y = epoch_data[col].values
+                # Interpolate using numpy.interp
+                interp_values = np.interp(
+                    common_times,
+                    t_rel,
+                    y,
+                    left=np.nan,
+                    right=np.nan
                 )
-            else:
-                # check for smallest and largest number of samples
-                min_samples = self.min_len
-                max_samples = self.max_len
-
-                df = self.window_length / max_samples
-                df_str = str(df) + "ns"
-                """
-                #check if difference is less than 10%
-                if (max_samples - min_samples) / min_samples > 0.1:
-                    raise ValueError("Epochs must have the same length, reference time, and time before/after values to convert to numpy array.")
-            
-                #resample epochs on t_rel to have the maximum length
-                else:
-                """
-                for idx in range(len(self.epochs)):
-                    epoch = self.epochs.iloc[idx]
-                    # Convert t_rel to timedelta
-                    epoch["data"]["t_rel"] = pd.to_timedelta(
-                        epoch["data"]["t_rel"], unit="ns"
-                    )
-                    epoch["data"] = (
-                        epoch["data"].resample(df_str, on="t_rel").mean().reset_index()
-                    )
-                    # Convert t_rel back to ns
-                    epoch["data"]["t_rel"] = (
-                        epoch["data"]["t_rel"].dt.total_seconds() * 1e9
-                    )
-                    self.epochs.iloc[idx] = epoch
-
-        n_epoch = len(self.epochs)
-        n_times = self.epochs.iloc[0]["data"].shape[0]
-        n_data = self.epochs.iloc[0]["data"].shape[1]
-
-        epochs_np = np.nan((n_epoch, n_times, n_data))
-
-        for i in range(n_epoch):
-            epoch = self.epochs.iloc[i]
-            epochs_np[i, :, :] = epoch["data"].values
+                epochs_np[i, :, idx] = interp_values
 
         return epochs_np
-    
+
+
     def __len__(self):
-        return self.epochs.shape[0]
+        return len(self.epochs)
+
 
 
 def create_epoch(
@@ -169,7 +155,7 @@ def create_epoch(
     # Initialize lists to collect data
     annotated_data = data.copy()
     epochs = pd.DataFrame(
-        columns=["epoch id", "t_ref", "t_before", "t_after", "description", "data"]
+        columns=["epoch id", "t_ref", "t_before", "t_after", "description", "epoch data"]
     )
     
     for i, (t_ref_i, t_before_i, t_after_i, description_i) in enumerate(zip(t_ref, t_before, t_after, description)):
@@ -192,8 +178,8 @@ def create_epoch(
         epochs.at[i, "epoch data"] = local_data
 
     # Drop rows where 'data' is empty
-    for i in range(len(epochs)):
-        if epochs["epoch data"][i].empty:
+    for i, epoch in epochs.iterrows():
+        if epoch["epoch data"].empty:
             epochs.drop(i, inplace=True)
 
     # set datatypes of the columns
