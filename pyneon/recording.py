@@ -283,10 +283,13 @@ Recording duration: {self.info["duration"] / 1e9} s
         Returns the scanpath data if it exists, otherwise None.
         """
         if self._scanpath is None:
-            if (scanpath_file := self.recording_dir / "scanpath.pkl").is_file():
+            scanpath_file = self.recording_dir / "scanpath.pkl"
+            if scanpath_file.is_file():
                 self._scanpath = pd.read_pickle(scanpath_file)
             else:  # compute scanpath
                 self._scanpath = self.estimate_scanpath()
+                #save scanpath
+                self._scanpath.to_pickle(scanpath_file)
         return self._scanpath
 
     def concat_streams(
