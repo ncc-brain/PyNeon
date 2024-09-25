@@ -379,12 +379,12 @@ document.write(`
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonRecording</span><span class="p">,</span> <span class="n">time_to_ts</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+from pyneon import get_sample_data, NeonRecording, time_to_ts
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+import matplotlib.pyplot as plt
 
-<span class="n">recording_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data&quot;</span> <span class="o">/</span> <span class="s2">&quot;walk1-e116e606&quot;</span>
+recording_dir = get_sample_data(&quot;OfficeWalk&quot;) / &quot;Timeseries Data&quot; / &quot;walk1-e116e606&quot;
 </pre></div>
 </div>
 </div>
@@ -393,10 +393,10 @@ document.write(`
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
-<span class="n">gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">gaze</span>
-<span class="n">eye_states</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">eye_states</span>
-<span class="n">imu</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">imu</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>recording = NeonRecording(recording_dir)
+gaze = recording.gaze
+eye_states = recording.eye_states
+imu = recording.imu
 </pre></div>
 </div>
 </div>
@@ -407,30 +407,30 @@ document.write(`
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the data points</span>
-<span class="n">gaze_ts</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-<span class="n">eye_states_ts</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-<span class="n">imu_ts</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Get the data points
+gaze_ts = gaze.data[&quot;timestamp [ns]&quot;].values
+eye_states_ts = eye_states.data[&quot;timestamp [ns]&quot;].values
+imu_ts = imu.data[&quot;timestamp [ns]&quot;].values
 
-<span class="c1"># Calculate the distances between subsequent data points</span>
-<span class="n">gaze_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gaze_ts</span><span class="p">)</span>
-<span class="n">eye_states_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">eye_states_ts</span><span class="p">)</span>
-<span class="n">imu_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">imu_ts</span><span class="p">)</span>
+# Calculate the distances between subsequent data points
+gaze_diff = np.diff(gaze_ts)
+eye_states_diff = np.diff(eye_states_ts)
+imu_diff = np.diff(imu_ts)
 
-<span class="c1"># Unique values</span>
-<span class="n">gaze_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">gaze_diff</span><span class="p">)</span>
-<span class="n">eye_states_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">eye_states_diff</span><span class="p">)</span>
-<span class="n">imu_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">imu_diff</span><span class="p">)</span>
+# Unique values
+gaze_diff_unique = np.unique(gaze_diff)
+eye_states_diff_unique = np.unique(eye_states_diff)
+imu_diff_unique = np.unique(imu_diff)
 
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Unique gaze time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gaze_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Unique eye states time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">eye_states_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">eye_states_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Unique imu time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">imu_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">imu_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
-<span class="p">)</span>
+print(
+    f&quot;Unique gaze time differences: {len(gaze_diff_unique)}, max: {np.max(gaze_diff_unique)/1e6}ms&quot;
+)
+print(
+    f&quot;Unique eye states time differences: {len(eye_states_diff_unique)}, max: {np.max(eye_states_diff_unique)/1e6}ms&quot;
+)
+print(
+    f&quot;Unique imu time differences: {len(imu_diff_unique)}, max: {np.max(imu_diff_unique)/1e6}ms&quot;
+)
 </pre></div>
 </div>
 </div>
@@ -449,30 +449,30 @@ Unique imu time differences: 1106, max: 230.444ms
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
-<span class="n">eye_states_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
-<span class="n">imu_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>gaze_nominal_diff = 1e9 / gaze.sampling_freq_nominal
+eye_states_nominal_diff = 1e9 / eye_states.sampling_freq_nominal
+imu_nominal_diff = 1e9 / imu.sampling_freq_nominal
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+fig, axs = plt.subplots(3, 1, tight_layout=True)
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">gaze_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">gaze_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Gaze&quot;</span><span class="p">)</span>
+axs[0].hist(gaze_diff, bins=50)
+axs[0].axvline(gaze_nominal_diff, color=&quot;red&quot;, label=&quot;Nominal&quot;)
+axs[0].set_title(&quot;Gaze&quot;)
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">eye_states_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">eye_states_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Eye states&quot;</span><span class="p">)</span>
+axs[1].hist(eye_states_diff, bins=50)
+axs[1].axvline(eye_states_nominal_diff, color=&quot;red&quot;, label=&quot;Nominal&quot;)
+axs[1].set_title(&quot;Eye states&quot;)
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">imu_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">imu_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;IMU&quot;</span><span class="p">)</span>
+axs[2].hist(imu_diff, bins=50)
+axs[2].axvline(imu_nominal_diff, color=&quot;red&quot;, label=&quot;Nominal&quot;)
+axs[2].set_title(&quot;IMU&quot;)
 
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time difference [ns]&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Counts&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+for i in range(3):
+    axs[i].set_yscale(&quot;log&quot;)
+    axs[i].set_xlabel(&quot;Time difference [ns]&quot;)
+    axs[i].set_ylabel(&quot;Counts&quot;)
+    axs[i].legend()
+plt.show()
 </pre></div>
 </div>
 </div>
@@ -491,14 +491,14 @@ Unique imu time differences: 1106, max: 230.444ms
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resample to the nominal sampling frequency</span>
-<span class="n">gaze_resampled_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">gaze_resampled_data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Resample to the nominal sampling frequency
+gaze_resampled_data = gaze.interpolate()
+print(gaze_resampled_data.head())
 
-<span class="n">ts</span> <span class="o">=</span> <span class="n">gaze_resampled_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-<span class="n">ts_diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
-<span class="n">ts_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ts_diffs</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only one unique time difference: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ts_diffs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+ts = gaze_resampled_data[&quot;timestamp [ns]&quot;].values
+ts_diffs = np.diff(ts)
+ts_diff_unique = np.unique(ts_diffs)
+print(f&quot;Only one unique time difference: {np.unique(ts_diffs)}&quot;)
 </pre></div>
 </div>
 </div>
@@ -529,10 +529,10 @@ Only one unique time difference: [5000000]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original gaze data length: </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original IMU data length: </span><span class="si">{</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">gaze_resampled_to_imu_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">new_ts</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data length after resampling to IMU: </span><span class="si">{</span><span class="n">gaze_resampled_to_imu_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&quot;Original gaze data length: {gaze.data.shape[0]}&quot;)
+print(f&quot;Original IMU data length: {imu.data.shape[0]}&quot;)
+gaze_resampled_to_imu_data = gaze.interpolate(new_ts=imu.ts)
+print(f&quot;Data length after resampling to IMU: {gaze_resampled_to_imu_data.shape[0]}&quot;)
 </pre></div>
 </div>
 </div>
@@ -555,8 +555,8 @@ Data length after resampling to IMU: 10919
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_data</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">concat_streams</span><span class="p">([</span><span class="s2">&quot;gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;eye_states&quot;</span><span class="p">,</span> <span class="s2">&quot;imu&quot;</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">concat_data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>concat_data = recording.concat_streams([&quot;gaze&quot;, &quot;eye_states&quot;, &quot;imu&quot;])
+print(concat_data.head())
 </pre></div>
 </div>
 </div>
@@ -615,57 +615,57 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start_time</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">end_time</span> <span class="o">=</span> <span class="mf">5.3</span>
-<span class="n">start_ts</span> <span class="o">=</span> <span class="n">time_to_ts</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">concat_data</span><span class="p">)</span>
-<span class="n">end_ts</span> <span class="o">=</span> <span class="n">time_to_ts</span><span class="p">(</span><span class="n">end_time</span><span class="p">,</span> <span class="n">concat_data</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>start_time = 5
+end_time = 5.3
+start_ts = time_to_ts(start_time, concat_data)
+end_ts = time_to_ts(end_time, concat_data)
 
-<span class="n">raw_gaze_data_slice</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
-    <span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
-<span class="p">]</span>
-<span class="n">raw_eye_states_data_slice</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
-    <span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">start_ts</span><span class="p">)</span>
-    <span class="o">&amp;</span> <span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
-<span class="p">]</span>
-<span class="n">raw_imu_data_slice</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
-    <span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
-<span class="p">]</span>
-<span class="n">concat_data_slice</span> <span class="o">=</span> <span class="n">concat_data</span><span class="p">[</span>
-    <span class="p">(</span><span class="n">concat_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span>
-    <span class="o">&amp;</span> <span class="p">(</span><span class="n">concat_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
-<span class="p">]</span>
+raw_gaze_data_slice = gaze.data[
+    (gaze.data[&quot;timestamp [ns]&quot;] &gt;= start_ts) &amp; (gaze.data[&quot;timestamp [ns]&quot;] &lt;= end_ts)
+]
+raw_eye_states_data_slice = eye_states.data[
+    (eye_states.data[&quot;timestamp [ns]&quot;] &gt; start_ts)
+    &amp; (eye_states.data[&quot;timestamp [ns]&quot;] &lt;= end_ts)
+]
+raw_imu_data_slice = imu.data[
+    (imu.data[&quot;timestamp [ns]&quot;] &gt;= start_ts) &amp; (imu.data[&quot;timestamp [ns]&quot;] &lt;= end_ts)
+]
+concat_data_slice = concat_data[
+    (concat_data[&quot;timestamp [ns]&quot;] &gt;= start_ts)
+    &amp; (concat_data[&quot;timestamp [ns]&quot;] &lt;= end_ts)
+]
 
-<span class="c1"># plot all data in the same scatter plot</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
-    <span class="n">raw_gaze_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">],</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">raw_gaze_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw gaze data&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
-    <span class="n">raw_eye_states_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">],</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">raw_eye_states_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw eye states data&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
-    <span class="n">raw_imu_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">],</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">raw_imu_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]),</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw IMU data&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
-    <span class="n">concat_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">],</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">concat_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Concatenated data&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="c1"># set x-ticks with higher frequency and add gridlines</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">concat_data_slice</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">([])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+# plot all data in the same scatter plot
+plt.figure(figsize=(15, 4))
+plt.scatter(
+    raw_gaze_data_slice[&quot;timestamp [ns]&quot;],
+    np.zeros_like(raw_gaze_data_slice[&quot;timestamp [ns]&quot;]) + 2,
+    label=&quot;Raw gaze data&quot;,
+    color=&quot;red&quot;,
+)
+plt.scatter(
+    raw_eye_states_data_slice[&quot;timestamp [ns]&quot;],
+    np.zeros_like(raw_eye_states_data_slice[&quot;timestamp [ns]&quot;]) + 1,
+    label=&quot;Raw eye states data&quot;,
+    color=&quot;orange&quot;,
+)
+plt.scatter(
+    raw_imu_data_slice[&quot;timestamp [ns]&quot;],
+    np.zeros_like(raw_imu_data_slice[&quot;timestamp [ns]&quot;]),
+    label=&quot;Raw IMU data&quot;,
+    color=&quot;blue&quot;,
+)
+plt.scatter(
+    concat_data_slice[&quot;timestamp [ns]&quot;],
+    np.zeros_like(concat_data_slice[&quot;timestamp [ns]&quot;]) - 1,
+    label=&quot;Concatenated data&quot;,
+    color=&quot;green&quot;,
+)
+# set x-ticks with higher frequency and add gridlines
+plt.xticks(concat_data_slice[&quot;timestamp [ns]&quot;], labels=None)
+plt.yticks([])
+plt.grid()
+plt.legend()
 </pre></div>
 </div>
 </div>
@@ -690,21 +690,21 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot imu data and interpolated data in same plot</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
-    <span class="n">raw_imu_data_slice</span><span class="p">[</span><span class="s2">&quot;time [s]&quot;</span><span class="p">],</span>
-    <span class="n">raw_imu_data_slice</span><span class="p">[</span><span class="s2">&quot;acceleration z [g]&quot;</span><span class="p">],</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw imu data&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">concat_data_slice</span><span class="p">[</span><span class="s2">&quot;time [s]&quot;</span><span class="p">],</span>
-    <span class="n">concat_data_slice</span><span class="p">[</span><span class="s2">&quot;acceleration z [g]&quot;</span><span class="p">],</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Interpolated imu data&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># plot imu data and interpolated data in same plot
+plt.figure(figsize=(16, 3))
+plt.scatter(
+    raw_imu_data_slice[&quot;time [s]&quot;],
+    raw_imu_data_slice[&quot;acceleration z [g]&quot;],
+    label=&quot;Raw imu data&quot;,
+    color=&quot;blue&quot;,
+)
+plt.plot(
+    concat_data_slice[&quot;time [s]&quot;],
+    concat_data_slice[&quot;acceleration z [g]&quot;],
+    label=&quot;Interpolated imu data&quot;,
+    color=&quot;green&quot;,
+)
+plt.legend()
 </pre></div>
 </div>
 </div>
