@@ -110,7 +110,7 @@ def window_average(
             "new_ts must have a lower sampling frequency than the old data"
         )
     if window_size is None:
-        window_size = new_ts_median_diff
+        window_size = int(new_ts_median_diff)
     new_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
     new_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
     for col in data.columns:
