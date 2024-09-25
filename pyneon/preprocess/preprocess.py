@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Literal
 from scipy.interpolate import interp1d
 
 from numbers import Number
@@ -10,11 +10,49 @@ if TYPE_CHECKING:
     from ..recording import NeonRecording
 
 
-def _check_data(data: pd.DataFrame) -> None:
-    if "timestamp [ns]" not in data.columns:
-        raise ValueError("Data must contain a 'timestamp [ns]' column")
-    if np.any(np.diff(data["timestamp [ns]"]) < 0):
-        raise ValueError("Timestamps must be monotonically increasing")
+def _check_data(data: pd.DataFrame, t_col_name: str = "timestamp [ns]") -> None:
+    if t_col_name not in data.columns:
+        raise ValueError(f"Data must contain a {t_col_name} column")
+    if np.any(np.diff(data[t_col_name]) < 0):
+        raise ValueError(f"{t_col_name} must be monotonically increasing")
+
+
+def crop(
+    data: pd.DataFrame,
+    tmin: Union[Number, None] = None,
+    tmax: Union[Number, None] = None,
+    by: Literal["timestamp", "time"] = "timestamp",
+) -> pd.DataFrame:
+    """
+    Crop data to a specific time range.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Data to crop. Must contain a monotonically increasing
+        ``timestamp [ns]`` or ``time [s]`` column.
+    tmin : number, optional
+        Start time or timestamp to crop the data to. If ``None``,
+        the minimum timestamp or time in the data is used. Defaults to ``None``.
+    tmax : number, optional
+        End time or timestamp to crop the data to. If ``None``,
+        the maximum timestamp or time in the data is used. Defaults to ``None``.
+    by : "timestamp" or "time", optional
+        Whether tmin and tmax are UTC timestamps in nanoseconds
+        or relative times in seconds. Defaults to "timestamp".
+
+    Returns
+    -------
+    pd.DataFrame
+        Cropped data.
+    """
+    if tmin is None and tmax is None:
+        raise ValueError("At least one of tmin or tmax must be provided")
+    t_col_name = "timestamp [ns]" if by == "timestamp" else "time [s]"
+    _check_data(data, t_col_name=t_col_name)
+    tmin = tmin if tmin is not None else data[t_col_name].min()
+    tmax = tmax if tmax is not None else data[t_col_name].max()
+    return data[(data[t_col_name] >= tmin) & (data[t_col_name] <= tmax)]
 
 
 def interpolate(

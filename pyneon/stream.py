@@ -1,10 +1,11 @@
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from typing import Union
+from numbers import Number
+from typing import Union, Literal
 
 from .data import NeonData
-from .preprocess import interpolate
+from .preprocess import crop, interpolate
 
 
 class NeonStream(NeonData):
@@ -58,6 +59,42 @@ class NeonStream(NeonData):
         self.data["time [s]"] = self.times
         self.duration = float(self.times[-1] - self.times[0])
         self.sampling_freq_effective = self.data.shape[0] / self.duration
+
+    def crop(
+        self,
+        tmin: Union[Number, None] = None,
+        tmax: Union[Number, None] = None,
+        by: Literal["timestamp", "time"] = "timestamp",
+        inplace: bool = False,
+    ) -> pd.DataFrame:
+        """
+        Crop data to a specific time range.
+
+        Parameters
+        ----------
+        tmin : number, optional
+            Start time or timestamp to crop the data to. If ``None``,
+            the minimum timestamp or time in the data is used. Defaults to ``None``.
+        tmax : number, optional
+            End time or timestamp to crop the data to. If ``None``,
+            the maximum timestamp or time in the data is used. Defaults to ``None``.
+        by : "timestamp" or "time", optional
+            Whether tmin and tmax are UTC timestamps in nanoseconds
+            or relative times in seconds. Defaults to "timestamp".
+        inplace : bool, optional
+            Whether to replace the data in the object with the cropped data.
+            Defaults to False.
+
+        Returns
+        -------
+        pd.DataFrame
+            Cropped data.
+        """
+        new_data = crop(self.data, tmin, tmax, by)
+        if inplace:
+            self.data = new_data
+            self._get_attributes()
+        return new_data
 
     def interpolate(
         self,
