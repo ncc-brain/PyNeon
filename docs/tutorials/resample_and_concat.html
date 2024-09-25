@@ -376,7 +376,7 @@ document.write(`
 <p>Informative as it is, raw Neon data is not always easy to work with. Different data streams (e.g., gaze, eye states, IMU) are sampled at different rates, don’t necessarily share a common start timestamp, and within each stream data might not have been sampled at a constant rate. This tutorial demonstrates how to deal with these issues by resampling data streams and concatenating them into a single DataFrame.</p>
 <p>We will use the same <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code> dataset as in the <a class="reference internal" href="read_recording.html"><span class="doc">previous tutorial</span></a>.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -390,7 +390,7 @@ document.write(`
 </div>
 <p>We can now access raw data from gaze, eye states, and IMU streams.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
@@ -404,7 +404,7 @@ document.write(`
 <h2>Unequally sampled data<a class="headerlink" href="#Unequally-sampled-data" title="Link to this heading">#</a></h2>
 <p>Data from each stream has <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> and <code class="docutils literal notranslate"><span class="pre">time</span> <span class="pre">[s]</span></code> columns, which denotes the UTC time of the sample in nanoseconds and the relative time since stream onset in seconds, respectively. But are they equally spaced in time? Let’s explore that by computing the time differences between consecutive samples for each stream and check how many unique values we have. If the data was sampled at a constant rate, we should have only one unique value.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the data points</span>
@@ -446,7 +446,7 @@ Unique imu time differences: 1106, max: 230.444ms
 </div>
 <p>Oops, it seems the data are far from being continuously sampled. We can further explore the distribution of such differences by plotting a histogram.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
@@ -488,11 +488,11 @@ Unique imu time differences: 1106, max: 230.444ms
 <h2>Resampling data streams<a class="headerlink" href="#Resampling-data-streams" title="Link to this heading">#</a></h2>
 <p>Given the unequal sampling, if we want to obtain continuous data streams, interpolation is necessary. PyNeon uses the <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> function to interpolate data streams. We can resample each stream by simply calling <code class="docutils literal notranslate"><span class="pre">resample()</span></code> which returns a new DataFrame with the resampled data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resample to the nominal sampling frequency</span>
-<span class="n">gaze_resampled_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">resample</span><span class="p">()</span>
+<span class="n">gaze_resampled_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">gaze_resampled_data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 
 <span class="n">ts</span> <span class="o">=</span> <span class="n">gaze_resampled_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
@@ -509,29 +509,29 @@ Unique imu time differences: 1106, max: 230.444ms
 <div class="highlight"><pre>
         timestamp [ns]  time [s]  gaze x [px]  gaze y [px]  worn  fixation id  \
 0  1725032224852161732     0.000  1067.486000   620.856000  True            1
-1  1725032224857161732     0.005  1066.920460   617.120037  True            1
-2  1725032224862161732     0.010  1072.698815   615.780043  True            1
-3  1725032224867161732     0.015  1067.446798   617.062049  True            1
-4  1725032224872161732     0.020  1071.563947   613.158050  True            1
+1  1725032224857161732     0.005  1066.920463   617.120061  True            1
+2  1725032224862161732     0.010  1072.699000   615.780000  True            1
+3  1725032224867161732     0.015  1067.447000   617.062000  True            1
+4  1725032224872161732     0.020  1071.564000   613.158000  True            1
 
    blink id  azimuth [deg]  elevation [deg]
 0      &lt;NA&gt;      16.213030        -0.748998
-1      &lt;NA&gt;      16.176315        -0.511926
-2      &lt;NA&gt;      16.546402        -0.426620
-3      &lt;NA&gt;      16.210036        -0.508254
-4      &lt;NA&gt;      16.473517        -0.260391
+1      &lt;NA&gt;      16.176315        -0.511927
+2      &lt;NA&gt;      16.546413        -0.426618
+3      &lt;NA&gt;      16.210049        -0.508251
+4      &lt;NA&gt;      16.473521        -0.260388
 Only one unique time difference: [5000000]
 </pre></div></div>
 </div>
 <p>In the above example, we resampled the gaze data with default parameters, which means that the resampled data will have the same start and timestamps as the original data, and the sampling rate is set to the nominal sampling frequency (200 Hz, as specified by Pupil Labs). Notice that resampling would not change the data type of the columns. For example, the <code class="docutils literal notranslate"><span class="pre">bool</span></code>-type <code class="docutils literal notranslate"><span class="pre">worn</span></code> column and the integer-type <code class="docutils literal notranslate"><span class="pre">fixation_id</span></code> column are preserved.</p>
 <p>Alternatively, one can also resample the gaze data to any desired timestamps by specifying the <code class="docutils literal notranslate"><span class="pre">new_ts</span></code> parameter. This is especially helpful when synchronizing different data streams. For example, we can resample the gaze data (~200Hz) to the timestamps of the IMU data (~110Hz).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original gaze data length: </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original IMU data length: </span><span class="si">{</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">gaze_resampled_to_imu_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">new_ts</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>
+<span class="n">gaze_resampled_to_imu_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">new_ts</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data length after resampling to IMU: </span><span class="si">{</span><span class="n">gaze_resampled_to_imu_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -552,7 +552,7 @@ Data length after resampling to IMU: 10919
 <p>Based on the resampling method, it is then possible to concatenate different streams into a single DataFrame by resampling them to common timestamps. The method <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> provides such functionality. It takes a list of stream names and resamples them to common timestamps, defined by the latest start and earliest end timestamps of the streams. The news ampling frequency can either be directly specified or taken from the lowest/highest sampling frequency of the streams.</p>
 <p>In the following example, we will concatenate the gaze, eye states, and IMU streams into a single DataFrame using the default parameters (e.g., using the lowest sampling frequency of the streams).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_data</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">concat_streams</span><span class="p">([</span><span class="s2">&quot;gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;eye_states&quot;</span><span class="p">,</span> <span class="s2">&quot;imu&quot;</span><span class="p">])</span>
@@ -573,11 +573,11 @@ Using lowest sampling rate: 110 Hz ([&#39;imu&#39;])
 Using latest start timestamp: 1725032224878547732 ([&#39;imu&#39;])
 Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
         timestamp [ns]  time [s]  gaze x [px]  gaze y [px]  worn  fixation id  \
-0  1725032224878547732  0.000000  1073.410350   611.095861  True            1
-1  1725032224887638641  0.009091  1069.801082   613.382534  True            1
+0  1725032224878547732  0.000000  1073.410354   611.095861  True            1
+1  1725032224887638641  0.009091  1069.801082   613.382535  True            1
 2  1725032224896729550  0.018182  1070.090109   613.439696  True            1
 3  1725032224905820459  0.027273  1069.891351   612.921757  True            1
-4  1725032224914911368  0.036364  1069.692588   612.403804  True            1
+4  1725032224914911368  0.036364  1069.692588   612.403803  True            1
 
    blink id  azimuth [deg]  elevation [deg]  pupil diameter left [mm]  ...  \
 0      &lt;NA&gt;      16.591703        -0.129540                  5.036588  ...
@@ -612,7 +612,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 </div>
 <p>We show an exemplary sampling of eye, imu and concatenated data below. It can be seen that imu data has subsequent missing values which can in turn be interpolated</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start_time</span> <span class="o">=</span> <span class="mi">5</span>
@@ -670,12 +670,12 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x29fd14c3500&gt;
+&lt;matplotlib.legend.Legend at 0x1fb49a7bb60&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -687,7 +687,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 </div>
 <p>A linear interpolation allows us to estimate missing values. In the end, the concatenated dataframe combines all continuous data into one central location</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot imu data and interpolated data in same plot</span>
@@ -709,12 +709,12 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x29fd14f7980&gt;
+&lt;matplotlib.legend.Legend at 0x1fb49cd3d10&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">

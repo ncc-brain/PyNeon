@@ -288,7 +288,7 @@ Recording duration: {self.info["duration"] / 1e9} s
                 self._scanpath = pd.read_pickle(scanpath_file)
             else:  # compute scanpath
                 self._scanpath = self.estimate_scanpath()
-                #save scanpath
+                # save scanpath
                 self._scanpath.to_pickle(scanpath_file)
         return self._scanpath
 

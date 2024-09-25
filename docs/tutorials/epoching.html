@@ -1,0 +1,747 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Tutorial: Processing Eye-Tracking Data with PyNeon &#8212; PyNeon dev documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/epoching';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">PyNeon dev documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../reference/index.html">
+    API reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/NCCLabMPI/PyNeon" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../reference/index.html">
+    API reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/NCCLabMPI/PyNeon" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">Tutorial:...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Tutorial:-Processing-Eye-Tracking-Data-with-PyNeon">
+<h1>Tutorial: Processing Eye-Tracking Data with PyNeon<a class="headerlink" href="#Tutorial:-Processing-Eye-Tracking-Data-with-PyNeon" title="Link to this heading">#</a></h1>
+<section id="Step-1:-Loading-Sample-Data">
+<h2>Step 1: Loading Sample Data<a class="headerlink" href="#Step-1:-Loading-Sample-Data" title="Link to this heading">#</a></h2>
+<p>First, we’ll load sample eye-tracking data provided by PyNeon.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">NeonRecording</span><span class="p">,</span> <span class="n">get_sample_data</span>
+<span class="kn">from</span> <span class="nn">pyneon.preprocess</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># Load the sample recording</span>
+<span class="n">recording_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data&quot;</span> <span class="o">/</span> <span class="s2">&quot;walk1-e116e606&quot;</span>
+<span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-2:-Constructing-Event-Times">
+<h2>Step 2: Constructing Event Times<a class="headerlink" href="#Step-2:-Constructing-Event-Times" title="Link to this heading">#</a></h2>
+<p>We’ll create a list of event times from 0 to 100 seconds at intervals of 0.1 seconds. These events will serve as reference points for creating epochs.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a list of event times from 0 to 100 seconds at 0.1-second intervals</span>
+<span class="n">tlist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">global_ref_time</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">start_time</span>
+
+<span class="c1"># Construct event times DataFrame</span>
+<span class="n">event_times</span> <span class="o">=</span> <span class="n">construct_event_times</span><span class="p">(</span>
+    <span class="n">t_refs</span><span class="o">=</span><span class="n">tlist</span><span class="p">,</span>
+    <span class="n">t_before</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># 0.1 seconds before the event</span>
+    <span class="n">t_after</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># 0.5 seconds after the event</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;test_event&quot;</span><span class="p">,</span>
+    <span class="n">global_t_ref</span><span class="o">=</span><span class="n">global_ref_time</span><span class="p">,</span>
+    <span class="n">time_unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span>  <span class="c1"># Specify that t_refs are in seconds</span>
+<span class="p">)</span>
+
+<span class="c1"># Display the first few event times</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">event_times</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+          t_ref     t_before      t_after description
+0  1.725032e+18  100000000.0  500000000.0  test_event
+1  1.725032e+18  100000000.0  500000000.0  test_event
+2  1.725032e+18  100000000.0  500000000.0  test_event
+3  1.725032e+18  100000000.0  500000000.0  test_event
+4  1.725032e+18  100000000.0  500000000.0  test_event
+</pre></div></div>
+</div>
+</section>
+<section id="Step-3:-Verifying-Event-Intervals">
+<h2>Step 3: Verifying Event Intervals<a class="headerlink" href="#Step-3:-Verifying-Event-Intervals" title="Link to this heading">#</a></h2>
+<p>Check the average interval between events to confirm they are correctly spaced.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Calculate the average difference between subsequent event times</span>
+<span class="n">average_interval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">event_times</span><span class="p">[</span><span class="s2">&quot;t_ref&quot;</span><span class="p">]))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average interval between events: </span><span class="si">{</span><span class="n">average_interval</span><span class="si">}</span><span class="s2"> nanoseconds&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Average interval between events: 100000000.0 nanoseconds
+</pre></div></div>
+</div>
+<p>This confirms that events are spaced 0.1 seconds (100,000,000 nanoseconds) apart.</p>
+</section>
+<section id="Step-4:-Creating-Epochs-from-the-Data">
+<h2>Step 4: Creating Epochs from the Data<a class="headerlink" href="#Step-4:-Creating-Epochs-from-the-Data" title="Link to this heading">#</a></h2>
+<p>Use the create_epoch function to create epochs from the gaze data based on the event times.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create epochs from the gaze data</span>
+<span class="n">epochs_df</span><span class="p">,</span> <span class="n">annotated_data</span> <span class="o">=</span> <span class="n">create_epoch</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">epochs_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+epoch id                                                      29
+t_ref                                        1725032224427000064
+t_before                                             100000000.0
+t_after                                              500000000.0
+description                                           test_event
+epoch data             timestamp [ns]  gaze x [px]  gaze y [p...
+Name: 0, dtype: object
+</pre></div></div>
+</div>
+<p>Every row in the epochs_df file has information about the epoch as well as the data assigned to this epoch.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">annotated_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+timestamp [ns]     1725032224852161732
+gaze x [px]                   1067.486
+gaze y [px]                    620.856
+worn                              True
+fixation id                          1
+blink id                          &lt;NA&gt;
+azimuth [deg]                 16.21303
+elevation [deg]              -0.748998
+time [s]                           0.0
+epoch id                            34
+description                 test_event
+t_rel                      -74838272.0
+Name: 0, dtype: object
+</pre></div></div>
+</div>
+<p>On the other hand, annotated data has the information about the current epoch appended at the end.</p>
+<p>Alternatively, an epoch object can also be created without an event_times object but rather the info needed to create one</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">epochs_df</span><span class="p">,</span> <span class="n">annotated_data</span> <span class="o">=</span> <span class="n">create_epoch</span><span class="p">(</span>
+    <span class="n">recording</span><span class="o">.</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">times_df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">t_refs</span><span class="o">=</span><span class="n">tlist</span><span class="p">,</span>
+    <span class="n">t_before</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">t_after</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">global_t_ref</span><span class="o">=</span><span class="n">global_ref_time</span><span class="p">,</span>
+    <span class="n">time_unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;test_event&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>This object is equivalent to the ones created before</p>
+</section>
+<section id="Step-5:-Initializing-the-Epoch-Class">
+<h2>Step 5: Initializing the Epoch Class<a class="headerlink" href="#Step-5:-Initializing-the-Epoch-Class" title="Link to this heading">#</a></h2>
+<p>Initialize the Epoch class with the gaze data and event times.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the Epoch object</span>
+
+<span class="n">epochs</span> <span class="o">=</span> <span class="n">Epoch</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-6:-Converting-Epochs-to-NumPy-Array">
+<h2>Step 6: Converting Epochs to NumPy Array<a class="headerlink" href="#Step-6:-Converting-Epochs-to-NumPy-Array" title="Link to this heading">#</a></h2>
+<p>Convert the epochs into a NumPy array, specifying the columns of interest</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert epochs to NumPy array, selecting specific columns</span>
+<span class="n">ep_np</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;gaze x [px]&quot;</span><span class="p">,</span> <span class="s2">&quot;gaze y [px]&quot;</span><span class="p">])</span>
+
+<span class="c1"># Display information about the epochs</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Column IDs:&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;column_ids&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Time relative to reference (s):&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;t_rel&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shape of epochs array:&quot;</span><span class="p">,</span> <span class="n">ep_np</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NaN values were found in the data.
+Column IDs: [&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;]
+Time relative to reference (s): [-0.1  -0.09 -0.08 -0.07 -0.06 -0.05 -0.04 -0.03 -0.02 -0.01  0.    0.01
+  0.02  0.03  0.04  0.05  0.06  0.07  0.08  0.09  0.1   0.11  0.12  0.13
+  0.14  0.15  0.16  0.17  0.18  0.19  0.2   0.21  0.22  0.23  0.24  0.25
+  0.26  0.27  0.28  0.29  0.3   0.31  0.32  0.33  0.34  0.35  0.36  0.37
+  0.38  0.39  0.4   0.41  0.42  0.43  0.44  0.45  0.46  0.47  0.48  0.49
+  0.5 ]
+Shape of epochs array: (955, 61, 2)
+</pre></div></div>
+</div>
+<p>Column IDs: The data channels extracted. Times: The common time grid for all epochs. Shape: Indicates there are 1000 epochs, each with 61 time points and 2 data channels.</p>
+</section>
+<section id="Step-7:-Averaging-Across-Epochs">
+<h2>Step 7: Averaging Across Epochs<a class="headerlink" href="#Step-7:-Averaging-Across-Epochs" title="Link to this heading">#</a></h2>
+<p>Compute the average across all epochs to get the mean time-series.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Average across epochs (resulting in a 2D array)</span>
+<span class="n">integrated_epochs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">ep_np</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shape after averaging across epochs:&quot;</span><span class="p">,</span> <span class="n">integrated_epochs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Shape after averaging across epochs: (61, 2)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+C:\Users\jan-gabriel.hartel\AppData\Local\Temp\ipykernel_12180\2544218633.py:2: RuntimeWarning: Mean of empty slice
+  integrated_epochs = np.nanmean(ep_np, axis=0)
+</pre></div></div>
+</div>
+<p>The resulting array has 61 time points and 2 channels.</p>
+</section>
+<section id="Step-8:-Averaging-Over-Time">
+<h2>Step 8: Averaging Over Time<a class="headerlink" href="#Step-8:-Averaging-Over-Time" title="Link to this heading">#</a></h2>
+<p>Further, average over time to get a single value per channel.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Average over time (resulting in a 1D array)</span>
+<span class="n">integrate_in_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">integrated_epochs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Averaged values over time:&quot;</span><span class="p">,</span> <span class="n">integrate_in_time</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Averaged values over time: [784.02903257 539.72164082]
+</pre></div></div>
+</div>
+<p>his gives the overall mean for each data channel.</p>
+</section>
+<section id="Conclusion">
+<h2>Conclusion<a class="headerlink" href="#Conclusion" title="Link to this heading">#</a></h2>
+<p>In this tutorial, we’ve demonstrated how to:</p>
+<ul class="simple">
+<li><p>Load sample eye-tracking data using PyNeon.</p></li>
+<li><p>Construct event times for epoching the data.</p></li>
+<li><p>Create epochs from continuous gaze data.</p></li>
+<li><p>Convert epochs into a NumPy array for analysis.</p></li>
+<li><p>Perform averaging across epochs and over time.</p></li>
+</ul>
+<p>These steps are essential for preprocessing eye-tracking data and can be extended for more advanced analyses.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-1:-Loading-Sample-Data">Step 1: Loading Sample Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-2:-Constructing-Event-Times">Step 2: Constructing Event Times</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-3:-Verifying-Event-Intervals">Step 3: Verifying Event Intervals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-4:-Creating-Epochs-from-the-Data">Step 4: Creating Epochs from the Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-5:-Initializing-the-Epoch-Class">Step 5: Initializing the Epoch Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-6:-Converting-Epochs-to-NumPy-Array">Step 6: Converting Epochs to NumPy Array</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-7:-Averaging-Across-Epochs">Step 7: Averaging Across Epochs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-8:-Averaging-Over-Time">Step 8: Averaging Over Time</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/tutorials/epoching.ipynb.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024, PyNeon developers.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
