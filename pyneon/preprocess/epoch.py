@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import pandas as pd
 
+
 class Epoch:
     """
     Class to create and manage epochs in the data streams.
@@ -43,16 +44,17 @@ class Epoch:
     - The `t_before` and `t_after` parameters are always expected in **seconds** and will be converted to nanoseconds internally.
     """
 
-    def __init__(self, data: pd.DataFrame,
-    times_df: Union[pd.DataFrame, None] = None,
-    t_ref: Union[np.ndarray, None] = None,
-    t_before: Union[np.ndarray, Number, None] = None,
-    t_after: Union[np.ndarray, Number, None] = None,
-    description: Union[np.ndarray, None] = None,
-    global_t_ref: Union[int, float] = 0,
-    time_unit: str = "ns",
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        times_df: Union[pd.DataFrame, None] = None,
+        t_ref: Union[np.ndarray, None] = None,
+        t_before: Union[np.ndarray, Number, None] = None,
+        t_after: Union[np.ndarray, Number, None] = None,
+        description: Union[np.ndarray, None] = None,
+        global_t_ref: Union[int, float] = 0,
+        time_unit: str = "ns",
     ):
-
         self.data = data
         self.times = times_df
 
@@ -61,7 +63,16 @@ class Epoch:
         self.uniform_data = len(ts_diff) == 1
 
         # Create epochs
-        self.epochs, self.data = create_epoch(data, times_df, t_ref, t_before, t_after, description, global_t_ref, time_unit)
+        self.epochs, self.data = create_epoch(
+            data,
+            times_df,
+            t_ref,
+            t_before,
+            t_after,
+            description,
+            global_t_ref,
+            time_unit,
+        )
 
         # Check epoch lengths
         data_len = self.epochs["epoch data"].apply(lambda x: x.shape[0])
@@ -75,10 +86,13 @@ class Epoch:
 
         # Check if t_before and t_after are the same across epochs
         self.equal_length = (
-            self.epochs["t_before"].nunique() == 1 and self.epochs["t_after"].nunique() == 1
+            self.epochs["t_before"].nunique() == 1
+            and self.epochs["t_after"].nunique() == 1
         )
         if self.equal_length:
-            self.window_length = self.epochs["t_before"].iloc[0] + self.epochs["t_after"].iloc[0]
+            self.window_length = (
+                self.epochs["t_before"].iloc[0] + self.epochs["t_after"].iloc[0]
+            )
 
     def to_numpy(self, sampling_rate=100, columns=None):
         """
@@ -112,12 +126,14 @@ class Epoch:
             raise ValueError("No epochs with data to convert to NumPy array.")
 
         # Remove epochs with empty data
-        self.epochs = self.epochs[self.epochs['epoch data'].apply(len) > 0].reset_index(drop=True)
+        self.epochs = self.epochs[self.epochs["epoch data"].apply(len) > 0].reset_index(
+            drop=True
+        )
         n_epochs = len(self.epochs)
 
         # Define the common time grid
-        t_before = self.epochs['t_before'].iloc[0]
-        t_after = self.epochs['t_after'].iloc[0]
+        t_before = self.epochs["t_before"].iloc[0]
+        t_after = self.epochs["t_after"].iloc[0]
         total_duration = t_after + t_before
         n_times = int(total_duration / 1e9 * sampling_rate) + 1
         common_times = np.linspace(-t_before, t_after, n_times)
@@ -125,10 +141,14 @@ class Epoch:
         # Select the relevant data columns
         if columns is None:
             # If no columns are provided, use all columns except 't_rel'
-            data_columns = self.epochs.iloc[0]['epoch data'].columns.drop('t_rel')
+            data_columns = self.epochs.iloc[0]["epoch data"].columns.drop("t_rel")
         else:
             # Use the explicitly provided columns
-            data_columns = [col for col in columns if col in self.epochs.iloc[0]['epoch data'].columns]
+            data_columns = [
+                col
+                for col in columns
+                if col in self.epochs.iloc[0]["epoch data"].columns
+            ]
 
         if len(data_columns) == 0:
             raise ValueError("None of the provided columns exist in the epoch data.")
@@ -140,20 +160,15 @@ class Epoch:
 
         # Interpolate each epoch onto the common time grid
         for i, (_, epoch) in enumerate(self.epochs.iterrows()):
-            epoch_data = epoch['epoch data'].copy()
-            t_rel = epoch_data['t_rel'].values
+            epoch_data = epoch["epoch data"].copy()
+            t_rel = epoch_data["t_rel"].values
             for idx, col in enumerate(data_columns):
                 y = epoch_data[col].values
                 # Interpolate using numpy.interp
                 interp_values = np.interp(
-                    common_times,
-                    t_rel,
-                    y,
-                    left=np.nan,
-                    right=np.nan
+                    common_times, t_rel, y, left=np.nan, right=np.nan
                 )
                 epochs_np[i, :, idx] = interp_values
-
 
         # check if there are any NaN values in the data
         nan_flag = np.isnan(epochs_np).any()
@@ -161,18 +176,16 @@ class Epoch:
             nan_text = "NaN values were found in the data."
         else:
             nan_text = "No NaN values were found in the data."
-            
+
         # Return an object holding the column ids, times, and data
         info = {
-            'column_ids': data_columns,
-            't_rel': common_times,
-            'nan_status': nan_text
+            "column_ids": data_columns,
+            "t_rel": common_times,
+            "nan_status": nan_text,
         }
         print(nan_text)
 
         return epochs_np, info
-
-
 
     def __len__(self):
         return len(self.epochs)
@@ -245,18 +258,27 @@ def create_epoch(
     elif "start timestamp [ns]" in data.columns:
         ts_name = "start timestamp [ns]"
     else:
-        raise ValueError("Data must contain a 'timestamp [ns]' or 'start timestamp [ns]' column.")
+        raise ValueError(
+            "Data must contain a 'timestamp [ns]' or 'start timestamp [ns]' column."
+        )
 
     # Generate event_times DataFrame
     if times_df is not None:
         # Ensure the DataFrame has the required columns
-        if not all(col in times_df.columns for col in ['t_ref', 't_before', 't_after', 'description']):
-            raise ValueError("times_df must contain 't_ref', 't_before', 't_after', and 'description' columns")
+        if not all(
+            col in times_df.columns
+            for col in ["t_ref", "t_before", "t_after", "description"]
+        ):
+            raise ValueError(
+                "times_df must contain 't_ref', 't_before', 't_after', and 'description' columns"
+            )
         event_times = times_df
     else:
         # Ensure the input arrays are not None
         if any(x is None for x in [t_refs, t_before, t_after, description]):
-            raise ValueError("t_refs, t_before, t_after, and description must be provided if times_df is None")
+            raise ValueError(
+                "t_refs, t_before, t_after, and description must be provided if times_df is None"
+            )
         # Use construct_event_times to create the event_times DataFrame
         event_times = construct_event_times(
             t_refs=t_refs,
@@ -270,15 +292,22 @@ def create_epoch(
     # Initialize lists to collect data
     annotated_data = data.copy()
     epochs = pd.DataFrame(
-        columns=["epoch id", "t_ref", "t_before", "t_after", "description", "epoch data"]
+        columns=[
+            "epoch id",
+            "t_ref",
+            "t_before",
+            "t_after",
+            "description",
+            "epoch data",
+        ]
     )
 
     # Iterate over each event time to create epochs
     for i, row in event_times.iterrows():
-        t_ref_i = row['t_ref']
-        t_before_i = row['t_before']
-        t_after_i = row['t_after']
-        description_i = row['description']
+        t_ref_i = row["t_ref"]
+        t_before_i = row["t_before"]
+        t_after_i = row["t_after"]
+        description_i = row["description"]
 
         start_time = t_ref_i - t_before_i
         end_time = t_ref_i + t_after_i
@@ -465,7 +494,9 @@ def construct_event_times(
     other_info = []
 
     # Check each of the parameters (t_before, t_after, description) for correct length and type
-    for x, name in zip([t_before, t_after, description], ["t_before", "t_after", "description"]):
+    for x, name in zip(
+        [t_before, t_after, description], ["t_before", "t_after", "description"]
+    ):
         if isinstance(x, np.ndarray):
             # Ensure it's the same length as t_refs
             if len(x) != n_epoch:
