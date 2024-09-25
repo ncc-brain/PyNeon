@@ -28,41 +28,37 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}  # Add your module's path to PYTHONPATH
       run: ruff format
-
-    - name: Build Documentation
-      env:
-        PYTHONPATH: ${{ github.workspace }}  # Add your module's path to PYTHONPATH
-      run: make html
     
-    - name: Clean up old documentation
-      run: |
-        rm -rf docs/*  # This removes all files and directories in the docs/ folder
-
-    - name: Move built docs to correct location
-      run: |
-        mv build/html/* docs/  # Move all contents to the docs directory
-
-    - name: Create .nojekyll file
-      run: |
-        touch docs/.nojekyll  # Create the .nojekyll file in the docs directory
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: html-docs
-        path: docs/
-      
     - name: Commit changes if any
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add .
-        git commit -m "Update doc && Format code with ruff" || echo "No changes to commit"
+        git commit -m "Format code with ruff" || echo "No changes to commit"
         git push
+
+    - name: Build Documentation
+      env:
+        PYTHONPATH: ${{ github.workspace }}  # Add your module's path to PYTHONPATH
+      run: make html
+
+    - name: Create .nojekyll file
+      run: |
+        touch build/html/.nojekyll  # Create the .nojekyll file in the html directory
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-docs
+        path: build/html
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/
+        publish_dir: build/html
+    
+    - name: Remove build folder
+      run: |
+        rm -rf build/*
