@@ -58,7 +58,7 @@ class NeonStream(NeonData):
         self.first_ts = int(self.ts[0])
         self.last_ts = int(self.ts[-1])
         self.times = (self.ts - self.first_ts) / 1e9
-        self.data.set_index(pd.to_datetime(self.ts, unit='ns'), inplace=True)
+        self.data.set_index(pd.to_datetime(self.ts, unit="ns"), inplace=True)
         self.data["time [s]"] = self.times
         self.duration = float(self.times[-1] - self.times[0])
         self.sampling_freq_effective = self.data.shape[0] / self.duration
