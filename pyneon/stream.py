@@ -20,6 +20,8 @@ class NeonStream(NeonData):
 
     Attributes
     ----------
+    file : :class:`pathlib.Path`
+        Path to the CSV file containing the stream data.
     data : pandas.DataFrame
         DataFrame containing the stream data.
     timestamps : np.ndarray
@@ -56,6 +58,7 @@ class NeonStream(NeonData):
         self.first_ts = int(self.ts[0])
         self.last_ts = int(self.ts[-1])
         self.times = (self.ts - self.first_ts) / 1e9
+        self.data.set_index(pd.to_datetime(self.ts, unit='ns'), inplace=True)
         self.data["time [s]"] = self.times
         self.duration = float(self.times[-1] - self.times[0])
         self.sampling_freq_effective = self.data.shape[0] / self.duration
@@ -220,3 +223,15 @@ class NeonIMU(NeonStream):
                 "time [s]": float,
             }
         )
+
+
+class CustomStream(NeonStream):
+    """
+    Custom stream data that inherits attributes and methods from :class:`NeonStream`.
+    """
+
+    def __init__(self, data: pd.DataFrame):
+        self.file = None
+        self.data = data
+        self.sampling_freq_nominal = None
+        self._get_attributes()

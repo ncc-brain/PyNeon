@@ -34,6 +34,8 @@ dev = [
     "pre-commit",
 ]
 doc = [
+    "jupyter",
+    "seaborn",
     "sphinx",
     "pydata-sphinx-theme",
     "nbsphinx",
