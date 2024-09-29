@@ -392,6 +392,17 @@ It must contain a <code class="docutils literal notranslate"><span class="pre">t
 </dd>
 </dl>
 <dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.file">
+<span class="sig-name descname"><span class="pre">file</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.file" title="Link to this definition">#</a></dt>
+<dd><p>Path to the CSV file containing the stream data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.data">
 <span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.data" title="Link to this definition">#</a></dt>
 <dd><p>DataFrame containing the stream data.</p>
@@ -566,6 +577,13 @@ by default “nearest”.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonIMU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonIMU" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a></p>
 <p>IMU data that inherits attributes and methods from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyneon.stream.CustomStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">CustomStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.CustomStream" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a></p>
+<p>Custom stream data that inherits attributes and methods from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class" id="module-pyneon.events">
@@ -759,6 +777,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonData"><code class="docutils literal notranslate"><span class="pre">NeonData</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.file"><code class="docutils literal notranslate"><span class="pre">NeonStream.file</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.data"><code class="docutils literal notranslate"><span class="pre">NeonStream.data</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.timestamps"><code class="docutils literal notranslate"><span class="pre">NeonStream.timestamps</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.ts</span></code></a></li>
@@ -775,6 +794,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.CustomStream"><code class="docutils literal notranslate"><span class="pre">CustomStream</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV"><code class="docutils literal notranslate"><span class="pre">NeonEV</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonBlinks"><code class="docutils literal notranslate"><span class="pre">NeonBlinks</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonFixations"><code class="docutils literal notranslate"><span class="pre">NeonFixations</span></code></a></li>
