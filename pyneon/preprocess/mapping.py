@@ -172,7 +172,7 @@ def estimate_scanpath(
         # Update the previous frame for the next iteration
         prev_frame = curr_frame
 
-    rec.estimated_scanpath = estimated_scanpath
+    rec.scanpath = estimated_scanpath
 
     return estimated_scanpath
 

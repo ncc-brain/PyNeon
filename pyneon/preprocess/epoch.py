@@ -359,36 +359,29 @@ def extract_event_times(
     event_name: str = "all",
 ) -> pd.DataFrame:
     """
-    Construct event times from a list or array of reference times.
+    Extract event times from the event data DataFrame.
 
     Parameters
     ----------
-    t_refs : list or np.ndarray
-        List or array of reference times. Units specified by `time_unit`.
-    t_before : float, np.ndarray, or list
-        Time before the reference time to start the epoch, in **seconds**.
-    t_after : float, np.ndarray, or list
-        Time after the reference time to end the epoch, in **seconds**.
-    description : str, np.ndarray, or list
-        Description or label associated with the epoch.
-    global_t_ref : int or float, optional
-        Global reference time to be added to each reference time in `t_refs`. Units specified by `time_unit`. Default is 0.
-    time_unit : str, optional
-        Unit of time for the reference times and `global_t_ref` ('ns' for nanoseconds or 's' for seconds). Default is 'ns'.
+    event_data : pd.DataFrame
+        DataFrame containing the event data.
+    t_before : float
+        Time before the event to start the epoch, in seconds.
+    t_after : float
+        Time after the event to end the epoch, in seconds.
+    event_name : str, optional
+        Name of the event to extract times for. Default is 'all'.
 
     Returns
     -------
+
     event_times : pd.DataFrame
-        DataFrame containing the constructed event times with columns:
+        DataFrame containing the extracted event times with the following columns:
         - 't_ref': Reference time of the event, in nanoseconds.
         - 't_before': Time before the reference time to start the epoch, in nanoseconds.
         - 't_after': Time after the reference time to end the epoch, in nanoseconds.
         - 'description': Description or label associated with the event.
 
-    Notes
-    -----
-    - The `t_refs` and `global_t_ref` are combined and converted to nanoseconds according to `time_unit`.
-    - The `t_before` and `t_after` parameters are always expected in **seconds** and will be converted to nanoseconds internally.
     """
 
     if "start timestamp [ns]" not in event_data.columns:
