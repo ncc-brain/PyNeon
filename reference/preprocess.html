@@ -613,20 +613,18 @@ Columns include:
 <dl class="py function">
 <dt class="sig sig-object py" id="pyneon.preprocess.extract_event_times">
 <span class="sig-prename descclassname"><span class="pre">pyneon.preprocess.</span></span><span class="sig-name descname"><span class="pre">extract_event_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_before</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_after</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.preprocess.extract_event_times" title="Link to this definition">#</a></dt>
-<dd><p>Construct event times from a list or array of reference times.</p>
+<dd><p>Extract event times from the event data DataFrame.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>t_refs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> or </em><em>np.ndarray</em>) – List or array of reference times. Units specified by <cite>time_unit</cite>.</p></li>
-<li><p><strong>t_before</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>np.ndarray</em><em>, or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a>) – Time before the reference time to start the epoch, in <strong>seconds</strong>.</p></li>
-<li><p><strong>t_after</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>np.ndarray</em><em>, or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a>) – Time after the reference time to end the epoch, in <strong>seconds</strong>.</p></li>
-<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>np.ndarray</em><em>, or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a>) – Description or label associated with the epoch.</p></li>
-<li><p><strong>global_t_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>optional</em>) – Global reference time to be added to each reference time in <cite>t_refs</cite>. Units specified by <cite>time_unit</cite>. Default is 0.</p></li>
-<li><p><strong>time_unit</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Unit of time for the reference times and <cite>global_t_ref</cite> (‘ns’ for nanoseconds or ‘s’ for seconds). Default is ‘ns’.</p></li>
+<li><p><strong>event_data</strong> (<em>pd.DataFrame</em>) – DataFrame containing the event data.</p></li>
+<li><p><strong>t_before</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Time before the event to start the epoch, in seconds.</p></li>
+<li><p><strong>t_after</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Time after the event to end the epoch, in seconds.</p></li>
+<li><p><strong>event_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Name of the event to extract times for. Default is ‘all’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>event_times</strong> – DataFrame containing the constructed event times with columns:
+<dd class="field-even"><p><strong>event_times</strong> – DataFrame containing the extracted event times with the following columns:
 - ‘t_ref’: Reference time of the event, in nanoseconds.
 - ‘t_before’: Time before the reference time to start the epoch, in nanoseconds.
 - ‘t_after’: Time after the reference time to end the epoch, in nanoseconds.
@@ -636,11 +634,6 @@ Columns include:
 <dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>The <cite>t_refs</cite> and <cite>global_t_ref</cite> are combined and converted to nanoseconds according to <cite>time_unit</cite>.</p></li>
-<li><p>The <cite>t_before</cite> and <cite>t_after</cite> parameters are always expected in <strong>seconds</strong> and will be converted to nanoseconds internally.</p></li>
-</ul>
 </dd></dl>
 
 <dl class="py function">

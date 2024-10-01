@@ -420,6 +420,7 @@ imu               True               imu.csv               ..\..\data\OpticalFlo
 labels            True            labels.csv            ..\..\data\OpticalFlow\data\labels.csv
 saccades          True          saccades.csv          ..\..\data\OpticalFlow\data\saccades.csv
 world_timestamps  True  world_timestamps.csv  ..\..\data\OpticalFlow\data\world_timestamps.csv
+scene_video_info  True     scene_camera.json     ..\..\data\OpticalFlow\data\scene_camera.json
 scene_video       True             video.mp4             ..\..\data\OpticalFlow\data\video.mp4
 
 </pre></div></div>
@@ -449,19 +450,29 @@ scene_video       True             video.mp4             ..\..\data\OpticalFlow\
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-           timestamp [ns]   time [s]  gaze x [px]  gaze y [px]  worn  \
-2848  1721831578297311111  96.074311   844.910429   846.663286   1.0
-2849  1721831578330655555  96.107656   839.472833   850.990000   1.0
-2850  1721831578364000000  96.141000   836.362571   855.123286   1.0
-2851  1721831578397344444  96.174344   838.284857   851.882143   1.0
-2852  1721831578430688888  96.207689   839.350333   851.466333   1.0
+<span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
+<span class="ansi-red-intense-fg ansi-bold">TypeError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-intense-fg ansi-bold">In[2], line 2</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Map gaze data to the video timestamps</span>
+<span class="ansi-green-intense-fg ansi-bold">----&gt; 2</span> <span class="ansi-yellow-bg">recording</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">map_gaze_to_video</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># Inspect the mapped gaze data</span>
+<span class="ansi-green-fg">      5</span> <span style="color: rgb(0,135,0)">print</span>(recording<span style="color: rgb(98,98,98)">.</span>mapped_gaze<span style="color: rgb(98,98,98)">.</span>tail())
 
-     fixation id blink id  azimuth [deg]  elevation [deg] fixation status
-2848       219.0     &lt;NA&gt;       1.945823       -15.279611          during
-2849       219.0     &lt;NA&gt;       1.588790       -15.557944          during
-2850       219.0     &lt;NA&gt;       1.384917       -15.823291          during
-2851       219.0     &lt;NA&gt;       1.510761       -15.615347          during
-2852       219.0     &lt;NA&gt;       1.580948       -15.588490             end
+File <span class="ansi-green-intense-fg ansi-bold">~\Documents\GitHub\PyNeon\pyneon\recording.py:457</span>, in <span class="ansi-cyan-fg">NeonRecording.map_gaze_to_video</span><span class="ansi-blue-intense-fg ansi-bold">(self, resamp_float_kind, resamp_other_kind)</span>
+<span class="ansi-green-fg">    440</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">map_gaze_to_video</span>(
+<span class="ansi-green-fg">    441</span>     <span style="color: rgb(0,135,0)">self</span>,
+<span class="ansi-green-fg">    442</span>     resamp_float_kind: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">linear</span><span style="color: rgb(175,0,0)">&#34;</span>,
+<span class="ansi-green-fg">    443</span>     resamp_other_kind: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">nearest</span><span style="color: rgb(175,0,0)">&#34;</span>,
+<span class="ansi-green-fg">    444</span> ) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> pd<span style="color: rgb(98,98,98)">.</span>DataFrame:
+<span class="ansi-green-fg">    445</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
+<span class="ansi-green-fg">    446</span> <span style="color: rgb(175,0,0)">    Map gaze data to video frames.</span>
+<span class="ansi-green-fg">    447</span>
+<span class="ansi-green-intense-fg ansi-bold">   (...)</span>
+<span class="ansi-green-fg">    455</span> <span style="color: rgb(175,0,0)">        Interpolation method for non-float columns.</span>
+<span class="ansi-green-fg">    456</span> <span style="color: rgb(175,0,0)">    &#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">--&gt; 457</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">map_gaze_to_video</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">resamp_float_kind</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">resamp_other_kind</span><span class="ansi-yellow-bg">)</span>
+
+<span class="ansi-red-intense-fg ansi-bold">TypeError</span>: map_gaze_to_video() takes 1 positional argument but 3 were given
 </pre></div></div>
 </div>
 <p>Above, we can see that each frame gets a current gaze position as well as a fixation status. Currently, three types of fixation status are used:</p>
