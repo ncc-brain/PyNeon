@@ -25,7 +25,7 @@ class NeonTabular:
             if data["section id"].nunique() > 1:
                 raise ValueError(f"{file.name} contains multiple section IDs")
             self.data.drop(columns=["section id"], inplace=True)
-        
+
         # Set the timestamp column as the index
         if "timestamp [ns]" in self.data.columns:
             self.data.set_index("timestamp [ns]", inplace=True)
