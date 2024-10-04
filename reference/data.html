@@ -373,17 +373,18 @@ document.write(`
   <section id="module-pyneon.data">
 <span id="classes-for-individual-data-types"></span><h1>Classes for individual data types<a class="headerlink" href="#module-pyneon.data" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="pyneon.data.NeonData">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonData" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="pyneon.data.NeonTabular">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonTabular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonTabular" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base for Neon tabular data. It reads from a CSV file and stores the data
-as a pandas DataFrame (with section and recording IDs removed).</p>
+as a pandas DataFrame (with section and recording IDs removed). The <cite>timestamp [ns]</cite>
+(for streams) or <cite>start timestamp [ns]</cite> (for events) column is set as the index.</p>
 </dd></dl>
 
 <dl class="py class" id="module-pyneon.stream">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonStream" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonData" title="pyneon.data.NeonData"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonData</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonTabular" title="pyneon.data.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
 <p>Base for Neon continuous data (gaze, eye states, IMU).
 It must contain a <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column.</p>
 <dl class="field-list simple">
@@ -589,7 +590,7 @@ by default “nearest”.</p></li>
 <dl class="py class" id="module-pyneon.events">
 <dt class="sig sig-object py" id="pyneon.events.NeonEV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonEV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonEV" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonData" title="pyneon.data.NeonData"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonData</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonTabular" title="pyneon.data.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
 <p>Base for Neon event data (blinks, fixations, saccades, “events” messages).</p>
 </dd></dl>
 
@@ -775,7 +776,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonData"><code class="docutils literal notranslate"><span class="pre">NeonData</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonTabular"><code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.file"><code class="docutils literal notranslate"><span class="pre">NeonStream.file</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.data"><code class="docutils literal notranslate"><span class="pre">NeonStream.data</span></code></a></li>
