@@ -4,11 +4,11 @@ import numpy as np
 from numbers import Number
 from typing import Union, Literal
 
-from .data import NeonData
+from .data import NeonTabular
 from .preprocess import crop, interpolate
 
 
-class NeonStream(NeonData):
+class NeonStream(NeonTabular):
     """
     Base for Neon continuous data (gaze, eye states, IMU).
     It must contain a ``timestamp [ns]`` column.
@@ -52,13 +52,11 @@ class NeonStream(NeonData):
         """
         Get attributes given self.data DataFrame.
         """
-        self.data.sort_values(by=["timestamp [ns]"], inplace=True)
-        self.timestamps = self.data["timestamp [ns]"].to_numpy()
+        self.timestamps = self.data.index.to_numpy()
         self.ts = self.timestamps
         self.first_ts = int(self.ts[0])
         self.last_ts = int(self.ts[-1])
         self.times = (self.ts - self.first_ts) / 1e9
-        self.data.set_index(pd.to_datetime(self.ts, unit="ns"), inplace=True)
         self.data["time [s]"] = self.times
         self.duration = float(self.times[-1] - self.times[0])
         self.sampling_freq_effective = self.data.shape[0] / self.duration
@@ -153,7 +151,6 @@ class NeonGaze(NeonStream):
         self.sampling_freq_nominal = int(200)
         self.data = self.data.astype(
             {
-                "timestamp [ns]": "Int64",
                 "gaze x [px]": float,
                 "gaze y [px]": float,
                 "worn": bool,
@@ -176,7 +173,6 @@ class NeonEyeStates(NeonStream):
         self.sampling_freq_nominal = 200
         self.data = self.data.astype(
             {
-                "timestamp [ns]": "Int64",
                 "pupil diameter left [mm]": float,
                 "pupil diameter right [mm]": float,
                 "eyeball center left x [mm]": float,
@@ -206,7 +202,6 @@ class NeonIMU(NeonStream):
         self.sampling_freq_nominal = int(110)
         self.data = self.data.astype(
             {
-                "timestamp [ns]": "Int64",
                 "gyro x [deg/s]": float,
                 "gyro y [deg/s]": float,
                 "gyro z [deg/s]": float,

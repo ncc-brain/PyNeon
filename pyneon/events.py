@@ -1,8 +1,8 @@
-from .data import NeonData
+from .data import NeonTabular
 import pandas as pd
 
 
-class NeonEV(NeonData):
+class NeonEV(NeonTabular):
     """
     Base for Neon event data (blinks, fixations, saccades, "events" messages).
     """
@@ -57,7 +57,6 @@ class NeonSaccades(NeonEV):
         self.data = self.data.astype(
             {
                 "saccade id": "Int32",
-                "start timestamp [ns]": "Int64",
                 "end timestamp [ns]": "Int64",
                 "duration [ms]": "Int64",
                 "amplitude [px]": float,
