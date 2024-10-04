@@ -376,13 +376,12 @@ document.write(`
 <p>In this tutorial, we will show how to load a single Neon recording downloaded from <a class="reference external" href="https://docs.pupil-labs.com/neon/pupil-cloud/">Pupil Cloud</a>.</p>
 <section id="Reading-sample-data">
 <h2>Reading sample data<a class="headerlink" href="#Reading-sample-data" title="Link to this heading">#</a></h2>
-<p>We will use a sample recording produced by the NCC Lab called <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code>. It’s a project with 2 recordings and multiple enrichments and can be downloaded with the <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code> function:</p>
+<p>We will use a sample recording produced by the NCC Lab called <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code>. It’s a project with 2 recordings and multiple enrichments and can be downloaded with the <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code> function. It returns a <code class="docutils literal notranslate"><span class="pre">`Pathlib.Path</span></code> &lt;<a class="reference external" href="https://docs.python.org/3/library/pathlib.html">https://docs.python.org/3/library/pathlib.html</a>&gt;`__ object to the downloaded &amp; unzipped directory.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonDataset</span><span class="p">,</span> <span class="n">NeonRecording</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonDataset</span><span class="p">,</span> <span class="n">NeonRecording</span>
 
 <span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span>
 </pre></div>
@@ -406,7 +405,7 @@ document.write(`
 └── OfficeWalk_STATIC-IMAGE-MAPPER_ManualMap_csv
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span></code> folder contains what PyNeon calls a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>. It contains multiple recordings, each with its own <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file and data files. These recordings can either be loaded individually as <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code>s or as a wholist <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span></code> folder contains what PyNeon calls a <code class="docutils literal notranslate"><span class="pre">`NeonDataset</span></code> &lt;<a class="reference external" href="https://ncc-brain.github.io/PyNeon/reference/dataset.html#pyneon.NeonDataset">https://ncc-brain.github.io/PyNeon/reference/dataset.html#pyneon.NeonDataset</a>&gt;`__. It contains multiple recordings, each with its own <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file and data files. These recordings can either be loaded individually as a <code class="docutils literal notranslate"><span class="pre">`NeonRecording</span></code> &lt;<a class="reference external" href="https://ncc-brain.github.io/PyNeon/reference/recording.html#pyneon.NeonRecording">https://ncc-brain.github.io/PyNeon/reference/recording.html#pyneon.NeonRecording</a>&gt;`__ or as a wholist <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>.</p>
 <p>If loading a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>, specify the path to the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span></code> folder to create a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code> object:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -444,7 +443,7 @@ NeonDataset | 2 recordings
 &lt;class &#39;pyneon.recording.NeonRecording&#39;&gt;
 </pre></div></div>
 </div>
-<p>Alternatively, one can directly load a single <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> by specifying the path to the recording’s folder:</p>
+<p>Equivalently, one can directly load a single <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> by specifying the path to the recording’s folder.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -502,35 +501,14 @@ scene_video       False                  None                                   
 </pre></div></div>
 </div>
 <p>As seen in the output, this recording contains every file other than the scene video. This is because we downloaded the “Timeseries Data” instead of “Timeseries Data + Scene Video” from Pupil Cloud. For more information on how to process video files, see the <a class="reference internal" href="video.html"><span class="doc">video tutorial</span></a>.</p>
-<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> object. For example, the gaze data can be accessed as <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code>, and upon accessing, the tabular data is loaded into memory.</p>
+<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> object. For example, the gaze data can be accessed as <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code>, and upon accessing, the tabular data is loaded into memory. On the other hand, if you try to access unavailable data like the video, it will simply return <code class="docutils literal notranslate"><span class="pre">None</span></code> and a warning message.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording._gaze size before accessing `gaze`: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">getsizeof</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">_gaze</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="n">gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">gaze</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.gaze is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording._gaze size after accessing `gaze`: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">getsizeof</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">_gaze</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-recording._gaze size before accessing `gaze`: 16
-recording.gaze is of type: &lt;class &#39;pyneon.stream.NeonGaze&#39;&gt;
-recording._gaze size after accessing `gaze`: 48
-</pre></div></div>
-</div>
-<p>On the other hand, if you try to access unavailable data like the video, it will simply return <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">video</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">video</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">gaze</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span>
+<span class="n">video</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">video</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">video</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -540,6 +518,7 @@ recording._gaze size after accessing `gaze`: 48
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
+&lt;pyneon.stream.NeonGaze object at 0x00000270398494C0&gt;
 None
 </pre></div></div>
 </div>
@@ -548,13 +527,14 @@ None
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:273: UserWarning: Scene video not loaded because no video or video timestamps file was found.
+C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:275: UserWarning: Scene video not loaded because no video or video timestamps file was found.
   warnings.warn(
 </pre></div></div>
 </div>
-<p>We can access the timeseries data in the gaze stream as a pandas DataFrame by accessing the <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute of the gaze stream. The columns of the DataFrame include <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> and channel data columns. During loading, PyNeon strips the redundant <code class="docutils literal notranslate"><span class="pre">section</span> <span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">recording</span> <span class="pre">id</span></code> columns and adds a more human-readable <code class="docutils literal notranslate"><span class="pre">time</span> <span class="pre">[s]</span></code> column to represent the time of each sample in seconds relative to the start of the data stream.</p>
+<p>We can access the timeseries data in the gaze stream as a <code class="docutils literal notranslate"><span class="pre">`pandas.DataFrame</span></code> &lt;<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html</a>&gt;`__ by accessing the <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute of the gaze stream. The DataFrame has the datetime of each data point as its index. The raw UTC <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> is available as a column along with data from channnels like <code class="docutils literal notranslate"><span class="pre">gaze</span> <span class="pre">x</span> <span class="pre">[px]</span></code>.</p>
+<p>During loading, PyNeon strips the redundant <code class="docutils literal notranslate"><span class="pre">section</span> <span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">recording</span> <span class="pre">id</span></code> columns and adds a more human-readable <code class="docutils literal notranslate"><span class="pre">time</span> <span class="pre">[s]</span></code> column to represent the time of each sample in seconds relative to the start of the data stream.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
@@ -566,24 +546,31 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:273: UserWarning: 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-        timestamp [ns]  gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
-0  1725032224852161732     1067.486      620.856  True            1      &lt;NA&gt;
-1  1725032224857165732     1066.920      617.117  True            1      &lt;NA&gt;
-2  1725032224862161732     1072.699      615.780  True            1      &lt;NA&gt;
-3  1725032224867161732     1067.447      617.062  True            1      &lt;NA&gt;
-4  1725032224872161732     1071.564      613.158  True            1      &lt;NA&gt;
+                                    timestamp [ns]  gaze x [px]  gaze y [px]  \
+2024-08-30 15:37:04.852161732  1725032224852161732     1067.486      620.856
+2024-08-30 15:37:04.857165732  1725032224857165732     1066.920      617.117
+2024-08-30 15:37:04.862161732  1725032224862161732     1072.699      615.780
+2024-08-30 15:37:04.867161732  1725032224867161732     1067.447      617.062
+2024-08-30 15:37:04.872161732  1725032224872161732     1071.564      613.158
 
-   azimuth [deg]  elevation [deg]  time [s]
-0      16.213030        -0.748998  0.000000
-1      16.176285        -0.511733  0.005004
-2      16.546413        -0.426618  0.010000
-3      16.210049        -0.508251  0.015000
-4      16.473521        -0.260388  0.020000
+                               worn  fixation id  blink id  azimuth [deg]  \
+2024-08-30 15:37:04.852161732  True            1      &lt;NA&gt;      16.213030
+2024-08-30 15:37:04.857165732  True            1      &lt;NA&gt;      16.176285
+2024-08-30 15:37:04.862161732  True            1      &lt;NA&gt;      16.546413
+2024-08-30 15:37:04.867161732  True            1      &lt;NA&gt;      16.210049
+2024-08-30 15:37:04.872161732  True            1      &lt;NA&gt;      16.473521
+
+                               elevation [deg]  time [s]
+2024-08-30 15:37:04.852161732        -0.748998  0.000000
+2024-08-30 15:37:04.857165732        -0.511733  0.005004
+2024-08-30 15:37:04.862161732        -0.426618  0.010000
+2024-08-30 15:37:04.867161732        -0.508251  0.015000
+2024-08-30 15:37:04.872161732        -0.260388  0.020000
 </pre></div></div>
 </div>
 <p>PyNeon also automatically sets the column datatype to appropriate types, such as <code class="docutils literal notranslate"><span class="pre">Int64</span></code> for timestamps, <code class="docutils literal notranslate"><span class="pre">Int32</span></code> for event IDs, and <code class="docutils literal notranslate"><span class="pre">float64</span></code> for float data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
@@ -612,7 +599,7 @@ dtype: object
 <h2>Data streams and events<a class="headerlink" href="#Data-streams-and-events" title="Link to this heading">#</a></h2>
 <p>Up to this point, PyNeon simply reads and re-organizes the raw .csv files. Let’s plot some samples from the <code class="docutils literal notranslate"><span class="pre">gaze</span></code> and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code> streams and a saccade from the <code class="docutils literal notranslate"><span class="pre">saccades</span></code> events.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -661,7 +648,7 @@ dtype: object
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -673,13 +660,13 @@ dtype: object
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_read_recording_19_1.png" src="../_images/tutorials_read_recording_19_1.png" />
+<img alt="../_images/tutorials_read_recording_17_1.png" src="../_images/tutorials_read_recording_17_1.png" />
 </div>
 </div>
 <p>It’s apparent that at the beginning of the recording, there are some missing data points in both the <code class="docutils literal notranslate"><span class="pre">gaze</span></code> and <code class="docutils literal notranslate"><span class="pre">imu</span></code> streams. This is presumably due to the time it takes for the sensors to start up and stabilize. We will show how to handle missing data using resampling in the next tutorial. For now, it’s important to be aware of these gaps and that it will require great caution to assume the data is continuously and equally sampled.</p>
 <p>PyNeon also calculates the effective (as opposed to the nominal) sampling frequency of each stream by dividing the number of samples by the duration of the recording.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
@@ -707,7 +694,7 @@ IMU: nominal sampling frequency = 110, effective sampling frequency = 115.355324
 <h2>Visualizing gaze heatmap<a class="headerlink" href="#Visualizing-gaze-heatmap" title="Link to this heading">#</a></h2>
 <p>Finally, we will show how to plot a heatmap of the gaze/fixation data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">plot_distribution</span><span class="p">()</span>
@@ -719,7 +706,7 @@ IMU: nominal sampling frequency = 110, effective sampling frequency = 115.355324
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:273: UserWarning: Scene video not loaded because no video or video timestamps file was found.
+C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:275: UserWarning: Scene video not loaded because no video or video timestamps file was found.
   warnings.warn(
 </pre></div></div>
 </div>
@@ -727,7 +714,7 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:273: UserWarning: 
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_read_recording_23_1.png" src="../_images/tutorials_read_recording_23_1.png" />
+<img alt="../_images/tutorials_read_recording_21_1.png" src="../_images/tutorials_read_recording_21_1.png" />
 </div>
 </div>
 <p>we can neatly see that the recorded data shows a centre-bias, which is a well-known effect from eye statistics. In y, we can see that fixations tend to occur below the horizon, which is indicative of a walking task where a participant looks at the floor in front of them more often</p>
