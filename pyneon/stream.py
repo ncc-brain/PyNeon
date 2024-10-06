@@ -80,11 +80,11 @@ class NeonStream(NeonTabular):
     def is_uniformly_sampled(self) -> bool:
         """Whether the stream is uniformly sampled."""
         return np.allclose(self.ts_diff, self.ts_diff[0])
-    
+
     def time_to_ts(self, time: Union[Number, np.ndarray]) -> np.ndarray:
         """Convert time(s) in seconds to timestamp(s) in nanoseconds."""
-        time 
-        
+        time
+
     def crop(
         self,
         tmin: Optional[Number] = None,
