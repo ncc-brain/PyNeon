@@ -10,6 +10,6 @@ started with PyNeon.
     :maxdepth: 1
 
     read_recording
-    resample_and_concat
+    interpolate_and_concat
     video
     export_to_bids

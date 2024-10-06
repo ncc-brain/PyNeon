@@ -1,4 +1,4 @@
-from .data import NeonTabular
+from .tabular import NeonTabular
 import pandas as pd
 
 
@@ -20,10 +20,11 @@ class NeonBlinks(NeonEV):
 
     def __init__(self, file):
         super().__init__(file)
+        if self.data.index.name != "start timestamp [ns]":
+            raise ValueError("Blink data should be indexed by `start timestamp [ns]`.")
         self.data = self.data.astype(
             {
                 "blink id": "Int32",
-                "start timestamp [ns]": "Int64",
                 "end timestamp [ns]": "Int64",
                 "duration [ms]": "Int64",
             }
@@ -35,10 +36,13 @@ class NeonFixations(NeonEV):
 
     def __init__(self, file):
         super().__init__(file)
+        if self.data.index.name != "start timestamp [ns]":
+            raise ValueError(
+                "Fixation data should be indexed by `start timestamp [ns]`."
+            )
         self.data = self.data.astype(
             {
                 "fixation id": "Int32",
-                "start timestamp [ns]": "Int64",
                 "end timestamp [ns]": "Int64",
                 "duration [ms]": "Int64",
                 "fixation x [px]": float,
@@ -54,6 +58,10 @@ class NeonSaccades(NeonEV):
 
     def __init__(self, file):
         super().__init__(file)
+        if self.data.index.name != "start timestamp [ns]":
+            raise ValueError(
+                "Saccade data should be indexed by `start timestamp [ns]`."
+            )
         self.data = self.data.astype(
             {
                 "saccade id": "Int32",
@@ -72,9 +80,10 @@ class NeonEvents(NeonEV):
 
     def __init__(self, file):
         super().__init__(file)
+        if self.data.index.name != "timestamp [ns]":
+            raise ValueError("Event data should be indexed by `timestamp [ns]`.")
         self.data = self.data.astype(
             {
-                "timestamp [ns]": "Int64",
                 "name": str,
                 "type": str,
             }

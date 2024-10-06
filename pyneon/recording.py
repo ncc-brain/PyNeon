@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, Literal
+from typing import Union, Literal, Optional
 import pandas as pd
 import json
 from datetime import datetime
@@ -7,7 +7,7 @@ import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
 
-from .stream import NeonGaze, NeonIMU, NeonEyeStates
+from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .video import NeonVideo
 from .preprocess import (
@@ -121,7 +121,7 @@ Recording ID: {self.recording_id}
 Wearer ID: {self.info['wearer_id']}
 Wearer name: {self.info['wearer_name']}
 Recording start time: {self.start_datetime}
-Recording duration: {self.info["duration"] / 1e9} s
+Recording duration: {self.info["duration"] / 1e9}s
 {self.contents.to_string()}
 """
 
@@ -167,7 +167,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         self.contents = contents
 
     @property
-    def gaze(self) -> Union[NeonGaze, None]:
+    def gaze(self) -> Optional[NeonGaze]:
         """
         Returns a NeonGaze object or None if no gaze data is found.
         """
@@ -180,7 +180,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._gaze
 
     @property
-    def imu(self) -> Union[NeonIMU, None]:
+    def imu(self) -> Optional[NeonIMU]:
         """
         Returns a NeonIMU object or None if no IMU data is found.
         """
@@ -193,7 +193,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._imu
 
     @property
-    def eye_states(self) -> Union[NeonEyeStates, None]:
+    def eye_states(self) -> Optional[NeonEyeStates]:
         """
         Returns a NeonEyeStates object or None if no eye states data is found.
         """
@@ -208,7 +208,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._eye_states
 
     @property
-    def blinks(self) -> Union[NeonBlinks, None]:
+    def blinks(self) -> Optional[NeonBlinks]:
         """
         Returns a NeonBlinks object or None if no blinks data is found.
         """
@@ -221,7 +221,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._blinks
 
     @property
-    def fixations(self) -> Union[NeonFixations, None]:
+    def fixations(self) -> Optional[NeonFixations]:
         """
         Returns a NeonFixations object or None if no fixations data is found.
         """
@@ -234,7 +234,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._fixations
 
     @property
-    def saccades(self) -> Union[NeonSaccades, None]:
+    def saccades(self) -> Optional[NeonSaccades]:
         """
         Returns a NeonSaccades object or None if no saccades data is found.
         """
@@ -247,7 +247,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._saccades
 
     @property
-    def events(self) -> Union[NeonEvents, None]:
+    def events(self) -> Optional[NeonEvents]:
         """
         Returns a NeonEvents object or None if no events data is found.
         """
@@ -260,7 +260,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._events
 
     @property
-    def video(self) -> Union[NeonVideo, None]:
+    def video(self) -> Optional[NeonVideo]:
         """
         Returns a NeonVideo object or None if no scene video is found.
         """
@@ -278,7 +278,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         return self._video
 
     @property
-    def scanpath(self) -> Union[pd.DataFrame, None]:
+    def scanpath(self) -> Optional[pd.DataFrame]:
         """
         Returns the scanpath data if it exists, otherwise None.
         """
@@ -299,7 +299,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         resamp_float_kind: str = "linear",
         resamp_other_kind: str = "nearest",
         inplace: bool = False,
-    ) -> pd.DataFrame:
+    ) -> CustomStream:
         """
         Concatenate data from different streams under common timestamps.
         Since the streams may have different timestamps and sampling frequencies,
@@ -335,7 +335,7 @@ Recording duration: {self.info["duration"] / 1e9} s
         concat_data : :class:`pandas.DataFrame`
             Concatenated data.
         """
-        return concat_streams(
+        new_data = concat_streams(
             self,
             stream_names,
             sampling_freq,
@@ -343,6 +343,7 @@ Recording duration: {self.info["duration"] / 1e9} s
             resamp_other_kind,
             inplace,
         )
+        return CustomStream(new_data)
 
     def concat_events(self, event_names: list[str]) -> pd.DataFrame:
         """
