@@ -370,23 +370,39 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-pyneon.data">
-<span id="classes-for-individual-data-types"></span><h1>Classes for individual data types<a class="headerlink" href="#module-pyneon.data" title="Link to this heading">#</a></h1>
+  <section id="module-pyneon.tabular">
+<span id="classes-for-individual-data-types"></span><h1>Classes for individual data types<a class="headerlink" href="#module-pyneon.tabular" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="pyneon.data.NeonTabular">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.data.</span></span><span class="sig-name descname"><span class="pre">NeonTabular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.data.NeonTabular" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="pyneon.tabular.NeonTabular">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.tabular.</span></span><span class="sig-name descname"><span class="pre">NeonTabular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.tabular.NeonTabular" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base for Neon tabular data. It reads from a CSV file and stores the data
 as a pandas DataFrame (with section and recording IDs removed). The <cite>timestamp [ns]</cite>
 (for streams) or <cite>start timestamp [ns]</cite> (for events) column is set as the index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file</strong> (<em>Path</em>) – Path to the CSV file.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.tabular.NeonTabular.data">
+<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.tabular.NeonTabular.data" title="Link to this definition">#</a></dt>
+<dd><p>The processed data with the timestamp index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class" id="module-pyneon.stream">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonStream" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonTabular" title="pyneon.data.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#pyneon.tabular.NeonTabular" title="pyneon.tabular.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
 <p>Base for Neon continuous data (gaze, eye states, IMU).
-It must contain a <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column.</p>
+It’s indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the CSV file containing the stream data.</p>
@@ -415,144 +431,161 @@ It must contain a <code class="docutils literal notranslate"><span class="pre">t
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.timestamps">
-<span class="sig-name descname"><span class="pre">timestamps</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.timestamps" title="Link to this definition">#</a></dt>
-<dd><p>Timestamps of the stream in nanoseconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.ts">
-<span class="sig-name descname"><span class="pre">ts</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.ts" title="Link to this definition">#</a></dt>
-<dd><p>Alias for timestamps.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.first_ts">
-<span class="sig-name descname"><span class="pre">first_ts</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.first_ts" title="Link to this definition">#</a></dt>
-<dd><p>First timestamp of the stream.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.last_ts">
-<span class="sig-name descname"><span class="pre">last_ts</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.last_ts" title="Link to this definition">#</a></dt>
-<dd><p>Last timestamp of the stream.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.times">
-<span class="sig-name descname"><span class="pre">times</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.times" title="Link to this definition">#</a></dt>
-<dd><p>Timestamps converted to seconds relative to stream start.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.duration">
-<span class="sig-name descname"><span class="pre">duration</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.duration" title="Link to this definition">#</a></dt>
-<dd><p>Duration of the stream in seconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)">float</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.stream.NeonStream.sampling_freq_effective">
-<span class="sig-name descname"><span class="pre">sampling_freq_effective</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.sampling_freq_effective" title="Link to this definition">#</a></dt>
-<dd><p>Effective sampling frequency of the stream
-(number of time points divided by duration).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)">float</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.sampling_freq_nominal">
 <span class="sig-name descname"><span class="pre">sampling_freq_nominal</span></span><a class="headerlink" href="#pyneon.stream.NeonStream.sampling_freq_nominal" title="Link to this definition">#</a></dt>
 <dd><p>Nominal sampling frequency of the stream as specified by Pupil Labs
 (<a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a> or None</p>
 </dd>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.timestamps">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">timestamps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.timestamps" title="Link to this definition">#</a></dt>
+<dd><p>Timestamps of the stream in nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.ts">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.ts" title="Link to this definition">#</a></dt>
+<dd><p>Alias for timestamps.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.first_ts">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">first_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.first_ts" title="Link to this definition">#</a></dt>
+<dd><p>First timestamp of the stream.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.last_ts">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.last_ts" title="Link to this definition">#</a></dt>
+<dd><p>Last timestamp of the stream.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.ts_diff">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ts_diff</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.ts_diff" title="Link to this definition">#</a></dt>
+<dd><p>Difference between consecutive timestamps.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.times">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">times</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.times" title="Link to this definition">#</a></dt>
+<dd><p>Timestamps converted to seconds relative to stream start.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.duration">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">duration</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.duration" title="Link to this definition">#</a></dt>
+<dd><p>Duration of the stream in seconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.sampling_freq_effective">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sampling_freq_effective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.sampling_freq_effective" title="Link to this definition">#</a></dt>
+<dd><p>Effective sampling frequency of the stream.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.is_uniformly_sampled">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_uniformly_sampled</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.is_uniformly_sampled" title="Link to this definition">#</a></dt>
+<dd><p>Whether the stream is uniformly sampled.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.time_to_ts">
+<span class="sig-name descname"><span class="pre">time_to_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.12)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.time_to_ts" title="Link to this definition">#</a></dt>
+<dd><p>Convert time(s) in seconds to timestamp(s) in nanoseconds.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.crop">
-<span class="sig-name descname"><span class="pre">crop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.12)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.12)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.12)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.crop" title="Link to this definition">#</a></dt>
-<dd><p>Crop data to a specific time range.</p>
+<span class="sig-name descname"><span class="pre">crop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.12)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.12)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.12)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'row'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.crop" title="Link to this definition">#</a></dt>
+<dd><p>Crop data to a specific time range based on timestamps,
+relative times since start, or row numbers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tmin</strong> (<em>number</em><em>, </em><em>optional</em>) – Start time or timestamp to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the minimum timestamp or time in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>tmax</strong> (<em>number</em><em>, </em><em>optional</em>) – End time or timestamp to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the maximum timestamp or time in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>by</strong> (<em>&quot;timestamp&quot;</em><em> or </em><em>&quot;time&quot;</em><em>, </em><em>optional</em>) – Whether tmin and tmax are UTC timestamps in nanoseconds
-or relative times in seconds. Defaults to “timestamp”.</p></li>
+<li><p><strong>tmin</strong> (<em>number</em><em>, </em><em>optional</em>) – Start timestamp/time/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the minimum timestamp/time/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>tmax</strong> (<em>number</em><em>, </em><em>optional</em>) – End timestamp/time/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the maximum timestamp/time/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>by</strong> (<em>&quot;timestamp&quot;</em><em> or </em><em>&quot;time&quot;</em><em> or </em><em>&quot;row&quot;</em><em>, </em><em>optional</em>) – Whether tmin and tmax are UTC timestamps in nanoseconds
+OR relative times in seconds OR row numbers of the stream data.
+Defaults to “timestamp”.</p></li>
 <li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the cropped data.
 Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Cropped data.</p>
+<dd class="field-even"><p>Cropped stream if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream">NeonStream</a> or None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.interpolate">
-<span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.interpolate" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.interpolate" title="Link to this definition">#</a></dt>
 <dd><p>Interpolate the stream to a new set of timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>new_ts</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – New timestamps to evaluate the interpolant at. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, new timestamps
+<li><p><strong>new_ts</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – An array of new timestamps (in nanoseconds)
+at which to evaluate the interpolant. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), new timestamps
 are generated according to the nominal sampling frequency of the stream as
 specified by Pupil Labs: <a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Data to interpolate. Must contain a monotonically increasing
-<code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column.</p></li>
 <li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
-by default “linear”. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+by default <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
 <li><p><strong>other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types,
-by default “nearest”.</p></li>
+by default <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.14.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the interpolated data.
+Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Interpolated data.</p>
+<dd class="field-even"><p>Interpolated stream if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream">NeonStream</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.window_average">
+<span class="sig-name descname"><span class="pre">window_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.window_average" title="Link to this definition">#</a></dt>
+<dd><p>Take the average over a time window to obtain smoothed data at new timestamps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_ts</strong> (<em>np.ndarray</em>) – An array of new timestamps (in nanoseconds)
+at which to compute the windowed averages.
+The median interval between these new timestamps must be larger than
+the median interval between the original data timestamps, i.e.,
+<code class="docutils literal notranslate"><span class="pre">np.median(np.diff(new_ts))</span> <span class="pre">&gt;</span> <span class="pre">np.median(np.diff(data.index))</span></code>.
+In other words, only downsampling is supported.</p></li>
+<li><p><strong>window_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em>) – The size of the time window (in nanoseconds)
+over which to compute the average around each new timestamp.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), the window size is set to the median interval
+between the new timestamps, i.e., <code class="docutils literal notranslate"><span class="pre">np.median(np.diff(new_ts))</span></code>.
+The window size must be larger than the median interval between the original data timestamps,
+i.e., <code class="docutils literal notranslate"><span class="pre">window_size</span> <span class="pre">&gt;</span> <span class="pre">np.median(np.diff(data.index))</span></code>.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the window averaged data.
+Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stream with window average applied on data if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream">NeonStream</a> or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -590,7 +623,7 @@ by default “nearest”.</p></li>
 <dl class="py class" id="module-pyneon.events">
 <dt class="sig sig-object py" id="pyneon.events.NeonEV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonEV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonEV" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.data.NeonTabular" title="pyneon.data.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#pyneon.tabular.NeonTabular" title="pyneon.tabular.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
 <p>Base for Neon event data (blinks, fixations, saccades, “events” messages).</p>
 </dd></dl>
 
@@ -776,20 +809,27 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.data.NeonTabular"><code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.NeonTabular"><code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.NeonTabular.data"><code class="docutils literal notranslate"><span class="pre">NeonTabular.data</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.file"><code class="docutils literal notranslate"><span class="pre">NeonStream.file</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.data"><code class="docutils literal notranslate"><span class="pre">NeonStream.data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.sampling_freq_nominal"><code class="docutils literal notranslate"><span class="pre">NeonStream.sampling_freq_nominal</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.timestamps"><code class="docutils literal notranslate"><span class="pre">NeonStream.timestamps</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.first_ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.first_ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.last_ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.last_ts</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.ts_diff"><code class="docutils literal notranslate"><span class="pre">NeonStream.ts_diff</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.times"><code class="docutils literal notranslate"><span class="pre">NeonStream.times</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.duration"><code class="docutils literal notranslate"><span class="pre">NeonStream.duration</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.sampling_freq_effective"><code class="docutils literal notranslate"><span class="pre">NeonStream.sampling_freq_effective</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.sampling_freq_nominal"><code class="docutils literal notranslate"><span class="pre">NeonStream.sampling_freq_nominal</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.is_uniformly_sampled"><code class="docutils literal notranslate"><span class="pre">NeonStream.is_uniformly_sampled</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.time_to_ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.time_to_ts()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.crop"><code class="docutils literal notranslate"><span class="pre">NeonStream.crop()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.interpolate"><code class="docutils literal notranslate"><span class="pre">NeonStream.interpolate()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.window_average"><code class="docutils literal notranslate"><span class="pre">NeonStream.window_average()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a></li>

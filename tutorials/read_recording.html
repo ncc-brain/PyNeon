@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/read_recording';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Resample Data and Concatenate Channels" href="resample_and_concat.html" />
+    <link rel="next" title="Interpolate Data and Concatenate Channels" href="interpolate_and_concat.html" />
     <link rel="prev" title="PyNeon Tutorials" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -311,7 +311,7 @@ document.write(`
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Reading a Neon dataset/recording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="resample_and_concat.html">Resample Data and Concatenate Channels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate Data and Concatenate Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Mapping Scanpath to video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Export Neon data recording to BIDS formats</a></li>
 </ul>
@@ -484,19 +484,19 @@ Recording ID: e116e606-5f3f-4d34-8727-040b8762cef8
 Wearer ID: bcff2832-cfcb-4f89-abef-7bbfe91ec561
 Wearer name: Qian
 Recording start time: 2024-08-30 17:37:01.527000
-Recording duration: 98.213 s
-                  exist              filename                                                                                                           path
-3d_eye_states      True     3d_eye_states.csv     C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\3d_eye_states.csv
-blinks             True            blinks.csv            C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\blinks.csv
-events             True            events.csv            C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\events.csv
-fixations          True         fixations.csv         C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\fixations.csv
-gaze               True              gaze.csv              C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\gaze.csv
-imu                True               imu.csv               C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\imu.csv
-labels             True            labels.csv            C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\labels.csv
-saccades           True          saccades.csv          C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\saccades.csv
-world_timestamps   True  world_timestamps.csv  C:\Users\qian.chu\Documents\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\world_timestamps.csv
-scene_video_info  False                  None                                                                                                           None
-scene_video       False                  None                                                                                                           None
+Recording duration: 98.213s
+                  exist              filename                                                                                  path
+3d_eye_states      True     3d_eye_states.csv     D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\3d_eye_states.csv
+blinks             True            blinks.csv            D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\blinks.csv
+events             True            events.csv            D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\events.csv
+fixations          True         fixations.csv         D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\fixations.csv
+gaze               True              gaze.csv              D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\gaze.csv
+imu                True               imu.csv               D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\imu.csv
+labels             True            labels.csv            D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\labels.csv
+saccades           True          saccades.csv          D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\saccades.csv
+world_timestamps   True  world_timestamps.csv  D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\world_timestamps.csv
+scene_video_info  False                  None                                                                                  None
+scene_video       False                  None                                                                                  None
 
 </pre></div></div>
 </div>
@@ -518,7 +518,7 @@ scene_video       False                  None                                   
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;pyneon.stream.NeonGaze object at 0x000002248D3B6240&gt;
+&lt;pyneon.stream.NeonGaze object at 0x00000216FFB5B800&gt;
 None
 </pre></div></div>
 </div>
@@ -527,7 +527,7 @@ None
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:275: UserWarning: Scene video not loaded because no video or video timestamps file was found.
+D:\GitHub\pyneon\pyneon\recording.py:275: UserWarning: Scene video not loaded because no video or video timestamps file was found.
   warnings.warn(
 </pre></div></div>
 </div>
@@ -546,26 +546,21 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:275: UserWarning: 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-                                    timestamp [ns]  gaze x [px]  gaze y [px]  \
-2024-08-30 15:37:04.852161732  1725032224852161732     1067.486      620.856
-2024-08-30 15:37:04.857165732  1725032224857165732     1066.920      617.117
-2024-08-30 15:37:04.862161732  1725032224862161732     1072.699      615.780
-2024-08-30 15:37:04.867161732  1725032224867161732     1067.447      617.062
-2024-08-30 15:37:04.872161732  1725032224872161732     1071.564      613.158
+                     gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
+timestamp [ns]
+1725032224852161732     1067.486      620.856  True            1      &lt;NA&gt;
+1725032224857165732     1066.920      617.117  True            1      &lt;NA&gt;
+1725032224862161732     1072.699      615.780  True            1      &lt;NA&gt;
+1725032224867161732     1067.447      617.062  True            1      &lt;NA&gt;
+1725032224872161732     1071.564      613.158  True            1      &lt;NA&gt;
 
-                               worn  fixation id  blink id  azimuth [deg]  \
-2024-08-30 15:37:04.852161732  True            1      &lt;NA&gt;      16.213030
-2024-08-30 15:37:04.857165732  True            1      &lt;NA&gt;      16.176285
-2024-08-30 15:37:04.862161732  True            1      &lt;NA&gt;      16.546413
-2024-08-30 15:37:04.867161732  True            1      &lt;NA&gt;      16.210049
-2024-08-30 15:37:04.872161732  True            1      &lt;NA&gt;      16.473521
-
-                               elevation [deg]  time [s]
-2024-08-30 15:37:04.852161732        -0.748998  0.000000
-2024-08-30 15:37:04.857165732        -0.511733  0.005004
-2024-08-30 15:37:04.862161732        -0.426618  0.010000
-2024-08-30 15:37:04.867161732        -0.508251  0.015000
-2024-08-30 15:37:04.872161732        -0.260388  0.020000
+                     azimuth [deg]  elevation [deg]
+timestamp [ns]
+1725032224852161732      16.213030        -0.748998
+1725032224857165732      16.176285        -0.511733
+1725032224862161732      16.546413        -0.426618
+1725032224867161732      16.210049        -0.508251
+1725032224872161732      16.473521        -0.260388
 </pre></div></div>
 </div>
 <p>PyNeon also automatically sets the column datatype to appropriate types, such as <code class="docutils literal notranslate"><span class="pre">Int64</span></code> for timestamps, <code class="docutils literal notranslate"><span class="pre">Int32</span></code> for event IDs, and <code class="docutils literal notranslate"><span class="pre">float64</span></code> for float data.</p>
@@ -582,7 +577,6 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:275: UserWarning: 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-timestamp [ns]       Int64
 gaze x [px]        float64
 gaze y [px]        float64
 worn                  bool
@@ -590,7 +584,6 @@ fixation id          Int32
 blink id             Int32
 azimuth [deg]      float64
 elevation [deg]    float64
-time [s]           float64
 dtype: object
 </pre></div></div>
 </div>
@@ -599,7 +592,7 @@ dtype: object
 <h2>Data streams and events<a class="headerlink" href="#Data-streams-and-events" title="Link to this heading">#</a></h2>
 <p>Up to this point, PyNeon simply reads and re-organizes the raw .csv files. Let’s plot some samples from the <code class="docutils literal notranslate"><span class="pre">gaze</span></code> and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code> streams and a saccade from the <code class="docutils literal notranslate"><span class="pre">saccades</span></code> events.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -619,11 +612,10 @@ dtype: object
 
 <span class="c1"># Visualize the 2nd saccade</span>
 <span class="n">saccade</span> <span class="o">=</span> <span class="n">saccades</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
-    <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;start timestamp [ns]&quot;</span><span class="p">],</span> <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span>
-<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">saccade</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">saccade</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-    <span class="p">(</span><span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;start timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">(</span><span class="n">saccade</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
     <span class="mi">1050</span><span class="p">,</span>
     <span class="s2">&quot;Saccade&quot;</span><span class="p">,</span>
     <span class="n">horizontalalignment</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
@@ -633,14 +625,14 @@ dtype: object
 <span class="n">sns</span><span class="o">.</span><span class="n">scatterplot</span><span class="p">(</span>
     <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
     <span class="n">data</span><span class="o">=</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="s2">&quot;gaze x [px]&quot;</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="n">gaze_color</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">scatterplot</span><span class="p">(</span>
     <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
     <span class="n">data</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">60</span><span class="p">),</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="s2">&quot;gyro x [deg/s]&quot;</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="n">gyro_color</span><span class="p">,</span>
 <span class="p">)</span>
@@ -648,19 +640,92 @@ dtype: object
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
+<div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;Axes: xlabel=&#39;timestamp [ns]&#39;, ylabel=&#39;gyro x [deg/s]&#39;&gt;
+saccade id                                2.0
+end timestamp [ns]      1725032225347526656.0
+duration [ms]                            65.0
+amplitude [px]                      228.36139
+amplitude [deg]                     14.676102
+mean velocity [px/s]              3685.269894
+peak velocity [px/s]              5411.775481
+Name: 1725032225282527732, dtype: Float64
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
+<span class="ansi-red-intense-fg ansi-bold">TypeError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-intense-fg ansi-bold">In[12], line 19</span>
+<span class="ansi-green-fg">     17</span> saccade <span style="color: rgb(98,98,98)">=</span> saccades<span style="color: rgb(98,98,98)">.</span>data<span style="color: rgb(98,98,98)">.</span>iloc[<span style="color: rgb(98,98,98)">1</span>]
+<span class="ansi-green-fg">     18</span> <span style="color: rgb(0,135,0)">print</span>(saccade)
+<span class="ansi-green-intense-fg ansi-bold">---&gt; 19</span> <span class="ansi-yellow-bg">ax</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">axvspan</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">     20</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">saccade</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">index</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">to_numpy</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">saccade</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">end timestamp [ns]</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">color</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">lightgray</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-fg">     21</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">     22</span> ax<span style="color: rgb(98,98,98)">.</span>text(
+<span class="ansi-green-fg">     23</span>     (saccade<span style="color: rgb(98,98,98)">.</span>index<span style="color: rgb(98,98,98)">.</span>to_numpy() <span style="color: rgb(98,98,98)">+</span> saccade[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">end timestamp [ns]</span><span style="color: rgb(175,0,0)">&#34;</span>]) <span style="color: rgb(98,98,98)">/</span> <span style="color: rgb(98,98,98)">2</span>,
+<span class="ansi-green-fg">     24</span>     <span style="color: rgb(98,98,98)">1050</span>,
+<span class="ansi-green-fg">     25</span>     <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Saccade</span><span style="color: rgb(175,0,0)">&#34;</span>,
+<span class="ansi-green-fg">     26</span>     horizontalalignment<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">center</span><span style="color: rgb(175,0,0)">&#34;</span>,
+<span class="ansi-green-fg">     27</span> )
+<span class="ansi-green-fg">     29</span> <span style="color: rgb(95,135,135)"># Visualize gaze x and pupil diameter left</span>
+
+File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\axes\_axes.py:1087</span>, in <span class="ansi-cyan-fg">Axes.axvspan</span><span class="ansi-blue-intense-fg ansi-bold">(self, xmin, xmax, ymin, ymax, **kwargs)</span>
+<span class="ansi-green-fg">   1085</span> <span style="color: rgb(95,135,135)"># Strip units away.</span>
+<span class="ansi-green-fg">   1086</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_check_no_units([ymin, ymax], [<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">ymin</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">ymax</span><span style="color: rgb(175,0,0)">&#39;</span>])
+<span class="ansi-green-intense-fg ansi-bold">-&gt; 1087</span> (xmin, xmax), <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_process_unit_info</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">x</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">xmin</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">xmax</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   1089</span> p <span style="color: rgb(98,98,98)">=</span> mpatches<span style="color: rgb(98,98,98)">.</span>Rectangle((xmin, ymin), xmax <span style="color: rgb(98,98,98)">-</span> xmin, ymax <span style="color: rgb(98,98,98)">-</span> ymin, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)
+<span class="ansi-green-fg">   1090</span> p<span style="color: rgb(98,98,98)">.</span>set_transform(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_xaxis_transform(which<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">grid</span><span style="color: rgb(175,0,0)">&#34;</span>))
+
+File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\axes\_base.py:2585</span>, in <span class="ansi-cyan-fg">_AxesBase._process_unit_info</span><span class="ansi-blue-intense-fg ansi-bold">(self, datasets, kwargs, convert)</span>
+<span class="ansi-green-fg">   2583</span>     <span style="color: rgb(95,135,135)"># Update from data if axis is already set but no unit is set yet.</span>
+<span class="ansi-green-fg">   2584</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> axis <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> data <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> axis<span style="color: rgb(98,98,98)">.</span>have_units():
+<span class="ansi-green-intense-fg ansi-bold">-&gt; 2585</span>         <span class="ansi-yellow-bg">axis</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">update_units</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   2586</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> axis_name, axis <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> axis_map<span style="color: rgb(98,98,98)">.</span>items():
+<span class="ansi-green-fg">   2587</span>     <span style="color: rgb(95,135,135)"># Return if no axis is set.</span>
+<span class="ansi-green-fg">   2588</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> axis <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+
+File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\axis.py:1756</span>, in <span class="ansi-cyan-fg">Axis.update_units</span><span class="ansi-blue-intense-fg ansi-bold">(self, data)</span>
+<span class="ansi-green-fg">   1754</span> neednew <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>converter <span style="color: rgb(98,98,98)">!=</span> converter
+<span class="ansi-green-fg">   1755</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>converter <span style="color: rgb(98,98,98)">=</span> converter
+<span class="ansi-green-intense-fg ansi-bold">-&gt; 1756</span> default <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">converter</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">default_units</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   1757</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> default <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>units <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-fg">   1758</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>set_units(default)
+
+File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\category.py:105</span>, in <span class="ansi-cyan-fg">StrCategoryConverter.default_units</span><span class="ansi-blue-intense-fg ansi-bold">(data, axis)</span>
+<span class="ansi-green-fg">    103</span> <span style="color: rgb(95,135,135)"># the conversion call stack is default_units -&gt; axis_info -&gt; convert</span>
+<span class="ansi-green-fg">    104</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> axis<span style="color: rgb(98,98,98)">.</span>units <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">--&gt; 105</span>     axis<span style="color: rgb(98,98,98)">.</span>set_units(<span class="ansi-yellow-bg">UnitData</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>)
+<span class="ansi-green-fg">    106</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">    107</span>     axis<span style="color: rgb(98,98,98)">.</span>units<span style="color: rgb(98,98,98)">.</span>update(data)
+
+File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\category.py:181</span>, in <span class="ansi-cyan-fg">UnitData.__init__</span><span class="ansi-blue-intense-fg ansi-bold">(self, data)</span>
+<span class="ansi-green-fg">    179</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_counter <span style="color: rgb(98,98,98)">=</span> itertools<span style="color: rgb(98,98,98)">.</span>count()
+<span class="ansi-green-fg">    180</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> data <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">--&gt; 181</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">update</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\category.py:214</span>, in <span class="ansi-cyan-fg">UnitData.update</span><span class="ansi-blue-intense-fg ansi-bold">(self, data)</span>
+<span class="ansi-green-fg">    212</span> <span style="color: rgb(95,135,135)"># check if convertible to number:</span>
+<span class="ansi-green-fg">    213</span> convertible <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>
+<span class="ansi-green-intense-fg ansi-bold">--&gt; 214</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> val <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg">OrderedDict</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">fromkeys</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>:
+<span class="ansi-green-fg">    215</span>     <span style="color: rgb(95,135,135)"># OrderedDict just iterates over unique values in data.</span>
+<span class="ansi-green-fg">    216</span>     _api<span style="color: rgb(98,98,98)">.</span>check_isinstance((<span style="color: rgb(0,135,0)">str</span>, <span style="color: rgb(0,135,0)">bytes</span>), value<span style="color: rgb(98,98,98)">=</span>val)
+<span class="ansi-green-fg">    217</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> convertible:
+<span class="ansi-green-fg">    218</span>         <span style="color: rgb(95,135,135)"># this will only be called so long as convertible is True.</span>
+
+<span class="ansi-red-intense-fg ansi-bold">TypeError</span>: unhashable type: &#39;numpy.ndarray&#39;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_read_recording_17_1.png" src="../_images/tutorials_read_recording_17_1.png" />
+<img alt="../_images/tutorials_read_recording_17_2.png" src="../_images/tutorials_read_recording_17_2.png" />
 </div>
 </div>
 <p>It’s apparent that at the beginning of the recording, there are some missing data points in both the <code class="docutils literal notranslate"><span class="pre">gaze</span></code> and <code class="docutils literal notranslate"><span class="pre">imu</span></code> streams. This is presumably due to the time it takes for the sensors to start up and stabilize. We will show how to handle missing data using resampling in the next tutorial. For now, it’s important to be aware of these gaps and that it will require great caution to assume the data is continuously and equally sampled.</p>
@@ -751,11 +816,11 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\pyneon\recording.py:275: UserWarning: 
       </div>
     </a>
     <a class="right-next"
-       href="resample_and_concat.html"
+       href="interpolate_and_concat.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Resample Data and Concatenate Channels</p>
+        <p class="prev-next-title">Interpolate Data and Concatenate Channels</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

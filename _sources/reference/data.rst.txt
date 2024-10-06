@@ -1,7 +1,7 @@
 Classes for individual data types
 =================================
 
-.. automodule:: pyneon.data
+.. automodule:: pyneon.tabular
     :members:
     :show-inheritance:
 

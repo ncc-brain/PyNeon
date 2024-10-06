@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Resample Data and Concatenate Channels &#8212; PyNeon dev documentation</title>
+    <title>Interpolate Data and Concatenate Channels &#8212; PyNeon dev documentation</title>
   
   
   
@@ -42,7 +42,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/resample_and_concat';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/interpolate_and_concat';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Mapping Scanpath to video" href="video.html" />
@@ -311,7 +311,7 @@ document.write(`
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Resample Data and Concatenate Channels</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Interpolate Data and Concatenate Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Mapping Scanpath to video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Export Neon data recording to BIDS formats</a></li>
 </ul>
@@ -354,7 +354,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">Resample...</li>
+    <li class="breadcrumb-item active" aria-current="page">Interpolate...</li>
   </ul>
 </nav>
 </div>
@@ -371,9 +371,9 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Resample-Data-and-Concatenate-Channels">
-<h1>Resample Data and Concatenate Channels<a class="headerlink" href="#Resample-Data-and-Concatenate-Channels" title="Link to this heading">#</a></h1>
-<p>Informative as it is, raw Neon data is not always easy to work with. Different data streams (e.g., gaze, eye states, IMU) are sampled at different rates, don’t necessarily share a common start timestamp, and within each stream data might not have been sampled at a constant rate. This tutorial demonstrates how to deal with these issues by resampling data streams and concatenating them into a single DataFrame.</p>
+  <section id="Interpolate-Data-and-Concatenate-Channels">
+<h1>Interpolate Data and Concatenate Channels<a class="headerlink" href="#Interpolate-Data-and-Concatenate-Channels" title="Link to this heading">#</a></h1>
+<p>Informative as it is, raw Neon data is not always easy to work with. Different data streams (e.g., gaze, eye states, IMU) are sampled at different rates, don’t necessarily share a common start timestamp, and within each stream data might not have been sampled at a constant rate. This tutorial demonstrates how to deal with these issues by interpolating data streams and concatenating them into a single DataFrame.</p>
 <p>We will use the same <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code> dataset as in the <a class="reference internal" href="read_recording.html"><span class="doc">previous tutorial</span></a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -407,20 +407,10 @@ document.write(`
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the data points</span>
-<span class="n">gaze_ts</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-<span class="n">eye_states_ts</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-<span class="n">imu_ts</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-
-<span class="c1"># Calculate the distances between subsequent data points</span>
-<span class="n">gaze_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gaze_ts</span><span class="p">)</span>
-<span class="n">eye_states_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">eye_states_ts</span><span class="p">)</span>
-<span class="n">imu_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">imu_ts</span><span class="p">)</span>
-
-<span class="c1"># Unique values</span>
-<span class="n">gaze_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">gaze_diff</span><span class="p">)</span>
-<span class="n">eye_states_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">eye_states_diff</span><span class="p">)</span>
-<span class="n">imu_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">imu_diff</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unique values</span>
+<span class="n">gaze_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span>
+<span class="n">eye_states_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span>
+<span class="n">imu_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span>
     <span class="sa">f</span><span class="s2">&quot;Unique gaze time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gaze_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
@@ -455,15 +445,15 @@ Unique imu time differences: 1106, max: 230.444ms
 
 <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">gaze_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">gaze_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Gaze&quot;</span><span class="p">)</span>
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">eye_states_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">eye_states_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Eye states&quot;</span><span class="p">)</span>
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">imu_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">imu_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;IMU&quot;</span><span class="p">)</span>
 
@@ -480,25 +470,21 @@ Unique imu time differences: 1106, max: 230.444ms
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_resample_and_concat_7_0.png" src="../_images/tutorials_resample_and_concat_7_0.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_7_0.png" src="../_images/tutorials_interpolate_and_concat_7_0.png" />
 </div>
 </div>
 </section>
-<section id="Resampling-data-streams">
-<h2>Resampling data streams<a class="headerlink" href="#Resampling-data-streams" title="Link to this heading">#</a></h2>
-<p>Given the unequal sampling, if we want to obtain continuous data streams, interpolation is necessary. PyNeon uses the <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> function to interpolate data streams. We can resample each stream by simply calling <code class="docutils literal notranslate"><span class="pre">resample()</span></code> which returns a new DataFrame with the resampled data.</p>
+<section id="Interpolating-data-streams">
+<h2>Interpolating data streams<a class="headerlink" href="#Interpolating-data-streams" title="Link to this heading">#</a></h2>
+<p>Given the unequal sampling, if we want to obtain continuous data streams, interpolation is necessary. PyNeon uses the <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> function to interpolate data streams. We can interpolate each stream by simply calling <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> which returns a copy of the object with the interpolated data.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resample to the nominal sampling frequency</span>
-<span class="n">gaze_resampled_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">gaze_resampled_data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<span class="n">gaze_resampled</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()</span>
 
-<span class="n">ts</span> <span class="o">=</span> <span class="n">gaze_resampled_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-<span class="n">ts_diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
-<span class="n">ts_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ts_diffs</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only one unique time difference: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ts_diffs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only one unique time difference: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">gaze_resampled</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -507,19 +493,6 @@ Unique imu time differences: 1106, max: 230.444ms
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-        timestamp [ns]  time [s]  gaze x [px]  gaze y [px]  worn  fixation id  \
-0  1725032224852161732     0.000  1067.486000   620.856000  True            1
-1  1725032224857161732     0.005  1066.920463   617.120061  True            1
-2  1725032224862161732     0.010  1072.699000   615.780000  True            1
-3  1725032224867161732     0.015  1067.447000   617.062000  True            1
-4  1725032224872161732     0.020  1071.564000   613.158000  True            1
-
-   blink id  azimuth [deg]  elevation [deg]
-0      &lt;NA&gt;      16.213030        -0.748998
-1      &lt;NA&gt;      16.176315        -0.511927
-2      &lt;NA&gt;      16.546413        -0.426618
-3      &lt;NA&gt;      16.210049        -0.508251
-4      &lt;NA&gt;      16.473521        -0.260388
 Only one unique time difference: [5000000]
 </pre></div></div>
 </div>
@@ -531,8 +504,10 @@ Only one unique time difference: [5000000]
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original gaze data length: </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original IMU data length: </span><span class="si">{</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">gaze_resampled_to_imu_data</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">new_ts</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data length after resampling to IMU: </span><span class="si">{</span><span class="n">gaze_resampled_to_imu_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">gaze_resampled_to_imu</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">new_ts</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Gaze data length after resampling to IMU: </span><span class="si">{</span><span class="n">gaze_resampled_to_imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -543,7 +518,7 @@ Only one unique time difference: [5000000]
 <div class="highlight"><pre>
 Original gaze data length: 18769
 Original IMU data length: 10919
-Data length after resampling to IMU: 10919
+Gaze data length after resampling to IMU: 10919
 </pre></div></div>
 </div>
 </section>
@@ -552,11 +527,11 @@ Data length after resampling to IMU: 10919
 <p>Based on the resampling method, it is then possible to concatenate different streams into a single DataFrame by resampling them to common timestamps. The method <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> provides such functionality. It takes a list of stream names and resamples them to common timestamps, defined by the latest start and earliest end timestamps of the streams. The news ampling frequency can either be directly specified or taken from the lowest/highest sampling frequency of the streams.</p>
 <p>In the following example, we will concatenate the gaze, eye states, and IMU streams into a single DataFrame using the default parameters (e.g., using the lowest sampling frequency of the streams).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_data</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">concat_streams</span><span class="p">([</span><span class="s2">&quot;gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;eye_states&quot;</span><span class="p">,</span> <span class="s2">&quot;imu&quot;</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">concat_data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_stream</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">concat_streams</span><span class="p">([</span><span class="s2">&quot;gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;eye_states&quot;</span><span class="p">,</span> <span class="s2">&quot;imu&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">concat_stream</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -572,42 +547,49 @@ Concatenating streams:
 Using lowest sampling rate: 110 Hz ([&#39;imu&#39;])
 Using latest start timestamp: 1725032224878547732 ([&#39;imu&#39;])
 Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
-        timestamp [ns]  time [s]  gaze x [px]  gaze y [px]  worn  fixation id  \
-0  1725032224878547732  0.000000  1073.410354   611.095861  True            1
-1  1725032224887638641  0.009091  1069.801082   613.382535  True            1
-2  1725032224896729550  0.018182  1070.090109   613.439696  True            1
-3  1725032224905820459  0.027273  1069.891351   612.921757  True            1
-4  1725032224914911368  0.036364  1069.692588   612.403803  True            1
+                     gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
+1725032224878547732  1073.410354   611.095861  True            1      &lt;NA&gt;
+1725032224887638641  1069.801082   613.382535  True            1      &lt;NA&gt;
+1725032224896729550  1070.090109   613.439696  True            1      &lt;NA&gt;
+1725032224905820459  1069.891351   612.921757  True            1      &lt;NA&gt;
+1725032224914911368  1069.692588   612.403803  True            1      &lt;NA&gt;
 
-   blink id  azimuth [deg]  elevation [deg]  pupil diameter left [mm]  ...  \
-0      &lt;NA&gt;      16.591703        -0.129540                  5.036588  ...
-1      &lt;NA&gt;      16.360605        -0.274666                  5.093205  ...
-2      &lt;NA&gt;      16.379116        -0.278283                  5.078107  ...
-3      &lt;NA&gt;      16.366379        -0.245426                  5.077680  ...
-4      &lt;NA&gt;      16.353641        -0.212567                  5.077253  ...
+                     azimuth [deg]  elevation [deg]  pupil diameter left [mm]  \
+1725032224878547732      16.591703        -0.129540                  5.036588
+1725032224887638641      16.360605        -0.274666                  5.093205
+1725032224896729550      16.379116        -0.278283                  5.078107
+1725032224905820459      16.366379        -0.245426                  5.077680
+1725032224914911368      16.353641        -0.212567                  5.077253
 
-   acceleration x [g]  acceleration y [g]  acceleration z [g]  roll [deg]  \
-0            0.063477           -0.058594            0.940430   -2.550682
-1            0.057486           -0.048916            0.942273   -2.602498
-2            0.051494           -0.039238            0.944117   -2.654314
-3            0.046721           -0.045800            0.944336   -2.699777
-4            0.042113           -0.054556            0.944336   -2.744383
+                     pupil diameter right [mm]  eyeball center left x [mm]  \
+1725032224878547732                   4.254749                  -31.742046
+1725032224887638641                   4.358431                  -31.746807
+1725032224896729550                   4.439704                  -31.700505
+1725032224905820459                   4.442760                  -31.711353
+1725032224914911368                   4.445815                  -31.722201
 
-   pitch [deg]   yaw [deg]  quaternion w  quaternion x  quaternion y  \
-0    -4.461626 -172.335180      0.067636     -0.024792      0.037342
-1    -4.493445 -172.562393      0.065682     -0.025185      0.037639
-2    -4.525265 -172.789613      0.063728     -0.025579      0.037936
-3    -4.556964 -173.013398      0.061802     -0.025917      0.038238
-4    -4.588647 -173.236726      0.059879     -0.026247      0.038541
+                     ...  acceleration x [g]  acceleration y [g]  \
+1725032224878547732  ...            0.063477           -0.058594
+1725032224887638641  ...            0.057486           -0.048916
+1725032224896729550  ...            0.051494           -0.039238
+1725032224905820459  ...            0.046721           -0.045800
+1725032224914911368  ...            0.042113           -0.054556
 
-   quaternion z
-0     -0.996703
-1     -0.996810
-2     -0.996917
-3     -0.997017
-4     -0.997115
+                     acceleration z [g]  roll [deg]  pitch [deg]   yaw [deg]  \
+1725032224878547732            0.940430   -2.550682    -4.461626 -172.335180
+1725032224887638641            0.942273   -2.602498    -4.493445 -172.562393
+1725032224896729550            0.944117   -2.654314    -4.525265 -172.789613
+1725032224905820459            0.944336   -2.699777    -4.556964 -173.013398
+1725032224914911368            0.944336   -2.744383    -4.588647 -173.236726
 
-[5 rows x 36 columns]
+                     quaternion w  quaternion x  quaternion y  quaternion z
+1725032224878547732      0.067636     -0.024792      0.037342     -0.996703
+1725032224887638641      0.065682     -0.025185      0.037639     -0.996810
+1725032224896729550      0.063728     -0.025579      0.037936     -0.996917
+1725032224905820459      0.061802     -0.025917      0.038238     -0.997017
+1725032224914911368      0.059879     -0.026247      0.038541     -0.997115
+
+[5 rows x 34 columns]
 </pre></div></div>
 </div>
 <p>We show an exemplary sampling of eye, imu and concatenated data below. It can be seen that imu data has subsequent missing values which can in turn be interpolated</p>
@@ -617,8 +599,8 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start_time</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="n">end_time</span> <span class="o">=</span> <span class="mf">5.3</span>
-<span class="n">start_ts</span> <span class="o">=</span> <span class="n">time_to_ts</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">concat_data</span><span class="p">)</span>
-<span class="n">end_ts</span> <span class="o">=</span> <span class="n">time_to_ts</span><span class="p">(</span><span class="n">end_time</span><span class="p">,</span> <span class="n">concat_data</span><span class="p">)</span>
+<span class="n">start_ts</span> <span class="o">=</span> <span class="n">time_to_ts</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">concat_stream</span><span class="p">)</span>
+<span class="n">end_ts</span> <span class="o">=</span> <span class="n">time_to_ts</span><span class="p">(</span><span class="n">end_time</span><span class="p">,</span> <span class="n">concat_stream</span><span class="p">)</span>
 
 <span class="n">raw_gaze_data_slice</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
     <span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
@@ -630,9 +612,9 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 <span class="n">raw_imu_data_slice</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
     <span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
 <span class="p">]</span>
-<span class="n">concat_data_slice</span> <span class="o">=</span> <span class="n">concat_data</span><span class="p">[</span>
-    <span class="p">(</span><span class="n">concat_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span>
-    <span class="o">&amp;</span> <span class="p">(</span><span class="n">concat_data</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
+<span class="n">concat_data_slice</span> <span class="o">=</span> <span class="n">concat_stream</span><span class="p">[</span>
+    <span class="p">(</span><span class="n">concat_stream</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_ts</span><span class="p">)</span>
+    <span class="o">&amp;</span> <span class="p">(</span><span class="n">concat_stream</span><span class="p">[</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end_ts</span><span class="p">)</span>
 <span class="p">]</span>
 
 <span class="c1"># plot all data in the same scatter plot</span>
@@ -682,7 +664,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_resample_and_concat_15_1.png" src="../_images/tutorials_resample_and_concat_15_1.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_15_1.png" src="../_images/tutorials_interpolate_and_concat_15_1.png" />
 </div>
 </div>
 <p>A linear interpolation allows us to estimate missing values. In the end, the concatenated dataframe combines all continuous data into one central location</p>
@@ -721,7 +703,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_resample_and_concat_17_1.png" src="../_images/tutorials_resample_and_concat_17_1.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_17_1.png" src="../_images/tutorials_interpolate_and_concat_17_1.png" />
 </div>
 </div>
 </section>
@@ -774,7 +756,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Unequally-sampled-data">Unequally sampled data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Resampling-data-streams">Resampling data streams</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Interpolating-data-streams">Interpolating data streams</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Concatenating-different-streams">Concatenating different streams</a></li>
 </ul>
   </nav></div>
@@ -782,7 +764,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/tutorials/resample_and_concat.ipynb.txt">
+    <a href="../_sources/tutorials/interpolate_and_concat.ipynb.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
