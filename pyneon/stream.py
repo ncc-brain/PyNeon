@@ -83,7 +83,8 @@ class NeonStream(NeonTabular):
 
     def time_to_ts(self, time: Union[Number, np.ndarray]) -> np.ndarray:
         """Convert time(s) in seconds to timestamp(s) in nanoseconds."""
-        time
+        time = np.array([time])
+        return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
 
     def crop(
         self,
