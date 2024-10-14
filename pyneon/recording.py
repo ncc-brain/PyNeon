@@ -345,7 +345,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
         return CustomStream(new_data)
 
-    def concat_events(self, event_names: list[str]) -> pd.DataFrame:
+    def concat_events(self, event_names: Union[str, list[str]]) -> pd.DataFrame:
         """
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional ``"type"`` column denotes the event

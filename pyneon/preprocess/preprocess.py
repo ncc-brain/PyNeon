@@ -124,7 +124,7 @@ def window_average(
     if window_size < original_ts_median_diff:
         raise ValueError(
             "Window size must be larger than the median difference "
-            "between the old timestamps"
+            "between the old timestamps, otherwise data could be interleaved by NAs."
         )
 
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
@@ -136,13 +136,10 @@ def window_average(
         # Select data within the window
         window_data = data[(data.index >= lower_bound) & (data.index <= upper_bound)]
         if not window_data.empty:
-            # Compute mean for each column
             mean_values = window_data.mean(axis=0)
-            # Assign mean values to new_data at index ts
             new_data.loc[ts, :] = mean_values
         else:
-            # Assign NaN to new_data at index ts
-            new_data.loc[ts, :] = np.nan
+            new_data.loc[ts, :] = pd.NA
 
     # Reset the dtypes of new_data columns to match those of the original data
     for col in data.columns:
@@ -151,7 +148,7 @@ def window_average(
             # For integer columns, round the mean values and convert to integers
             new_data[col] = new_data[col].round().astype(original_dtype)
         else:
-            # For other dtypes, cast to the original dtype if possible
+            # For other dtypes, cast to the original dtype
             new_data[col] = new_data[col].astype(original_dtype)
 
     return new_data
@@ -321,13 +318,13 @@ def concat_streams(
 
     concat_data = pd.DataFrame(index=new_ts)
     for stream in stream_info["stream"]:
-        resamp_df = stream.interpolate(
+        resamp_data = stream.interpolate(
             new_ts, interp_float_kind, interp_other_kind, inplace=inplace
         ).data
-        assert concat_data.shape[0] == resamp_df.shape[0]
-        assert concat_data.index.equals(resamp_df.index)
-        concat_data = pd.concat([concat_data, resamp_df], axis=1)
-        assert concat_data.shape[0] == resamp_df.shape[0]
+        assert concat_data.shape[0] == resamp_data.shape[0]
+        assert concat_data.index.equals(resamp_data.index)
+        concat_data = pd.concat([concat_data, resamp_data], axis=1)
+        assert concat_data.shape[0] == resamp_data.shape[0]
     return concat_data
 
 
@@ -352,8 +349,8 @@ def concat_events(
     present in the final DataFrame. An additional ``type`` column denotes the event
     type. If ``"events"`` is in ``event_names``, its ``timestamp [ns]`` column will be
     renamed to ``start timestamp [ns]``, and the ``name`` and ``type`` columns will
-    be renamed to ``message name`` and ``message type`` respectively to provide
-    a more readable output.
+    be renamed to ``message name`` and ``message type`` respectively to prevent confusion
+    between physiological events and user-supplied messages.
 
     Parameters
     ----------
@@ -387,10 +384,9 @@ def concat_events(
 
     concat_data = pd.DataFrame(
         {
-            "type": pd.Series(dtype="str"),
-            "start timestamp [ns]": pd.Series(dtype="Int64"),
             "end timestamp [ns]": pd.Series(dtype="Int64"),
             "duration [ms]": pd.Series(dtype="float64"),
+            "type": pd.Series(dtype="str"),
         }
     )
     print("Concatenating events:")
@@ -399,33 +395,46 @@ def concat_events(
             raise ValueError("Cannnot load blink data.")
         data = rec.blinks.data
         data["type"] = "blink"
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tBlinks")
     if "fixations" in event_names or "fixation" in event_names:
         if rec.fixations is None:
             raise ValueError("Cannnot load fixation data.")
         data = rec.fixations.data
         data["type"] = "fixation"
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tFixations")
     if "saccades" in event_names or "saccade" in event_names:
         if rec.saccades is None:
             raise ValueError("Cannnot load saccade data.")
         data = rec.saccades.data
         data["type"] = "saccade"
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tSaccades")
     if "events" in event_names or "event" in event_names:
         if rec.events is None:
             raise ValueError("Cannnot load event data.")
         data = rec.events.data
-        data.rename(
-            columns={"name": "message name", "type": "message type"}, inplace=True
-        )
+        data.index.name = "start timestamp [ns]"
+        data = data.rename(columns={"name": "message name", "type": "message type"})
         data["type"] = "event"
-        data.rename(columns={"timestamp [ns]": "start timestamp [ns]"}, inplace=True)
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tEvents")
-    concat_data.sort_values("start timestamp [ns]", inplace=True)
-    concat_data.reset_index(drop=True, inplace=True)
+    concat_data = concat_data.sort_index()
     return concat_data

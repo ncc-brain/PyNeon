@@ -1,4 +1,5 @@
 from .tabular import NeonTabular
+import numpy as np
 import pandas as pd
 
 
@@ -9,6 +10,9 @@ class NeonEV(NeonTabular):
 
     def __init__(self, file):
         super().__init__(file)
+
+    def start_ts(self) -> np.ndarray:
+        return self.index.to_numpy()
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event timeseries by index."""
