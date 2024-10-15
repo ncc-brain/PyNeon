@@ -4,26 +4,38 @@ import cv2
 import warnings
 from pathlib import Path
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Optional
+
+from ..preprocess import window_average
 
 if TYPE_CHECKING:
     from ..recording import NeonRecording
 
 
-def map_gaze_to_video(
+def sync_gaze_to_video(
     rec: "NeonRecording",
+    window_size: Optional[int] = None,
 ) -> pd.DataFrame:
     """
-    Map gaze data to video frames.
+    Synchronize gaze data to video frames by applying windowed averaging
+    around each video frame timestamp.
 
     Parameters:
     -----------
     rec : NeonRecording
         Recording object containing gaze and video data.
-    resamp_float_kind : str
-        Interpolation method for float columns.
-    resamp_other_kind : str
-        Interpolation method for non-float columns.
+    window_size : int, optional
+        The size of the time window (in nanoseconds)
+        over which to compute the average around each new timestamp.
+        If ``None`` (default), the window size is set to the median interval
+        between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
+        The window size must be larger than the median interval between the original data timestamps,
+        i.e., ``window_size > np.median(np.diff(data.index))``.
+        
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame containing gaze data mapped to video timestamps.
     """
     gaze = rec.gaze
     video = rec.video
@@ -34,10 +46,10 @@ def map_gaze_to_video(
         raise ValueError("No video data available.")
 
     # Resample the gaze data to the video timestamps
-    mapped_gaze = rec.gaze_on_video()
+    mapped_gaze = window_average(rec.video.ts, rec.gaze.data, window_size)
 
     # Mark the fixation status of each frame
-    mapped_gaze["fixation status"] = pd.NA
+    mapped_gaze["fixation status"] = pd.Series(dtype="string")
 
     for fixation_id in mapped_gaze["fixation id"].dropna().unique():
         current_gaze_data = mapped_gaze.loc[mapped_gaze["fixation id"] == fixation_id]
@@ -46,10 +58,7 @@ def map_gaze_to_video(
         during_idx = current_gaze_data.index[1:-1]
         mapped_gaze.loc[during_idx, "fixation status"] = "during"
         mapped_gaze.at[start_idx, "fixation status"] = "start"
-        # Assign end last to enforce that the last frame is always marked as end
         mapped_gaze.at[end_idx, "fixation status"] = "end"
-
-    rec.mapped_gaze = mapped_gaze
 
     return mapped_gaze
 
@@ -73,7 +82,7 @@ def estimate_scanpath(
 
     # check if rec.mapped_gaze exists, if not, create it
     if not hasattr(rec, "mapped_gaze") or rec.mapped_gaze is None:
-        mapped_gaze = map_gaze_to_video(rec)
+        mapped_gaze = sync_gaze_to_video(rec)
     else:
         mapped_gaze = rec.mapped_gaze
 

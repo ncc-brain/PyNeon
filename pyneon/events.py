@@ -11,8 +11,37 @@ class NeonEV(NeonTabular):
     def __init__(self, file):
         super().__init__(file)
 
+    @property
     def start_ts(self) -> np.ndarray:
+        """Start timestamps of events in nanoseconds.."""
         return self.index.to_numpy()
+
+    @property
+    def end_ts(self) -> np.ndarray:
+        """End timestamps of events in nanoseconds."""
+        if "end timestamp [ns]" in self.data.columns:
+            return self.data["end timestamp [ns]"].to_numpy()
+        else:
+            print("No 'end timestamp [ns]' column found.")
+            return np.empty(self.data.shape[0], dtype=np.int64)
+
+    @property
+    def durations(self) -> np.ndarray:
+        """Duration of events in milliseconds."""
+        if "duration [ms]" in self.data.columns:
+            return self.data["duration [ms]"].to_numpy()
+        else:
+            print("No 'duration [ms]' column found.")
+            return np.empty(self.data.shape[0], dtype=np.int64)
+        
+    @property
+    def id(self) -> np.ndarray:
+        """Event ID."""
+        if self.id_name in self.data.columns and self.id_name is not None:
+            return self.data[self.id_name].to_numpy()
+        else:
+            print(f"Event ID name is undefined or not found in the data.")
+            return np.empty(self.data.shape[0], dtype=np.int64)
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event timeseries by index."""
@@ -33,6 +62,7 @@ class NeonBlinks(NeonEV):
                 "duration [ms]": "Int64",
             }
         )
+        self.id_name = "blink id"
 
 
 class NeonFixations(NeonEV):
@@ -55,6 +85,7 @@ class NeonFixations(NeonEV):
                 "elevation [deg]": float,
             }
         )
+        self.id_name = "fixation id"
 
 
 class NeonSaccades(NeonEV):
@@ -77,6 +108,7 @@ class NeonSaccades(NeonEV):
                 "peak velocity [px/s]": float,
             }
         )
+        self.id_name = "saccade id"
 
 
 class NeonEvents(NeonEV):
@@ -92,3 +124,4 @@ class NeonEvents(NeonEV):
                 "type": str,
             }
         )
+        self.id_name = None

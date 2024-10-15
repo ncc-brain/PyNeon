@@ -246,7 +246,7 @@ class NeonGaze(NeonStream):
             {
                 "gaze x [px]": float,
                 "gaze y [px]": float,
-                "worn": bool,
+                "worn": "Int32",
                 "fixation id": "Int32",
                 "blink id": "Int32",
                 "azimuth [deg]": float,

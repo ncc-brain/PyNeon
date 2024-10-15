@@ -6,7 +6,7 @@ from typing import Union
 import matplotlib.pyplot as plt
 import json
 
-from .vis import plot_frame
+from ..vis import plot_frame
 
 
 class NeonVideo(cv2.VideoCapture):

@@ -127,29 +127,27 @@ def window_average(
             "between the old timestamps, otherwise data could be interleaved by NAs."
         )
 
-    new_data = pd.DataFrame(index=new_ts, columns=data.columns)
+    new_data = pd.DataFrame(index=new_ts, columns=data.columns).astype(data.dtypes)
+    non_float_cols = data.select_dtypes(exclude="float").columns
 
     for ts in new_ts:
         lower_bound = ts - window_size / 2
         upper_bound = ts + window_size / 2
 
         # Select data within the window
-        window_data = data[(data.index >= lower_bound) & (data.index <= upper_bound)]
+        window_data = data[
+            (data.index >= lower_bound) & (data.index <= upper_bound)
+        ].copy()
         if not window_data.empty:
+            # Take the mean of the window data
             mean_values = window_data.mean(axis=0)
+            # Round non-float columns so that they can be safely set to the original data type
+            for non_float_col in non_float_cols:
+                if not pd.isna(col_value := mean_values[non_float_col]):
+                    mean_values[non_float_col] = round(col_value)
             new_data.loc[ts, :] = mean_values
         else:
             new_data.loc[ts, :] = pd.NA
-
-    # Reset the dtypes of new_data columns to match those of the original data
-    for col in data.columns:
-        original_dtype = data[col].dtype
-        if pd.api.types.is_integer_dtype(original_dtype):
-            # For integer columns, round the mean values and convert to integers
-            new_data[col] = new_data[col].round().astype(original_dtype)
-        else:
-            # For other dtypes, cast to the original dtype
-            new_data[col] = new_data[col].astype(original_dtype)
 
     return new_data
 

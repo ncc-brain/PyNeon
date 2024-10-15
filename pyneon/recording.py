@@ -9,15 +9,8 @@ from numbers import Number
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
-from .video import NeonVideo
-from .preprocess import (
-    concat_streams,
-    concat_events,
-    window_average,
-    map_gaze_to_video,
-    estimate_scanpath,
-    overlay_scanpath_on_video,
-)
+from .preprocess import concat_streams, concat_events
+from .video import NeonVideo, sync_gaze_to_video, estimate_scanpath, overlay_scanpath_on_video
 from .vis import plot_distribution
 from .export import export_motion_bids, exports_eye_bids
 
@@ -430,32 +423,32 @@ Recording duration: {self.info["duration"] / 1e9}s
             show,
         )
 
-    def gaze_on_video(
+    def sync_gaze_to_video(
         self,
+        window_size: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Apply window average over video timestamps to gaze data.
-        """
-        return window_average(self.video.ts, self.gaze.data)
-
-    def map_gaze_to_video(
-        self,
-        resamp_float_kind: str = "linear",
-        resamp_other_kind: str = "nearest",
-    ) -> pd.DataFrame:
-        """
-        Map gaze data to video frames.
+        Synchronize gaze data to video frames by applying windowed averaging
+        around each video frame timestamp.
 
         Parameters:
         -----------
         rec : NeonRecording
             Recording object containing gaze and video data.
-        resamp_float_kind : str
-            Interpolation method for float columns.
-        resamp_other_kind : str
-            Interpolation method for non-float columns.
+        window_size : int, optional
+            The size of the time window (in nanoseconds)
+            over which to compute the average around each new timestamp.
+            If ``None`` (default), the window size is set to the median interval
+            between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
+            The window size must be larger than the median interval between the original data timestamps,
+            i.e., ``window_size > np.median(np.diff(data.index))``.
+            
+        Returns
+        -------
+        pd.DataFrame
+            Gaze data synchronized to video frames.
         """
-        return map_gaze_to_video(self, resamp_float_kind, resamp_other_kind)
+        return sync_gaze_to_video(self, window_size)
 
     def estimate_scanpath(
         self,
