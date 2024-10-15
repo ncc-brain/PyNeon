@@ -10,7 +10,12 @@ from numbers import Number
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .preprocess import concat_streams, concat_events
-from .video import NeonVideo, sync_gaze_to_video, estimate_scanpath, overlay_scanpath_on_video
+from .video import (
+    NeonVideo,
+    sync_gaze_to_video,
+    estimate_scanpath,
+    overlay_scanpath_on_video,
+)
 from .vis import plot_distribution
 from .export import export_motion_bids, exports_eye_bids
 
@@ -442,7 +447,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
-            
+
         Returns
         -------
         pd.DataFrame

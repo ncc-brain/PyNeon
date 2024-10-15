@@ -33,7 +33,7 @@ class NeonEV(NeonTabular):
         else:
             print("No 'duration [ms]' column found.")
             return np.empty(self.data.shape[0], dtype=np.int64)
-        
+
     @property
     def id(self) -> np.ndarray:
         """Event ID."""

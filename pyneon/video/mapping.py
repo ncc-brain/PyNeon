@@ -31,7 +31,7 @@ def sync_gaze_to_video(
         between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
         The window size must be larger than the median interval between the original data timestamps,
         i.e., ``window_size > np.median(np.diff(data.index))``.
-        
+
     Returns:
     --------
     pd.DataFrame
