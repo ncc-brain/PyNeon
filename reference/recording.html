@@ -518,7 +518,7 @@ May not match the start time of each data stream.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.NeonRecording.video">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="data.html#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><span class="pre">NeonVideo</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.NeonRecording.video" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="data.html#pyneon.video.NeonVideo" title="pyneon.video.video.NeonVideo"><span class="pre">NeonVideo</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.NeonRecording.video" title="Link to this definition">#</a></dt>
 <dd><p>Returns a NeonVideo object or None if no scene video is found.</p>
 </dd></dl>
 
@@ -626,23 +626,29 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pyneon.NeonRecording.gaze_on_video">
-<span class="sig-name descname"><span class="pre">gaze_on_video</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.NeonRecording.gaze_on_video" title="Link to this definition">#</a></dt>
-<dd><p>Apply window average over video timestamps to gaze data.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.NeonRecording.map_gaze_to_video">
-<span class="sig-name descname"><span class="pre">map_gaze_to_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resamp_float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resamp_other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.NeonRecording.map_gaze_to_video" title="Link to this definition">#</a></dt>
-<dd><p>Map gaze data to video frames.</p>
+<dt class="sig sig-object py" id="pyneon.NeonRecording.sync_gaze_to_video">
+<span class="sig-name descname"><span class="pre">sync_gaze_to_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.NeonRecording.sync_gaze_to_video" title="Link to this definition">#</a></dt>
+<dd><p>Synchronize gaze data to video frames by applying windowed averaging
+around each video frame timestamp.</p>
 <section id="parameters">
 <h2>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>rec<span class="classifier">NeonRecording</span></dt><dd><p>Recording object containing gaze and video data.</p>
 </dd>
-<dt>resamp_float_kind<span class="classifier">str</span></dt><dd><p>Interpolation method for float columns.</p>
+<dt>window_size<span class="classifier">int, optional</span></dt><dd><p>The size of the time window (in nanoseconds)
+over which to compute the average around each new timestamp.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), the window size is set to the median interval
+between the new timestamps, i.e., <code class="docutils literal notranslate"><span class="pre">np.median(np.diff(new_ts))</span></code>.
+The window size must be larger than the median interval between the original data timestamps,
+i.e., <code class="docutils literal notranslate"><span class="pre">window_size</span> <span class="pre">&gt;</span> <span class="pre">np.median(np.diff(data.index))</span></code>.</p>
 </dd>
-<dt>resamp_other_kind<span class="classifier">str</span></dt><dd><p>Interpolation method for non-float columns.</p>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Gaze data synchronized to video frames.</p>
+</dd>
+<dt class="field-even">rtype<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
 </dd>
 </dl>
 </section>
@@ -809,8 +815,7 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.concat_streams"><code class="docutils literal notranslate"><span class="pre">NeonRecording.concat_streams()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.concat_events"><code class="docutils literal notranslate"><span class="pre">NeonRecording.concat_events()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.plot_distribution"><code class="docutils literal notranslate"><span class="pre">NeonRecording.plot_distribution()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.gaze_on_video"><code class="docutils literal notranslate"><span class="pre">NeonRecording.gaze_on_video()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.map_gaze_to_video"><code class="docutils literal notranslate"><span class="pre">NeonRecording.map_gaze_to_video()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.sync_gaze_to_video"><code class="docutils literal notranslate"><span class="pre">NeonRecording.sync_gaze_to_video()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.estimate_scanpath"><code class="docutils literal notranslate"><span class="pre">NeonRecording.estimate_scanpath()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.overlay_scanpath_on_video"><code class="docutils literal notranslate"><span class="pre">NeonRecording.overlay_scanpath_on_video()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonRecording.to_motion_bids"><code class="docutils literal notranslate"><span class="pre">NeonRecording.to_motion_bids()</span></code></a></li>
