@@ -3,6 +3,7 @@ from typing import Union, Literal, Optional
 import pandas as pd
 import json
 from datetime import datetime
+import copy
 import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
@@ -431,7 +432,7 @@ Recording duration: {self.info["duration"] / 1e9}s
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> NeonGaze:
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around each video frame timestamp.
@@ -450,10 +451,13 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        pd.DataFrame
-            Gaze data synchronized to video frames.
+        NeonGaze
+            Gaze object containing data synchronized to video frames.
         """
-        return sync_gaze_to_video(self, window_size)
+        new_data = sync_gaze_to_video(self, window_size)
+        new_gaze = copy.copy(self.gaze)
+        new_gaze.data = new_data
+        return new_gaze
 
     def estimate_scanpath(
         self,

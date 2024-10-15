@@ -10,6 +10,7 @@ from ..preprocess import window_average
 
 if TYPE_CHECKING:
     from ..recording import NeonRecording
+    from ..stream import NeonGaze
 
 
 def sync_gaze_to_video(
@@ -18,7 +19,8 @@ def sync_gaze_to_video(
 ) -> pd.DataFrame:
     """
     Synchronize gaze data to video frames by applying windowed averaging
-    around each video frame timestamp.
+    around each video frame timestamp. See :func:`window_average` for details
+    on the averaging process.
 
     Parameters:
     -----------
@@ -46,26 +48,27 @@ def sync_gaze_to_video(
         raise ValueError("No video data available.")
 
     # Resample the gaze data to the video timestamps
-    mapped_gaze = window_average(rec.video.ts, rec.gaze.data, window_size)
+    sync_gaze = window_average(rec.video.ts, rec.gaze.data, window_size)
 
     # Mark the fixation status of each frame
-    mapped_gaze["fixation status"] = pd.Series(dtype="string")
+    sync_gaze["fixation status"] = pd.Series(dtype="string")
 
-    for fixation_id in mapped_gaze["fixation id"].dropna().unique():
-        current_gaze_data = mapped_gaze.loc[mapped_gaze["fixation id"] == fixation_id]
-        start_idx = current_gaze_data.index[0]
-        end_idx = current_gaze_data.index[-1]
-        during_idx = current_gaze_data.index[1:-1]
-        mapped_gaze.loc[during_idx, "fixation status"] = "during"
-        mapped_gaze.at[start_idx, "fixation status"] = "start"
-        mapped_gaze.at[end_idx, "fixation status"] = "end"
+    for fixation_id in sync_gaze["fixation id"].dropna().unique():
+        fix_data_index = sync_gaze.loc[sync_gaze["fixation id"] == fixation_id].index
+        start_idx = fix_data_index[0]
+        end_idx = fix_data_index[-1]
+        during_idx = fix_data_index[1:-1]
+        sync_gaze.loc[during_idx, "fixation status"] = "during"
+        sync_gaze.at[start_idx, "fixation status"] = "start"
+        sync_gaze.at[end_idx, "fixation status"] = "end"
 
-    return mapped_gaze
+    return sync_gaze
 
 
 def estimate_scanpath(
     rec: "NeonRecording",
-    lk_params: Union[None, dict] = None,
+    sync_gaze: Optional["NeonGaze"] = None,
+    lk_params: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
     Map fixations to video frames.
@@ -80,24 +83,21 @@ def estimate_scanpath(
 
     warnings.simplefilter(action="ignore", category=FutureWarning)
 
-    # check if rec.mapped_gaze exists, if not, create it
-    if not hasattr(rec, "mapped_gaze") or rec.mapped_gaze is None:
-        mapped_gaze = sync_gaze_to_video(rec)
-    else:
-        mapped_gaze = rec.mapped_gaze
+    if sync_gaze is None:
+        sync_gaze = sync_gaze_to_video(rec)
 
     # create a new dataframe of dataframes that stores the relevant data for each fixation
-    mapped_gaze.rename(
+    sync_gaze.rename(
         columns={"time [s]": "time", "gaze x [px]": "x", "gaze y [px]": "y"},
         inplace=True,
     )
     estimated_scanpath = pd.DataFrame(columns=["time", "fixations"])
 
-    for idx in range(mapped_gaze.shape[0]):
+    for idx in range(sync_gaze.shape[0]):
         estimated_scanpath = estimated_scanpath._append(
             {
-                "time": mapped_gaze.loc[idx, "time"],
-                "fixations": mapped_gaze.loc[
+                "time": sync_gaze.loc[idx, "time"],
+                "fixations": sync_gaze.loc[
                     [idx], ["fixation id", "x", "y", "fixation status"]
                 ],
             },
