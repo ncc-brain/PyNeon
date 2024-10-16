@@ -125,7 +125,9 @@ def estimate_scanpath(
     scanpath["fixations"] = [
         gaze_data.loc[
             i, ["fixation id", "gaze x [px]", "gaze y [px]", "fixation status"]
-        ].to_frame().T
+        ]
+        .to_frame()
+        .T
         for i in gaze_data.index
     ]
 
@@ -133,7 +135,7 @@ def estimate_scanpath(
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     prev_image = None
-    
+
     for i_frame in tqdm(range(scanpath.shape[0]), desc="Estimating scanpath"):
         # Read the current frame from the video
         ret, frame = video.read()
@@ -146,7 +148,7 @@ def estimate_scanpath(
             # Estimate the new fixation points using optical flow for
             # fixations that just ended or are being tracked
             prev_fixations = scanpath.iat[i_frame - 1, 0].copy()
-            
+
             prev_fixations = prev_fixations[
                 (prev_fixations["fixation status"] == "end")
                 | (prev_fixations["fixation status"] == "tracked")
@@ -156,7 +158,8 @@ def estimate_scanpath(
                 # Prepare points for tracking
                 prev_pts = (
                     prev_fixations[["gaze x [px]", "gaze y [px]"]]
-                    .to_numpy().astype(np.float32)
+                    .to_numpy()
+                    .astype(np.float32)
                     .reshape(-1, 1, 2)
                 )
                 prev_ids = prev_fixations["fixation id"].values
@@ -173,21 +176,29 @@ def estimate_scanpath(
                 for i, (pt, s) in enumerate(zip(curr_pts, status)):
                     if s[0]:  # Check if the point was successfully tracked
                         x, y = pt.ravel()
-                        fixation = pd.DataFrame({
-                            "fixation id": prev_ids[i],
-                            "gaze x [px]": x,
-                            "gaze y [px]": y,
-                            "fixation status": "tracked"
-                            }, index=[prev_ids[i]])
+                        fixation = pd.DataFrame(
+                            {
+                                "fixation id": prev_ids[i],
+                                "gaze x [px]": x,
+                                "gaze y [px]": y,
+                                "fixation status": "tracked",
+                            },
+                            index=[prev_ids[i]],
+                        )
                     else:
-                        fixation = pd.DataFrame({
-                            "fixation id": prev_ids[i],
-                            "gaze x [px]": None,
-                            "gaze y [px]": None,
-                            "fixation status": "lost"
-                            }, index=[prev_ids[i]])
-                    curr_fixations = pd.concat([curr_fixations, fixation], ignore_index=True)
-                
+                        fixation = pd.DataFrame(
+                            {
+                                "fixation id": prev_ids[i],
+                                "gaze x [px]": None,
+                                "gaze y [px]": None,
+                                "fixation status": "lost",
+                            },
+                            index=[prev_ids[i]],
+                        )
+                    curr_fixations = pd.concat(
+                        [curr_fixations, fixation], ignore_index=True
+                    )
+
                 # Update the DataFrame with the modified fixations
                 scanpath.iat[i_frame, 0] = curr_fixations
 
