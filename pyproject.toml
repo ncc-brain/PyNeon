@@ -23,6 +23,7 @@ dependencies = [
     "opencv-python",
     "typeguard",
     "requests",
+    "tqdm",
 ]
 
 [project.optional-dependencies]

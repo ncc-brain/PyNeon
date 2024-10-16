@@ -8,6 +8,7 @@ from numbers import Number
 
 if TYPE_CHECKING:
     from ..recording import NeonRecording
+from tqdm import tqdm
 
 
 # Data must be from a NeonStream object
@@ -130,7 +131,7 @@ def window_average(
     new_data = pd.DataFrame(index=new_ts, columns=data.columns).astype(data.dtypes)
     non_float_cols = data.select_dtypes(exclude="float").columns
 
-    for ts in new_ts:
+    for ts in tqdm(new_ts, desc="Computing window averages"):
         lower_bound = ts - window_size / 2
         upper_bound = ts + window_size / 2
 

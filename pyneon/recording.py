@@ -461,6 +461,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def estimate_scanpath(
         self,
+        sync_gaze: Optional["NeonGaze"] = None,
         lk_params: Union[None, dict] = None,
     ) -> pd.DataFrame:
         """
@@ -473,7 +474,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         lk_params : dict
             Parameters for the Lucas-Kanade optical flow algorithm.
         """
-        return estimate_scanpath(self, lk_params)
+        return estimate_scanpath(self, sync_gaze, lk_params)
 
     def overlay_scanpath_on_video(
         self,
