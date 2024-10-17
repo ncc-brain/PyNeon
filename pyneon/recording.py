@@ -15,9 +15,8 @@ from .video import (
     NeonVideo,
     sync_gaze_to_video,
     estimate_scanpath,
-    overlay_scanpath_on_video,
 )
-from .vis import plot_distribution
+from .vis import plot_distribution, plot_scanpath_on_video
 from .export import export_motion_bids, exports_eye_bids
 
 
@@ -462,53 +461,64 @@ Recording duration: {self.info["duration"] / 1e9}s
     def estimate_scanpath(
         self,
         sync_gaze: Optional["NeonGaze"] = None,
-        lk_params: Union[None, dict] = None,
+        lk_params: Optional[dict] = None,
     ) -> pd.DataFrame:
         """
         Map fixations to video frames.
 
         Parameters:
         -----------
-        rec : NeonRecording
-            Recording object containing gaze and video data.
+        sync_gaze : NeonGaze
+            Gaze data synchronized to video frames. If None (default),
+            a windowed average is applied to synchronize gaze data to video frames.
         lk_params : dict
             Parameters for the Lucas-Kanade optical flow algorithm.
         """
-        return estimate_scanpath(self, sync_gaze, lk_params)
+        if sync_gaze is None:
+            sync_gaze = self.sync_gaze_to_video()
+        if (video := self.video) is None:
+            raise ValueError("Estimating scanpath requires video data.")
+        return estimate_scanpath(video, sync_gaze, lk_params)
 
-    def overlay_scanpath_on_video(
+    def plot_scanpath_on_video(
         self,
-        video_output_path: Union[Path, str] = "sacnpath_overlay_video.mp4",
+        scanpath: pd.DataFrame,
         circle_radius: int = 10,
-        show_lines: bool = True,
-        line_thickness: int = 2,
-        show_video: bool = False,
+        line_thickness: Optional[int] = 2,
         max_fixations: int = 10,
+        show_video: bool = False,
+        video_output_path: Optional[Union[Path, str]] = "scanpath.mp4",
     ) -> None:
         """
-        Overlay fixations and gaze data on video frames and save the resulting video.
+        Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
 
-        Parameters:
-        -----------
-        rec : NeonRecording
-            Recording object containing gaze and video data.
-        video_output_path : str
-            Path where the video with fixations will be saved.
+        Parameters
+        ----------
+        scanpath : :class:`pandas.DataFrame`
+            DataFrame containing the fixations and gaze data.
         circle_radius : int
-            Radius of the circle used to represent fixations.
-        line_thickness : int
-            Thickness of the lines connecting successive fixations.
+            Radius of the fixation circles in pixels. Defaults to 10.
+        line_thickness : int or None
+            Thickness of the lines connecting fixations. If None, no lines are drawn.
+            Defaults to 2.
+        max_fixations : int
+            Maximum number of fixations to plot per frame. Defaults to 10.
         show_video : bool
-            Flag to display the video with fixations overlaid in
+            Whether to display the video with fixations overlaid. Defaults to False.
+        video_output_path : :class:`pathlib.Path` or str or None
+            Path to save the video with fixations overlaid. If None, the video is not saved.
+            Defaults to 'scanpath.mp4'.
         """
-        overlay_scanpath_on_video(
-            self,
-            video_output_path,
+        if (video := self.video) is None:
+            raise ValueError("Estimating scanpath requires video data.")
+        plot_scanpath_on_video(
+            video,
+            scanpath,
             circle_radius,
-            show_lines,
             line_thickness,
-            show_video,
             max_fixations,
+            show_video,
+            video_output_path,
         )
 
     def to_motion_bids(
