@@ -17,7 +17,7 @@ from .video import (
     estimate_scanpath,
 )
 from .vis import plot_distribution, plot_scanpath_on_video
-from .export import export_motion_bids, exports_eye_bids
+from .export import export_motion_bids, export_eye_bids
 
 
 def _check_file(dir_path: Path, stem: str):
@@ -521,7 +521,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             video_output_path,
         )
 
-    def to_motion_bids(
+    def export_motion_bids(
         self,
         motion_dir: Union[str, Path],
         prefix: str = "",
@@ -556,7 +556,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         """
         export_motion_bids(self, motion_dir, prefix, extra_metadata)
 
-    def to_eye_bids(
+    def export_eye_bids(
         self,
         output_dir: Union[str, Path],
         prefix: str = "",
@@ -585,4 +585,4 @@ Recording duration: {self.info["duration"] / 1e9}s
         The extension is still being finialized. This method follows the latest standards
         outlined in https://github.com/bids-standard/bids-specification/pull/1128.
         """
-        exports_eye_bids(self, output_dir, prefix, extra_metadata)
+        export_eye_bids(self, output_dir, prefix, extra_metadata)

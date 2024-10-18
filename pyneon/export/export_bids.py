@@ -123,7 +123,7 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def exports_eye_bids(rec: "NeonRecording", output_dir: Union[str, Path]):
+def export_eye_bids(rec: "NeonRecording", output_dir: Union[str, Path]):
     gaze = rec.gaze
     eye_states = rec.eye_states
     output_dir = Path(output_dir)
