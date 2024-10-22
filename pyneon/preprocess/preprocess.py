@@ -317,13 +317,13 @@ def concat_streams(
 
     concat_data = pd.DataFrame(index=new_ts)
     for stream in stream_info["stream"]:
-        resamp_data = stream.interpolate(
+        interp_data = stream.interpolate(
             new_ts, interp_float_kind, interp_other_kind, inplace=inplace
         ).data
-        assert concat_data.shape[0] == resamp_data.shape[0]
-        assert concat_data.index.equals(resamp_data.index)
-        concat_data = pd.concat([concat_data, resamp_data], axis=1)
-        assert concat_data.shape[0] == resamp_data.shape[0]
+        assert concat_data.shape[0] == interp_data.shape[0]
+        assert concat_data.index.equals(interp_data.index)
+        concat_data = pd.concat([concat_data, interp_data], axis=1)
+        assert concat_data.shape[0] == interp_data.shape[0]
     return concat_data
 
 
