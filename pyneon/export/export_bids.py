@@ -52,6 +52,8 @@ def export_motion_bids(
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():
         raise FileNotFoundError(f"Directory not found: {motion_dir}")
+    if motion_dir.name != 'motion':
+        raise RuntimeWarning(f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS")
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
     motion_json_path = motion_dir / f"{prefix}_motion.json"
     channels_tsv_path = motion_dir / f"{prefix}_channels.tsv"
