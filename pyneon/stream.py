@@ -82,7 +82,7 @@ class NeonStream(NeonTabular):
         return np.allclose(self.ts_diff, self.ts_diff[0])
 
     def time_to_ts(self, time: Union[Number, np.ndarray]) -> np.ndarray:
-        """Convert time(s) in seconds to timestamp(s) in nanoseconds."""
+        """Convert relative time(s) in seconds to closest timestamp(s) in nanoseconds."""
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
 
