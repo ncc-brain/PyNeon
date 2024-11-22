@@ -109,8 +109,6 @@ class NeonRecording:
         self._events = None
         self._video = None
 
-        self._scanpath = None
-
         self._get_contents()
 
     def __repr__(self) -> str:
@@ -271,24 +269,10 @@ Recording duration: {self.info["duration"] / 1e9}s
                 self._video = NeonVideo(video_file, timestamp_file, video_info_file)
             else:
                 warnings.warn(
-                    "Scene video not loaded because no video or video timestamps file was found."
+                    "Scene video not loaded because not all video-related files "
+                    "(video, scene_camera.json, world_timestamps.csv) are found."
                 )
         return self._video
-
-    @property
-    def scanpath(self) -> Optional[pd.DataFrame]:
-        """
-        Returns the scanpath data if it exists, otherwise None.
-        """
-        if self._scanpath is None:
-            scanpath_file = self.recording_dir / "scanpath.pkl"
-            if scanpath_file.is_file():
-                self._scanpath = pd.read_pickle(scanpath_file)
-            else:  # compute scanpath
-                self._scanpath = self.estimate_scanpath()
-                # save scanpath
-                self._scanpath.to_pickle(scanpath_file)
-        return self._scanpath
 
     def concat_streams(
         self,
