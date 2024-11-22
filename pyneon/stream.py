@@ -34,7 +34,6 @@ class NeonStream(NeonTabular):
         super().__init__(file)
         if self.data.index.name != "timestamp [ns]":
             raise ValueError("Stream data should be indexed by `timestamp [ns]`.")
-        self.sampling_freq_nominal = None
 
     @property
     def timestamps(self) -> np.ndarray:
@@ -239,9 +238,10 @@ class NeonGaze(NeonStream):
     Gaze data that inherits attributes and methods from :class:`NeonStream`.
     """
 
+    sampling_freq_nominal = int(200)
+
     def __init__(self, file: Path):
         super().__init__(file)
-        self.sampling_freq_nominal = int(200)
         self.data = self.data.astype(
             {
                 "gaze x [px]": float,
@@ -260,9 +260,10 @@ class NeonEyeStates(NeonStream):
     3D eye states data that inherits attributes and methods from :class:`NeonStream`.
     """
 
+    sampling_freq_nominal = int(200)
+
     def __init__(self, file: Path):
         super().__init__(file)
-        self.sampling_freq_nominal = 200
         self.data = self.data.astype(
             {
                 "pupil diameter left [mm]": float,
@@ -288,9 +289,10 @@ class NeonIMU(NeonStream):
     IMU data that inherits attributes and methods from :class:`NeonStream`.
     """
 
+    sampling_freq_nominal = int(110)
+
     def __init__(self, file: Path):
         super().__init__(file)
-        self.sampling_freq_nominal = int(110)
         self.data = self.data.astype(
             {
                 "gyro x [deg/s]": float,
@@ -315,7 +317,8 @@ class CustomStream(NeonStream):
     Custom stream data that inherits attributes and methods from :class:`NeonStream`.
     """
 
+    file = None
+    sampling_freq_nominal = None
+
     def __init__(self, data: pd.DataFrame):
-        self.file = None
         self.data = data
-        self.sampling_freq_nominal = None
