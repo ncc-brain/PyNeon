@@ -351,8 +351,8 @@
 <p>In this tutorial, we will show how to load a single Neon recording downloaded from <a class="reference external" href="https://docs.pupil-labs.com/neon/pupil-cloud/">Pupil Cloud</a> and give an overview of the data structure.</p>
 <section id="Reading-sample-data">
 <h2>Reading sample data<a class="headerlink" href="#Reading-sample-data" title="Link to this heading">#</a></h2>
-<p>We will use a sample recording produced by the NCC Lab, called <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code>. This project (collection of recordings on Pupil Cloud) contains two recordings and multiple enrichments and can be downloaded with the <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code> function. The function returns a <code class="docutils literal notranslate"><span class="pre">Pathlib.Path</span></code> <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">(reference)</a> object pointing to the downloaded and unzipped directory. PyNeon accepts both <code class="docutils literal notranslate"><span class="pre">Path</span></code> and <code class="docutils literal notranslate"><span class="pre">string</span></code> objects but internally always uses
-<code class="docutils literal notranslate"><span class="pre">Path</span></code>.</p>
+<p>We will use a sample recording produced by the NCC Lab, called <code class="docutils literal notranslate"><span class="pre">boardView</span></code>. This project (collection of recordings on Pupil Cloud) contains two recordings downloaded with the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> option and a marker mapper enrichment. It can be downloaded with the <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code> function. The function returns a <code class="docutils literal notranslate"><span class="pre">Pathlib.Path</span></code> <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">(reference)</a> instance pointing to the downloaded and unzipped directory. PyNeon
+accepts both <code class="docutils literal notranslate"><span class="pre">Path</span></code> and <code class="docutils literal notranslate"><span class="pre">string</span></code> objects but internally always uses <code class="docutils literal notranslate"><span class="pre">Path</span></code>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -360,7 +360,7 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonDataset</span><span class="p">,</span> <span class="n">NeonRecording</span>
 
 <span class="c1"># Download sample data (if not existing) and return the path</span>
-<span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span>
+<span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;boardView&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sample_dir</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -370,34 +370,32 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-D:\GitHub\pyneon\data\OfficeWalk
+C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView
 </pre></div></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code> data has the following structure:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>OfficeWalk
-├── Timeseries Data
-│   ├── walk1-e116e606
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>boardView
+├── Timeseries Data + Scene Video
+│   ├── boardview1-d4fd9a27
 │   │   ├── info.json
 │   │   ├── gaze.csv
 │   │   └── ....
-│   ├── walk2-93b8c234
+│   ├── boardview2-713532d5
 │   │   ├── info.json
 │   │   ├── gaze.csv
 │   │   └── ....
 |   ├── enrichment_info.txt
 |   └── sections.csv
-├── OfficeWalk_FACE-MAPPER_FaceMap
-├── OfficeWalk_MARKER-MAPPER_TagMap_csv
-└── OfficeWalk_STATIC-IMAGE-MAPPER_ManualMap_csv
+└── boardView_MARKER-MAPPER_boardMapping_csv
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span></code> folder contains what PyNeon refers to as a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>. It consists of two recordings, each with its own <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file and data files. These recordings can be loaded either individually as a <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> as a collective <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>.</p>
-<p>To load a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>, specify the path to the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span></code> folder:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> folder contains what PyNeon refers to as a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>. It consists of two recordings, each with its own <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file and data files. These recordings can be loaded either individually as a <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> as a collective <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>.</p>
+<p>To load a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>, specify the path to the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> folder:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
 <span class="n">dataset</span> <span class="o">=</span> <span class="n">NeonDataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
 </pre></div>
@@ -416,9 +414,9 @@ NeonDataset | 2 recordings
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">first_recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">first_recording</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">first_recording</span><span class="o">.</span><span class="n">recording_dir</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">recording</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">recording_dir</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -428,7 +426,7 @@ NeonDataset | 2 recordings
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 &lt;class &#39;pyneon.recording.NeonRecording&#39;&gt;
-D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk2-93b8c234
+C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview2-713532d5
 </pre></div></div>
 </div>
 <p>Alternatively, you can directly load a single <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> by specifying the recording’s folder path:</p>
@@ -436,7 +434,7 @@ D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk2-93b8c234
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording_dir</span> <span class="o">=</span> <span class="n">dataset_dir</span> <span class="o">/</span> <span class="s2">&quot;walk1-e116e606&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording_dir</span> <span class="o">=</span> <span class="n">dataset_dir</span> <span class="o">/</span> <span class="s2">&quot;boardview1-d4fd9a27&quot;</span>
 <span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">recording</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">recording_dir</span><span class="p">)</span>
@@ -449,7 +447,7 @@ D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk2-93b8c234
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 &lt;class &#39;pyneon.recording.NeonRecording&#39;&gt;
-D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606
+C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27
 </pre></div></div>
 </div>
 </section>
@@ -470,28 +468,28 @@ D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 
-Recording ID: e116e606-5f3f-4d34-8727-040b8762cef8
-Wearer ID: bcff2832-cfcb-4f89-abef-7bbfe91ec561
+Recording ID: d4fd9a27-3e28-45bf-937f-b9c14c3c1c5e
+Wearer ID: af6cd360-443a-4d3d-adda-7dc8510473c2
 Wearer name: Qian
-Recording start time: 2024-08-30 17:37:01.527000
-Recording duration: 98.213s
-                  exist              filename                                                                                  path
-3d_eye_states      True     3d_eye_states.csv     D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\3d_eye_states.csv
-blinks             True            blinks.csv            D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\blinks.csv
-events             True            events.csv            D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\events.csv
-fixations          True         fixations.csv         D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\fixations.csv
-gaze               True              gaze.csv              D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\gaze.csv
-imu                True               imu.csv               D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\imu.csv
-labels             True            labels.csv            D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\labels.csv
-saccades           True          saccades.csv          D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\saccades.csv
-world_timestamps   True  world_timestamps.csv  D:\GitHub\pyneon\data\OfficeWalk\Timeseries Data\walk1-e116e606\world_timestamps.csv
-scene_video_info  False                  None                                                                                  None
-scene_video       False                  None                                                                                  None
+Recording start time: 2024-11-26 12:44:48.937000
+Recording duration: 32.046s
+                 exist                 filename                                                                                                                                path
+3d_eye_states     True        3d_eye_states.csv        C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\3d_eye_states.csv
+blinks            True               blinks.csv               C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\blinks.csv
+events            True               events.csv               C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\events.csv
+fixations         True            fixations.csv            C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\fixations.csv
+gaze              True                 gaze.csv                 C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\gaze.csv
+imu               True                  imu.csv                  C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\imu.csv
+labels            True               labels.csv               C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\labels.csv
+saccades          True             saccades.csv             C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\saccades.csv
+world_timestamps  True     world_timestamps.csv     C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\world_timestamps.csv
+scene_video_info  True        scene_camera.json        C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\scene_camera.json
+scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\182240fd_0.0-32.046.mp4
 
 </pre></div></div>
 </div>
-<p>As seen in the output, this recording includes all data files except the scene video and its metadata because we downloaded only the “Timeseries Data” instead of “ “Timeseries Data + Scene Video” from Pupil Cloud. For processing video, refer to the <a class="reference internal" href="video.html"><span class="doc">Neon video tutorial</span></a>.</p>
-<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> object. For example, the gaze data can be accessed as <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code>, and upon accessing, the tabular data is loaded into memory. On the other hand, if you try to access unavailable data like the video, it will simply return <code class="docutils literal notranslate"><span class="pre">None</span></code> and a warning message.</p>
+<p>As seen in the output, this recording includes all data files. This tutorial will focus on non-video data. For processing video, refer to the <a class="reference internal" href="video.html"><span class="doc">Neon video tutorial</span></a>.</p>
+<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> object. For example, the gaze data can be accessed as <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code>, and upon accessing, the tabular data is loaded into memory. On the other hand, if you try to access unavailable data, PyNeon will return <code class="docutils literal notranslate"><span class="pre">None</span></code> and a warning message.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
@@ -499,32 +497,21 @@ scene_video       False                  None                                   
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Gaze and fixation data are available</span>
 <span class="n">gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">gaze</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.gaze is </span><span class="si">{</span><span class="n">gaze</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">fixations</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">fixations</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.fixations is </span><span class="si">{</span><span class="n">fixations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Video is not available</span>
+<span class="n">saccades</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">saccades</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.saccades is </span><span class="si">{</span><span class="n">saccades</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="n">video</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">video</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.video is </span><span class="si">{</span><span class="n">video</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-recording.gaze is &lt;pyneon.stream.NeonGaze object at 0x000001B2167FC830&gt;
-recording.fixations is &lt;pyneon.events.NeonFixations object at 0x000001B236FA6DB0&gt;
-recording.video is None
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-D:\GitHub\pyneon\pyneon\recording.py:271: UserWarning: Scene video not loaded because not all video-related files (video, scene_camera.json, world_timestamps.csv) are found.
-  warnings.warn(
+recording.gaze is &lt;pyneon.stream.NeonGaze object at 0x0000027AE3680C20&gt;
+recording.saccades is &lt;pyneon.events.NeonSaccades object at 0x0000027AC22E0B90&gt;
+recording.video is &lt; cv2.VideoCapture 0000027AE592DB90&gt;
 </pre></div></div>
 </div>
 <p>PyNeon reads tabular CSV file into specialized classes (e.g., gaze.csv to <code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code>) which all have a <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute that holds the tabular data as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">(reference)</a>. Depending on the nature of the data, such classes could be of <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> or <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> super classes. <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> contains (semi)-continuous data streams, while <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> (dubbed so to avoid confusion with the
@@ -562,19 +549,19 @@ D:\GitHub\pyneon\pyneon\recording.py:271: UserWarning: Scene video not loaded be
 <div class="highlight"><pre>
                      gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
 timestamp [ns]
-1725032224852161732     1067.486      620.856     1            1      &lt;NA&gt;
-1725032224857165732     1066.920      617.117     1            1      &lt;NA&gt;
-1725032224862161732     1072.699      615.780     1            1      &lt;NA&gt;
-1725032224867161732     1067.447      617.062     1            1      &lt;NA&gt;
-1725032224872161732     1071.564      613.158     1            1      &lt;NA&gt;
+1732621490425631343      697.829      554.242     1            1      &lt;NA&gt;
+1732621490430625343      698.096      556.335     1            1      &lt;NA&gt;
+1732621490435625343      697.810      556.360     1            1      &lt;NA&gt;
+1732621490440625343      695.752      557.903     1            1      &lt;NA&gt;
+1732621490445625343      696.108      558.438     1            1      &lt;NA&gt;
 
                      azimuth [deg]  elevation [deg]
 timestamp [ns]
-1725032224852161732      16.213030        -0.748998
-1725032224857165732      16.176285        -0.511733
-1725032224862161732      16.546413        -0.426618
-1725032224867161732      16.210049        -0.508251
-1725032224872161732      16.473521        -0.260388
+1732621490425631343      -7.581023         3.519804
+1732621490430625343      -7.563214         3.385485
+1732621490435625343      -7.581576         3.383787
+1732621490440625343      -7.713686         3.284294
+1732621490445625343      -7.690596         3.250055
 gaze x [px]        float64
 gaze y [px]        float64
 worn                 Int32
@@ -589,8 +576,8 @@ dtype: object
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">fixations</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">fixations</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">saccades</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">saccades</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -599,48 +586,48 @@ dtype: object
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-                      fixation id   end timestamp [ns]  duration [ms]  \
+                      saccade id   end timestamp [ns]  duration [ms]  \
 start timestamp [ns]
-1725032224852161732             1  1725032225007283732            155
-1725032225027282732             2  1725032225282527732            255
-1725032225347526732             3  1725032225617770732            270
-1725032225667907732             4  1725032225798022732            130
-1725032225833015732             5  1725032225958137732            125
+1732621490876132343            1  1732621490891115343             15
+1732621491241357343            2  1732621491291481343             50
+1732621491441602343            3  1732621491516601343             75
+1732621491626723343            4  1732621491696847343             70
+1732621491917092343            5  1732621491977090343             60
 
-                      fixation x [px]  fixation y [px]  azimuth [deg]  \
+                      amplitude [px]  amplitude [deg]  mean velocity [px/s]  \
 start timestamp [ns]
-1725032224852161732          1069.932          614.843      16.369094
-1725032225027282732           906.439          538.107       5.878844
-1725032225347526732           694.843          533.982      -7.781338
-1725032225667907732           572.983          488.800     -15.679003
-1725032225833015732           601.861          491.125     -13.813521
+1732621490876132343        14.938179         0.962102           1025.709879
+1732621491241357343       130.743352         8.378644           2700.713283
+1732621491441602343       241.003342        15.391730           3615.380044
+1732621491626723343       212.619205        13.608618           3757.394092
+1732621491917092343       220.842812        13.914266           4220.180601
 
-                      elevation [deg]
+                      peak velocity [px/s]
 start timestamp [ns]
-1725032224852161732         -0.367312
-1725032225027282732          4.561914
-1725032225347526732          4.819739
-1725032225667907732          7.636408
-1725032225833015732          7.512433
-fixation id             Int32
-end timestamp [ns]      Int64
-duration [ms]           Int64
-fixation x [px]       float64
-fixation y [px]       float64
-azimuth [deg]         float64
-elevation [deg]       float64
+1732621490876132343            1191.520740
+1732621491241357343            3687.314947
+1732621491441602343            5337.244676
+1732621491626723343            6164.040944
+1732621491917092343            6369.217052
+saccade id                Int32
+end timestamp [ns]        Int64
+duration [ms]             Int64
+amplitude [px]          float64
+amplitude [deg]         float64
+mean velocity [px/s]    float64
+peak velocity [px/s]    float64
 dtype: object
 </pre></div></div>
 </div>
 <p>PyNeon performs the following preprocessing when reading the CSV files: 1. Removes the redundant <code class="docutils literal notranslate"><span class="pre">section</span> <span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">recording</span> <span class="pre">id</span></code> columns that are present in the raw CSVs. 2. Sets the <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> (or <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> for most event files) column as the DataFrame index. 3. Automatically assigns appropriate data types to columns. For instance, <code class="docutils literal notranslate"><span class="pre">Int64</span></code> type is assigned to timestamps, <code class="docutils literal notranslate"><span class="pre">Int32</span></code> to event IDs (blink/fixation/saccade ID), and <code class="docutils literal notranslate"><span class="pre">float64</span></code> to float data (e.g. gaze
 location, pupil size).</p>
-<p>Just like any other <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>, you can access individual rows, columns, or subsets of the data using the standard indexing and slicing methods. For example, <code class="docutils literal notranslate"><span class="pre">gaze.data.iloc[0]</span></code> returns the first row of the gaze data, and <code class="docutils literal notranslate"><span class="pre">gaze.data['gaze</span> <span class="pre">x</span> <span class="pre">[px]']</span></code> returns the gaze x-coordinate column.</p>
+<p>Just like any other <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>, you can access individual rows, columns, or subsets of the data using the standard indexing and slicing methods. For example, <code class="docutils literal notranslate"><span class="pre">gaze.data.iloc[0]</span></code> returns the first row of the gaze data, and <code class="docutils literal notranslate"><span class="pre">gaze.data['gaze</span> <span class="pre">x</span> <span class="pre">[px]']</span></code> (or <code class="docutils literal notranslate"><span class="pre">gaze['gaze</span> <span class="pre">x</span> <span class="pre">[px]']</span></code>) returns the gaze x-coordinate column.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;First row of gaze data:</span><span class="se">\n</span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All gaze x values:</span><span class="se">\n</span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;gaze x [px]&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All gaze x values:</span><span class="se">\n</span><span class="si">{</span><span class="n">gaze</span><span class="p">[</span><span class="s1">&#39;gaze x [px]&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -650,29 +637,29 @@ location, pupil size).</p>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 First row of gaze data:
-gaze x [px]        1067.486
-gaze y [px]         620.856
+gaze x [px]         697.829
+gaze y [px]         554.242
 worn                    1.0
 fixation id             1.0
 blink id               &lt;NA&gt;
-azimuth [deg]      16.21303
-elevation [deg]   -0.748998
-Name: 1725032224852161732, dtype: Float64
+azimuth [deg]     -7.581023
+elevation [deg]    3.519804
+Name: 1732621490425631343, dtype: Float64
 
 All gaze x values:
 timestamp [ns]
-1725032224852161732    1067.486
-1725032224857165732    1066.920
-1725032224862161732    1072.699
-1725032224867161732    1067.447
-1725032224872161732    1071.564
-                         ...
-1725032319717194732     800.364
-1725032319722198732     799.722
-1725032319727194732     799.901
-1725032319732194732     796.982
-1725032319737194732     797.285
-Name: gaze x [px], Length: 18769, dtype: float64
+1732621490425631343    697.829
+1732621490430625343    698.096
+1732621490435625343    697.810
+1732621490440625343    695.752
+1732621490445625343    696.108
+                        ...
+1732621520958946343    837.027
+1732621520964071343    836.595
+1732621520969071343    836.974
+1732621520974075343    835.169
+1732621520979070343    833.797
+Name: gaze x [px], Length: 6091, dtype: float64
 </pre></div></div>
 </div>
 </section>
@@ -694,23 +681,22 @@ Name: gaze x [px], Length: 18769, dtype: float64
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[1725032224852161732 1725032224857165732 1725032224862161732 ...
- 1725032319727194732 1725032319732194732 1725032319737194732]
-[0.0000000e+00 5.0040000e-03 1.0000000e-02 ... 9.4875033e+01 9.4880033e+01
- 9.4885033e+01]
+[1732621490425631343 1732621490430625343 1732621490435625343 ...
+ 1732621520969071343 1732621520974075343 1732621520979070343]
+[0.0000000e+00 4.9940000e-03 9.9940000e-03 ... 3.0543440e+01 3.0548444e+01
+ 3.0553439e+01]
 </pre></div></div>
 </div>
-<p>Timestamps (UTC, in ns) and relative time (relative to the stream start, in s) are thus the two units of time that are most commonly used in PyNeon. For example, you can crop the stream by either timestamp or relative time by calling the <code class="docutils literal notranslate"><span class="pre">crop()</span></code> method. The method takes two arguments: <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code>:</p>
+<p>Timestamps (UTC, in ns), relative time (relative to the stream start, in s), and index are the three units of time that are most commonly used in PyNeon. For example, you can crop the stream by either timestamp or relative time by calling the <code class="docutils literal notranslate"><span class="pre">crop()</span></code> method. The method takes <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code> of the crop window in either UTC timestamps or relative time, and uses <code class="docutils literal notranslate"><span class="pre">by</span></code> to specify whether</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Last data time of the original gaze data</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaze data points before cropping: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="c1"># Crop the gaze data to the first 10 seconds</span>
-<span class="n">gaze_cropped</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>  <span class="c1"># Crop by time</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">gaze_cropped</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="c1"># Crop the gaze data to 5-10 seconds</span>
+<span class="n">gaze_crop</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>  <span class="c1"># Crop by time</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaze data points after cropping: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze_crop</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -719,180 +705,114 @@ Name: gaze x [px], Length: 18769, dtype: float64
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-94.885033
-9.999289
+Gaze data points before cropping: 6091
+Gaze data points after cropping: 999
+</pre></div></div>
+</div>
+<p>You may also want to restrict one stream to the temporal range of another stream. This can be done by calling the <code class="docutils literal notranslate"><span class="pre">restrict()</span></code> method. The method takes another <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> instance as an argument and crops the stream to the intersection of the two streams’ temporal ranges.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">imu_crop</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_crop</span><span class="p">)</span>
+<span class="n">saccades_crop</span> <span class="o">=</span> <span class="n">saccades</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_crop</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;IMU first timestamp: </span><span class="si">{</span><span class="n">imu_crop</span><span class="o">.</span><span class="n">first_ts</span><span class="si">}</span><span class="s2"> &gt; Gaze first timestamp: </span><span class="si">{</span><span class="n">gaze_crop</span><span class="o">.</span><span class="n">first_ts</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;IMU last timestamp: </span><span class="si">{</span><span class="n">imu_crop</span><span class="o">.</span><span class="n">last_ts</span><span class="si">}</span><span class="s2"> &lt; Gaze last timestamp: </span><span class="si">{</span><span class="n">gaze_crop</span><span class="o">.</span><span class="n">last_ts</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+IMU first timestamp: 1732621495435389343 &gt; Gaze first timestamp: 1732621495430263343
+IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 1732621500424901343
 </pre></div></div>
 </div>
 <p>There are many other attributes and methods available for <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> and <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> classes. For a full list, refer to the <a class="reference external" href="https://ncc-brain.github.io/PyNeon/reference/data.html">API reference</a>. We will also cover some of them in the following tutorials (e.g., <a class="reference internal" href="interpolate_and_concat.html"><span class="doc">interpolation and concatenation of streams</span></a>).</p>
 </section>
-<section id="Data-streams-and-events">
-<h2>Data streams and events<a class="headerlink" href="#Data-streams-and-events" title="Link to this heading">#</a></h2>
-<p>Up to this point, PyNeon simply reads and re-organizes the raw .csv files. Let’s plot some samples from the <code class="docutils literal notranslate"><span class="pre">gaze</span></code> and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code> streams and a saccade from the <code class="docutils literal notranslate"><span class="pre">saccades</span></code> events.</p>
+<section id="An-example-plot-of-cropped-data">
+<h2>An example plot of cropped data<a class="headerlink" href="#An-example-plot-of-cropped-data" title="Link to this heading">#</a></h2>
+<p>Below we show how to easily plot the gaze and saccade data we cropped just now. Since PyNeon data are stored in <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>, you can use any plotting library that supports <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> as input. Here we use <code class="docutils literal notranslate"><span class="pre">seaaborn</span></code> and <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> to plot the gaze x, y coordinates and the saccade durations (shadowed areas).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
 
-<span class="n">gaze_color</span> <span class="o">=</span> <span class="s2">&quot;royalblue&quot;</span>
-<span class="n">gyro_color</span> <span class="o">=</span> <span class="s2">&quot;darkorange&quot;</span>
-
-<span class="n">imu</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">imu</span>
-<span class="n">fixations</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">saccades</span>
-
 <span class="c1"># Create a figure</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">ax2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">gaze_color</span><span class="p">)</span>
-<span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">gyro_color</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 
-<span class="c1"># Visualize the 2nd saccade</span>
-<span class="n">saccade</span> <span class="o">=</span> <span class="n">fixations</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">saccade</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">saccade</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-    <span class="p">(</span><span class="n">saccade</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">saccade</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="mi">1050</span><span class="p">,</span>
-    <span class="s2">&quot;Saccade&quot;</span><span class="p">,</span>
-    <span class="n">horizontalalignment</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="c1"># Visualize the 1st saccade</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sac</span> <span class="ow">in</span> <span class="n">saccades_crop</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">sac</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">sac</span><span class="p">[</span><span class="s2">&quot;end timestamp [ns]&quot;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">)</span>
 
-<span class="c1"># Visualize gaze x and pupil diameter left</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">scatterplot</span><span class="p">(</span>
+<span class="c1"># Visualize gaze x and y</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">lineplot</span><span class="p">(</span>
     <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-    <span class="n">x</span><span class="o">=</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">gaze_crop</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">gaze_crop</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="s2">&quot;gaze x [px]&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="n">gaze_color</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Gaze x&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">scatterplot</span><span class="p">(</span>
-    <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">60</span><span class="p">),</span>
-    <span class="n">x</span><span class="o">=</span><span class="n">imu</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-    <span class="n">y</span><span class="o">=</span><span class="s2">&quot;gyro x [deg/s]&quot;</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="n">gyro_color</span><span class="p">,</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">lineplot</span><span class="p">(</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">gaze_crop</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">gaze_crop</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">&quot;gaze y [px]&quot;</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Gaze y&quot;</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Gaze location (pixels)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-saccade id                                2.0
-end timestamp [ns]      1725032225347526656.0
-duration [ms]                            65.0
-amplitude [px]                      228.36139
-amplitude [deg]                     14.676102
-mean velocity [px/s]              3685.269894
-peak velocity [px/s]              5411.775481
-Name: 1725032225282527732, dtype: Float64
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
-<span class="ansi-red-intense-fg ansi-bold">TypeError</span>                                 Traceback (most recent call last)
-Cell <span class="ansi-green-intense-fg ansi-bold">In[12], line 19</span>
-<span class="ansi-green-fg">     17</span> saccade <span style="color: rgb(98,98,98)">=</span> fixations<span style="color: rgb(98,98,98)">.</span>data<span style="color: rgb(98,98,98)">.</span>iloc[<span style="color: rgb(98,98,98)">1</span>]
-<span class="ansi-green-fg">     18</span> <span style="color: rgb(0,135,0)">print</span>(saccade)
-<span class="ansi-green-intense-fg ansi-bold">---&gt; 19</span> <span class="ansi-yellow-bg">ax</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">axvspan</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">saccade</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">index</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">values</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">saccade</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">end timestamp [ns]</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">color</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">lightgray</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">     20</span> ax<span style="color: rgb(98,98,98)">.</span>text(
-<span class="ansi-green-fg">     21</span>     (saccade<span style="color: rgb(98,98,98)">.</span>index<span style="color: rgb(98,98,98)">.</span>values <span style="color: rgb(98,98,98)">+</span> saccade[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">end timestamp [ns]</span><span style="color: rgb(175,0,0)">&#34;</span>]) <span style="color: rgb(98,98,98)">/</span> <span style="color: rgb(98,98,98)">2</span>,
-<span class="ansi-green-fg">     22</span>     <span style="color: rgb(98,98,98)">1050</span>,
-<span class="ansi-green-fg">     23</span>     <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Saccade</span><span style="color: rgb(175,0,0)">&#34;</span>,
-<span class="ansi-green-fg">     24</span>     horizontalalignment<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">center</span><span style="color: rgb(175,0,0)">&#34;</span>,
-<span class="ansi-green-fg">     25</span> )
-<span class="ansi-green-fg">     27</span> <span style="color: rgb(95,135,135)"># Visualize gaze x and pupil diameter left</span>
-
-File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\axes\_axes.py:1087</span>, in <span class="ansi-cyan-fg">Axes.axvspan</span><span class="ansi-blue-intense-fg ansi-bold">(self, xmin, xmax, ymin, ymax, **kwargs)</span>
-<span class="ansi-green-fg">   1085</span> <span style="color: rgb(95,135,135)"># Strip units away.</span>
-<span class="ansi-green-fg">   1086</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_check_no_units([ymin, ymax], [<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">ymin</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">ymax</span><span style="color: rgb(175,0,0)">&#39;</span>])
-<span class="ansi-green-intense-fg ansi-bold">-&gt; 1087</span> (xmin, xmax), <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_process_unit_info</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">x</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">xmin</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">xmax</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">   1089</span> p <span style="color: rgb(98,98,98)">=</span> mpatches<span style="color: rgb(98,98,98)">.</span>Rectangle((xmin, ymin), xmax <span style="color: rgb(98,98,98)">-</span> xmin, ymax <span style="color: rgb(98,98,98)">-</span> ymin, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)
-<span class="ansi-green-fg">   1090</span> p<span style="color: rgb(98,98,98)">.</span>set_transform(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_xaxis_transform(which<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">grid</span><span style="color: rgb(175,0,0)">&#34;</span>))
-
-File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\axes\_base.py:2585</span>, in <span class="ansi-cyan-fg">_AxesBase._process_unit_info</span><span class="ansi-blue-intense-fg ansi-bold">(self, datasets, kwargs, convert)</span>
-<span class="ansi-green-fg">   2583</span>     <span style="color: rgb(95,135,135)"># Update from data if axis is already set but no unit is set yet.</span>
-<span class="ansi-green-fg">   2584</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> axis <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> data <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> axis<span style="color: rgb(98,98,98)">.</span>have_units():
-<span class="ansi-green-intense-fg ansi-bold">-&gt; 2585</span>         <span class="ansi-yellow-bg">axis</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">update_units</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">   2586</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> axis_name, axis <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> axis_map<span style="color: rgb(98,98,98)">.</span>items():
-<span class="ansi-green-fg">   2587</span>     <span style="color: rgb(95,135,135)"># Return if no axis is set.</span>
-<span class="ansi-green-fg">   2588</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> axis <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-
-File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\axis.py:1756</span>, in <span class="ansi-cyan-fg">Axis.update_units</span><span class="ansi-blue-intense-fg ansi-bold">(self, data)</span>
-<span class="ansi-green-fg">   1754</span> neednew <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>converter <span style="color: rgb(98,98,98)">!=</span> converter
-<span class="ansi-green-fg">   1755</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>converter <span style="color: rgb(98,98,98)">=</span> converter
-<span class="ansi-green-intense-fg ansi-bold">-&gt; 1756</span> default <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">converter</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">default_units</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">   1757</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> default <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>units <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg">   1758</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>set_units(default)
-
-File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\category.py:105</span>, in <span class="ansi-cyan-fg">StrCategoryConverter.default_units</span><span class="ansi-blue-intense-fg ansi-bold">(data, axis)</span>
-<span class="ansi-green-fg">    103</span> <span style="color: rgb(95,135,135)"># the conversion call stack is default_units -&gt; axis_info -&gt; convert</span>
-<span class="ansi-green-fg">    104</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> axis<span style="color: rgb(98,98,98)">.</span>units <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">--&gt; 105</span>     axis<span style="color: rgb(98,98,98)">.</span>set_units(<span class="ansi-yellow-bg">UnitData</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>)
-<span class="ansi-green-fg">    106</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
-<span class="ansi-green-fg">    107</span>     axis<span style="color: rgb(98,98,98)">.</span>units<span style="color: rgb(98,98,98)">.</span>update(data)
-
-File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\category.py:181</span>, in <span class="ansi-cyan-fg">UnitData.__init__</span><span class="ansi-blue-intense-fg ansi-bold">(self, data)</span>
-<span class="ansi-green-fg">    179</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_counter <span style="color: rgb(98,98,98)">=</span> itertools<span style="color: rgb(98,98,98)">.</span>count()
-<span class="ansi-green-fg">    180</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> data <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">--&gt; 181</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">update</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\pyneon\Lib\site-packages\matplotlib\category.py:214</span>, in <span class="ansi-cyan-fg">UnitData.update</span><span class="ansi-blue-intense-fg ansi-bold">(self, data)</span>
-<span class="ansi-green-fg">    212</span> <span style="color: rgb(95,135,135)"># check if convertible to number:</span>
-<span class="ansi-green-fg">    213</span> convertible <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>
-<span class="ansi-green-intense-fg ansi-bold">--&gt; 214</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> val <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg">OrderedDict</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">fromkeys</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">)</span>:
-<span class="ansi-green-fg">    215</span>     <span style="color: rgb(95,135,135)"># OrderedDict just iterates over unique values in data.</span>
-<span class="ansi-green-fg">    216</span>     _api<span style="color: rgb(98,98,98)">.</span>check_isinstance((<span style="color: rgb(0,135,0)">str</span>, <span style="color: rgb(0,135,0)">bytes</span>), value<span style="color: rgb(98,98,98)">=</span>val)
-<span class="ansi-green-fg">    217</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> convertible:
-<span class="ansi-green-fg">    218</span>         <span style="color: rgb(95,135,135)"># this will only be called so long as convertible is True.</span>
-
-<span class="ansi-red-intense-fg ansi-bold">TypeError</span>: unhashable type: &#39;numpy.ndarray&#39;
-</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_read_recording_26_2.png" src="../_images/tutorials_read_recording_26_2.png" />
-</div>
-</div>
-<p>It’s apparent that at the beginning of the recording, there are some missing data points in both the <code class="docutils literal notranslate"><span class="pre">gaze</span></code> and <code class="docutils literal notranslate"><span class="pre">imu</span></code> streams. This is presumably due to the time it takes for the sensors to start up and stabilize. We will show how to handle missing data using resampling in the next tutorial. For now, it’s important to be aware of these gaps and that it will require great caution to assume the data is continuously and equally sampled.</p>
-<p>PyNeon also calculates the effective (as opposed to the nominal) sampling frequency of each stream by dividing the number of samples by the duration of the recording.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Gaze: nominal sampling frequency = </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="si">}</span><span class="s2">, &quot;</span>
-    <span class="sa">f</span><span class="s2">&quot;effective sampling frequency = </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_effective</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;IMU: nominal sampling frequency = </span><span class="si">{</span><span class="n">recording</span><span class="o">.</span><span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="si">}</span><span class="s2">, &quot;</span>
-    <span class="sa">f</span><span class="s2">&quot;effective sampling frequency = </span><span class="si">{</span><span class="n">recording</span><span class="o">.</span><span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_effective</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="p">)</span>
-</pre></div>
+<img alt="../_images/tutorials_read_recording_28_0.png" src="../_images/tutorials_read_recording_28_0.png" />
 </div>
 </div>
 </section>
 <section id="Visualizing-gaze-heatmap">
 <h2>Visualizing gaze heatmap<a class="headerlink" href="#Visualizing-gaze-heatmap" title="Link to this heading">#</a></h2>
-<p>Finally, we will show how to plot a heatmap of the gaze/fixation data.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<p>Finally, we will show how to plot a heatmap of the gaze/fixation data. Since it requires gaze, fixation, and video data, the input it takes is an instance of <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> that contains all necessary data. The method <code class="docutils literal notranslate"><span class="pre">plot_heatmap()</span></code>, by default, plots a gaze heatmap with fixations overlaid as circles.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span><span class="o">.</span><span class="n">plot_distribution</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
-<p>we can neatly see that the recorded data shows a centre-bias, which is a well-known effect from eye statistics. In y, we can see that fixations tend to occur below the horizon, which is indicative of a walking task where a participant looks at the floor in front of them more often</p>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_read_recording_30_0.png" src="../_images/tutorials_read_recording_30_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;Figure size 640x480 with 2 Axes&gt;,
+ &lt;Axes: xlabel=&#39;Scene camera x [px]&#39;, ylabel=&#39;Scene camera y [px]&#39;&gt;)
+</pre></div></div>
+</div>
+<p>We can see a clear centre-bias, as participants tend to look more centrally relative to head position.</p>
 </section>
 </section>
 
@@ -947,7 +867,7 @@ File <span class="ansi-green-intense-fg ansi-bold">c:\Users\QianC\.conda\envs\py
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-and-metadata-of-a-NeonRecording">Data and metadata of a NeonRecording</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-as-dataframes">Data as dataframes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Useful-attributes-and-methods-for-NeonStream-and-NeonEV">Useful attributes and methods for NeonStream and NeonEV</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-streams-and-events">Data streams and events</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#An-example-plot-of-cropped-data">An example plot of cropped data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Visualizing-gaze-heatmap">Visualizing gaze heatmap</a></li>
 </ul>
   </nav></div>

@@ -506,6 +506,24 @@ Defaults to False.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.restrict">
+<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonStream.restrict" title="Link to this definition">#</a></dt>
+<dd><p>Temporally restrict the stream to the timestamps of another stream.
+In others words, crop the stream to tmin and tmax of the other stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><em>NeonStream</em></a>) – The other stream whose timestamps are used to restrict the data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stream with data restricted to the timestamps of the other stream.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream">NeonStream</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.interpolate">
 <span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.interpolate" title="Link to this definition">#</a></dt>
 <dd><p>Interpolate the stream to a new set of timestamps.</p>
@@ -622,6 +640,50 @@ Defaults to False.</p></li>
 <dt class="sig sig-object py" id="pyneon.events.NeonEV.id">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.events.NeonEV.id" title="Link to this definition">#</a></dt>
 <dd><p>Event ID.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.events.NeonEV.crop">
+<span class="sig-name descname"><span class="pre">crop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'row'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><span class="pre">NeonEV</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.events.NeonEV.crop" title="Link to this definition">#</a></dt>
+<dd><p>Crop data to a specific time range based on timestamps or row numbers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tmin</strong> (<em>number</em><em>, </em><em>optional</em>) – Start timestamp/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the minimum timestamp/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>tmax</strong> (<em>number</em><em>, </em><em>optional</em>) – End timestamp/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the maximum timestamp/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>by</strong> (<em>&quot;timestamp&quot;</em><em> or </em><em>&quot;row&quot;</em><em>, </em><em>optional</em>) – Whether tmin and tmax are UTC timestamps in nanoseconds
+or row numbers of the stream data.
+Defaults to “timestamp”.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the cropped data.
+Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cropped stream if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV">NeonEV</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.events.NeonEV.restrict">
+<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><span class="pre">NeonEV</span></a></span></span><a class="headerlink" href="#pyneon.events.NeonEV.restrict" title="Link to this definition">#</a></dt>
+<dd><p>Restrict events to a time range defined by another stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><em>NeonStream</em></a>) – Stream to restrict to.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Restricted event data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV">NeonEV</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -878,6 +940,7 @@ i.e., <code class="docutils literal notranslate"><span class="pre">window_size</
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.is_uniformly_sampled"><code class="docutils literal notranslate"><span class="pre">NeonStream.is_uniformly_sampled</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.time_to_ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.time_to_ts()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.crop"><code class="docutils literal notranslate"><span class="pre">NeonStream.crop()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.restrict"><code class="docutils literal notranslate"><span class="pre">NeonStream.restrict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.interpolate"><code class="docutils literal notranslate"><span class="pre">NeonStream.interpolate()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.window_average"><code class="docutils literal notranslate"><span class="pre">NeonStream.window_average()</span></code></a></li>
 </ul>
@@ -891,6 +954,8 @@ i.e., <code class="docutils literal notranslate"><span class="pre">window_size</
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.end_ts"><code class="docutils literal notranslate"><span class="pre">NeonEV.end_ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.durations"><code class="docutils literal notranslate"><span class="pre">NeonEV.durations</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.id"><code class="docutils literal notranslate"><span class="pre">NeonEV.id</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.crop"><code class="docutils literal notranslate"><span class="pre">NeonEV.crop()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.restrict"><code class="docutils literal notranslate"><span class="pre">NeonEV.restrict()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonBlinks"><code class="docutils literal notranslate"><span class="pre">NeonBlinks</span></code></a></li>
