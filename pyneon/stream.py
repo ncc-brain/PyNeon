@@ -35,6 +35,11 @@ class NeonStream(NeonTabular):
         if self.data.index.name != "timestamp [ns]":
             raise ValueError("Stream data should be indexed by `timestamp [ns]`.")
 
+    def __getitem__(self, index: str) -> pd.Series:
+        if index not in self.data.columns:
+            raise KeyError(f"Column '{index}' not found in the stream data.")
+        return self.data[index]
+
     @property
     def timestamps(self) -> np.ndarray:
         """Timestamps of the stream in nanoseconds."""
@@ -137,6 +142,31 @@ class NeonStream(NeonTabular):
             new_stream = copy.copy(self)
             new_stream.data = new_data
             return new_stream
+
+    def restrict(
+        self,
+        other: "NeonStream",
+    ):
+        """
+        Temporally restrict the stream to the timestamps of another stream.
+        In others words, crop the stream to tmin and tmax of the other stream.
+
+        Parameters
+        ----------
+        other : NeonStream
+            The other stream whose timestamps are used to restrict the data.
+
+        Returns
+        -------
+        NeonStream
+            Stream with data restricted to the timestamps of the other stream.
+        """
+        new_stream = self.crop(
+            other.first_ts, other.last_ts, by="timestamp", inplace=False
+        )
+        if new_stream.data.empty:
+            raise ValueError("No data found in the range of the other stream")
+        return new_stream
 
     def interpolate(
         self,
