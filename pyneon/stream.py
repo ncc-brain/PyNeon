@@ -129,7 +129,7 @@ class NeonStream(NeonTabular):
         elif by == "time":
             t = self.times
         else:
-            t = np.arange(len(self.data))
+            t = np.arange(len(self))
         tmin = tmin if tmin is not None else t.min()
         tmax = tmax if tmax is not None else t.max()
         mask = (t >= tmin) & (t <= tmax)

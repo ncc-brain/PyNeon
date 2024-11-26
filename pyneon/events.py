@@ -1,6 +1,12 @@
 from .tabular import NeonTabular
 import numpy as np
 import pandas as pd
+from numbers import Number
+from typing import TYPE_CHECKING, Literal, Optional
+import copy
+
+if TYPE_CHECKING:
+    from .stream import NeonStream
 
 
 class NeonEV(NeonTabular):
@@ -14,7 +20,7 @@ class NeonEV(NeonTabular):
     @property
     def start_ts(self) -> np.ndarray:
         """Start timestamps of events in nanoseconds.."""
-        return self.index.to_numpy()
+        return self.data.index.to_numpy()
 
     @property
     def end_ts(self) -> np.ndarray:
@@ -43,8 +49,77 @@ class NeonEV(NeonTabular):
             print(f"Event ID name is undefined or not found in the data.")
             return np.empty(self.data.shape[0], dtype=np.int64)
 
+    def crop(
+        self,
+        tmin: Optional[Number] = None,
+        tmax: Optional[Number] = None,
+        by: Literal["timestamp", "row"] = "timestamp",
+        inplace: bool = False,
+    ) -> Optional["NeonEV"]:
+        """
+        Crop data to a specific time range based on timestamps or row numbers.
+
+        Parameters
+        ----------
+        tmin : number, optional
+            Start timestamp/row to crop the data to. If ``None``,
+            the minimum timestamp/row in the data is used. Defaults to ``None``.
+        tmax : number, optional
+            End timestamp/row to crop the data to. If ``None``,
+            the maximum timestamp/row in the data is used. Defaults to ``None``.
+        by : "timestamp" or "row", optional
+            Whether tmin and tmax are UTC timestamps in nanoseconds
+            or row numbers of the stream data.
+            Defaults to "timestamp".
+        inplace : bool, optional
+            Whether to replace the data in the object with the cropped data.
+            Defaults to False.
+
+        Returns
+        -------
+        NeonEV or None
+            Cropped stream if ``inplace=False``, otherwise ``None``.
+        """
+        if tmin is None and tmax is None:
+            raise ValueError("At least one of tmin or tmax must be provided")
+        if by == "timestamp":
+            t = self.start_ts
+        else:
+            t = np.arange(len(self))
+        tmin = tmin if tmin is not None else t.min()
+        tmax = tmax if tmax is not None else t.max()
+        mask = (t >= tmin) & (t <= tmax)
+        if not mask.any():
+            raise ValueError("No data found in the specified time range")
+        new_data = self.data[mask].copy()
+        if inplace:
+            self.data = new_data
+        else:
+            new_EV = copy.copy(self)
+            new_EV.data = new_data
+            return new_EV
+
+    def restrict(self, other: "NeonStream") -> "NeonEV":
+        """
+        Restrict events to a time range defined by another stream.
+
+        Parameters
+        ----------
+        other : NeonStream
+            Stream to restrict to.
+
+        Returns
+        -------
+        NeonEV
+            Restricted event data.
+        """
+        new_EV = self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=False)
+        if new_EV.data.empty:
+            raise ValueError("No data found in the range of the other stream")
+        return new_EV
+
     def __getitem__(self, index) -> pd.Series:
-        """Get an event timeseries by index."""
+        """Get an event series by index."""
         return self.data.iloc[index]
 
 
