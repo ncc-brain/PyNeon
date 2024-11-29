@@ -8,7 +8,9 @@ PyNeon API
 
     dataset
     recording
-    data
+    stream
+    events
+    video
     preprocess
     vis
     export

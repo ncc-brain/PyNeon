@@ -286,7 +286,9 @@
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data.html">Classes for individual data types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vis.html">Visualization module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export.html">Exportation module</a></li>
@@ -354,21 +356,26 @@
 <li class="toctree-l2"><a class="reference internal" href="recording.html#pyneon.NeonRecording"><code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="data.html">Classes for individual data types</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.tabular.NeonTabular"><code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.stream.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.stream.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.stream.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.stream.CustomStream"><code class="docutils literal notranslate"><span class="pre">CustomStream</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.events.NeonEV"><code class="docutils literal notranslate"><span class="pre">NeonEV</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.events.NeonBlinks"><code class="docutils literal notranslate"><span class="pre">NeonBlinks</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.events.NeonFixations"><code class="docutils literal notranslate"><span class="pre">NeonFixations</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.events.NeonSaccades"><code class="docutils literal notranslate"><span class="pre">NeonSaccades</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.events.NeonEvents"><code class="docutils literal notranslate"><span class="pre">NeonEvents</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.video.NeonVideo"><code class="docutils literal notranslate"><span class="pre">NeonVideo</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.video.sync_gaze_to_video"><code class="docutils literal notranslate"><span class="pre">sync_gaze_to_video()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#pyneon.video.estimate_scanpath"><code class="docutils literal notranslate"><span class="pre">estimate_scanpath()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.CustomStream"><code class="docutils literal notranslate"><span class="pre">CustomStream</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonEV"><code class="docutils literal notranslate"><span class="pre">NeonEV</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonBlinks"><code class="docutils literal notranslate"><span class="pre">NeonBlinks</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonFixations"><code class="docutils literal notranslate"><span class="pre">NeonFixations</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonSaccades"><code class="docutils literal notranslate"><span class="pre">NeonSaccades</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonEvents"><code class="docutils literal notranslate"><span class="pre">NeonEvents</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.NeonVideo"><code class="docutils literal notranslate"><span class="pre">NeonVideo</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.sync_gaze_to_video"><code class="docutils literal notranslate"><span class="pre">sync_gaze_to_video()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.estimate_scanpath"><code class="docutils literal notranslate"><span class="pre">estimate_scanpath()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a><ul>

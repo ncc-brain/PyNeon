@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Classes for individual data types &#8212; PyNeon dev documentation</title>
+    <title>Data stream classes (gaze, eye states, IMU) &#8212; PyNeon dev documentation</title>
   
   
   
@@ -42,10 +42,10 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/data';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/stream';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Preprocessing module" href="preprocess.html" />
+    <link rel="next" title="Event classes (blinks, fixations, saccades, events)" href="events.html" />
     <link rel="prev" title="NeonRecording class" href="recording.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -286,7 +286,9 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Classes for individual data types</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Data stream classes (gaze, eye states, IMU)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vis.html">Visualization module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export.html">Exportation module</a></li>
@@ -328,7 +330,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Classes for individual data types</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Data stream classes (gaze, eye states, IMU)</span></li>
   </ul>
 </nav>
 </div>
@@ -345,37 +347,12 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-pyneon.tabular">
-<span id="classes-for-individual-data-types"></span><h1>Classes for individual data types<a class="headerlink" href="#module-pyneon.tabular" title="Link to this heading">#</a></h1>
+  <section id="module-pyneon.stream">
+<span id="data-stream-classes-gaze-eye-states-imu"></span><h1>Data stream classes (gaze, eye states, IMU)<a class="headerlink" href="#module-pyneon.stream" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="pyneon.tabular.NeonTabular">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.tabular.</span></span><span class="sig-name descname"><span class="pre">NeonTabular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.tabular.NeonTabular" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Base for Neon tabular data. It reads from a CSV file and stores the data
-as a pandas DataFrame (with section and recording IDs removed). The <cite>timestamp [ns]</cite>
-(for streams) or <cite>start timestamp [ns]</cite> (for events) column is set as the index.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>Path</em>) – Path to the CSV file.</p>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.tabular.NeonTabular.data">
-<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.tabular.NeonTabular.data" title="Link to this definition">#</a></dt>
-<dd><p>The processed data with the timestamp index.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class" id="module-pyneon.stream">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.stream.</span></span><span class="sig-name descname"><span class="pre">NeonStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonStream" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.tabular.NeonTabular" title="pyneon.tabular.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></p>
 <p>Base for Neon continuous data (gaze, eye states, IMU).
 It’s indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>.</p>
 <dl class="field-list simple">
@@ -616,265 +593,6 @@ Defaults to False.</p></li>
 <p>Custom stream data that inherits attributes and methods from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonStream</span></code></a>.</p>
 </dd></dl>
 
-<dl class="py class" id="module-pyneon.events">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonEV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonEV" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.tabular.NeonTabular" title="pyneon.tabular.NeonTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonTabular</span></code></a></p>
-<p>Base for Neon event data (blinks, fixations, saccades, “events” messages).</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV.start_ts">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.events.NeonEV.start_ts" title="Link to this definition">#</a></dt>
-<dd><p>Start timestamps of events in nanoseconds..</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV.end_ts">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.events.NeonEV.end_ts" title="Link to this definition">#</a></dt>
-<dd><p>End timestamps of events in nanoseconds.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV.durations">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">durations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.events.NeonEV.durations" title="Link to this definition">#</a></dt>
-<dd><p>Duration of events in milliseconds.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV.id">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.1)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.events.NeonEV.id" title="Link to this definition">#</a></dt>
-<dd><p>Event ID.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV.crop">
-<span class="sig-name descname"><span class="pre">crop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'row'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><span class="pre">NeonEV</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.events.NeonEV.crop" title="Link to this definition">#</a></dt>
-<dd><p>Crop data to a specific time range based on timestamps or row numbers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>tmin</strong> (<em>number</em><em>, </em><em>optional</em>) – Start timestamp/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the minimum timestamp/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>tmax</strong> (<em>number</em><em>, </em><em>optional</em>) – End timestamp/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the maximum timestamp/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>by</strong> (<em>&quot;timestamp&quot;</em><em> or </em><em>&quot;row&quot;</em><em>, </em><em>optional</em>) – Whether tmin and tmax are UTC timestamps in nanoseconds
-or row numbers of the stream data.
-Defaults to “timestamp”.</p></li>
-<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the cropped data.
-Defaults to False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Cropped stream if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV">NeonEV</a> or None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.events.NeonEV.restrict">
-<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><span class="pre">NeonEV</span></a></span></span><a class="headerlink" href="#pyneon.events.NeonEV.restrict" title="Link to this definition">#</a></dt>
-<dd><p>Restrict events to a time range defined by another stream.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><em>NeonStream</em></a>) – Stream to restrict to.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Restricted event data.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV">NeonEV</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyneon.events.NeonBlinks">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonBlinks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonBlinks" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
-<p>Blink data.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyneon.events.NeonFixations">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonFixations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonFixations" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
-<p>Fixation data.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyneon.events.NeonSaccades">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonSaccades</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonSaccades" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
-<p>Saccade data.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pyneon.events.NeonEvents">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.events.</span></span><span class="sig-name descname"><span class="pre">NeonEvents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.events.NeonEvents" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonEV</span></code></a></p>
-<p>Event data.</p>
-</dd></dl>
-
-<dl class="py class" id="module-pyneon.video">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.video.</span></span><span class="sig-name descname"><span class="pre">NeonVideo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">info_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.video.NeonVideo" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoCapture</span></code></p>
-<p>Loaded video file with timestamps.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>video_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the video file.</p></li>
-<li><p><strong>timestamps_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the timestamps file.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.timestamps">
-<span class="sig-name descname"><span class="pre">timestamps</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.timestamps" title="Link to this definition">#</a></dt>
-<dd><p>Timestamps of the video frames in nanoseconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.ts">
-<span class="sig-name descname"><span class="pre">ts</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.ts" title="Link to this definition">#</a></dt>
-<dd><p>Alias for timestamps.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.n_frames">
-<span class="sig-name descname"><span class="pre">n_frames</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.n_frames" title="Link to this definition">#</a></dt>
-<dd><p>Number of frames in the video.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.fps">
-<span class="sig-name descname"><span class="pre">fps</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.fps" title="Link to this definition">#</a></dt>
-<dd><p>Frames per second of the video.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.width">
-<span class="sig-name descname"><span class="pre">width</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.width" title="Link to this definition">#</a></dt>
-<dd><p>Width of the video frames in pixels.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.height">
-<span class="sig-name descname"><span class="pre">height</span></span><a class="headerlink" href="#pyneon.video.NeonVideo.height" title="Link to this definition">#</a></dt>
-<dd><p>Height of the video frames in pixels.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.video.NeonVideo.plot_frame">
-<span class="sig-name descname"><span class="pre">plot_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.9.2)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.video.NeonVideo.plot_frame" title="Link to this definition">#</a></dt>
-<dd><p>Plot a frame from the video on a matplotlib axis.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Index of the frame to plot.</p></li>
-<li><p><strong>ax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Axes</span></code> or None) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
-Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>auto_title</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to automatically set the title of the axis.
-The automatic title includes the video file name and the frame index.
-Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>fig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Figure</span></code>) – Figure object containing the plot.</p></li>
-<li><p><strong>ax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Axes</span></code>) – Axis object containing the plot.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyneon.video.sync_gaze_to_video">
-<span class="sig-prename descclassname"><span class="pre">pyneon.video.</span></span><span class="sig-name descname"><span class="pre">sync_gaze_to_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><span class="pre">NeonRecording</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.video.sync_gaze_to_video" title="Link to this definition">#</a></dt>
-<dd><p>Synchronize gaze data to video frames by applying windowed averaging
-around each video frame timestamp. See <code class="xref py py-func docutils literal notranslate"><span class="pre">window_average()</span></code> for details
-on the averaging process.</p>
-<section id="parameters">
-<h2>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>rec<span class="classifier">NeonRecording</span></dt><dd><p>Recording object containing gaze and video data.</p>
-</dd>
-<dt>window_size<span class="classifier">int, optional</span></dt><dd><p>The size of the time window (in nanoseconds)
-over which to compute the average around each new timestamp.
-If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), the window size is set to the median interval
-between the new timestamps, i.e., <code class="docutils literal notranslate"><span class="pre">np.median(np.diff(new_ts))</span></code>.
-The window size must be larger than the median interval between the original data timestamps,
-i.e., <code class="docutils literal notranslate"><span class="pre">window_size</span> <span class="pre">&gt;</span> <span class="pre">np.median(np.diff(data.index))</span></code>.</p>
-</dd>
-</dl>
-</section>
-<section id="returns">
-<h2>Returns:<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>pd.DataFrame</dt><dd><p>DataFrame containing gaze data mapped to video timestamps.</p>
-</dd>
-</dl>
-</section>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyneon.video.estimate_scanpath">
-<span class="sig-prename descclassname"><span class="pre">pyneon.video.</span></span><span class="sig-name descname"><span class="pre">estimate_scanpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><span class="pre">NeonVideo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sync_gaze</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.stream.NeonGaze" title="pyneon.stream.NeonGaze"><span class="pre">NeonGaze</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lk_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.video.estimate_scanpath" title="Link to this definition">#</a></dt>
-<dd><p>Map fixations to video frames using optical flow.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>video</strong> (<a class="reference internal" href="#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><em>NeonVideo</em></a>) – Video object containing the frames.</p></li>
-<li><p><strong>sync_gaze</strong> (<a class="reference internal" href="#pyneon.stream.NeonGaze" title="pyneon.stream.NeonGaze"><em>NeonGaze</em></a>) – Gaze data synchronized with the video frames.</p></li>
-<li><p><strong>lk_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>, </em><em>optional</em>) – Parameters for the Lucas-Kanade optical flow algorithm.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>DataFrame containing the scanpath with updated fixation points.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 
 
@@ -897,11 +615,11 @@ i.e., <code class="docutils literal notranslate"><span class="pre">window_size</
       </div>
     </a>
     <a class="right-next"
-       href="preprocess.html"
+       href="events.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Preprocessing module</p>
+        <p class="prev-next-title">Event classes (blinks, fixations, saccades, events)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -924,10 +642,6 @@ i.e., <code class="docutils literal notranslate"><span class="pre">window_size</
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.NeonTabular"><code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.NeonTabular.data"><code class="docutils literal notranslate"><span class="pre">NeonTabular.data</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.file"><code class="docutils literal notranslate"><span class="pre">NeonStream.file</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.data"><code class="docutils literal notranslate"><span class="pre">NeonStream.data</span></code></a></li>
@@ -952,38 +666,13 @@ i.e., <code class="docutils literal notranslate"><span class="pre">window_size</
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.CustomStream"><code class="docutils literal notranslate"><span class="pre">CustomStream</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV"><code class="docutils literal notranslate"><span class="pre">NeonEV</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.start_ts"><code class="docutils literal notranslate"><span class="pre">NeonEV.start_ts</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.end_ts"><code class="docutils literal notranslate"><span class="pre">NeonEV.end_ts</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.durations"><code class="docutils literal notranslate"><span class="pre">NeonEV.durations</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.id"><code class="docutils literal notranslate"><span class="pre">NeonEV.id</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.crop"><code class="docutils literal notranslate"><span class="pre">NeonEV.crop()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEV.restrict"><code class="docutils literal notranslate"><span class="pre">NeonEV.restrict()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonBlinks"><code class="docutils literal notranslate"><span class="pre">NeonBlinks</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonFixations"><code class="docutils literal notranslate"><span class="pre">NeonFixations</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonSaccades"><code class="docutils literal notranslate"><span class="pre">NeonSaccades</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events.NeonEvents"><code class="docutils literal notranslate"><span class="pre">NeonEvents</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo"><code class="docutils literal notranslate"><span class="pre">NeonVideo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.timestamps"><code class="docutils literal notranslate"><span class="pre">NeonVideo.timestamps</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.ts"><code class="docutils literal notranslate"><span class="pre">NeonVideo.ts</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.n_frames"><code class="docutils literal notranslate"><span class="pre">NeonVideo.n_frames</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.fps"><code class="docutils literal notranslate"><span class="pre">NeonVideo.fps</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.width"><code class="docutils literal notranslate"><span class="pre">NeonVideo.width</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.height"><code class="docutils literal notranslate"><span class="pre">NeonVideo.height</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.NeonVideo.plot_frame"><code class="docutils literal notranslate"><span class="pre">NeonVideo.plot_frame()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.sync_gaze_to_video"><code class="docutils literal notranslate"><span class="pre">sync_gaze_to_video()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.video.estimate_scanpath"><code class="docutils literal notranslate"><span class="pre">estimate_scanpath()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/reference/data.rst.txt">
+    <a href="../_sources/reference/stream.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
