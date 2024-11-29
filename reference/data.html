@@ -507,18 +507,21 @@ Defaults to False.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.restrict">
-<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonStream.restrict" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><span class="pre">NeonStream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.stream.NeonStream.restrict" title="Link to this definition">#</a></dt>
 <dd><p>Temporally restrict the stream to the timestamps of another stream.
-In others words, crop the stream to tmin and tmax of the other stream.</p>
+Equivalent to <code class="docutils literal notranslate"><span class="pre">crop(other.first_ts,</span> <span class="pre">other.last_ts)</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><em>NeonStream</em></a>) – The other stream whose timestamps are used to restrict the data.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>other</strong> (<a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><em>NeonStream</em></a>) – The other stream whose timestamps are used to restrict the data.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the restricted data.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Stream with data restricted to the timestamps of the other stream.</p>
+<dd class="field-even"><p>Restricted stream if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream">NeonStream</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream">NeonStream</a> or None</p>
 </dd>
 </dl>
 </dd></dl>

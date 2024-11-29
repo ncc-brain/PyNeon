@@ -509,9 +509,9 @@ scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\Git
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-recording.gaze is &lt;pyneon.stream.NeonGaze object at 0x0000027AE3680C20&gt;
-recording.saccades is &lt;pyneon.events.NeonSaccades object at 0x0000027AC22E0B90&gt;
-recording.video is &lt; cv2.VideoCapture 0000027AE592DB90&gt;
+recording.gaze is &lt;pyneon.stream.NeonGaze object at 0x000001BD60ED11F0&gt;
+recording.saccades is &lt;pyneon.events.NeonSaccades object at 0x000001BD62F11580&gt;
+recording.video is &lt; cv2.VideoCapture 000001BD62F53F50&gt;
 </pre></div></div>
 </div>
 <p>PyNeon reads tabular CSV file into specialized classes (e.g., gaze.csv to <code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code>) which all have a <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute that holds the tabular data as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">(reference)</a>. Depending on the nature of the data, such classes could be of <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> or <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> super classes. <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> contains (semi)-continuous data streams, while <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> (dubbed so to avoid confusion with the
@@ -687,7 +687,7 @@ Name: gaze x [px], Length: 6091, dtype: float64
  3.0553439e+01]
 </pre></div></div>
 </div>
-<p>Timestamps (UTC, in ns), relative time (relative to the stream start, in s), and index are the three units of time that are most commonly used in PyNeon. For example, you can crop the stream by either timestamp or relative time by calling the <code class="docutils literal notranslate"><span class="pre">crop()</span></code> method. The method takes <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code> of the crop window in either UTC timestamps or relative time, and uses <code class="docutils literal notranslate"><span class="pre">by</span></code> to specify whether</p>
+<p>Timestamps (UTC, in ns), relative time (relative to the stream start, in s), and index are the three units of time that are most commonly used in PyNeon. For example, you can crop the stream by either timestamp or relative time by calling the <code class="docutils literal notranslate"><span class="pre">crop()</span></code> method. The method takes <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code> of the crop window in either UTC timestamps or relative time, and uses <code class="docutils literal notranslate"><span class="pre">by</span></code> to specify which time unit is used. The method returns a new <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> instance with the cropped data.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
