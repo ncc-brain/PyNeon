@@ -146,27 +146,30 @@ class NeonStream(NeonTabular):
     def restrict(
         self,
         other: "NeonStream",
+        inplace: bool = False,
     ):
         """
         Temporally restrict the stream to the timestamps of another stream.
-        In others words, crop the stream to tmin and tmax of the other stream.
+        Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
         other : NeonStream
             The other stream whose timestamps are used to restrict the data.
+        inplace : bool, optional
+            Whether to replace the data in the object with the restricted data.
 
         Returns
         -------
-        NeonStream
-            Stream with data restricted to the timestamps of the other stream.
+        NeonStream or None
+            Restricted stream if ``inplace=False``, otherwise ``None``.
         """
         new_stream = self.crop(
-            other.first_ts, other.last_ts, by="timestamp", inplace=False
+            other.first_ts, other.last_ts, by="timestamp", inplace=inplace
         )
         if new_stream.data.empty:
             raise ValueError("No data found in the range of the other stream")
-        return new_stream
+        return None if inplace else new_stream
 
     def interpolate(
         self,
