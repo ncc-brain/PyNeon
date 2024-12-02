@@ -48,7 +48,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/read_recording';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Interpolate Data and Concatenate Channels" href="interpolate_and_concat.html" />
+    <link rel="next" title="Interpolate data and concatenate streams" href="interpolate_and_concat.html" />
     <link rel="prev" title="PyNeon Tutorials" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -288,8 +288,8 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Reading a Neon dataset/recording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate Data and Concatenate Channels</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Mapping Scanpath to video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Export Neon data recording to BIDS formats</a></li>
 </ul>
 </div>
@@ -509,9 +509,9 @@ scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\Git
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-recording.gaze is &lt;pyneon.stream.NeonGaze object at 0x000001BD60ED11F0&gt;
-recording.saccades is &lt;pyneon.events.NeonSaccades object at 0x000001BD62F11580&gt;
-recording.video is &lt; cv2.VideoCapture 000001BD62F53F50&gt;
+recording.gaze is &lt;pyneon.stream.NeonGaze object at 0x000001996280E8D0&gt;
+recording.saccades is &lt;pyneon.events.NeonSaccades object at 0x000001993F232BA0&gt;
+recording.video is &lt; cv2.VideoCapture 00000199629C75D0&gt;
 </pre></div></div>
 </div>
 <p>PyNeon reads tabular CSV file into specialized classes (e.g., gaze.csv to <code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code>) which all have a <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute that holds the tabular data as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">(reference)</a>. Depending on the nature of the data, such classes could be of <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> or <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> super classes. <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code> contains (semi)-continuous data streams, while <code class="docutils literal notranslate"><span class="pre">NeonEV</span></code> (dubbed so to avoid confusion with the
@@ -530,8 +530,8 @@ recording.video is &lt; cv2.VideoCapture 000001BD62F53F50&gt;
 </pre></div>
 </div>
 </section>
-<section id="Data-as-dataframes">
-<h2>Data as dataframes<a class="headerlink" href="#Data-as-dataframes" title="Link to this heading">#</a></h2>
+<section id="Data-as-DataFrames">
+<h2>Data as DataFrames<a class="headerlink" href="#Data-as-DataFrames" title="Link to this heading">#</a></h2>
 <p>The essence of <code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code> is the <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute—a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>. This is a common data structure in Python for handling tabular data. For example, you can print the first 5 rows of the gaze data by calling <code class="docutils literal notranslate"><span class="pre">gaze.data.head()</span></code>, and inspect the data type of each column by calling <code class="docutils literal notranslate"><span class="pre">gaze.data.dtypes</span></code>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -747,7 +747,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
 
 <span class="c1"># Create a figure</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 
 <span class="c1"># Visualize the 1st saccade</span>
 <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sac</span> <span class="ow">in</span> <span class="n">saccades_crop</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
@@ -770,7 +770,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
     <span class="n">color</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Gaze y&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Gaze location (pixels)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Gaze location [px]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -840,7 +840,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Interpolate Data and Concatenate Channels</p>
+        <p class="prev-next-title">Interpolate data and concatenate streams</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -865,7 +865,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Reading-sample-data">Reading sample data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-and-metadata-of-a-NeonRecording">Data and metadata of a NeonRecording</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-as-dataframes">Data as dataframes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-as-DataFrames">Data as DataFrames</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Useful-attributes-and-methods-for-NeonStream-and-NeonEV">Useful attributes and methods for NeonStream and NeonEV</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#An-example-plot-of-cropped-data">An example plot of cropped data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Visualizing-gaze-heatmap">Visualizing gaze heatmap</a></li>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Interpolate Data and Concatenate Channels &#8212; PyNeon dev documentation</title>
+    <title>Interpolate data and concatenate streams &#8212; PyNeon dev documentation</title>
   
   
   
@@ -48,7 +48,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/interpolate_and_concat';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Mapping Scanpath to video" href="video.html" />
+    <link rel="next" title="Scene video and scanpath mapping" href="video.html" />
     <link rel="prev" title="Reading a Neon dataset/recording" href="read_recording.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -288,8 +288,8 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Interpolate Data and Concatenate Channels</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Mapping Scanpath to video</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Interpolate data and concatenate streams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Export Neon data recording to BIDS formats</a></li>
 </ul>
 </div>
@@ -329,7 +329,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Interpolate Data and Concatenate Channels</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Interpolate data and concatenate streams</span></li>
   </ul>
 </nav>
 </div>
@@ -346,26 +346,30 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Interpolate-Data-and-Concatenate-Channels">
-<h1>Interpolate Data and Concatenate Channels<a class="headerlink" href="#Interpolate-Data-and-Concatenate-Channels" title="Link to this heading">#</a></h1>
+  <section id="Interpolate-data-and-concatenate-streams">
+<h1>Interpolate data and concatenate streams<a class="headerlink" href="#Interpolate-data-and-concatenate-streams" title="Link to this heading">#</a></h1>
 <p>Informative as it is, raw Neon data is not always easy to work with. Different data streams (e.g., gaze, eye states, IMU) are sampled at different rates, don’t necessarily share a common start timestamp, and within each stream data might not have been sampled at a constant rate. This tutorial demonstrates how to deal with these issues by interpolating data streams and concatenating them into a single DataFrame.</p>
-<p>We will use the same <code class="docutils literal notranslate"><span class="pre">OfficeWalk</span></code> dataset as in the <a class="reference internal" href="read_recording.html"><span class="doc">previous tutorial</span></a>.</p>
+<p>We will use the same <code class="docutils literal notranslate"><span class="pre">boardView</span></code> dataset as in the <a class="reference internal" href="read_recording.html"><span class="doc">previous tutorial</span></a>.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonRecording</span><span class="p">,</span> <span class="n">time_to_ts</span>
+<span class="kn">from</span> <span class="nn">pyneon</span> <span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonRecording</span>
 
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
-<span class="n">recording_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data&quot;</span> <span class="o">/</span> <span class="s2">&quot;walk1-e116e606&quot;</span>
+<span class="n">recording_dir</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;boardView&quot;</span><span class="p">)</span>
+    <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
+    <span class="o">/</span> <span class="s2">&quot;boardview1-d4fd9a27&quot;</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>We can now access raw data from gaze, eye states, and IMU streams.</p>
+<p>We now access raw data from gaze, eye states, and IMU streams.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
@@ -375,27 +379,34 @@
 </pre></div>
 </div>
 </div>
-<section id="Unequally-sampled-data">
-<h2>Unequally sampled data<a class="headerlink" href="#Unequally-sampled-data" title="Link to this heading">#</a></h2>
-<p>Data from each stream has <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> and <code class="docutils literal notranslate"><span class="pre">time</span> <span class="pre">[s]</span></code> columns, which denotes the UTC time of the sample in nanoseconds and the relative time since stream onset in seconds, respectively. But are they equally spaced in time? Let’s explore that by computing the time differences between consecutive samples for each stream and check how many unique values we have. If the data was sampled at a constant rate, we should have only one unique value.</p>
+<section id="Irregularly-sampled-data">
+<h2>Irregularly sampled data<a class="headerlink" href="#Irregularly-sampled-data" title="Link to this heading">#</a></h2>
+<p>Data points from each stream are indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>, which denotes the UTC time of the sample in nanoseconds. But are these samples equally spaced in time? Let’s take a look at the first few samples of each stream, where, due to device boot-up, the sampling may be irregular.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unique values</span>
-<span class="n">gaze_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span>
-<span class="n">eye_states_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span>
-<span class="n">imu_diff_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Take the first 0.5 seconds of gaze data</span>
+<span class="n">gaze_begin</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="c1"># And the corresponding eye states and IMU data</span>
+<span class="n">eye_states_begin</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">)</span>
+<span class="n">imu_begin</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Unique gaze time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gaze_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Unique eye states time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">eye_states_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">eye_states_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Unique imu time differences: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">imu_diff_unique</span><span class="p">)</span><span class="si">}</span><span class="s2">, max: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">imu_diff_unique</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">ms&quot;</span>
-<span class="p">)</span>
+
+<span class="c1"># Define a function to plot the timestamps of the gaze, eye states, and IMU data</span>
+<span class="k">def</span> <span class="nf">plot_timestamps</span><span class="p">(</span><span class="n">gaze</span><span class="p">,</span> <span class="n">eye_states</span><span class="p">,</span> <span class="n">imu</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts</span><span class="p">),</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span><span class="s2">&quot;Gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;Eye states&quot;</span><span class="p">,</span> <span class="s2">&quot;IMU&quot;</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Timestamp (ns)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="n">plot_timestamps</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">,</span> <span class="n">eye_states_begin</span><span class="p">,</span> <span class="n">imu_begin</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -403,41 +414,19 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-Unique gaze time differences: 130, max: 115.123ms
-Unique eye states time differences: 130, max: 115.123ms
-Unique imu time differences: 1106, max: 230.444ms
-</pre></div></div>
+<img alt="../_images/tutorials_interpolate_and_concat_5_0.png" src="../_images/tutorials_interpolate_and_concat_5_0.png" />
 </div>
-<p>Oops, it seems the data are far from being continuously sampled. We can further explore the distribution of such differences by plotting a histogram.</p>
+</div>
+<p>As apparent from the figure above, in addition to the apparently later onset of IMU data, during the first 0.5 seconds of the recording the data suffers from dropouts and irregular sampling. While this is a common issue for the first few samples due to device boot-up, it could also happen at any time during the recording. For example, even in the middle of a recording (5 - 5.5 seconds), some irregular sampling might still be observed:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
-<span class="n">eye_states_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
-<span class="n">imu_nominal_diff</span> <span class="o">=</span> <span class="mf">1e9</span> <span class="o">/</span> <span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_nominal</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_middle</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="n">eye_states_middle</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
+<span class="n">imu_middle</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">gaze_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Gaze&quot;</span><span class="p">)</span>
-
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">eye_states_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Eye states&quot;</span><span class="p">)</span>
-
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">imu_nominal_diff</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;IMU&quot;</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time difference [ns]&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Counts&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plot_timestamps</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">,</span> <span class="n">eye_states_middle</span><span class="p">,</span> <span class="n">imu_middle</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -448,18 +437,88 @@ Unique imu time differences: 1106, max: 230.444ms
 <img alt="../_images/tutorials_interpolate_and_concat_7_0.png" src="../_images/tutorials_interpolate_and_concat_7_0.png" />
 </div>
 </div>
+<p>Some irregular sampling in the IMU data is observed in this segment of the recording as well. How frequent are these irregularities? Let’s take a look at the distribution of the time differences between consecutive samples, and compare them to the expected time difference for a regular, nominal (as specified by Pupil Labs) sampling rate.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Nominal sampling frequency of gaze: </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="si">}</span><span class="s2"> Hz. &quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;Actual: </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_effective</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Nominal sampling frequency of eye states: </span><span class="si">{</span><span class="n">eye_states</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="si">}</span><span class="s2"> Hz. &quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;Actual: </span><span class="si">{</span><span class="n">eye_states</span><span class="o">.</span><span class="n">sampling_freq_effective</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Nominal sampling frequency of IMU: </span><span class="si">{</span><span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="si">}</span><span class="s2"> Hz. &quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;Actual: </span><span class="si">{</span><span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_effective</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e9</span> <span class="o">/</span> <span class="n">gaze</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Gaze&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e9</span> <span class="o">/</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Eye states&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">imu</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">1e9</span> <span class="o">/</span> <span class="n">imu</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nominal&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;IMU&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time difference [ns]&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Counts&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Nominal sampling frequency of gaze: 200 Hz. Actual: 199.36 Hz
+Nominal sampling frequency of eye states: 200 Hz. Actual: 199.36 Hz
+Nominal sampling frequency of IMU: 110 Hz. Actual: 113.88 Hz
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_interpolate_and_concat_9_1.png" src="../_images/tutorials_interpolate_and_concat_9_1.png" />
+</div>
+</div>
+<p>For gaze and eye states data, the empirical distribution of time differences is close to the expected value (though with some integer multiples of the nominal sampling rate, which hints at possible eye video frame drops). For IMU data, the distribution is much wider.</p>
 </section>
 <section id="Interpolating-data-streams">
 <h2>Interpolating data streams<a class="headerlink" href="#Interpolating-data-streams" title="Link to this heading">#</a></h2>
-<p>Given the unequal sampling, if we want to obtain continuous data streams, interpolation is necessary. PyNeon uses the <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> function to interpolate data streams. We can interpolate each stream by simply calling <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> which returns a copy of the object with the interpolated data.</p>
+<p>Given the presence of irregular sampling, if you want to perform analyses that assume continuous data streams, interpolation is necessary. PyNeon uses the <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html">(API reference)</a> function to interpolate data streams. For instances of <code class="docutils literal notranslate"><span class="pre">NeonStream</span></code>, we can call <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> which returns a copy of the object with the data interpolated with the default parameters.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resample to the nominal sampling frequency</span>
 <span class="n">gaze_resampled</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()</span>
 
+<span class="c1"># Three ways you can check if the resampling was successful:</span>
+<span class="c1"># 1. Compare the effective sampling frequency to the nominal sampling frequency</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Nominal sampling frequency of gaze: </span><span class="si">{</span><span class="n">gaze_resampled</span><span class="o">.</span><span class="n">sampling_freq_nominal</span><span class="si">}</span><span class="s2"> Hz. &quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;Actual (after interpolation): </span><span class="si">{</span><span class="n">gaze_resampled</span><span class="o">.</span><span class="n">sampling_freq_effective</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span>
+<span class="p">)</span>
+<span class="c1"># 2. Check the number of unique time differences</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only one unique time difference: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">gaze_resampled</span><span class="o">.</span><span class="n">ts_diff</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="c1"># 3. Call the `is_uniformly_sampled` property (boolean)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;The new gaze stream is uniformly sampled: </span><span class="si">{</span><span class="n">gaze_resampled</span><span class="o">.</span><span class="n">is_uniformly_sampled</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -468,13 +527,16 @@ Unique imu time differences: 1106, max: 230.444ms
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
+Nominal sampling frequency of gaze: 200 Hz. Actual (after interpolation): 200.03 Hz
 Only one unique time difference: [5000000]
+The new gaze stream is uniformly sampled: True
 </pre></div></div>
 </div>
-<p>In the above example, we resampled the gaze data with default parameters, which means that the resampled data will have the same start and timestamps as the original data, and the sampling rate is set to the nominal sampling frequency (200 Hz, as specified by Pupil Labs). Notice that resampling would not change the data type of the columns. For example, the <code class="docutils literal notranslate"><span class="pre">bool</span></code>-type <code class="docutils literal notranslate"><span class="pre">worn</span></code> column and the integer-type <code class="docutils literal notranslate"><span class="pre">fixation_id</span></code> column are preserved.</p>
+<p>In the above example, we resampled the gaze data with default parameters, which means that the resampled data will have the same start and timestamps as the original data, and the sampling rate is set to the nominal sampling frequency (200 Hz, as specified by Pupil Labs). Notice that resampling would not change the data type of the columns. For example, the <code class="docutils literal notranslate"><span class="pre">bool</span></code>-type <code class="docutils literal notranslate"><span class="pre">worn</span></code> column and the integer-type <code class="docutils literal notranslate"><span class="pre">fixation_id</span></code> column are preserved. nominal sampling rate (you can also customize by
+passing the <code class="docutils literal notranslate"><span class="pre">new_ts</span></code> argument).</p>
 <p>Alternatively, one can also resample the gaze data to any desired timestamps by specifying the <code class="docutils literal notranslate"><span class="pre">new_ts</span></code> parameter. This is especially helpful when synchronizing different data streams. For example, we can resample the gaze data (~200Hz) to the timestamps of the IMU data (~110Hz).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original gaze data length: </span><span class="si">{</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -491,9 +553,9 @@ Only one unique time difference: [5000000]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Original gaze data length: 18769
-Original IMU data length: 10919
-Gaze data length after resampling to IMU: 10919
+Original gaze data length: 6091
+Original IMU data length: 3459
+Gaze data length after resampling to IMU: 3459
 </pre></div></div>
 </div>
 </section>
@@ -502,7 +564,7 @@ Gaze data length after resampling to IMU: 10919
 <p>Based on the resampling method, it is then possible to concatenate different streams into a single DataFrame by resampling them to common timestamps. The method <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> provides such functionality. It takes a list of stream names and resamples them to common timestamps, defined by the latest start and earliest end timestamps of the streams. The news ampling frequency can either be directly specified or taken from the lowest/highest sampling frequency of the streams.</p>
 <p>In the following example, we will concatenate the gaze, eye states, and IMU streams into a single DataFrame using the default parameters (e.g., using the lowest sampling frequency of the streams).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_stream</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">concat_streams</span><span class="p">([</span><span class="s2">&quot;gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;eye_states&quot;</span><span class="p">,</span> <span class="s2">&quot;imu&quot;</span><span class="p">])</span>
@@ -520,56 +582,56 @@ Concatenating streams:
         3D eye states
         IMU
 Using lowest sampling rate: 110 Hz ([&#39;imu&#39;])
-Using latest start timestamp: 1725032224878547732 ([&#39;imu&#39;])
-Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
+Using latest start timestamp: 1732621490607650343 ([&#39;imu&#39;])
+Using earliest last timestamp: 1732621520979070343 ([&#39;gaze&#39; &#39;3d_eye_states&#39;])
                      gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
-1725032224878547732  1073.410354   611.095861  True            1      &lt;NA&gt;
-1725032224887638641  1069.801082   613.382535  True            1      &lt;NA&gt;
-1725032224896729550  1070.090109   613.439696  True            1      &lt;NA&gt;
-1725032224905820459  1069.891351   612.921757  True            1      &lt;NA&gt;
-1725032224914911368  1069.692588   612.403803  True            1      &lt;NA&gt;
+1732621490607650343   705.518843   554.990998     1            1      &lt;NA&gt;
+1732621490616741252   704.882466   553.793144     1            1      &lt;NA&gt;
+1732621490625832161   707.703787   556.712159     1            1      &lt;NA&gt;
+1732621490634923070   711.389879   553.846843     1            1      &lt;NA&gt;
+1732621490644013979   709.281775   555.543777     1            1      &lt;NA&gt;
 
                      azimuth [deg]  elevation [deg]  pupil diameter left [mm]  \
-1725032224878547732      16.591703        -0.129540                  5.036588
-1725032224887638641      16.360605        -0.274666                  5.093205
-1725032224896729550      16.379116        -0.278283                  5.078107
-1725032224905820459      16.366379        -0.245426                  5.077680
-1725032224914911368      16.353641        -0.212567                  5.077253
+1732621490607650343      -7.085339         3.473196                  3.346414
+1732621490616741252      -7.126717         3.550038                  3.363306
+1732621490625832161      -6.944033         3.363048                  3.368352
+1732621490634923070      -6.707339         3.547815                  3.365432
+1732621490644013979      -6.842683         3.438366                  3.374732
 
                      pupil diameter right [mm]  eyeball center left x [mm]  \
-1725032224878547732                   4.254749                  -31.742046
-1725032224887638641                   4.358431                  -31.746807
-1725032224896729550                   4.439704                  -31.700505
-1725032224905820459                   4.442760                  -31.711353
-1725032224914911368                   4.445815                  -31.722201
+1732621490607650343                   3.360563                  -32.282935
+1732621490616741252                   3.359459                  -32.249418
+1732621490625832161                   3.350918                  -32.216781
+1732621490634923070                   3.361014                  -32.249155
+1732621490644013979                   3.365781                  -32.234159
 
                      ...  acceleration x [g]  acceleration y [g]  \
-1725032224878547732  ...            0.063477           -0.058594
-1725032224887638641  ...            0.057486           -0.048916
-1725032224896729550  ...            0.051494           -0.039238
-1725032224905820459  ...            0.046721           -0.045800
-1725032224914911368  ...            0.042113           -0.054556
+1732621490607650343  ...           -0.067383           -0.340820
+1732621490616741252  ...           -0.062619           -0.315917
+1732621490625832161  ...           -0.052682           -0.329993
+1732621490634923070  ...           -0.058795           -0.334090
+1732621490644013979  ...           -0.060815           -0.322199
 
                      acceleration z [g]  roll [deg]  pitch [deg]   yaw [deg]  \
-1725032224878547732            0.940430   -2.550682    -4.461626 -172.335180
-1725032224887638641            0.942273   -2.602498    -4.493445 -172.562393
-1725032224896729550            0.944117   -2.654314    -4.525265 -172.789613
-1725032224905820459            0.944336   -2.699777    -4.556964 -173.013398
-1725032224914911368            0.944336   -2.744383    -4.588647 -173.236726
+1732621490607650343            0.932129    1.923968   -20.230545  132.920122
+1732621490616741252            0.925714    1.923949   -20.227639  132.924402
+1732621490625832161            0.924432    1.920479   -20.228228  132.927574
+1732621490634923070            0.931812    1.916587   -20.228839  132.931756
+1732621490644013979            0.925476    1.916104   -20.227092  132.937429
 
                      quaternion w  quaternion x  quaternion y  quaternion z
-1725032224878547732      0.067636     -0.024792      0.037342     -0.996703
-1725032224887638641      0.065682     -0.025185      0.037639     -0.996810
-1725032224896729550      0.063728     -0.025579      0.037936     -0.996917
-1725032224905820459      0.061802     -0.025917      0.038238     -0.997017
-1725032224914911368      0.059879     -0.026247      0.038541     -0.997115
+1732621490607650343      0.395828     -0.085287     -0.154390      0.901227
+1732621490616741252      0.395796     -0.085271     -0.154370      0.901246
+1732621490625832161      0.395766     -0.085242     -0.154389      0.901258
+1732621490634923070      0.395728     -0.085207     -0.154411      0.901275
+1732621490644013979      0.395683     -0.085190     -0.154403      0.901297
 
 [5 rows x 34 columns]
 </pre></div></div>
 </div>
 <p>We show an exemplary sampling of eye, imu and concatenated data below. It can be seen that imu data has subsequent missing values which can in turn be interpolated</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start_time</span> <span class="o">=</span> <span class="mi">5</span>
@@ -626,25 +688,28 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x1fb49a7bb60&gt;
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_15_1.png" src="../_images/tutorials_interpolate_and_concat_15_1.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
+<span class="ansi-red-intense-fg ansi-bold">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-intense-fg ansi-bold">In[36], line 3</span>
+<span class="ansi-green-fg">      1</span> start_time <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(98,98,98)">5</span>
+<span class="ansi-green-fg">      2</span> end_time <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(98,98,98)">5.3</span>
+<span class="ansi-green-intense-fg ansi-bold">----&gt; 3</span> start_ts <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">time_to_ts</span>(start_time, concat_stream)
+<span class="ansi-green-fg">      4</span> end_ts <span style="color: rgb(98,98,98)">=</span> time_to_ts(end_time, concat_stream)
+<span class="ansi-green-fg">      6</span> raw_gaze_data_slice <span style="color: rgb(98,98,98)">=</span> gaze<span style="color: rgb(98,98,98)">.</span>data[
+<span class="ansi-green-fg">      7</span>     (gaze<span style="color: rgb(98,98,98)">.</span>data[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">timestamp [ns]</span><span style="color: rgb(175,0,0)">&#34;</span>] <span style="color: rgb(98,98,98)">&gt;</span><span style="color: rgb(98,98,98)">=</span> start_ts) <span style="color: rgb(98,98,98)">&amp;</span> (gaze<span style="color: rgb(98,98,98)">.</span>data[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">timestamp [ns]</span><span style="color: rgb(175,0,0)">&#34;</span>] <span style="color: rgb(98,98,98)">&lt;</span><span style="color: rgb(98,98,98)">=</span> end_ts)
+<span class="ansi-green-fg">      8</span> ]
+
+<span class="ansi-red-intense-fg ansi-bold">NameError</span>: name &#39;time_to_ts&#39; is not defined
+</pre></div></div>
 </div>
 <p>A linear interpolation allows us to estimate missing values. In the end, the concatenated dataframe combines all continuous data into one central location</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot imu data and interpolated data in same plot</span>
@@ -663,22 +728,6 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
 <span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 </pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x1fb49cd3d10&gt;
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_17_1.png" src="../_images/tutorials_interpolate_and_concat_17_1.png" />
 </div>
 </div>
 </section>
@@ -708,7 +757,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Mapping Scanpath to video</p>
+        <p class="prev-next-title">Scene video and scanpath mapping</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -731,7 +780,7 @@ Using earliest last timestamp: 1725032319533909732 ([&#39;imu&#39;])
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Unequally-sampled-data">Unequally sampled data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Irregularly-sampled-data">Irregularly sampled data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Interpolating-data-streams">Interpolating data streams</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Concatenating-different-streams">Concatenating different streams</a></li>
 </ul>
