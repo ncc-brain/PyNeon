@@ -56,6 +56,9 @@ class NeonVideo(cv2.VideoCapture):
         self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+        self.camera_matrix = np.array(self.info["camera_matrix"])
+        self.dist_coeffs = np.array(self.info["distortion_coefficients"])
+
     def __len__(self) -> int:
         return int(len(self.ts))
 
