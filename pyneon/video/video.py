@@ -8,6 +8,7 @@ import json
 
 from ..vis import plot_frame
 
+
 class NeonVideo(cv2.VideoCapture):
     """
     Loaded video file with timestamps.

@@ -11,14 +11,11 @@ if TYPE_CHECKING:
     from ..recording import NeonRecording
     from .video import NeonVideo
 
-def detect_apriltags(
-        video: "NeonVideo",
-        tag_family: str ='tag36h11'
-        ):
-    
+
+def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     """
     Detect AprilTags in a video and report their data for every frame using the apriltag library.
-    
+
     Parameters
     ----------
     video : cv2.VideoCapture or similar video object
@@ -45,42 +42,45 @@ def detect_apriltags(
 
     all_detections = []
     frame_idx = 0
-    
+
     while True:
         ret, frame = video.read()
         if not ret:
             break
-        
+
         # Convert frame to grayscale for detection
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        
+
         # Detect AprilTags
         detections = detector.detect(gray_frame)
-        
+
         for detection in detections:
             # Extract the tag ID and corners
             tag_id = detection.tag_id
             corners = detection.corners
-            
+
             # Calculate the center of the tag
             center = np.mean(corners, axis=0)
-            
+
             # Store the detection data
-            all_detections.append({
-                "frame_idx": frame_idx,
-                "tag_id": tag_id,
-                "corners": corners,
-                "center": center
-            })
-        
+            all_detections.append(
+                {
+                    "frame_idx": frame_idx,
+                    "tag_id": tag_id,
+                    "corners": corners,
+                    "center": center,
+                }
+            )
+
         frame_idx += 1
-    
+
     video.release()
 
     # convert to pandas DataFrame
     all_detections = pd.DataFrame(all_detections)
-    
+
     return all_detections
+
 
 def compute_camera_positions(
     video: "NeonVideo",
@@ -91,9 +91,9 @@ def compute_camera_positions(
     """
     Compute the camera position for each frame using AprilTag detections stored in a DataFrame.
 
-    This function uses a pinhole camera model and the `cv2.solvePnP` function to determine the 
-    camera translation and rotation vectors for each frame. The known 3D positions of each tag 
-    and the detected 2D corners are used as correspondences. The resulting camera pose is then 
+    This function uses a pinhole camera model and the `cv2.solvePnP` function to determine the
+    camera translation and rotation vectors for each frame. The known 3D positions of each tag
+    and the detected 2D corners are used as correspondences. The resulting camera pose is then
     expressed in world coordinates.
 
     Parameters
@@ -123,9 +123,9 @@ def compute_camera_positions(
 
     Notes
     -----
-    - The camera's intrinsic parameters are estimated from the field of view and resolution. 
+    - The camera's intrinsic parameters are estimated from the field of view and resolution.
         For more accurate results, use known camera intrinsics.
-    - The function assumes that each tag's known location is provided as the center of the tag, 
+    - The function assumes that each tag's known location is provided as the center of the tag,
         and constructs the tag's corners in 3D world coordinates by offsetting from its center.
 
     Raises
@@ -134,14 +134,21 @@ def compute_camera_positions(
         If no sufficient points are found to solve PnP for a given frame.
     """
 
-    #check if all_detections is empty
+    # check if all_detections is empty
     if all_detections.empty:
         # call the detect_apriltags function to get the detections
         all_detections = detect_apriltags(video)
         # if still empty, return an empty DataFrame
         if all_detections.empty:
             print("No AprilTag detections found in the video.")
-            return pd.DataFrame(columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"])
+            return pd.DataFrame(
+                columns=[
+                    "frame_idx",
+                    "translation_vector",
+                    "rotation_vector",
+                    "camera_pos",
+                ]
+            )
 
     # Handle tag size inputs
     if isinstance(tag_size, float):
@@ -152,11 +159,15 @@ def compute_camera_positions(
         # Different sizes per tag
         def get_tag_half_size(tid):
             if tid not in tag_size:
-                raise ValueError(f"Tag ID {tid} not found in provided tag_size dictionary.")
+                raise ValueError(
+                    f"Tag ID {tid} not found in provided tag_size dictionary."
+                )
             return tag_size[tid] / 2.0
     else:
-        raise TypeError("tag_size must be either a float or a dictionary mapping tag IDs to sizes.")
-    
+        raise TypeError(
+            "tag_size must be either a float or a dictionary mapping tag IDs to sizes."
+        )
+
     camera_matrix = video.camera_matrix
     dist_coeffs = video.dist_coeffs
 
@@ -167,8 +178,8 @@ def compute_camera_positions(
     results = []
 
     # Process each unique frame
-    for frame in all_detections['frame_idx'].unique():
-        frame_detections = all_detections.loc[all_detections['frame_idx'] == frame]
+    for frame in all_detections["frame_idx"].unique():
+        frame_detections = all_detections.loc[all_detections["frame_idx"] == frame]
 
         if frame_detections.empty:
             # No tags detected in this frame, skip
@@ -179,8 +190,8 @@ def compute_camera_positions(
 
         # Collect all object-image correspondences for this frame
         for _, row in frame_detections.iterrows():
-            tag_id = row['tag_id']
-            corners = row['corners']  # shape (4,2)
+            tag_id = row["tag_id"]
+            corners = row["corners"]  # shape (4,2)
 
             if tag_id not in tag_locations:
                 # If no known location for this tag is provided, skip it
@@ -191,12 +202,31 @@ def compute_camera_positions(
 
             # Compute the 3D corners of the tag from its center
             # The tag plane orientation is assumed. Adjust as needed.
-            tag_3d_corners = np.array([
-                [tag_center_3d[0], tag_center_3d[1] - half_size, tag_center_3d[2] + half_size],
-                [tag_center_3d[0], tag_center_3d[1] + half_size, tag_center_3d[2] + half_size],
-                [tag_center_3d[0], tag_center_3d[1] + half_size, tag_center_3d[2] - half_size],
-                [tag_center_3d[0], tag_center_3d[1] - half_size, tag_center_3d[2] - half_size]
-            ], dtype=np.float32)
+            tag_3d_corners = np.array(
+                [
+                    [
+                        tag_center_3d[0],
+                        tag_center_3d[1] - half_size,
+                        tag_center_3d[2] + half_size,
+                    ],
+                    [
+                        tag_center_3d[0],
+                        tag_center_3d[1] + half_size,
+                        tag_center_3d[2] + half_size,
+                    ],
+                    [
+                        tag_center_3d[0],
+                        tag_center_3d[1] + half_size,
+                        tag_center_3d[2] - half_size,
+                    ],
+                    [
+                        tag_center_3d[0],
+                        tag_center_3d[1] - half_size,
+                        tag_center_3d[2] - half_size,
+                    ],
+                ],
+                dtype=np.float32,
+            )
 
             object_points.extend(tag_3d_corners)
             image_points.extend(corners)
@@ -210,10 +240,7 @@ def compute_camera_positions(
 
         # Solve the PnP problem to find rotation and translation vectors
         success, rotation_vector, translation_vector = cv2.solvePnP(
-            object_points,
-            image_points,
-            camera_matrix,
-            dist_coeffs
+            object_points, image_points, camera_matrix, dist_coeffs
         )
 
         if not success:
@@ -222,18 +249,23 @@ def compute_camera_positions(
 
         # Convert rotation vector to rotation matrix
         R, _ = cv2.Rodrigues(rotation_vector)
-        
+
         # Compute camera position in world coordinates
         # World to camera: Pc = R * Pw + t
         # Pw = R^T * (Pc - t), with Pc=0 (camera center)
         # camera_pos = -R^T * t
         camera_pos = -R.T @ translation_vector
 
-        results.append({
-            "frame_idx": frame,
-            "translation_vector": translation_vector.reshape(-1),
-            "rotation_vector": rotation_vector.reshape(-1),
-            "camera_pos": camera_pos.reshape(-1)
-        })
+        results.append(
+            {
+                "frame_idx": frame,
+                "translation_vector": translation_vector.reshape(-1),
+                "rotation_vector": rotation_vector.reshape(-1),
+                "camera_pos": camera_pos.reshape(-1),
+            }
+        )
 
-    return pd.DataFrame(results, columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"])
+    return pd.DataFrame(
+        results,
+        columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"],
+    )

@@ -10,7 +10,7 @@ def smooth_camera_positions(
     meas_dim: int = 3,
     process_noise: float = 0.005,
     measurement_noise: float = 0.005,
-    gating_threshold: float = 3.0
+    gating_threshold: float = 3.0,
 ) -> pd.DataFrame:
     """
     Apply a Kalman filter to smooth camera positions and gate outliers based on Mahalanobis distance.
@@ -39,15 +39,15 @@ def smooth_camera_positions(
         containing the smoothed positions.
     """
     # Ensure the DataFrame is sorted by frame_idx
-    camera_position_raw = camera_position_raw.sort_values('frame_idx')
+    camera_position_raw = camera_position_raw.sort_values("frame_idx")
 
     # Extract positions and frame indices
-    positions = np.stack(camera_position_raw['camera_pos'].values)
-    frame_indices = camera_position_raw['frame_idx'].values
+    positions = np.stack(camera_position_raw["camera_pos"].values)
+    frame_indices = camera_position_raw["frame_idx"].values
 
     # Define Kalman filter matrices
     F = np.eye(state_dim)  # State transition: Identity
-    H = np.eye(meas_dim)   # Measurement matrix: Identity
+    H = np.eye(meas_dim)  # Measurement matrix: Identity
 
     Q = process_noise * np.eye(state_dim)  # Process noise covariance
     R = measurement_noise * np.eye(meas_dim)  # Measurement noise covariance
@@ -88,12 +88,11 @@ def smooth_camera_positions(
     smoothed_positions = np.array(smoothed_positions)
 
     # Create a new DataFrame with smoothed results
-    smoothed_df = pd.DataFrame({
-        'frame_idx': frame_indices,
-        'smoothed_camera_pos': list(smoothed_positions)
-    })
+    smoothed_df = pd.DataFrame(
+        {"frame_idx": frame_indices, "smoothed_camera_pos": list(smoothed_positions)}
+    )
 
     final_results = camera_position_raw.copy()
-    final_results['smoothed_camera_pos'] = smoothed_df['smoothed_camera_pos'].values
+    final_results["smoothed_camera_pos"] = smoothed_df["smoothed_camera_pos"].values
 
     return final_results
