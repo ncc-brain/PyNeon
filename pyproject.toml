@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["pyneon"]
+packages = ["pyneon"]
 
 [project]
 name = "pyneon"
