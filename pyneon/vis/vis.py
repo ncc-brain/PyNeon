@@ -395,15 +395,18 @@ def overlay_detections_and_positions(
     room_max_y = np.max(room_corners[:, 1])
 
     # Extract camera positions into a dictionary for quick lookup
-    results_dict = {row['frame_idx']: row['smoothed_camera_pos'] for _, row in camera_positions.iterrows()}
+    results_dict = {
+        row["frame_idx"]: row["smoothed_camera_pos"]
+        for _, row in camera_positions.iterrows()
+    }
 
     # Group detections by frame
     detections_by_frame = {}
     for _, row in april_detections.iterrows():
-        fidx = row['frame_idx']
+        fidx = row["frame_idx"]
         if fidx not in detections_by_frame:
             detections_by_frame[fidx] = []
-        detections_by_frame[fidx].append((row['tag_id'], row['corners']))
+        detections_by_frame[fidx].append((row["tag_id"], row["corners"]))
 
     cap = recording.video
     frame_idx = 0
@@ -419,18 +422,24 @@ def overlay_detections_and_positions(
     graph_width, graph_height = graph_size
 
     def draw_detections(frame, detections, color, thickness=2):
-        for (tag_id, corners) in detections:
+        for tag_id, corners in detections:
             # Ensure corners are a NumPy array before converting to int
             corners_array = np.array(corners, dtype=np.float32)
             corners_int = corners_array.astype(int)
-            
+
             cv2.polylines(frame, [corners_int], True, color, thickness)
             for c in corners_int:
                 cv2.circle(frame, tuple(c), 4, color, -1)
             corner_text_pos = (corners_int[0, 0], corners_int[0, 1] - 10)
-            cv2.putText(frame, f"ID: {tag_id}", corner_text_pos, cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6, color, 2)
-
+            cv2.putText(
+                frame,
+                f"ID: {tag_id}",
+                corner_text_pos,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                color,
+                2,
+            )
 
     def position_to_graph_coords(position, x0, y0, w, h, min_x, max_x, min_y, max_y):
         x, y, z = position
@@ -442,38 +451,56 @@ def overlay_detections_and_positions(
 
     def draw_coordinate_cross(frame, x0, y0, w, h, min_x, max_x, min_y, max_y):
         # Draw a black background
-        cv2.rectangle(frame, (x0, y0), (x0+w, y0+h), (0, 0, 0), -1)
+        cv2.rectangle(frame, (x0, y0), (x0 + w, y0 + h), (0, 0, 0), -1)
 
         # Only draw axes if 0,0 is within the range
         if min_x < 0 < max_x and min_y < 0 < max_y:
-            origin = position_to_graph_coords((0,0,0), x0, y0, w, h, min_x, max_x, min_y, max_y)
+            origin = position_to_graph_coords(
+                (0, 0, 0), x0, y0, w, h, min_x, max_x, min_y, max_y
+            )
 
             line_color = (200, 200, 200)
             thickness = 1
 
             # Draw x-axis line
-            cv2.line(frame, (x0, origin[1]), (x0+w, origin[1]), line_color, thickness)
+            cv2.line(frame, (x0, origin[1]), (x0 + w, origin[1]), line_color, thickness)
 
             # Draw y-axis line
-            cv2.line(frame, (origin[0], y0), (origin[0], y0+h), line_color, thickness)
+            cv2.line(frame, (origin[0], y0), (origin[0], y0 + h), line_color, thickness)
 
-    def draw_mini_graph(frame, current_position, detected, visited_positions, min_x, max_x, min_y, max_y):
+    def draw_mini_graph(
+        frame, current_position, detected, visited_positions, min_x, max_x, min_y, max_y
+    ):
         h, w = frame.shape[:2]
         x0 = w - graph_width - 10
         y0 = h - graph_height - 10
 
         # Draw axes and background
-        draw_coordinate_cross(frame, x0, y0, graph_width, graph_height, min_x, max_x, min_y, max_y)
+        draw_coordinate_cross(
+            frame, x0, y0, graph_width, graph_height, min_x, max_x, min_y, max_y
+        )
 
         # Draw visited positions in dim color
         dim_color = (100, 100, 100)
         for pos in visited_positions:
-            pt = position_to_graph_coords(pos, x0, y0, graph_width, graph_height, min_x, max_x, min_y, max_y)
+            pt = position_to_graph_coords(
+                pos, x0, y0, graph_width, graph_height, min_x, max_x, min_y, max_y
+            )
             cv2.circle(frame, pt, 3, dim_color, -1)
 
         # Draw current/last position
         if current_position is not None:
-            pt = position_to_graph_coords(current_position, x0, y0, graph_width, graph_height, min_x, max_x, min_y, max_y)
+            pt = position_to_graph_coords(
+                current_position,
+                x0,
+                y0,
+                graph_width,
+                graph_height,
+                min_x,
+                max_x,
+                min_y,
+                max_y,
+            )
             color = (0, 255, 0) if detected else (0, 0, 255)
             cv2.circle(frame, pt, 5, color, -1)
 
@@ -487,7 +514,7 @@ def overlay_detections_and_positions(
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     # Initialize VideoWriter
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 30  # fallback if FPS is not available
@@ -513,29 +540,61 @@ def overlay_detections_and_positions(
             # Current frame has detections
             ever_detected = True
             last_detections = current_detections
-            last_position = current_position if current_position is not None else last_position
+            last_position = (
+                current_position if current_position is not None else last_position
+            )
 
             draw_detections(frame, current_detections, (0, 255, 0))
-            draw_mini_graph(frame, current_position, True, visited_positions,
-                            room_min_x, room_max_x, room_min_y, room_max_y)
+            draw_mini_graph(
+                frame,
+                current_position,
+                True,
+                visited_positions,
+                room_min_x,
+                room_max_x,
+                room_min_y,
+                room_max_y,
+            )
         else:
             # No current detections
             if ever_detected and last_detections is not None:
                 # Draw last known detections in red
                 draw_detections(frame, last_detections, (0, 0, 255))
-                draw_mini_graph(frame, last_position, False, visited_positions,
-                                room_min_x, room_max_x, room_min_y, room_max_y)
+                draw_mini_graph(
+                    frame,
+                    last_position,
+                    False,
+                    visited_positions,
+                    room_min_x,
+                    room_max_x,
+                    room_min_y,
+                    room_max_y,
+                )
             else:
                 # Never had detections: draw a green overlay
                 overlay = frame.copy()
-                cv2.rectangle(overlay, (0,0), (frame.shape[1], frame.shape[0]), (0,255,0), thickness=20)
+                cv2.rectangle(
+                    overlay,
+                    (0, 0),
+                    (frame.shape[1], frame.shape[0]),
+                    (0, 255, 0),
+                    thickness=20,
+                )
                 alpha = 0.2
                 frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
-                draw_mini_graph(frame, last_position, True, visited_positions,
-                                room_min_x, room_max_x, room_min_y, room_max_y)
+                draw_mini_graph(
+                    frame,
+                    last_position,
+                    True,
+                    visited_positions,
+                    room_min_x,
+                    room_max_x,
+                    room_min_y,
+                    room_max_y,
+                )
 
         if show_video:
-            cv2.imshow('Video with Overlays', frame)
+            cv2.imshow("Video with Overlays", frame)
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC key
                 break

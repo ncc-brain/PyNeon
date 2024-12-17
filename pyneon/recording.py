@@ -466,14 +466,11 @@ Recording duration: {self.info["duration"] / 1e9}s
         if (video := self.video) is None:
             raise ValueError("Estimating scanpath requires video data.")
         return estimate_scanpath(video, sync_gaze, lk_params)
-    
-    def detect_apriltags(
-        self,
-        tag_family: str ='tag36h11'
-    ) -> pd.DataFrame:
+
+    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
         """
         Detect AprilTags in a video and report their data for every frame using the apriltag library.
-        
+
         Parameters
         ----------
         tag_family : str, optional
@@ -494,10 +491,11 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         all_detections = detect_apriltags(self.video, tag_family)
         # Save to JSON
-        all_detections.to_json(self.recording_dir / "apriltags.json", orient="records", lines=True)
+        all_detections.to_json(
+            self.recording_dir / "apriltags.json", orient="records", lines=True
+        )
 
         return all_detections
-
 
     def compute_camera_positions(
         self,
@@ -536,20 +534,30 @@ Recording duration: {self.info["duration"] / 1e9}s
             - 'camera_pos': A (3,) array with the camera position in world coordinates
         """
 
-        required_columns = {"tag_id", "x", "y", "z", "normal_x", "normal_y", "normal_z", "size"}
+        required_columns = {
+            "tag_id",
+            "x",
+            "y",
+            "z",
+            "normal_x",
+            "normal_y",
+            "normal_z",
+            "size",
+        }
         if not required_columns.issubset(tag_locations_df.columns):
             missing = required_columns - set(tag_locations_df.columns)
             raise ValueError(f"tag_locations_df is missing required columns: {missing}")
-        
-        #check for detections dataframe
+
+        # check for detections dataframe
         if all_detections.empty:
             detection_file = self.recording_dir / "apriltags.json"
-            #open apriltags
+            # open apriltags
             if detection_file.is_file():
-                all_detections = pd.read_json(detection_file, orient="records", lines=True)
+                all_detections = pd.read_json(
+                    detection_file, orient="records", lines=True
+                )
             else:
                 all_detections = self.detect_apriltags()
-
 
         # Check if result JSON already exists
         json_file = self.recording_dir / "camera_positions.json"
@@ -560,7 +568,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         camera_positions = compute_camera_positions(
             video=self.video,
             tag_locations_df=tag_locations_df,
-            all_detections=all_detections
+            all_detections=all_detections,
         )
 
         # Save to JSON
@@ -611,9 +619,9 @@ Recording duration: {self.info["duration"] / 1e9}s
             if (json_file := self.recording_dir / "camera_positions.json").is_file():
                 camera_position_raw = pd.read_json(json_file, orient="records")
                 # Ensure 'camera_pos' is parsed as NumPy arrays
-                camera_position_raw['camera_pos'] = camera_position_raw['camera_pos'].apply(
-                    lambda pos: np.array(pos, dtype=float)
-                )
+                camera_position_raw["camera_pos"] = camera_position_raw[
+                    "camera_pos"
+                ].apply(lambda pos: np.array(pos, dtype=float))
             else:
                 # Run the function to get the data
                 camera_position_raw = self.compute_camera_positions()
@@ -626,14 +634,15 @@ Recording duration: {self.info["duration"] / 1e9}s
             process_noise,
             measurement_noise,
             gating_threshold,
-            bidirectional
+            bidirectional,
         )
 
         # Save to JSON
-        smoothed_positions.to_json(self.recording_dir / "smoothed_camera_positions.json", orient="records")
+        smoothed_positions.to_json(
+            self.recording_dir / "smoothed_camera_positions.json", orient="records"
+        )
 
         return smoothed_positions
-    
 
     def plot_scanpath_on_video(
         self,
