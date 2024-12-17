@@ -11,7 +11,7 @@ from numbers import Number
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
-from .preprocess import concat_streams, concat_events, smooth_camera_positions
+from .preprocess import concat_streams, concat_events, smooth_camera_pose
 from .video import (
     NeonVideo,
     sync_gaze_to_video,
@@ -501,56 +501,83 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def compute_camera_positions(
         self,
-        tag_locations: Dict[int, List[float]],
-        tag_size: Union[float, Dict[int, float]],
+        tag_locations_df: pd.DataFrame,
         all_detections: pd.DataFrame = pd.DataFrame(),
+        overwrite: bool = False,
     ) -> pd.DataFrame:
         """
         Compute the camera positions from AprilTag detections in a video.
 
         Parameters
         ----------
-        tag_locations : dict
-            A dictionary mapping AprilTag IDs to their 3D locations in the scene.
-        tag_size : float or dict
-            The size of the AprilTags in the scene. If a float, all tags are assumed to have the same size.
-            If a dictionary, the keys are the AprilTag IDs and the values are the sizes.
+        tag_locations_df : pd.DataFrame
+            A DataFrame containing AprilTag 3D locations, orientations, and sizes.
+            Required columns:
+                - 'tag_id': int, ID of the tag
+                - 'x', 'y', 'z': float, coordinates of the tag's center
+                - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
+                - 'size': float, the side length of the tag in meters
+
         all_detections : pd.DataFrame, optional
-            DataFrame containing the AprilTag detections for each frame, with columns:
-            - 'frame_idx': The frame number
-            - 'tag_id': The ID of the detected AprilTag
-            - 'corners': A 4x2 array of the tag corner coordinates
-            - 'center': A 1x2 array with the tag center coordinates
-            If None, the detections are computed using the `detect_apriltags` function.
+            DataFrame containing AprilTag detections for each frame, with columns:
+                - 'frame_idx': The frame number (int)
+                - 'tag_id': The ID of the detected AprilTag (int)
+                - 'corners': A (4x2) array of the tag corner pixel coordinates (np.ndarray)
+                - 'center': A (1x2) array of the tag center pixel coordinates (np.ndarray)
+            If empty, the detections are computed using the `detect_apriltags` function.
 
         Returns
         -------
         pd.DataFrame
             DataFrame containing the camera positions for each frame, with columns:
             - 'frame_idx': The frame number
-            - 'position': A 1x3 array with the camera position
-            - 'rotation': A 1x3 array with the camera rotation
+            - 'translation_vector': A (3,) array with the camera translation vector
+            - 'rotation_vector': A (3,) array with the camera rotation vector (Rodrigues form)
+            - 'camera_pos': A (3,) array with the camera position in world coordinates
         """
 
-        # Check if JSON already exists
-        if (json_file := self.recording_dir / "camera_positions.json").is_file():
+        required_columns = {"tag_id", "x", "y", "z", "normal_x", "normal_y", "normal_z", "size"}
+        if not required_columns.issubset(tag_locations_df.columns):
+            missing = required_columns - set(tag_locations_df.columns)
+            raise ValueError(f"tag_locations_df is missing required columns: {missing}")
+        
+        #check for detections dataframe
+        if all_detections.empty:
+            detection_file = self.recording_dir / "apriltags.json"
+            #open apriltags
+            if detection_file.is_file():
+                all_detections = pd.read_json(detection_file, orient="records", lines=True)
+            else:
+                all_detections = self.detect_apriltags()
+
+
+        # Check if result JSON already exists
+        json_file = self.recording_dir / "camera_positions.json"
+        if json_file.is_file() and not overwrite:
             return pd.read_json(json_file, orient="records")
 
-        camera_positions = compute_camera_positions(self.video, tag_locations, tag_size, all_detections)
+        # Compute camera positions
+        camera_positions = compute_camera_positions(
+            video=self.video,
+            tag_locations_df=tag_locations_df,
+            all_detections=all_detections
+        )
+
         # Save to JSON
-        camera_positions.to_json(self.recording_dir / "camera_positions.json", orient="records")
+        camera_positions.to_json(json_file, orient="records")
 
         return camera_positions
 
-
-    def smooth_camera_positions(
+    def smooth_camera_pose(
         self,
         camera_position_raw: pd.DataFrame = pd.DataFrame(),
         state_dim: int = 3,
         meas_dim: int = 3,
+        initial_state_noise: float = 0.1,
         process_noise: float = 0.005,
         measurement_noise: float = 0.005,
-        gating_threshold: float = 3.0
+        gating_threshold: float = 3.0,
+        bidirectional: bool = False,
     ) -> pd.DataFrame:
         """
         Apply a Kalman filter to smooth camera positions and gate outliers based on Mahalanobis distance.
@@ -591,20 +618,22 @@ Recording duration: {self.info["duration"] / 1e9}s
                 # Run the function to get the data
                 camera_position_raw = self.compute_camera_positions()
 
-        smoothed_positions = smooth_camera_positions(
+        smoothed_positions = smooth_camera_pose(
             camera_position_raw,
             state_dim,
             meas_dim,
+            initial_state_noise,
             process_noise,
             measurement_noise,
-            gating_threshold
+            gating_threshold,
+            bidirectional
         )
 
         # Save to JSON
-        smoothed_positions.to_json(self.recording_dir / "camera_positions.json", orient="records")
+        smoothed_positions.to_json(self.recording_dir / "smoothed_camera_positions.json", orient="records")
 
         return smoothed_positions
-
+    
 
     def plot_scanpath_on_video(
         self,

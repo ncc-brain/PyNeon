@@ -82,133 +82,126 @@ def detect_apriltags(
     
     return all_detections
 
+
 def compute_camera_positions(
     video: "NeonVideo",
-    tag_locations: Dict[int, List[float]],
-    tag_size: Union[float, Dict[int, float]],
+    tag_locations_df: pd.DataFrame,
     all_detections: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """
-    Compute the camera position for each frame using AprilTag detections stored in a DataFrame.
-
-    This function uses a pinhole camera model and the `cv2.solvePnP` function to determine the 
-    camera translation and rotation vectors for each frame. The known 3D positions of each tag 
-    and the detected 2D corners are used as correspondences. The resulting camera pose is then 
-    expressed in world coordinates.
+    Compute the camera position for each frame using AprilTag detections stored in a DataFrame,
+    handling arbitrary tag orientations.
 
     Parameters
     ----------
+    video : NeonVideo
+        Video object containing camera parameters.
+    tag_locations_df : pd.DataFrame
+        DataFrame containing AprilTag 3D positions, normals, and sizes with columns:
+        - 'tag_id': int, ID of the tag
+        - 'x', 'y', 'z': float, coordinates of the tag's center
+        - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
+        - 'size': float, side length of the tag in meters
     all_detections : pd.DataFrame
-        DataFrame containing AprilTag detections. Expected columns:
+        DataFrame containing AprilTag detections with columns:
         - 'frame_idx': int, frame number
         - 'tag_id': int, ID of the detected tag
-        - 'corners': np.ndarray of shape (4, 2), pixel coordinates of the tag's corners.
-        - 'center': np.ndarray of shape (1, 2), pixel coordinates of the tag's center (not strictly required here).
-    tag_locations : dict
-        Dictionary mapping tag IDs to their known 3D center coordinates in the world frame.
-        Example: { tag_id: [X, Y, Z] }
-    tag_size : float or dict
-        If a float is provided, all tags are assumed to have the same size (side length in meters).
-        If a dict is provided, it should map tag IDs to their respective side lengths.
-        Example: 0.075 (for a single size) or {0: 0.075, 1: 0.1} for different sizes.
+        - 'corners': np.ndarray of shape (4, 2), pixel coordinates of the tag's corners
+        - 'center': np.ndarray of shape (1, 2), pixel coordinates of the tag's center (optional)
 
     Returns
     -------
     pd.DataFrame
         A DataFrame with one row per frame containing:
-        - 'frame_idx': The frame number.
-        - 'translation_vector': (3,) array representing camera translation in world coordinates.
-        - 'rotation_vector': (3,) array representing camera rotation in Rodrigues form.
-        - 'camera_pos': (3,) array representing the camera position in world coordinates.
-
-    Notes
-    -----
-    - The camera's intrinsic parameters are estimated from the field of view and resolution. 
-        For more accurate results, use known camera intrinsics.
-    - The function assumes that each tag's known location is provided as the center of the tag, 
-        and constructs the tag's corners in 3D world coordinates by offsetting from its center.
-
-    Raises
-    ------
-    ValueError
-        If no sufficient points are found to solve PnP for a given frame.
+        - 'frame_idx': int
+        - 'translation_vector': np.ndarray of shape (3,)
+        - 'rotation_vector': np.ndarray of shape (3,)
+        - 'camera_pos': np.ndarray of shape (3,)
     """
 
-    #check if all_detections is empty
-    if all_detections.empty:
-        # call the detect_apriltags function to get the detections
+    if all_detections is None or all_detections.empty:
         all_detections = detect_apriltags(video)
-        # if still empty, return an empty DataFrame
         if all_detections.empty:
             print("No AprilTag detections found in the video.")
             return pd.DataFrame(columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"])
 
-    # Handle tag size inputs
-    if isinstance(tag_size, float):
-        # Single size for all tags
-        def get_tag_half_size(tid):
-            return tag_size / 2.0
-    elif isinstance(tag_size, dict):
-        # Different sizes per tag
-        def get_tag_half_size(tid):
-            if tid not in tag_size:
-                raise ValueError(f"Tag ID {tid} not found in provided tag_size dictionary.")
-            return tag_size[tid] / 2.0
-    else:
-        raise TypeError("tag_size must be either a float or a dictionary mapping tag IDs to sizes.")
-    
     camera_matrix = video.camera_matrix
     dist_coeffs = video.dist_coeffs
-
-    # If no distortion is provided, assume zero distortion
     if dist_coeffs is None:
         dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
     results = []
 
-    # Process each unique frame
+    # Precompute tag_info dictionary for quick lookup
+    # {tag_id: (center_3d, normal, half_size)}
+    tag_info_dict = {}
+    for _, row in tag_locations_df.iterrows():
+        tag_id = row['tag_id']
+        center_3d = np.array([row['x'], row['y'], row['z']], dtype=np.float32)
+        normal = np.array([row['normal_x'], row['normal_y'], row['normal_z']], dtype=np.float32)
+        normal = normal / np.linalg.norm(normal)  # Normalize the normal vector
+        half_size = row['size'] / 2.0
+        tag_info_dict[tag_id] = (center_3d, normal, half_size)
+
     for frame in all_detections['frame_idx'].unique():
         frame_detections = all_detections.loc[all_detections['frame_idx'] == frame]
-
         if frame_detections.empty:
-            # No tags detected in this frame, skip
             continue
 
         object_points = []
         image_points = []
 
-        # Collect all object-image correspondences for this frame
-        for _, row in frame_detections.iterrows():
-            tag_id = row['tag_id']
-            corners = row['corners']  # shape (4,2)
-
-            if tag_id not in tag_locations:
-                # If no known location for this tag is provided, skip it
+        for _, det in frame_detections.iterrows():
+            tag_id = det['tag_id']
+            if tag_id not in tag_info_dict:
                 continue
 
-            tag_center_3d = np.array(tag_locations[tag_id], dtype=np.float32)
-            half_size = get_tag_half_size(tag_id)
+            corners_2d = det['corners']
+            center_3d, normal, half_size = tag_info_dict[tag_id]
 
-            # Compute the 3D corners of the tag from its center
-            # The tag plane orientation is assumed. Adjust as needed.
+            # Construct a local coordinate system aligned with the tag's plane
+            # Z-axis: normal
+            Z = normal
+
+            # Choose a reference vector to avoid degeneracies:
+            reference_up = np.array([0, 0, 1], dtype=np.float32)
+            # If normal is parallel or close to parallel with reference_up, choose a different reference
+            if np.allclose(Z, reference_up, atol=1e-6) or np.allclose(Z, -reference_up, atol=1e-6):
+                reference_up = np.array([1, 0, 0], dtype=np.float32)
+
+            # X-axis: perpendicular to Z and reference_up
+            X = np.cross(Z, reference_up)
+            X_norm = np.linalg.norm(X)
+            if X_norm < 1e-9:
+                # If X is degenerate, pick another reference axis
+                reference_up = np.array([0, 1, 0], dtype=np.float32)
+                X = np.cross(Z, reference_up)
+
+            X = X / np.linalg.norm(X)
+            # Y-axis: perpendicular to Z and X
+            Y = np.cross(Z, X)
+
+            # Compute the 3D corners of the tag based on the orientation:
+            # We'll arrange corners in a consistent order:
+            # bottom-left, bottom-right, top-right, top-left (assuming Z normal facing 'up')
+            # Adjust the sign pattern as needed:
             tag_3d_corners = np.array([
-                [tag_center_3d[0], tag_center_3d[1] - half_size, tag_center_3d[2] + half_size],
-                [tag_center_3d[0], tag_center_3d[1] + half_size, tag_center_3d[2] + half_size],
-                [tag_center_3d[0], tag_center_3d[1] + half_size, tag_center_3d[2] - half_size],
-                [tag_center_3d[0], tag_center_3d[1] - half_size, tag_center_3d[2] - half_size]
+                center_3d + (-half_size)*X + (-half_size)*Y,
+                center_3d + ( half_size)*X + (-half_size)*Y,
+                center_3d + ( half_size)*X + ( half_size)*Y,
+                center_3d + (-half_size)*X + ( half_size)*Y,
             ], dtype=np.float32)
 
             object_points.extend(tag_3d_corners)
-            image_points.extend(corners)
+            image_points.extend(corners_2d)
 
         if len(object_points) < 4:
-            # Not enough points to solve for pose
+            # Not enough points to solve PnP
             continue
 
         object_points = np.array(object_points, dtype=np.float32)
         image_points = np.array(image_points, dtype=np.float32)
 
-        # Solve the PnP problem to find rotation and translation vectors
         success, rotation_vector, translation_vector = cv2.solvePnP(
             object_points,
             image_points,
@@ -217,16 +210,9 @@ def compute_camera_positions(
         )
 
         if not success:
-            # Could not solve for this frame
             continue
 
-        # Convert rotation vector to rotation matrix
         R, _ = cv2.Rodrigues(rotation_vector)
-        
-        # Compute camera position in world coordinates
-        # World to camera: Pc = R * Pw + t
-        # Pw = R^T * (Pc - t), with Pc=0 (camera center)
-        # camera_pos = -R^T * t
         camera_pos = -R.T @ translation_vector
 
         results.append({
