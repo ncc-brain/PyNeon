@@ -45,7 +45,7 @@ def smooth_camera_pose(
         A DataFrame with 'frame_idx' and 'smoothed_camera_pos'.
     """
     # Ensure the DataFrame is sorted by frame_idx
-    camera_position_raw = camera_position_raw.sort_values('frame_idx')
+    camera_position_raw = camera_position_raw.sort_values("frame_idx")
 
     # Extract all frame indices and create a complete range
     all_frames = np.arange(camera_position_raw['frame_idx'].min(), 

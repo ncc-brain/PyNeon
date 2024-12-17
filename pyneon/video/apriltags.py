@@ -11,14 +11,11 @@ if TYPE_CHECKING:
     from ..recording import NeonRecording
     from .video import NeonVideo
 
-def detect_apriltags(
-        video: "NeonVideo",
-        tag_family: str ='tag36h11'
-        ):
-    
+
+def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     """
     Detect AprilTags in a video and report their data for every frame using the apriltag library.
-    
+
     Parameters
     ----------
     video : cv2.VideoCapture or similar video object
@@ -45,42 +42,45 @@ def detect_apriltags(
 
     all_detections = []
     frame_idx = 0
-    
+
     while True:
         ret, frame = video.read()
         if not ret:
             break
-        
+
         # Convert frame to grayscale for detection
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        
+
         # Detect AprilTags
         detections = detector.detect(gray_frame)
-        
+
         for detection in detections:
             # Extract the tag ID and corners
             tag_id = detection.tag_id
             corners = detection.corners
-            
+
             # Calculate the center of the tag
             center = np.mean(corners, axis=0)
-            
+
             # Store the detection data
-            all_detections.append({
-                "frame_idx": frame_idx,
-                "tag_id": tag_id,
-                "corners": corners,
-                "center": center
-            })
-        
+            all_detections.append(
+                {
+                    "frame_idx": frame_idx,
+                    "tag_id": tag_id,
+                    "corners": corners,
+                    "center": center,
+                }
+            )
+
         frame_idx += 1
-    
+
     video.release()
 
     # convert to pandas DataFrame
     all_detections = pd.DataFrame(all_detections)
-    
+
     return all_detections
+
 
 
 def compute_camera_positions(
@@ -203,10 +203,7 @@ def compute_camera_positions(
         image_points = np.array(image_points, dtype=np.float32)
 
         success, rotation_vector, translation_vector = cv2.solvePnP(
-            object_points,
-            image_points,
-            camera_matrix,
-            dist_coeffs
+            object_points, image_points, camera_matrix, dist_coeffs
         )
 
         if not success:
@@ -215,11 +212,16 @@ def compute_camera_positions(
         R, _ = cv2.Rodrigues(rotation_vector)
         camera_pos = -R.T @ translation_vector
 
-        results.append({
-            "frame_idx": frame,
-            "translation_vector": translation_vector.reshape(-1),
-            "rotation_vector": rotation_vector.reshape(-1),
-            "camera_pos": camera_pos.reshape(-1)
-        })
+        results.append(
+            {
+                "frame_idx": frame,
+                "translation_vector": translation_vector.reshape(-1),
+                "rotation_vector": rotation_vector.reshape(-1),
+                "camera_pos": camera_pos.reshape(-1),
+            }
+        )
 
-    return pd.DataFrame(results, columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"])
+    return pd.DataFrame(
+        results,
+        columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"],
+    )
