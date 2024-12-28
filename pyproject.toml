@@ -12,7 +12,8 @@ description = "A Python library for reading, preprocessing and exporting Pupil L
 readme = "README.md"
 authors = [
     { name = "Qian Chu", email = "qianchu99@gmail.com" },
-    { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" }
+    { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" },
+    { name = "Alex Lepauvre", email = "alex.lepauvre@gmail.com" }
 ]
 requires-python = ">=3.9"
 dependencies = [
@@ -41,3 +42,4 @@ doc = [
     "pydata-sphinx-theme",
     "nbsphinx",
 ]
+full = ["pyneon[dev,doc]"]
