@@ -624,8 +624,12 @@ peak velocity [px/s]    float64
 dtype: object
 </pre></div></div>
 </div>
-<p>PyNeon performs the following preprocessing when reading the CSV files: 1. Removes the redundant <code class="docutils literal notranslate"><span class="pre">section</span> <span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">recording</span> <span class="pre">id</span></code> columns that are present in the raw CSVs. 2. Sets the <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> (or <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> for most event files) column as the DataFrame index. 3. Automatically assigns appropriate data types to columns. For instance, <code class="docutils literal notranslate"><span class="pre">Int64</span></code> type is assigned to timestamps, <code class="docutils literal notranslate"><span class="pre">Int32</span></code> to event IDs (blink/fixation/saccade ID), and <code class="docutils literal notranslate"><span class="pre">float64</span></code> to float data (e.g. gaze
-location, pupil size).</p>
+<p>PyNeon performs the following preprocessing when reading the CSV files:</p>
+<ol class="arabic simple">
+<li><p>Removes the redundant <code class="docutils literal notranslate"><span class="pre">section</span> <span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">recording</span> <span class="pre">id</span></code> columns that are present in the raw CSVs.</p></li>
+<li><p>Sets the <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> (or <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> for most event files) column as the DataFrame index.</p></li>
+<li><p>Automatically assigns appropriate data types to columns. For instance, <code class="docutils literal notranslate"><span class="pre">Int64</span></code> type is assigned to timestamps, <code class="docutils literal notranslate"><span class="pre">Int32</span></code> to event IDs (blink/fixation/saccade ID), and <code class="docutils literal notranslate"><span class="pre">float64</span></code> to float data (e.g. gaze location, pupil size).</p></li>
+</ol>
 <p>Just like any other <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>, you can access individual rows, columns, or subsets of the data using the standard indexing and slicing methods. For example, <code class="docutils literal notranslate"><span class="pre">gaze.data.iloc[0]</span></code> returns the first row of the gaze data, and <code class="docutils literal notranslate"><span class="pre">gaze.data['gaze</span> <span class="pre">x</span> <span class="pre">[px]']</span></code> (or <code class="docutils literal notranslate"><span class="pre">gaze['gaze</span> <span class="pre">x</span> <span class="pre">[px]']</span></code>) returns the gaze x-coordinate column.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
@@ -911,7 +915,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
 
   <p class="copyright">
     
-      © Copyright 2024, PyNeon developers.
+      © Copyright 2024-2024, PyNeon developers.
       <br/>
     
   </p>
