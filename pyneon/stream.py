@@ -88,7 +88,7 @@ class NeonStream(NeonTabular):
     @property
     def columns(self):
         return self.data.columns
-    
+
     @property
     def dtypes(self):
         return self.data.dtypes
