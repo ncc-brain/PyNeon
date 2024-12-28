@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from tqdm import tqdm
 
 
-# Data must be from a NeonStream object
+# Check if data is from NeonStream.data
 def _check_data(data: pd.DataFrame) -> None:
     # Check if index name is timestamp [ns]
     if data.index.name != "timestamp [ns]":
@@ -24,7 +24,7 @@ def _check_data(data: pd.DataFrame) -> None:
 def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
-    float_kind: str = "linear",
+    float_kind: str = "cubic",
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
@@ -40,7 +40,7 @@ def interpolate(
         index named ``timestamp [ns]``.
     float_kind : str, optional
         Kind of interpolation applied on columns of float type,
-        by default ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
+        by default ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
     other_kind : str, optional
         Kind of interpolation applied on columns of other types,
         by default ``"nearest"``. For details see :class:`scipy.interpolate.interp1d`.
@@ -160,7 +160,7 @@ def concat_streams(
     rec: "NeonRecording",
     stream_names: Union[str, list[str]] = "all",
     sampling_freq: Union[Number, str] = "min",
-    interp_float_kind: str = "linear",
+    interp_float_kind: str = "cubic",
     interp_other_kind: str = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
@@ -187,7 +187,7 @@ def concat_streams(
         If ``"max"``, the highest nominal sampling frequency will be used.
     interp_float_kind : str, optional
         Kind of interpolation applied on columns of float type,
-        Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
     interp_other_kind : str, optional
         Kind of interpolation applied on columns of other types.
         Defaults to ``"nearest"``.
