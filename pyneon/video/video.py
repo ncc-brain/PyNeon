@@ -19,6 +19,8 @@ class NeonVideo(cv2.VideoCapture):
         Path to the video file.
     timestamps_file : :class:`pathlib.Path`
         Path to the timestamps file.
+    info_file : :class:`pathlib.Path`
+        Path to the scene camera info file.
 
     Attributes
     ----------

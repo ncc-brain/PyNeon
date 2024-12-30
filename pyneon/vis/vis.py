@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 def plot_frame(
     video: "NeonVideo",
     index: int = 0,
-    ax: Union[plt.Axes, None] = None,
+    ax: Optional[plt.Axes] = None,
     auto_title: bool = True,
     show: bool = True,
 ):
@@ -69,10 +69,10 @@ def plot_distribution(
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
     scatter_source: Literal["gaze", "fixations", None] = "fixations",
     step_size: int = 10,
-    sigma: Union[Number, None] = 2,
+    sigma: Optional[Number] = 2,
     width_height: tuple[int, int] = (1600, 1200),
-    cmap: Union[str, None] = "inferno",
-    ax: Union[plt.Axes, None] = None,
+    cmap: Optional[str] = "inferno",
+    ax: Optional[plt.Axes] = None,
     show: bool = True,
 ):
     """
