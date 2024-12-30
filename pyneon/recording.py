@@ -3,7 +3,6 @@ from typing import Union, Literal, Optional
 import pandas as pd
 import json
 from datetime import datetime
-import copy
 import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
@@ -11,11 +10,7 @@ from numbers import Number
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .preprocess import concat_streams, concat_events
-from .video import (
-    NeonVideo,
-    sync_gaze_to_video,
-    estimate_scanpath,
-)
+from .video import NeonVideo, estimate_scanpath
 from .vis import plot_distribution, plot_scanpath_on_video
 from .export import export_motion_bids, export_eye_bids
 
@@ -414,15 +409,15 @@ Recording duration: {self.info["duration"] / 1e9}s
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-    ) -> NeonGaze:
+        inplace: bool = False,
+    ) -> Optional[NeonGaze]:
         """
         Synchronize gaze data to video frames by applying windowed averaging
-        around each video frame timestamp.
+        around timestamps of each video frame.
+        See :meth:`pyneon.stream.NeonStream.window_average` for details.
 
-        Parameters:
-        -----------
-        rec : NeonRecording
-            Recording object containing gaze and video data.
+        Parameters
+        ----------
         window_size : int, optional
             The size of the time window (in nanoseconds)
             over which to compute the average around each new timestamp.
@@ -430,15 +425,18 @@ Recording duration: {self.info["duration"] / 1e9}s
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
+        inplace : bool, optional
+            Whether to replace the gaze data in the instance with the window averaged data.
 
         Returns
         -------
         NeonGaze
             Gaze object containing data synchronized to video frames.
         """
-        new_data = sync_gaze_to_video(self, window_size)
-        new_gaze = copy.copy(self.gaze)
-        new_gaze.data = new_data
+        if self.gaze is None or self.video is None:
+            raise ValueError("Gaze-video synchronization requires gaze and video data.")
+
+        new_gaze = self.gaze.window_average(self.video.ts, window_size, inplace)
         return new_gaze
 
     def estimate_scanpath(
@@ -465,12 +463,12 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def plot_scanpath_on_video(
         self,
-        scanpath: pd.DataFrame,
+        scanpath: Optional[pd.DataFrame] = None,
         circle_radius: int = 10,
-        line_thickness: Optional[int] = 2,
+        line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Optional[Union[Path, str]] = "scanpath.mp4",
+        video_output_path: Union[Path, str] = "scanpath.mp4",
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -492,10 +490,12 @@ Recording duration: {self.info["duration"] / 1e9}s
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'scanpath.mp4'.
         """
-        if (video := self.video) is None:
-            raise ValueError("Estimating scanpath requires video data.")
+        if scanpath is None:
+            scanpath = self.estimate_scanpath()
+        if self.video is None:
+            raise ValueError("Plotting scanpath on video requires video data.")
         plot_scanpath_on_video(
-            video,
+            self,
             scanpath,
             circle_radius,
             line_thickness,

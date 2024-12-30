@@ -1,69 +1,13 @@
 import pandas as pd
 import numpy as np
 import cv2
-import warnings
-from pathlib import Path
 from tqdm import tqdm
 from typing import TYPE_CHECKING, Union, Optional
 
-from ..preprocess import window_average
 
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
     from ..stream import NeonGaze
     from .video import NeonVideo
-
-
-def sync_gaze_to_video(
-    rec: "NeonRecording",
-    window_size: Optional[int] = None,
-) -> pd.DataFrame:
-    """
-    Synchronize gaze data to video frames by applying windowed averaging
-    around each video frame timestamp. See :func:`window_average` for details
-    on the averaging process.
-
-    Parameters:
-    -----------
-    rec : NeonRecording
-        Recording object containing gaze and video data.
-    window_size : int, optional
-        The size of the time window (in nanoseconds)
-        over which to compute the average around each new timestamp.
-        If ``None`` (default), the window size is set to the median interval
-        between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
-        The window size must be larger than the median interval between the original data timestamps,
-        i.e., ``window_size > np.median(np.diff(data.index))``.
-
-    Returns:
-    --------
-    pd.DataFrame
-        DataFrame containing gaze data mapped to video timestamps.
-    """
-    gaze = rec.gaze
-    video = rec.video
-
-    if gaze is None:
-        raise ValueError("No gaze data available.")
-    if video is None:
-        raise ValueError("No video data available.")
-
-    # Resample the gaze data to the video timestamps
-    sync_gaze = window_average(rec.video.ts, rec.gaze.data, window_size)
-
-    # Mark the fixation status of each frame
-    sync_gaze["fixation status"] = pd.Series(dtype="string")
-
-    for fixation_id in sync_gaze["fixation id"].dropna().unique():
-        fix_data_index = sync_gaze.loc[sync_gaze["fixation id"] == fixation_id].index
-        start_idx = fix_data_index[0]
-        end_idx = fix_data_index[-1]
-        during_idx = fix_data_index[1:-1]
-        sync_gaze.loc[during_idx, "fixation status"] = "during"
-        sync_gaze.at[start_idx, "fixation status"] = "start"
-        sync_gaze.at[end_idx, "fixation status"] = "end"
-
-    return sync_gaze
 
 
 def estimate_scanpath(
@@ -90,7 +34,8 @@ def estimate_scanpath(
     """
     if not np.allclose(sync_gaze.ts, video.ts):
         raise ValueError("Gaze and video timestamps do not match.")
-    # Default parameters for Lucas-Kanade optical flow from Neon
+
+    # Default parameters for Lucas-Kanade optical flow from Pupil Labs
     lk_params = (
         {
             "winSize": (90, 90),
@@ -101,6 +46,18 @@ def estimate_scanpath(
         else lk_params
     )
     gaze_data = sync_gaze.data.copy().reset_index(drop=True)
+
+    # Mark the fixation status of each frame
+    gaze_data["fixation status"] = pd.Series(dtype="string")
+
+    for fixation_id in gaze_data["fixation id"].dropna().unique():
+        fix_data_index = gaze_data.loc[gaze_data["fixation id"] == fixation_id].index
+        start_idx = fix_data_index[0]
+        end_idx = fix_data_index[-1]
+        during_idx = fix_data_index[1:-1]
+        gaze_data.loc[during_idx, "fixation status"] = "during"
+        gaze_data.at[start_idx, "fixation status"] = "start"
+        gaze_data.at[end_idx, "fixation status"] = "end"
 
     # Initiate scanpath DataFrame, indexed by video timestamps and containing fixation DataFrames
     scanpath = pd.DataFrame(index=sync_gaze.ts, columns=["fixations"], dtype="object")

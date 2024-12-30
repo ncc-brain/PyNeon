@@ -177,7 +177,7 @@ class NeonStream(NeonTabular):
         )
         if new_stream.data.empty:
             raise ValueError("No data found in the range of the other stream")
-        return None if inplace else new_stream
+        return new_stream
 
     def interpolate(
         self,
@@ -271,7 +271,7 @@ class NeonStream(NeonTabular):
         else:
             new_instance = copy.copy(self)
             new_instance.data = new_data
-        return new_instance
+            return new_instance
 
 
 class NeonGaze(NeonStream):

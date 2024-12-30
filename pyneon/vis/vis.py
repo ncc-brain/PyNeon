@@ -182,7 +182,7 @@ def plot_scanpath_on_video(
     video: "NeonVideo",
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
-    line_thickness: Optional[int] = 2,
+    line_thickness: int = 2,
     max_fixations: int = 10,
     show_video: bool = False,
     video_output_path: Optional[Union[Path, str]] = "scanpath.mp4",
