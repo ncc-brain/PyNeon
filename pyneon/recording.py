@@ -278,8 +278,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         self,
         stream_names: Union[str, list[str]],
         sampling_freq: Union[Number, str] = "min",
-        resamp_float_kind: str = "linear",
-        resamp_other_kind: str = "nearest",
+        interp_float_kind: str = "cubic",
+        interp_other_kind: str = "nearest",
         inplace: bool = False,
     ) -> CustomStream:
         """
@@ -296,20 +296,19 @@ Recording duration: {self.info["duration"] / 1e9}s
             If a list, items must be in ``{"gaze", "imu", "eye_states"}``
             (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
         sampling_freq : float or int or str, optional
-            Sampling frequency to resample the streams to.
-            If numeric, the streams will be resampled to this frequency.
-            If ``"min"``, the lowest nominal sampling frequency
+            Sampling frequency of the concatenated streams.
+            If numeric, the streams will be interpolated to this frequency.
+            If ``"min"`` (default), the lowest nominal sampling frequency
             of the selected streams will be used.
             If ``"max"``, the highest nominal sampling frequency will be used.
-            Defaults to ``"min"``.
-        resamp_float_kind : str, optional
+        interp_float_kind : str, optional
             Kind of interpolation applied on columns of float type,
-            Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
-        resamp_other_kind : str, optional
+            Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
+        interp_other_kind : str, optional
             Kind of interpolation applied on columns of other types.
             Defaults to ``"nearest"``.
         inplace : bool, optional
-            Replace selected stream data with resampled data during concatenation
+            Replace selected stream data with interpolated data during concatenation
             if``True``. Defaults to ``False``.
 
         Returns
@@ -321,8 +320,8 @@ Recording duration: {self.info["duration"] / 1e9}s
             self,
             stream_names,
             sampling_freq,
-            resamp_float_kind,
-            resamp_other_kind,
+            interp_float_kind,
+            interp_other_kind,
             inplace,
         )
         return CustomStream(new_data)
