@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from numbers import Number
-from typing import Union, Literal, Optional
+from typing import Literal, Optional
 import copy
 
 from .tabular import NeonTabular
@@ -93,7 +93,7 @@ class NeonStream(NeonTabular):
     def dtypes(self):
         return self.data.dtypes
 
-    def time_to_ts(self, time: Union[Number, np.ndarray]) -> np.ndarray:
+    def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
         """Convert relative time(s) in seconds to closest timestamp(s) in nanoseconds."""
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])

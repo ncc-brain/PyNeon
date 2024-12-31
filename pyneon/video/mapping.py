@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import cv2
 from tqdm import tqdm
-from typing import TYPE_CHECKING, Union, Optional
+from typing import TYPE_CHECKING, Optional
 
 
 if TYPE_CHECKING:

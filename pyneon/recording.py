@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, Literal, Optional
+from typing import Literal, Optional
 import pandas as pd
 import json
 from datetime import datetime
@@ -80,7 +80,7 @@ class NeonRecording:
         ``filename`` (str), and ``path`` (Path).
     """
 
-    def __init__(self, recording_dir: Union[str, Path]):
+    def __init__(self, recording_dir: str | Path):
         recording_dir = Path(recording_dir)
         if not recording_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {recording_dir}")
@@ -271,8 +271,8 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def concat_streams(
         self,
-        stream_names: Union[str, list[str]],
-        sampling_freq: Union[Number, str] = "min",
+        stream_names: str | list[str],
+        sampling_freq: Number | str = "min",
         interp_float_kind: str = "cubic",
         interp_other_kind: str = "nearest",
         inplace: bool = False,
@@ -321,7 +321,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
         return CustomStream(new_data)
 
-    def concat_events(self, event_names: Union[str, list[str]]) -> pd.DataFrame:
+    def concat_events(self, event_names: str | list[str]) -> pd.DataFrame:
         """
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional ``"type"`` column denotes the event
@@ -468,7 +468,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Union[Path, str] = "scanpath.mp4",
+        video_output_path: Path | str = "scanpath.mp4",
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -506,7 +506,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def export_motion_bids(
         self,
-        motion_dir: Union[str, Path],
+        motion_dir: str | Path,
         prefix: str = "",
         extra_metadata: dict = {},
     ):
@@ -541,7 +541,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def export_eye_bids(
         self,
-        output_dir: Union[str, Path],
+        output_dir: str | Path,
         prefix: str = "",
         extra_metadata: dict = {},
     ):

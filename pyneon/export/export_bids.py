@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import datetime
 import re
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ._bids_parameters import MOTION_META_DEFAULT
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 def export_motion_bids(
     rec: "NeonRecording",
-    motion_dir: Union[str, Path],
+    motion_dir: str | Path,
     prefix: str = "",
     extra_metadata: dict = {},
 ):
@@ -127,7 +127,7 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def export_eye_bids(rec: "NeonRecording", output_dir: Union[str, Path]):
+def export_eye_bids(rec: "NeonRecording", output_dir: str | Path):
     gaze = rec.gaze
     eye_states = rec.eye_states
     output_dir = Path(output_dir)

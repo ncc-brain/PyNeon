@@ -4,8 +4,7 @@ from scipy.ndimage import gaussian_filter
 import cv2
 import matplotlib.pyplot as plt
 from pathlib import Path
-from numbers import Number
-from typing import TYPE_CHECKING, Union, Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 from tqdm import tqdm
 
 if TYPE_CHECKING:
@@ -185,7 +184,7 @@ def plot_scanpath_on_video(
     line_thickness: int = 2,
     max_fixations: int = 10,
     show_video: bool = False,
-    video_output_path: Optional[Union[Path, str]] = "scanpath.mp4",
+    video_output_path: Optional[Path | str] = "scanpath.mp4",
 ) -> None:
     """
     Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.

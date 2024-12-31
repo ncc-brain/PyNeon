@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from typing import TYPE_CHECKING, Union, Optional
+from typing import TYPE_CHECKING, Optional
 from scipy.interpolate import interp1d
 
 from numbers import Number
@@ -158,8 +158,8 @@ _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 def concat_streams(
     rec: "NeonRecording",
-    stream_names: Union[str, list[str]] = "all",
-    sampling_freq: Union[Number, str] = "min",
+    stream_names: str | list[str] = "all",
+    sampling_freq: Number | str = "min",
     interp_float_kind: str = "cubic",
     interp_other_kind: str = "nearest",
     inplace: bool = False,
@@ -341,7 +341,7 @@ VALID_EVENTS = {
 
 def concat_events(
     rec: "NeonRecording",
-    event_names: Union[str, list[str]],
+    event_names: str | list[str],
 ) -> pd.DataFrame:
     """
     Concatenate different events. All columns in the selected event type will be

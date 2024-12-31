@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
@@ -46,7 +45,7 @@ class NeonDataset:
         DataFrame containing the sections of the dataset.
     """
 
-    def __init__(self, dataset_dir: Union[str, Path]):
+    def __init__(self, dataset_dir: str | Path):
         dataset_dir = Path(dataset_dir)
         if not dataset_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {dataset_dir}")
@@ -91,7 +90,7 @@ class NeonDataset:
         """Get a NeonRecording by index."""
         return self.recordings[index]
 
-    def load_enrichment(self, enrichment_dir: Union[str, Path]):
+    def load_enrichment(self, enrichment_dir: str | Path):
         """
         Load enrichment information from an enrichment directory. The directory must
         contain an enrichment_info.txt file. Enrichment data will be parsed for each
