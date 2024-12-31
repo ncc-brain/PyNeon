@@ -109,7 +109,7 @@ def window_average(
         Data with window average applied.
     """
     _check_data(data)
-    new_ts = np.sort(new_ts)
+    new_ts = np.sort(new_ts).astype(np.int64)
     new_ts_median_diff = np.median(np.diff(new_ts))
     original_ts_median_diff = np.median(np.diff(data.index))
 
