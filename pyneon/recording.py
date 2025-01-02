@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, Literal, Optional, Dict, List
+from typing import Literal, Optional, Dict, List
 import pandas as pd
 import numpy as np
 import json
@@ -13,7 +13,6 @@ from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .preprocess import concat_streams, concat_events, smooth_camera_pose
 from .video import (
     NeonVideo,
-    sync_gaze_to_video,
     estimate_scanpath,
     detect_apriltags,
     compute_camera_positions,
