@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "PyNeon"
-copyright = "2024, PyNeon developers"
+copyright = "2024-%Y, PyNeon developers"
 author = "PyNeon developers"
 release = "dev"
 

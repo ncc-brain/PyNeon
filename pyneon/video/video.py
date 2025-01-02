@@ -2,11 +2,11 @@ import cv2
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Union
+from typing import Optional
 import matplotlib.pyplot as plt
 import json
 
-from ..vis import plot_frame
+from ..vis import plot_frame, plot_scanpath_on_video
 
 
 class NeonVideo(cv2.VideoCapture):
@@ -19,6 +19,8 @@ class NeonVideo(cv2.VideoCapture):
         Path to the video file.
     timestamps_file : :class:`pathlib.Path`
         Path to the timestamps file.
+    info_file : :class:`pathlib.Path`
+        Path to the scene camera info file.
 
     Attributes
     ----------
@@ -65,7 +67,7 @@ class NeonVideo(cv2.VideoCapture):
     def plot_frame(
         self,
         index: int = 0,
-        ax: Union[plt.Axes, None] = None,
+        ax: Optional[plt.Axes] = None,
         auto_title: bool = True,
         show: bool = True,
     ):
@@ -92,3 +94,42 @@ class NeonVideo(cv2.VideoCapture):
             Axis object containing the plot.
         """
         return plot_frame(self, index, ax, auto_title, show)
+
+    def plot_scanpath_on_video(
+        self,
+        scanpath: pd.DataFrame,
+        circle_radius: int = 10,
+        line_thickness: int = 2,
+        max_fixations: int = 10,
+        show_video: bool = False,
+        video_output_path: Path | str = "scanpath.mp4",
+    ) -> None:
+        """
+        Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        scanpath : :class:`pandas.DataFrame`
+            DataFrame containing the fixations and gaze data.
+        circle_radius : int
+            Radius of the fixation circles in pixels. Defaults to 10.
+        line_thickness : int or None
+            Thickness of the lines connecting fixations. If None, no lines are drawn.
+            Defaults to 2.
+        max_fixations : int
+            Maximum number of fixations to plot per frame. Defaults to 10.
+        show_video : bool
+            Whether to display the video with fixations overlaid. Defaults to False.
+        video_output_path : :class:`pathlib.Path` or str or None
+            Path to save the video with fixations overlaid. If None, the video is not saved.
+            Defaults to 'scanpath.mp4'.
+        """
+        plot_scanpath_on_video(
+            self,
+            scanpath,
+            circle_radius,
+            line_thickness,
+            max_fixations,
+            show_video,
+            video_output_path,
+        )

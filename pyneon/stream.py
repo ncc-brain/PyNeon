@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from numbers import Number
-from typing import Union, Literal, Optional
+from typing import Literal, Optional
 import copy
 
 from .tabular import NeonTabular
@@ -85,7 +85,15 @@ class NeonStream(NeonTabular):
         """Whether the stream is uniformly sampled."""
         return np.allclose(self.ts_diff, self.ts_diff[0])
 
-    def time_to_ts(self, time: Union[Number, np.ndarray]) -> np.ndarray:
+    @property
+    def columns(self):
+        return self.data.columns
+
+    @property
+    def dtypes(self):
+        return self.data.dtypes
+
+    def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
         """Convert relative time(s) in seconds to closest timestamp(s) in nanoseconds."""
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
@@ -169,12 +177,12 @@ class NeonStream(NeonTabular):
         )
         if new_stream.data.empty:
             raise ValueError("No data found in the range of the other stream")
-        return None if inplace else new_stream
+        return new_stream
 
     def interpolate(
         self,
         new_ts: Optional[np.ndarray] = None,
-        float_kind: str = "linear",
+        float_kind: str = "cubic",
         other_kind: str = "nearest",
         inplace: bool = False,
     ) -> Optional["NeonStream"]:
@@ -190,7 +198,7 @@ class NeonStream(NeonTabular):
             specified by Pupil Labs: https://pupil-labs.com/products/neon/specs.
         float_kind : str, optional
             Kind of interpolation applied on columns of float type,
-            by default ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
+            by default ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
             by default ``"nearest"``. For details see :class:`scipy.interpolate.interp1d`.
@@ -263,7 +271,7 @@ class NeonStream(NeonTabular):
         else:
             new_instance = copy.copy(self)
             new_instance.data = new_data
-        return new_instance
+            return new_instance
 
 
 class NeonGaze(NeonStream):

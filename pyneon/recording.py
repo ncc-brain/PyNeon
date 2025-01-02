@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import json
 from datetime import datetime
-import copy
 import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
@@ -88,7 +87,7 @@ class NeonRecording:
         ``filename`` (str), and ``path`` (Path).
     """
 
-    def __init__(self, recording_dir: Union[str, Path]):
+    def __init__(self, recording_dir: str | Path):
         recording_dir = Path(recording_dir)
         if not recording_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {recording_dir}")
@@ -279,10 +278,10 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def concat_streams(
         self,
-        stream_names: Union[str, list[str]],
-        sampling_freq: Union[Number, str] = "min",
-        resamp_float_kind: str = "linear",
-        resamp_other_kind: str = "nearest",
+        stream_names: str | list[str],
+        sampling_freq: Number | str = "min",
+        interp_float_kind: str = "cubic",
+        interp_other_kind: str = "nearest",
         inplace: bool = False,
     ) -> CustomStream:
         """
@@ -299,20 +298,19 @@ Recording duration: {self.info["duration"] / 1e9}s
             If a list, items must be in ``{"gaze", "imu", "eye_states"}``
             (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
         sampling_freq : float or int or str, optional
-            Sampling frequency to resample the streams to.
-            If numeric, the streams will be resampled to this frequency.
-            If ``"min"``, the lowest nominal sampling frequency
+            Sampling frequency of the concatenated streams.
+            If numeric, the streams will be interpolated to this frequency.
+            If ``"min"`` (default), the lowest nominal sampling frequency
             of the selected streams will be used.
             If ``"max"``, the highest nominal sampling frequency will be used.
-            Defaults to ``"min"``.
-        resamp_float_kind : str, optional
+        interp_float_kind : str, optional
             Kind of interpolation applied on columns of float type,
-            Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
-        resamp_other_kind : str, optional
+            Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
+        interp_other_kind : str, optional
             Kind of interpolation applied on columns of other types.
             Defaults to ``"nearest"``.
         inplace : bool, optional
-            Replace selected stream data with resampled data during concatenation
+            Replace selected stream data with interpolated data during concatenation
             if``True``. Defaults to ``False``.
 
         Returns
@@ -324,13 +322,13 @@ Recording duration: {self.info["duration"] / 1e9}s
             self,
             stream_names,
             sampling_freq,
-            resamp_float_kind,
-            resamp_other_kind,
+            interp_float_kind,
+            interp_other_kind,
             inplace,
         )
         return CustomStream(new_data)
 
-    def concat_events(self, event_names: Union[str, list[str]]) -> pd.DataFrame:
+    def concat_events(self, event_names: str | list[str]) -> pd.DataFrame:
         """
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional ``"type"`` column denotes the event
@@ -358,12 +356,12 @@ Recording duration: {self.info["duration"] / 1e9}s
         heatmap_source: Literal["gaze", "fixations", None] = "gaze",
         scatter_source: Literal["gaze", "fixations", None] = "fixations",
         step_size: int = 10,
-        sigma: Union[float, None] = 2,
+        sigma: int | float = 2,
         width_height: tuple[int, int] = (1600, 1200),
-        cmap: Union[str, None] = "inferno",
-        ax: Union[plt.Axes, None] = None,
+        cmap: str = "inferno",
+        ax: Optional[plt.Axes] = None,
         show: bool = True,
-    ):
+    ) -> tuple[plt.Figure, plt.Axes]:
         """
         Plot a heatmap of gaze or fixation data on a matplotlib axis.
         Users can flexibly choose to generate a smoothed heatmap and/or scatter plot and
@@ -382,15 +380,15 @@ Recording duration: {self.info["duration"] / 1e9}s
             for scatter plots.
         step_size : int
             Size of the grid cells in pixels. Defaults to 10.
-        sigma : float or None
+        sigma : int or float
             Standard deviation of the Gaussian kernel used to smooth the heatmap.
             If None or 0, no smoothing is applied. Defaults to 2.
         width_height : tuple[int, int]
             If video is not available, the width and height of the scene camera frames to
             specify the heatmap dimensions. Defaults to (1600, 1200).
-        cmap : str or None
+        cmap : str
             Colormap to use for the heatmap. Defaults to 'inferno'.
-        ax : :class:`matplotlib.pyplot.Axes` or None
+        ax : :class:`matplotlib.axes.Axes` or None
             Axis to plot the frame on. If ``None``, a new figure is created.
             Defaults to ``None``.
         show : bool
@@ -398,9 +396,9 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        fig : :class:`matplotlib.pyplot.Figure`
+        fig : :class:`matplotlib.figure.Figure`
             Figure object containing the plot.
-        ax : :class:`matplotlib.pyplot.Axes`
+        ax : :class:`matplotlib.axes.Axes`
             Axis object containing the plot.
         """
         return plot_distribution(
@@ -418,15 +416,15 @@ Recording duration: {self.info["duration"] / 1e9}s
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-    ) -> NeonGaze:
+        inplace: bool = False,
+    ) -> Optional[NeonGaze]:
         """
         Synchronize gaze data to video frames by applying windowed averaging
-        around each video frame timestamp.
+        around timestamps of each video frame.
+        See :meth:`pyneon.stream.NeonStream.window_average` for details.
 
-        Parameters:
-        -----------
-        rec : NeonRecording
-            Recording object containing gaze and video data.
+        Parameters
+        ----------
         window_size : int, optional
             The size of the time window (in nanoseconds)
             over which to compute the average around each new timestamp.
@@ -434,15 +432,18 @@ Recording duration: {self.info["duration"] / 1e9}s
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
+        inplace : bool, optional
+            Whether to replace the gaze data in the instance with the window averaged data.
 
         Returns
         -------
         NeonGaze
             Gaze object containing data synchronized to video frames.
         """
-        new_data = sync_gaze_to_video(self, window_size)
-        new_gaze = copy.copy(self.gaze)
-        new_gaze.data = new_data
+        if self.gaze is None or self.video is None:
+            raise ValueError("Gaze-video synchronization requires gaze and video data.")
+
+        new_gaze = self.gaze.window_average(self.video.ts, window_size, inplace)
         return new_gaze
 
     def estimate_scanpath(
@@ -646,12 +647,12 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def plot_scanpath_on_video(
         self,
-        scanpath: pd.DataFrame,
+        scanpath: Optional[pd.DataFrame] = None,
         circle_radius: int = 10,
-        line_thickness: Optional[int] = 2,
+        line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Optional[Union[Path, str]] = "scanpath.mp4",
+        video_output_path: Path | str = "scanpath.mp4",
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -673,10 +674,12 @@ Recording duration: {self.info["duration"] / 1e9}s
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'scanpath.mp4'.
         """
-        if (video := self.video) is None:
-            raise ValueError("Estimating scanpath requires video data.")
+        if scanpath is None:
+            scanpath = self.estimate_scanpath()
+        if self.video is None:
+            raise ValueError("Plotting scanpath on video requires video data.")
         plot_scanpath_on_video(
-            video,
+            self,
             scanpath,
             circle_radius,
             line_thickness,
@@ -687,7 +690,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def export_motion_bids(
         self,
-        motion_dir: Union[str, Path],
+        motion_dir: str | Path,
         prefix: str = "",
         extra_metadata: dict = {},
     ):
@@ -722,7 +725,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def export_eye_bids(
         self,
-        output_dir: Union[str, Path],
+        output_dir: str | Path,
         prefix: str = "",
         extra_metadata: dict = {},
     ):

@@ -4,8 +4,7 @@ from scipy.ndimage import gaussian_filter
 import cv2
 import matplotlib.pyplot as plt
 from pathlib import Path
-from numbers import Number
-from typing import TYPE_CHECKING, Union, Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 from tqdm import tqdm
 
 if TYPE_CHECKING:
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
 def plot_frame(
     video: "NeonVideo",
     index: int = 0,
-    ax: Union[plt.Axes, None] = None,
+    ax: Optional[plt.Axes] = None,
     auto_title: bool = True,
     show: bool = True,
 ):
@@ -69,12 +68,12 @@ def plot_distribution(
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
     scatter_source: Literal["gaze", "fixations", None] = "fixations",
     step_size: int = 10,
-    sigma: Union[Number, None] = 2,
+    sigma: int | float = 2,
     width_height: tuple[int, int] = (1600, 1200),
-    cmap: Union[str, None] = "inferno",
-    ax: Union[plt.Axes, None] = None,
+    cmap: str = "inferno",
+    ax: Optional[plt.Axes] = None,
     show: bool = True,
-):
+) -> tuple[plt.Figure, plt.Axes]:
     """
     Plot a heatmap of gaze or fixation data on a matplotlib axis.
     Users can flexibly choose to generate a smoothed heatmap and/or scatter plot and
@@ -93,15 +92,15 @@ def plot_distribution(
         for scatter plots.
     step_size : int
         Size of the grid cells in pixels. Defaults to 10.
-    sigma : float or None
+    sigma : int or float
         Standard deviation of the Gaussian kernel used to smooth the heatmap.
         If None or 0, no smoothing is applied. Defaults to 2.
     width_height : tuple[int, int]
         If video is not available, the width and height of the scene camera frames to
         specify the heatmap dimensions. Defaults to (1600, 1200).
-    cmap : str or None
+    cmap : str
         Colormap to use for the heatmap. Defaults to 'inferno'.
-    ax : :class:`matplotlib.pyplot.Axes` or None
+    ax : :class:`matplotlib.axes.Axes` or None
         Axis to plot the frame on. If ``None``, a new figure is created.
         Defaults to ``None``.
     show : bool
@@ -109,9 +108,9 @@ def plot_distribution(
 
     Returns
     -------
-    fig : :class:`matplotlib.pyplot.Figure`
+    fig : :class:`matplotlib.figure.Figure`
         Figure object containing the plot.
-    ax : :class:`matplotlib.pyplot.Axes`
+    ax : :class:`matplotlib.axes.Axes`
         Axis object containing the plot.
     """
     if heatmap_source is None and scatter_source is None:
@@ -182,10 +181,10 @@ def plot_scanpath_on_video(
     video: "NeonVideo",
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
-    line_thickness: Optional[int] = 2,
+    line_thickness: int = 2,
     max_fixations: int = 10,
     show_video: bool = False,
-    video_output_path: Optional[Union[Path, str]] = "scanpath.mp4",
+    video_output_path: Optional[Path | str] = "scanpath.mp4",
 ) -> None:
     """
     Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
