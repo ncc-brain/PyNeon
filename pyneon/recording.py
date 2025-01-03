@@ -623,9 +623,9 @@ Recording duration: {self.info["duration"] / 1e9}s
             if (json_file := self.der_dir / "camera_pose.json").is_file():
                 camera_pose_raw = pd.read_json(json_file, orient="records")
                 # Ensure 'camera_pos' is parsed as NumPy arrays
-                camera_pose_raw["camera_pos"] = camera_pose_raw[
-                    "camera_pos"
-                ].apply(lambda pos: np.array(pos, dtype=float))
+                camera_pose_raw["camera_pos"] = camera_pose_raw["camera_pos"].apply(
+                    lambda pos: np.array(pos, dtype=float)
+                )
             else:
                 # Run the function to get the data
                 camera_pose_raw = self.estimate_camera_pose()
@@ -681,7 +681,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             scanpath = self.estimate_scanpath()
         if self.video is None:
             raise ValueError("Plotting scanpath on video requires video data.")
-        
+
         if video_output_path is None:
             video_output_path = self.der_dir / "scanpath.mp4"
 
@@ -696,47 +696,49 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
     def overlay_detections_and_pose(
-            self,
-            april_detections: pd.DataFrame,
-            camera_positions: pd.DataFrame,
-            room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-            video_output_path: Path | str | None = None,
-            graph_size: np.ndarray = np.array([300, 300]),
-            show_video: bool = True,
-        ):
-            """
-            Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.
+        self,
+        april_detections: pd.DataFrame,
+        camera_positions: pd.DataFrame,
+        room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
+        video_output_path: Path | str | None = None,
+        graph_size: np.ndarray = np.array([300, 300]),
+        show_video: bool = True,
+    ):
+        """
+        Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.
 
-            Parameters
-            ----------
-            april_detections : :class:`pandas.DataFrame`
-                DataFrame containing the AprilTag detections.
-            camera_positions : :class:`pandas.DataFrame`
-                DataFrame containing the camera positions.
-            room_corners : :class:`numpy.ndarray`
-                Array containing the room corners coordinates. Defaults to a unit square.
-            video_output_path : :class:`pathlib.Path` or str
-                Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
-            graph_size : :class:`numpy.ndarray`
-                Size of the graph to overlay on the video. Defaults to [300, 300].
-            show_video : bool
-                Whether to display the video with detections and poses overlaid. Defaults to True.
-            """
-            if self.video is None:
-                raise ValueError("Overlaying detections and pose on video requires video data.")
-
-            if video_output_path is None:
-                video_output_path = self.der_dir / "detection_and_pose.mp4"
-
-            overlay_detections_and_pose(
-                self.video,
-                april_detections,
-                camera_positions,
-                room_corners,
-                video_output_path,
-                graph_size,
-                show_video,
+        Parameters
+        ----------
+        april_detections : :class:`pandas.DataFrame`
+            DataFrame containing the AprilTag detections.
+        camera_positions : :class:`pandas.DataFrame`
+            DataFrame containing the camera positions.
+        room_corners : :class:`numpy.ndarray`
+            Array containing the room corners coordinates. Defaults to a unit square.
+        video_output_path : :class:`pathlib.Path` or str
+            Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
+        graph_size : :class:`numpy.ndarray`
+            Size of the graph to overlay on the video. Defaults to [300, 300].
+        show_video : bool
+            Whether to display the video with detections and poses overlaid. Defaults to True.
+        """
+        if self.video is None:
+            raise ValueError(
+                "Overlaying detections and pose on video requires video data."
             )
+
+        if video_output_path is None:
+            video_output_path = self.der_dir / "detection_and_pose.mp4"
+
+        overlay_detections_and_pose(
+            self.video,
+            april_detections,
+            camera_positions,
+            room_corners,
+            video_output_path,
+            graph_size,
+            show_video,
+        )
 
     def export_motion_bids(
         self,

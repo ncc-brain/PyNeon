@@ -395,8 +395,7 @@ def overlay_detections_and_pose(
 
     # Extract camera positions into a dictionary for quick lookup
     results_dict = {
-        row["frame_idx"]: row["camera_pos"]
-        for _, row in camera_positions.iterrows()
+        row["frame_idx"]: row["camera_pos"] for _, row in camera_positions.iterrows()
     }
 
     # Group detections by frame
