@@ -25,6 +25,7 @@ dependencies = [
     "typeguard",
     "requests",
     "tqdm",
+    "pupil-apriltags",
 ]
 
 [project.optional-dependencies]

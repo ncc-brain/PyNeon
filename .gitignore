@@ -2,6 +2,9 @@
 data/
 tests/outputs/
 
+# Test scripts
+source/tutorials/sensor_fusion.ipynb
+
 # Ruff
 .ruff_cache/
 
