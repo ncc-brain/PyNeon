@@ -1,10 +1,10 @@
 from .video import NeonVideo
-from .mapping import sync_gaze_to_video, estimate_scanpath
-from .apriltags import detect_apriltags, compute_camera_positions
+from .mapping import estimate_scanpath
+from .apriltags import detect_apriltags, estimate_camera_pose
 
 __all__ = [
     "NeonVideo",
     "estimate_scanpath",
     "detect_apriltags",
-    "compute_camera_positions",
+    "estimate_camera_pose",
 ]

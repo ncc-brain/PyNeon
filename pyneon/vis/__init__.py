@@ -1,13 +1,13 @@
 from .vis import (
     plot_frame,
     plot_distribution,
-    plot_scanpath_on_video,
-    overlay_detections_and_positions,
+    overlay_scanpath,
+    overlay_detections_and_pose,
 )
 
 __all__ = [
     "plot_frame",
     "plot_distribution",
-    "plot_scanpath_on_video",
-    "overlay_detections_and_positions",
+    "overlay_scanpath",
+    "overlay_detections_and_pose",
 ]

@@ -12,9 +12,9 @@ def smooth_camera_pose(
     state_dim: int = 3,
     meas_dim: int = 3,
     initial_state_noise: float = 0.1,
-    process_noise: float = 0.005,
-    measurement_noise: float = 0.005,
-    gating_threshold: float = 3.0,
+    process_noise: float = 0.1,
+    measurement_noise: float = 0.01,
+    gating_threshold: float = 2.0,
     bidirectional: bool = False,
 ) -> pd.DataFrame:
     """

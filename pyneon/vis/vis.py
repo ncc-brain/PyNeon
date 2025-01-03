@@ -177,7 +177,7 @@ def plot_distribution(
     return fig, ax
 
 
-def plot_scanpath_on_video(
+def overlay_scanpath(
     video: "NeonVideo",
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
@@ -323,12 +323,12 @@ def plot_scanpath_on_video(
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 
-def overlay_detections_and_positions(
+def overlay_detections_and_pose(
     recording: "NeonRecording",
     april_detections: pd.DataFrame,
     camera_positions: pd.DataFrame,
     room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-    video_output_path: Union[Path, str] = "output_with_overlays.mp4",
+    video_output_path: Path | str = "detection_and_pose.mp4",
     graph_size: np.ndarray = np.array([300, 300]),
     show_video: bool = True,
 ):
@@ -395,7 +395,7 @@ def overlay_detections_and_positions(
 
     # Extract camera positions into a dictionary for quick lookup
     results_dict = {
-        row["frame_idx"]: row["smoothed_camera_pos"]
+        row["frame_idx"]: row["camera_pos"]
         for _, row in camera_positions.iterrows()
     }
 

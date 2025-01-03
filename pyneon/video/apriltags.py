@@ -82,13 +82,13 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     return all_detections
 
 
-def compute_camera_positions(
+def estimate_camera_pose(
     video: "NeonVideo",
     tag_locations_df: pd.DataFrame,
     all_detections: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """
-    Compute the camera position for each frame using AprilTag detections stored in a DataFrame,
+    Compute the camera pose for each frame using AprilTag detections stored in a DataFrame,
     handling arbitrary tag orientations.
 
     Parameters
