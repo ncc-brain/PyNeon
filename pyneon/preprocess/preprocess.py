@@ -1,24 +1,15 @@
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
+from numbers import Number
 from typing import TYPE_CHECKING, Optional
 from scipy.interpolate import interp1d
 
-from numbers import Number
+from ..utils import _check_stream_data
 
 if TYPE_CHECKING:
     from ..recording import NeonRecording
-from tqdm import tqdm
-
-
-# Check if data is from NeonStream.data
-def _check_data(data: pd.DataFrame) -> None:
-    # Check if index name is timestamp [ns]
-    if data.index.name != "timestamp [ns]":
-        raise ValueError("Index name must be 'timestamp [ns]'")
-    # Check if index is sorted
-    if not data.index.is_monotonic_increasing:
-        raise ValueError("Index must be sorted in increasing order")
 
 
 def interpolate(
@@ -50,7 +41,7 @@ def interpolate(
     pandas.DataFrame
         Interpolated data.
     """
-    _check_data(data)
+    _check_stream_data(data)
     new_ts = np.sort(new_ts).astype(np.int64)
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
     for col in data.columns:
@@ -108,7 +99,7 @@ def window_average(
     pd.DataFrame
         Data with window average applied.
     """
-    _check_data(data)
+    _check_stream_data(data)
     new_ts = np.sort(new_ts).astype(np.int64)
     new_ts_median_diff = np.median(np.diff(new_ts))
     original_ts_median_diff = np.median(np.diff(data.index))
