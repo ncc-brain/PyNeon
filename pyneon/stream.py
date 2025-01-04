@@ -7,6 +7,7 @@ import copy
 
 from .tabular import NeonTabular
 from .preprocess import interpolate, window_average
+from .utils import _check_stream_data
 
 
 class NeonStream(NeonTabular):
@@ -362,4 +363,5 @@ class CustomStream(NeonStream):
     sampling_freq_nominal = None
 
     def __init__(self, data: pd.DataFrame):
+        _check_stream_data(data)
         self.data = data
