@@ -212,7 +212,8 @@ def _create_epochs(
     """
     data = source.data.copy()
     data["epoch id"] = pd.Series(dtype="Int32")
-    data["t_rel"] = pd.Series(dtype="str")
+    data["t_rel"] = pd.Series(dtype="int64")
+    data["description"] = pd.Series(dtype="str")
     ts = source.ts
 
     epochs = times_df.copy().reset_index(drop=True)
@@ -220,12 +221,9 @@ def _create_epochs(
 
     # Iterate over each event time to create epochs
     for i, row in times_df.iterrows():
-        t_ref_i, t_before_i, t_after_i, description_i = (
-            row["t_ref"],
-            row["t_before"],
-            row["t_after"],
-            row["description"],
-        )  # Use a list of keys
+        t_ref_i, t_before_i, t_after_i, description_i = row[
+            ["t_ref", "t_before", "t_after", "description"]
+        ].to_list()
 
         start_time = t_ref_i - t_before_i
         end_time = t_ref_i + t_after_i
