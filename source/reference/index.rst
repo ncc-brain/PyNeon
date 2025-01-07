@@ -10,6 +10,7 @@ PyNeon API
     recording
     stream
     events
+    epochs
     video
     preprocess
     vis
