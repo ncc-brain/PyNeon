@@ -156,7 +156,7 @@ class NeonStream(NeonTabular):
         self,
         other: "NeonStream",
         inplace: bool = False,
-    ):
+    ) -> Optional["NeonStream"]:
         """
         Temporally restrict the stream to the timestamps of another stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.

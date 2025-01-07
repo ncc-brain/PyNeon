@@ -8,6 +8,7 @@ import copy
 if TYPE_CHECKING:
     from .stream import NeonStream
 
+from .utils import _check_event_data
 
 class NeonEV(NeonTabular):
     """
@@ -23,31 +24,28 @@ class NeonEV(NeonTabular):
         return self.data.index.to_numpy()
 
     @property
-    def end_ts(self) -> np.ndarray:
+    def end_ts(self) -> Optional[np.ndarray]:
         """End timestamps of events in nanoseconds."""
         if "end timestamp [ns]" in self.data.columns:
             return self.data["end timestamp [ns]"].to_numpy()
         else:
-            print("No 'end timestamp [ns]' column found.")
-            return np.empty(self.data.shape[0], dtype=np.int64)
+            raise ValueError("No 'end timestamp [ns]' column found in the instance.")
 
     @property
-    def durations(self) -> np.ndarray:
+    def durations(self) -> Optional[np.ndarray]:
         """Duration of events in milliseconds."""
         if "duration [ms]" in self.data.columns:
             return self.data["duration [ms]"].to_numpy()
         else:
-            print("No 'duration [ms]' column found.")
-            return np.empty(self.data.shape[0], dtype=np.int64)
+            raise ValueError("No 'duration [ms]' column found in the instance.")
 
     @property
-    def id(self) -> np.ndarray:
+    def id(self) -> Optional[np.ndarray]:
         """Event ID."""
         if self.id_name in self.data.columns and self.id_name is not None:
             return self.data[self.id_name].to_numpy()
         else:
-            print(f"Event ID name is undefined or not found in the data.")
-            return np.empty(self.data.shape[0], dtype=np.int64)
+            raise ValueError(f"No event ID column found in the instance.")
 
     def crop(
         self,
@@ -99,7 +97,9 @@ class NeonEV(NeonTabular):
             new_EV.data = new_data
             return new_EV
 
-    def restrict(self, other: "NeonStream") -> "NeonEV":
+    def restrict(
+        self, other: "NeonStream", inplace: bool = False
+    ) -> Optional["NeonEV"]:
         """
         Restrict events to a time range defined by another stream.
 
@@ -113,7 +113,9 @@ class NeonEV(NeonTabular):
         NeonEV
             Restricted event data.
         """
-        new_EV = self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=False)
+        new_EV = self.crop(
+            other.first_ts, other.last_ts, by="timestamp", inplace=inplace
+        )
         if new_EV.data.empty:
             raise ValueError("No data found in the range of the other stream")
         return new_EV
@@ -199,4 +201,22 @@ class NeonEvents(NeonEV):
                 "type": str,
             }
         )
+        self.id_name = None
+
+
+class CustomEvents(NeonEV):
+    """
+    Custom NeonEV class for user-defined event data.
+    
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Event data. Must be indexed by 'timestamp [ns]' or 'start timestamp [ns]'.
+    """
+
+    file = None
+
+    def __init__(self, data: pd.DataFrame):
+        _check_event_data(data)
+        self.data = data
         self.id_name = None
