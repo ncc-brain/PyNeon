@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 from .utils import _check_event_data
 
+
 class NeonEV(NeonTabular):
     """
     Base for Neon event data (blinks, fixations, saccades, "events" messages).
@@ -207,7 +208,7 @@ class NeonEvents(NeonEV):
 class CustomEvents(NeonEV):
     """
     Custom NeonEV class for user-defined event data.
-    
+
     Parameters
     ----------
     data : pd.DataFrame
