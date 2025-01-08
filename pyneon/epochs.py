@@ -7,7 +7,15 @@ import warnings
 
 
 if TYPE_CHECKING:
-    from ..tabular import NeonTabular
+    from .tabular import NeonTabular
+    from .events import (
+        NeonEV,
+        NeonBlinks,
+        NeonFixations,
+        NeonSaccades,
+        NeonEvents,
+        CustomEvents,
+    )
 
 
 class Epochs:
@@ -246,10 +254,11 @@ def _create_epochs(
 
 
 def extract_event_times(
-    event_data: pd.DataFrame,
-    t_before: int,
-    t_after: int,
-    event_name: str = "all",
+    event: "NeonEV",
+    t_before: Number,
+    t_after: Number,
+    time_unit: Literal["s", "ms", "us", "ns"] = "s",
+    type_name: str = "all",
 ) -> pd.DataFrame:
     """
     Extract event times from the event data DataFrame.
@@ -258,9 +267,9 @@ def extract_event_times(
     ----------
     event_data : pd.DataFrame
         DataFrame containing the event data.
-    t_before : float
+    t_before : Number
         Time before the event to start the epoch, in seconds.
-    t_after : float
+    t_after : Number
         Time after the event to end the epoch, in seconds.
     event_name : str, optional
         Name of the event to extract times for. Default is 'all'.
@@ -277,55 +286,34 @@ def extract_event_times(
 
     """
 
-    if "start timestamp [ns]" not in event_data.columns:
-        raise ValueError("Data must contain a 'start timestamp [ns]' column.")
+    if isinstance(event, NeonBlinks):
+        description = "blink"
+    elif isinstance(event, NeonFixations):
+        description = "fixation"
+    elif isinstance(event, NeonSaccades):
+        description = "saccade"
+    elif isinstance(event, NeonEvents):
+        description = "event"
+    t_ref = event.start_ts
 
-    description = None
-
-    # check if the event_data has the 'type' column. It should only be present in concat streams
-    if "type" in event_data.columns:
-        data_type = "concat_steam"
-    else:
-        data_type = "single_stream"
-
-    # check of event_data has fixation id column
-    if data_type == "single_stream":
-        if "fixation id" in event_data.columns:
-            description = "fixation"
-        elif "saccade id" in event_data.columns:
-            description = "saccade"
-        elif "blink id" in event_data.columns:
-            description = "blink"
-
-        event_times = event_data[["start timestamp [ns]"]].copy()
-        event_times.rename(columns={"start timestamp [ns]": "t_ref"}, inplace=True)
-        event_times["t_before"] = t_before
-        event_times["t_after"] = t_after
-        event_times["description"] = description
-
-    # Extract event times
-    if data_type == "concat_stream":
-        if event_name == "all":
-            event_data = event_data
-            event_times = event_data[["start timestamp [ns]", "type"]].copy()
-            event_times.rename(columns={"type": "description"}, inplace=True)
-
-        elif (
-            event_name == "fixation" or event_name == "saccade" or event_name == "blink"
-        ):
-            event_data = event_data[event_data["type"] == event_name]
-            event_times = event_data[["start timestamp [ns]", "type"]].copy()
-            event_times.rename(columns={"type": "description"}, inplace=True)
-
+    if isinstance(event, CustomEvents):
+        if "type" not in event.data.columns:
+            raise ValueError("Custom event data must have a 'type' column.")
+        if type_name == "all":
+            description = event.data["type"].to_numpy()
         else:
-            event_data = event_data[event_data["message name"] == event_name]
-            event_times = event_data[["start timestamp [ns]", "message name"]].copy()
-            event_times.rename(columns={"message name": "description"}, inplace=True)
+            mask = event.data["type"] == type_name
+            t_ref = event.data.index.to_numpy()[mask]
+            description = type_name
 
-        event_times["t_before"] = t_before
-        event_times["t_after"] = t_after
-
-    return event_times
+    return construct_times_df(
+        t_ref,
+        t_before,
+        t_after,
+        description,
+        0,
+        time_unit,
+    )
 
 
 def construct_times_df(
