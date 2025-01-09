@@ -68,11 +68,11 @@ class NeonDataset:
                     self.recordings.append(NeonRecording(rec_dir))
                 except Exception as e:
                     raise RuntimeWarning(
-                        f"Skipping reading recording {rec_id} " f"due to error:\n{e}"
+                        f"Skipping reading recording {rec_id} due to error:\n{e}"
                     )
             elif len(rec_dir) == 0:
                 raise FileNotFoundError(
-                    "Recording directory not found for recording id " f"{rec_id_start}"
+                    f"Recording directory not found for recording id {rec_id_start}"
                 )
             else:
                 raise FileNotFoundError(

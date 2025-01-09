@@ -109,8 +109,8 @@ class NeonRecording:
     def __repr__(self) -> str:
         return f"""
 Recording ID: {self.recording_id}
-Wearer ID: {self.info['wearer_id']}
-Wearer name: {self.info['wearer_name']}
+Wearer ID: {self.info["wearer_id"]}
+Wearer name: {self.info["wearer_name"]}
 Recording start time: {self.start_datetime}
 Recording duration: {self.info["duration"] / 1e9}s
 {self.contents.to_string()}
