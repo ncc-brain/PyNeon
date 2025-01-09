@@ -5,17 +5,17 @@ from numbers import Number
 from typing import TYPE_CHECKING, Literal
 import warnings
 
+from .events import (
+    NeonEV,
+    NeonBlinks,
+    NeonFixations,
+    NeonSaccades,
+    NeonEvents,
+    CustomEvents,
+)
 
 if TYPE_CHECKING:
     from .tabular import NeonTabular
-    from .events import (
-        NeonEV,
-        NeonBlinks,
-        NeonFixations,
-        NeonSaccades,
-        NeonEvents,
-        CustomEvents,
-    )
 
 
 class Epochs:
@@ -94,25 +94,25 @@ class Epochs:
         # Create epochs
         self.epochs, self.data = _create_epochs(source, times_df)
 
-        # Check epoch lengths
-        data_len = self.epochs["epoch data"].apply(lambda x: x.shape[0])
-        self.min_len = data_len.min()
-        self.max_len = data_len.max()
-        self.equal_times = data_len.nunique() == 1
+        # # Check epoch lengths
+        # data_len = self.epochs["epoch data"].apply(lambda x: x.shape[0])
+        # self.min_len = data_len.min()
+        # self.max_len = data_len.max()
+        # self.equal_times = data_len.nunique() == 1
 
-        # Check if t_ref differences are equal
-        t_ref_diff = self.epochs["t_ref"].diff().dropna().unique()
-        self.equal_dist = len(t_ref_diff) == 1
+        # # Check if t_ref differences are equal
+        # t_ref_diff = self.epochs["t_ref"].diff().dropna().unique()
+        # self.equal_dist = len(t_ref_diff) == 1
 
-        # Check if t_before and t_after are the same across epochs
-        self.equal_length = (
-            self.epochs["t_before"].nunique() == 1
-            and self.epochs["t_after"].nunique() == 1
-        )
-        if self.equal_length:
-            self.window_length = (
-                self.epochs["t_before"].iloc[0] + self.epochs["t_after"].iloc[0]
-            )
+        # # Check if t_before and t_after are the same across epochs
+        # self.equal_length = (
+        #     self.epochs["t_before"].nunique() == 1
+        #     and self.epochs["t_after"].nunique() == 1
+        # )
+        # if self.equal_length:
+        #     self.window_length = (
+        #         self.epochs["t_before"].iloc[0] + self.epochs["t_after"].iloc[0]
+        #     )
 
     def to_numpy(self, sampling_rate=100, columns=None):
         """
@@ -220,12 +220,12 @@ def _create_epochs(
     """
     data = source.data.copy()
     data["epoch id"] = pd.Series(dtype="Int32")
-    data["t_rel"] = pd.Series(dtype="int64")
-    data["description"] = pd.Series(dtype="str")
+    data["epoch time"] = pd.Series(dtype="int64")
+    data["epoch description"] = pd.Series(dtype="str")
     ts = source.ts
 
     epochs = times_df.copy().reset_index(drop=True)
-    epochs["epoch data"] = pd.Series(dtype="object")
+    epochs["data"] = pd.Series(dtype="object")
 
     # Iterate over each event time to create epochs
     for i, row in times_df.iterrows():
@@ -243,17 +243,19 @@ def _create_epochs(
             continue
 
         data.loc[mask, "epoch id"] = i
-        data.loc[mask, "description"] = description_i
-        data.loc[mask, "t_rel"] = data.loc[mask].index.to_numpy() - t_ref_i
+        data.loc[mask, "epoch description"] = str(description_i)
+        data.loc[mask, "epoch time"] = (
+            data.loc[mask].index.to_numpy() - t_ref_i
+        ).astype("int64")
 
         local_data = data.loc[mask].copy()
-        local_data.drop(columns=["epoch id", "description"], inplace=True)
-        epochs.at[i, "epoch data"] = local_data
+        local_data.drop(columns=["epoch id", "epoch description"], inplace=True)
+        epochs.at[i, "data"] = local_data
 
     return epochs, data
 
 
-def extract_event_times(
+def events_to_times_df(
     event: "NeonEV",
     t_before: Number,
     t_after: Number,
@@ -261,29 +263,32 @@ def extract_event_times(
     type_name: str = "all",
 ) -> pd.DataFrame:
     """
-    Extract event times from the event data DataFrame.
+    Construct a times_df DataFrame suitable for creating epochs from event data.
 
     Parameters
     ----------
-    event_data : pd.DataFrame
-        DataFrame containing the event data.
+    event : NeonEV
+        NeonEV instance containing the event times.
     t_before : Number
-        Time before the event to start the epoch, in seconds.
+        Time before the event start time to start the epoch. Units specified by `time_unit`.
     t_after : Number
-        Time after the event to end the epoch, in seconds.
-    event_name : str, optional
-        Name of the event to extract times for. Default is 'all'.
+        Time after the event start time to end the epoch. Units specified by `time_unit`.
+    time_unit : str, optional
+        Unit of time for the reference times, can be 's' (seconds), 'ms' (milliseconds),
+        'us' (microseconds), or 'ns' (nanoseconds). Defaults to 's'.
 
     Returns
     -------
+    pandas.DataFrame
+        DataFrame containing epoch information with the following columns:
 
-    event_times : pd.DataFrame
-        DataFrame containing the extracted event times with the following columns:
-        - 't_ref': Reference time of the event, in nanoseconds.
-        - 't_before': Time before the reference time to start the epoch, in nanoseconds.
-        - 't_after': Time after the reference time to end the epoch, in nanoseconds.
-        - 'description': Description or label associated with the event.
+            ``t_ref``: Reference time of the epoch, in nanoseconds.
 
+            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.
+
+            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.
+
+            ``description``: Description or label associated with the epoch.
     """
 
     if isinstance(event, NeonBlinks):
@@ -306,7 +311,7 @@ def extract_event_times(
             t_ref = event.data.index.to_numpy()[mask]
             description = type_name
 
-    return construct_times_df(
+    times_df = construct_times_df(
         t_ref,
         t_before,
         t_after,
@@ -314,6 +319,8 @@ def extract_event_times(
         0,
         time_unit,
     )
+    times_df["t_ref"] = t_ref
+    return times_df
 
 
 def construct_times_df(
@@ -324,7 +331,10 @@ def construct_times_df(
     global_t_ref: int = 0,
     time_unit: Literal["s", "ms", "us", "ns"] = "ns",
 ) -> pd.DataFrame:
-    """Construct times_df DataFrame from arrays about epoch information.
+    """
+    Handles the construction of the times_df DataFrame for creating epochs. It populates
+    single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
+    and converts all times to UTC timestamps in nanoseconds.
 
     Parameters
     ----------
@@ -339,10 +349,22 @@ def construct_times_df(
     global_t_ref : int
         Global reference time to be added to each reference time in `t_ref`.
         Should represent UTC timestamp in nanoseconds. Defaults to 0.
+    time_unit : str
+        Unit of time for the reference times and `global_t_ref` ('ns' for nanoseconds or 's' for seconds).
+        Defaults to 'ns'.
 
-    Notes
-    -----
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing epoch information with the following columns:
 
+            ``t_ref``: Reference time of the epoch, in nanoseconds.
+
+            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.
+
+            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.
+
+            ``description``: Description or label associated with the epoch.
     """
     n_epoch = len(t_ref)
 
