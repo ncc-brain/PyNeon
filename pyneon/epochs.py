@@ -18,6 +18,28 @@ if TYPE_CHECKING:
     from .tabular import NeonTabular
 
 
+def _check_overlap(times_df: pd.DataFrame) -> bool:
+    """
+    Emits warnings if any adjacent epochs overlap in time.
+    """
+    times_df = times_df.sort_values("t_ref", inplace=False)
+    overlap = False
+    overlap_epochs = []
+    for i in range(1, times_df.shape[0]):
+        # Check if the current epoch overlaps with the previous epoch
+        if (
+            times_df["t_ref"].iloc[i] - times_df["t_before"].iloc[i]
+            < times_df["t_ref"].iloc[i - 1] + times_df["t_after"].iloc[i - 1]
+        ):
+            overlap_epochs.append((i - 1, i))
+            overlap = True
+    if overlap:
+        warnings.warn(
+            f"The following epochs overlap in time:\n{overlap_epochs}", RuntimeWarning
+        )
+    return overlap
+
+
 class Epochs:
     """
     Class to create and manage epochs in the data streams.
@@ -143,6 +165,11 @@ class Epochs:
             self.t_after, self.t_after[0]
         )
 
+    @property
+    def has_overlap(self) -> bool:
+        """Whether any adjacent epochs overlap."""
+        return _check_overlap(self.epochs)
+
     def to_numpy(self, sampling_rate=100, columns=None):
         """
         Converts epochs into a NumPy array with dimensions (n_epochs, n_times, n_channels).
@@ -247,6 +274,8 @@ def _create_epochs(
     """
     Create epochs DataFrame and annotate the data with epoch information.
     """
+    _check_overlap(times_df)
+
     data = source.data.copy()
     data["epoch id"] = pd.Series(dtype="Int32")
     data["epoch time"] = pd.Series(dtype="int64")
