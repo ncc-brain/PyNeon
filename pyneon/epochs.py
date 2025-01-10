@@ -61,8 +61,9 @@ class Epochs:
         t_before: np.ndarray | Number | None = None,
         t_after: np.ndarray | Number | None = None,
         description: np.ndarray | str | None = None,
+        t_ref_unit: Literal["s", "ms", "us", "ns"] = "ns",
+        t_other_unit: Literal["s", "ms", "us", "ns"] = "s",
         global_t_ref: int = 0,
-        time_unit: Literal["s", "ms", "us", "ns"] = "ns",
     ):
         if times_df is not None:
             if times_df.isnull().values.any():
@@ -87,8 +88,9 @@ class Epochs:
                 t_before,
                 t_after,
                 description,
+                t_ref_unit,
+                t_other_unit,
                 global_t_ref,
-                time_unit,
             )
 
         # Create epochs
@@ -274,7 +276,7 @@ def events_to_times_df(
     t_after : Number
         Time after the event start time to end the epoch. Units specified by `time_unit`.
     time_unit : str, optional
-        Unit of time for the reference times, can be 's' (seconds), 'ms' (milliseconds),
+        Unit of time for ``t_before`` and ``t_after``. Can be 's' (seconds), 'ms' (milliseconds),
         'us' (microseconds), or 'ns' (nanoseconds). Defaults to 's'.
 
     Returns
@@ -316,10 +318,9 @@ def events_to_times_df(
         t_before,
         t_after,
         description,
-        0,
+        "ns",
         time_unit,
     )
-    times_df["t_ref"] = t_ref
     return times_df
 
 
@@ -328,8 +329,9 @@ def construct_times_df(
     t_before: np.ndarray | Number,
     t_after: np.ndarray | Number,
     description: np.ndarray | str,
+    t_ref_unit: Literal["s", "ms", "us", "ns"] = "ns",
+    t_other_unit: Literal["s", "ms", "us", "ns"] = "s",
     global_t_ref: int = 0,
-    time_unit: Literal["s", "ms", "us", "ns"] = "ns",
 ) -> pd.DataFrame:
     """
     Handles the construction of the times_df DataFrame for creating epochs. It populates
@@ -366,18 +368,10 @@ def construct_times_df(
 
             ``description``: Description or label associated with the epoch.
     """
-    n_epoch = len(t_ref)
+    if n_epoch := len(t_ref) == 0:
+        raise ValueError("t_ref must not be empty")
 
-    # Set conversion factor based on time unit
-    match time_unit:
-        case "s":
-            factor = 1e9
-        case "ms":
-            factor = 1e6
-        case "us":
-            factor = 1e3
-        case "ns":
-            factor = 1
+    time_factors = {"s": 1e9, "ms": 1e6, "us": 1e3, "ns": 1}
 
     # Check each of the parameters (t_before, t_after, description) for correct length and type
     for x, name in zip(
@@ -396,9 +390,9 @@ def construct_times_df(
     # Do rounding as they should be timestamps already
     times_df = pd.DataFrame(
         {
-            "t_ref": t_ref * factor + global_t_ref,
-            "t_before": t_before * factor,
-            "t_after": t_after * factor,
+            "t_ref": t_ref * time_factors[t_ref_unit] + global_t_ref,
+            "t_before": t_before * time_factors[t_other_unit],
+            "t_after": t_after * time_factors[t_other_unit],
             "description": description,
         }
     )
