@@ -74,7 +74,7 @@ class Epochs:
                 raise ValueError(
                     "t_ref, t_before, t_after, and description must be provided if times_df is None"
                 )
-            times_df = construct_times_df(
+            times_df = _construct_times_df(
                 t_ref,
                 t_before,
                 t_after,
@@ -340,7 +340,7 @@ def events_to_times_df(
             t_ref = event.data.index.to_numpy()[mask]
             description = type_name
 
-    times_df = construct_times_df(
+    times_df = _construct_times_df(
         t_ref,
         t_before,
         t_after,
@@ -351,7 +351,7 @@ def events_to_times_df(
     return times_df
 
 
-def construct_times_df(
+def _construct_times_df(
     t_ref: np.ndarray,
     t_before: np.ndarray | Number,
     t_after: np.ndarray | Number,
