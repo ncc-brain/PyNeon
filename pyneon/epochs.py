@@ -68,15 +68,6 @@ class Epochs:
         if times_df is not None:
             if times_df.isnull().values.any():
                 raise ValueError("times_df should not have any empty values")
-            # Set columns to appropriate data types (check if columns are present along the way)
-            times_df = times_df.astype(
-                {
-                    "t_ref": "int64",
-                    "t_before": "int64",
-                    "t_after": "int64",
-                    "description": "str",
-                }
-            )
         else:
             # Ensure the input arrays are not None
             if any(x is None for x in [t_ref, t_before, t_after, description]):
@@ -92,6 +83,16 @@ class Epochs:
                 t_other_unit,
                 global_t_ref,
             )
+
+        # Set columns to appropriate data types (check if columns are present along the way)
+        times_df = times_df.astype(
+            {
+                "t_ref": "int64",
+                "t_before": "int64",
+                "t_after": "int64",
+                "description": "str",
+            }
+        )
 
         # Create epochs
         self.epochs, self.data = _create_epochs(source, times_df)
@@ -111,10 +112,36 @@ class Epochs:
         #     self.epochs["t_before"].nunique() == 1
         #     and self.epochs["t_after"].nunique() == 1
         # )
-        # if self.equal_length:
-        #     self.window_length = (
-        #         self.epochs["t_before"].iloc[0] + self.epochs["t_after"].iloc[0]
-        #     )
+
+    def __len__(self):
+        return self.epochs.shape[0]
+
+    @property
+    def t_ref(self) -> np.ndarray:
+        """The reference time for each epoch in UTC nanoseconds."""
+        return self.epochs["t_ref"].to_numpy()
+
+    @property
+    def t_before(self) -> np.ndarray:
+        """The time before the reference time for each epoch in nanoseconds."""
+        return self.epochs["t_before"].to_numpy()
+
+    @property
+    def t_after(self) -> np.ndarray:
+        """The time after the reference time for each epoch in nanoseconds."""
+        return self.epochs["t_after"].to_numpy()
+
+    @property
+    def description(self) -> np.ndarray:
+        """The description or label for each epoch."""
+        return self.epochs["description"].to_numpy()
+
+    @property
+    def is_equal_length(self) -> bool:
+        """Whether all epochs have the same length."""
+        return np.allclose(self.t_before, self.t_before[0]) and np.allclose(
+            self.t_after, self.t_after[0]
+        )
 
     def to_numpy(self, sampling_rate=100, columns=None):
         """
@@ -384,7 +411,7 @@ def construct_times_df(
         elif isinstance(x, (Number, str)):
             x = np.repeat(x, n_epoch)
         else:
-            raise ValueError(f"{name} must be a single number or a numpy array")
+            raise ValueError(f"{name} must be a single value or a numpy array")
 
     # Construct the event times DataFrame
     # Do rounding as they should be timestamps already
