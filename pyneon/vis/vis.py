@@ -54,7 +54,7 @@ def plot_frame(
     if ret:
         ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         if auto_title:
-            ax.set_title(f"{video.video_file.name} | Frame {index+1}/{len(video)}")
+            ax.set_title(f"{video.video_file.name} | Frame {index + 1}/{len(video)}")
         ax.axis("off")
     else:
         raise RuntimeError(f"Could not read frame {index}")
