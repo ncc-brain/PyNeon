@@ -22,7 +22,7 @@ def _check_overlap(times_df: pd.DataFrame) -> bool:
     """
     Emits warnings if any adjacent epochs overlap in time.
     """
-    times_df = times_df.sort_values("t_ref", inplace=False)
+    times_df = times_df.sort_values("t_ref")
     overlap = False
     overlap_epochs = []
     for i in range(1, times_df.shape[0]):
@@ -106,6 +106,8 @@ class Epochs:
                 global_t_ref,
             )
 
+        # Sort by t_ref
+        times_df = times_df.sort_values("t_ref").reset_index(drop=True)
         # Set columns to appropriate data types (check if columns are present along the way)
         times_df = times_df.astype(
             {
