@@ -288,6 +288,7 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">NeonRecording class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vis.html">Visualization module</a></li>
@@ -524,7 +525,7 @@ If <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;<
 of the selected streams will be used.
 If <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, the highest nominal sampling frequency will be used.</p></li>
 <li><p><strong>interp_float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;cubic&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.15.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;cubic&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.15.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
 <li><p><strong>interp_other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types.
 Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.</p></li>
 <li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Replace selected stream data with interpolated data during concatenation
