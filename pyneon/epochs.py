@@ -72,7 +72,7 @@ class Epochs:
         Global reference time (in nanoseconds) to be added to `t_ref`.
         Unit is nanosecond. Defaults to 0. This is useful when the reference times
         are relative to a global start time
-        (e.g. attr:`pyneon.stream.NeonStream.first_ts`).
+        (for instance :attr:`pyneon.stream.NeonStream.first_ts`).
     t_ref_unit : str, optional
         Unit of time for the reference times. Default is 'ns'.
     t_other_unit : str, optional
