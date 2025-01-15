@@ -363,9 +363,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>video_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the video file.</p></li>
-<li><p><strong>timestamps_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the timestamps file.</p></li>
-<li><p><strong>info_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to the scene camera info file.</p></li>
+<li><p><strong>video_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a>) – Path to the video file.</p></li>
+<li><p><strong>timestamps_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a>) – Path to the timestamps file.</p></li>
+<li><p><strong>info_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a>) – Path to the scene camera info file.</p></li>
 </ul>
 </dd>
 </dl>
@@ -375,7 +375,7 @@
 <dd><p>Timestamps of the video frames in nanoseconds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)">numpy.ndarray</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -386,7 +386,7 @@
 <dd><p>Alias for timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)">numpy.ndarray</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -443,7 +443,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Index of the frame to plot.</p></li>
-<li><p><strong>ax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Axes</span></code> or None) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.0)"><em>matplotlib.axes.Axes</em></a><em> or </em><em>None</em>) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
 Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>auto_title</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to automatically set the title of the axis.
 The automatic title includes the video file name and the frame index.
@@ -452,8 +452,8 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>fig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Figure</span></code>) – Figure object containing the plot.</p></li>
-<li><p><strong>ax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Axes</span></code>) – Axis object containing the plot.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em>) – Figure object containing the plot.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – Axis object containing the plot.</p></li>
 </ul>
 </p>
 </dd>
@@ -467,13 +467,13 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>scanpath</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame containing the fixations and gaze data.</p></li>
+<li><p><strong>scanpath</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a>) – DataFrame containing the fixations and gaze data.</p></li>
 <li><p><strong>circle_radius</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Radius of the fixation circles in pixels. Defaults to 10.</p></li>
 <li><p><strong>line_thickness</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> or </em><em>None</em>) – Thickness of the lines connecting fixations. If None, no lines are drawn.
 Defaults to 2.</p></li>
 <li><p><strong>max_fixations</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Maximum number of fixations to plot per frame. Defaults to 10.</p></li>
 <li><p><strong>show_video</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to display the video with fixations overlaid. Defaults to False.</p></li>
-<li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a> or str or None) – Path to save the video with fixations overlaid. If None, the video is not saved.
+<li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><em>None</em>) – Path to save the video with fixations overlaid. If None, the video is not saved.
 Defaults to ‘scanpath.mp4’.</p></li>
 </ul>
 </dd>
@@ -498,7 +498,7 @@ Defaults to ‘scanpath.mp4’.</p></li>
 <dd class="field-even"><p>DataFrame containing the scanpath with updated fixation points.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
 </dd>
 </dl>
 </dd></dl>

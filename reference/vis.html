@@ -362,9 +362,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>video</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonVideo</span></code>) – Video object to plot the frame from.</p></li>
+<li><p><strong>video</strong> (<a class="reference internal" href="video.html#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><em>NeonVideo</em></a>) – Video object to plot the frame from.</p></li>
 <li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Index of the frame to plot.</p></li>
-<li><p><strong>ax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Axes</span></code> or None) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.0)"><em>matplotlib.axes.Axes</em></a><em> or </em><em>None</em>) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
 Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>auto_title</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to automatically set the title of the axis.
 The automatic title includes the video file name and the frame index.
@@ -373,8 +373,8 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>fig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Figure</span></code>) – Figure object containing the plot.</p></li>
-<li><p><strong>ax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.pyplot.Axes</span></code>) – Axis object containing the plot.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em>) – Figure object containing the plot.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – Axis object containing the plot.</p></li>
 </ul>
 </p>
 </dd>
@@ -390,7 +390,7 @@ the source of the data (gaze or fixation).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rec</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonRecording</span></code>) – Recording object containing the gaze and video data.</p></li>
+<li><p><strong>rec</strong> (<a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><em>NeonRecording</em></a>) – Recording object containing the gaze and video data.</p></li>
 <li><p><strong>heatmap_source</strong> (<em>{'gaze'</em><em>, </em><em>'fixations'</em><em>, </em><em>None}</em>) – Source of the data to plot as a heatmap. If None, no heatmap is plotted.
 Defaults to ‘gaze’.</p></li>
 <li><p><strong>scatter_source</strong> (<em>{'gaze'</em><em>, </em><em>'fixations'</em><em>, </em><em>None}</em>) – Source of the data to plot as a scatter plot. If None, no scatter plot is plotted.
@@ -402,15 +402,15 @@ If None or 0, no smoothing is applied. Defaults to 2.</p></li>
 <li><p><strong>width_height</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – If video is not available, the width and height of the scene camera frames to
 specify the heatmap dimensions. Defaults to (1600, 1200).</p></li>
 <li><p><strong>cmap</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Colormap to use for the heatmap. Defaults to ‘inferno’.</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a> or None) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.0)"><em>matplotlib.axes.Axes</em></a><em> or </em><em>None</em>) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
 Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Show the figure if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>fig</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.10.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.figure.Figure</span></code></a>) – Figure object containing the plot.</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>) – Axis object containing the plot.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em>) – Figure object containing the plot.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – Axis object containing the plot.</p></li>
 </ul>
 </p>
 </dd>
@@ -424,14 +424,14 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>video</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonVideo</span></code>) – Video object to overlay the fixations on.</p></li>
-<li><p><strong>scanpath</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame containing the fixations and gaze data.</p></li>
+<li><p><strong>video</strong> (<a class="reference internal" href="video.html#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><em>NeonVideo</em></a>) – Video object to overlay the fixations on.</p></li>
+<li><p><strong>scanpath</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a>) – DataFrame containing the fixations and gaze data.</p></li>
 <li><p><strong>circle_radius</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Radius of the fixation circles in pixels. Defaults to 10.</p></li>
 <li><p><strong>line_thickness</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> or </em><em>None</em>) – Thickness of the lines connecting fixations. If None, no lines are drawn.
 Defaults to 2.</p></li>
 <li><p><strong>max_fixations</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Maximum number of fixations to plot per frame. Defaults to 10.</p></li>
 <li><p><strong>show_video</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to display the video with fixations overlaid. Defaults to False.</p></li>
-<li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a> or str or None) – Path to save the video with fixations overlaid. If None, the video is not saved.
+<li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><em>None</em>) – Path to save the video with fixations overlaid. If None, the video is not saved.
 Defaults to ‘scanpath.mp4’.</p></li>
 </ul>
 </dd>

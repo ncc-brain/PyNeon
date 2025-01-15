@@ -362,9 +362,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>new_ts</strong> (<em>np.ndarray</em>) – An array of new timestamps (in nanoseconds)
+<li><p><strong>new_ts</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a>) – An array of new timestamps (in nanoseconds)
 at which to evaluate the interpolant.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Data to interpolate. Must have a monotonically increasing
+<li><p><strong>data</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a>) – Data to interpolate. Must have a monotonically increasing
 index named <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>.</p></li>
 <li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
 by default <code class="docutils literal notranslate"><span class="pre">&quot;cubic&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.15.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
@@ -388,13 +388,13 @@ by default <code class="docutils literal notranslate"><span class="pre">&quot;ne
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>new_ts</strong> (<em>np.ndarray</em>) – An array of new timestamps (in nanoseconds)
+<li><p><strong>new_ts</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a>) – An array of new timestamps (in nanoseconds)
 at which to compute the windowed averages.
 The median interval between these new timestamps must be larger than
 the median interval between the original data timestamps, i.e.,
 <code class="docutils literal notranslate"><span class="pre">np.median(np.diff(new_ts))</span> <span class="pre">&gt;</span> <span class="pre">np.median(np.diff(data.index))</span></code>.
 In other words, only downsampling is supported.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Data to apply window average to. Must have a monotonically increasing
+<li><p><strong>data</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a>) – Data to apply window average to. Must have a monotonically increasing
 index named <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>.</p></li>
 <li><p><strong>window_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The size of the time window (in nanoseconds)
 over which to compute the average around each new timestamp.
@@ -408,7 +408,7 @@ i.e., <code class="docutils literal notranslate"><span class="pre">window_size</
 <dd class="field-even"><p>Data with window average applied.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -424,7 +424,7 @@ are used to define the common timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rec</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonRecording</span></code>) – NeonRecording object containing the streams to concatenate.</p></li>
+<li><p><strong>rec</strong> (<a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><em>NeonRecording</em></a>) – NeonRecording object containing the streams to concatenate.</p></li>
 <li><p><strong>stream_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Stream names to concatenate. If “all”, then all streams will be used.
 If a list, items must be in <code class="docutils literal notranslate"><span class="pre">{&quot;gaze&quot;,</span> <span class="pre">&quot;imu&quot;,</span> <span class="pre">&quot;eye_states&quot;}</span></code>
 (<code class="docutils literal notranslate"><span class="pre">&quot;3d_eye_states&quot;</span></code>) is also tolerated as an alias for <code class="docutils literal notranslate"><span class="pre">&quot;eye_states&quot;</span></code>).</p></li>
@@ -445,7 +445,7 @@ if``True``. Defaults to <code class="docutils literal notranslate"><span class="
 <dd class="field-even"><p><strong>concat_data</strong> – Concatenated data.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -462,17 +462,17 @@ between physiological events and user-supplied messages.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rec</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonRecording</span></code>) – NeonRecording object containing the events to concatenate.</p></li>
+<li><p><strong>rec</strong> (<a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><em>NeonRecording</em></a>) – NeonRecording object containing the events to concatenate.</p></li>
 <li><p><strong>event_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – List of event names to concatenate. Event names must be in
 <code class="docutils literal notranslate"><span class="pre">{&quot;blinks&quot;,</span> <span class="pre">&quot;fixations&quot;,</span> <span class="pre">&quot;saccades&quot;,</span> <span class="pre">&quot;events&quot;}</span></code>
 (singular forms are tolerated).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>concat_events</strong> – Concatenated events.</p>
+<dd class="field-even"><p>Concatenated events.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
 </dd>
 </dl>
 </dd></dl>
