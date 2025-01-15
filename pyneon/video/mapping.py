@@ -29,7 +29,7 @@ def estimate_scanpath(
 
     Returns
     -------
-    pd.DataFrame
+    pandas.DataFrame
         DataFrame containing the scanpath with updated fixation points.
     """
     if not np.allclose(sync_gaze.ts, video.ts):

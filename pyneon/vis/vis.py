@@ -24,11 +24,11 @@ def plot_frame(
 
     Parameters
     ----------
-    video : :class:`NeonVideo`
+    video : NeonVideo
         Video object to plot the frame from.
     index : int
         Index of the frame to plot.
-    ax : :class:`matplotlib.pyplot.Axes` or None
+    ax : matplotlib.axes.Axes or None
         Axis to plot the frame on. If ``None``, a new figure is created.
         Defaults to ``None``.
     auto_title : bool
@@ -38,9 +38,9 @@ def plot_frame(
 
     Returns
     -------
-    fig : :class:`matplotlib.pyplot.Figure`
+    fig : matplotlib.figure.Figure
         Figure object containing the plot.
-    ax : :class:`matplotlib.pyplot.Axes`
+    ax : matplotlib.axes.Axes
         Axis object containing the plot.
     """
     if index >= len(video.ts) or index < 0:
@@ -81,7 +81,7 @@ def plot_distribution(
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         Recording object containing the gaze and video data.
     heatmap_source : {'gaze', 'fixations', None}
         Source of the data to plot as a heatmap. If None, no heatmap is plotted.
@@ -100,7 +100,7 @@ def plot_distribution(
         specify the heatmap dimensions. Defaults to (1600, 1200).
     cmap : str
         Colormap to use for the heatmap. Defaults to 'inferno'.
-    ax : :class:`matplotlib.axes.Axes` or None
+    ax : matplotlib.axes.Axes or None
         Axis to plot the frame on. If ``None``, a new figure is created.
         Defaults to ``None``.
     show : bool
@@ -108,9 +108,9 @@ def plot_distribution(
 
     Returns
     -------
-    fig : :class:`matplotlib.figure.Figure`
+    fig : matplotlib.figure.Figure
         Figure object containing the plot.
-    ax : :class:`matplotlib.axes.Axes`
+    ax : matplotlib.axes.Axes
         Axis object containing the plot.
     """
     if heatmap_source is None and scatter_source is None:
@@ -191,9 +191,9 @@ def plot_scanpath_on_video(
 
     Parameters
     ----------
-    video : :class:`NeonVideo`
+    video : NeonVideo
         Video object to overlay the fixations on.
-    scanpath : :class:`pandas.DataFrame`
+    scanpath : pandas.DataFrame
         DataFrame containing the fixations and gaze data.
     circle_radius : int
         Radius of the fixation circles in pixels. Defaults to 10.
@@ -204,7 +204,7 @@ def plot_scanpath_on_video(
         Maximum number of fixations to plot per frame. Defaults to 10.
     show_video : bool
         Whether to display the video with fixations overlaid. Defaults to False.
-    video_output_path : :class:`pathlib.Path` or str or None
+    video_output_path : pathlib.Path or str or None
         Path to save the video with fixations overlaid. If None, the video is not saved.
         Defaults to 'scanpath.mp4'.
     """

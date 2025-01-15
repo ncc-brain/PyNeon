@@ -25,9 +25,9 @@ def export_motion_bids(
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         Recording object containing the IMU data.
-    motion_dir : str or :class:`pathlib.Path`
+    motion_dir : str or pathlib.Path
         Output directory to save the Motion-BIDS formatted data.
     prefix : str, optional
         Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
@@ -128,6 +128,9 @@ def export_motion_bids(
 
 
 def export_eye_bids(rec: "NeonRecording", output_dir: str | Path):
+    """
+    Under development. Export eye tracking data to Eye-BIDS format.
+    """
     gaze = rec.gaze
     eye_states = rec.eye_states
     output_dir = Path(output_dir)

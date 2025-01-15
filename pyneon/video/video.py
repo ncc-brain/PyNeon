@@ -15,18 +15,18 @@ class NeonVideo(cv2.VideoCapture):
 
     Parameters
     ----------
-    video_file : :class:`pathlib.Path`
+    video_file : pathlib.Path
         Path to the video file.
-    timestamps_file : :class:`pathlib.Path`
+    timestamps_file : pathlib.Path
         Path to the timestamps file.
-    info_file : :class:`pathlib.Path`
+    info_file : pathlib.Path
         Path to the scene camera info file.
 
     Attributes
     ----------
-    timestamps : np.ndarray
+    timestamps : numpy.ndarray
         Timestamps of the video frames in nanoseconds.
-    ts : np.ndarray
+    ts : numpy.ndarray
         Alias for timestamps.
     n_frames : int
         Number of frames in the video.
@@ -75,7 +75,7 @@ class NeonVideo(cv2.VideoCapture):
         ----------
         index : int
             Index of the frame to plot.
-        ax : :class:`matplotlib.pyplot.Axes` or None
+        ax : matplotlib.axes.Axes or None
             Axis to plot the frame on. If ``None``, a new figure is created.
             Defaults to ``None``.
         auto_title : bool
@@ -85,9 +85,9 @@ class NeonVideo(cv2.VideoCapture):
 
         Returns
         -------
-        fig : :class:`matplotlib.pyplot.Figure`
+        fig : matplotlib.figure.Figure
             Figure object containing the plot.
-        ax : :class:`matplotlib.pyplot.Axes`
+        ax : matplotlib.axes.Axes
             Axis object containing the plot.
         """
         return plot_frame(self, index, ax, auto_title, show)
@@ -106,7 +106,7 @@ class NeonVideo(cv2.VideoCapture):
 
         Parameters
         ----------
-        scanpath : :class:`pandas.DataFrame`
+        scanpath : pandas.DataFrame
             DataFrame containing the fixations and gaze data.
         circle_radius : int
             Radius of the fixation circles in pixels. Defaults to 10.
@@ -117,7 +117,7 @@ class NeonVideo(cv2.VideoCapture):
             Maximum number of fixations to plot per frame. Defaults to 10.
         show_video : bool
             Whether to display the video with fixations overlaid. Defaults to False.
-        video_output_path : :class:`pathlib.Path` or str or None
+        video_output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'scanpath.mp4'.
         """

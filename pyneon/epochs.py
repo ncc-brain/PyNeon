@@ -5,6 +5,7 @@ from numbers import Number
 from typing import TYPE_CHECKING, Literal
 import warnings
 
+from .stream import NeonStream
 from .events import (
     NeonEV,
     NeonBlinks,
@@ -13,9 +14,6 @@ from .events import (
     NeonEvents,
     CustomEvents,
 )
-
-if TYPE_CHECKING:
-    from .tabular import NeonTabular
 
 
 def _check_overlap(times_df: pd.DataFrame) -> bool:
@@ -46,38 +44,63 @@ class Epochs:
 
     Parameters
     ----------
-    source : NeonTabular
-        Data stream to create epochs from.
-    times_df : pd.DataFrame, optional
+    source : NeonStream or NeonEV
+        Data to create epochs from.
+    times_df : pandas.DataFrame, optional
         DataFrame containing epoch information with the following columns:
-        - 't_ref': Reference time of the epoch, in nanoseconds.
-        - 't_before': Time before the reference time to start the epoch, in nanoseconds.
-        - 't_after': Time after the reference time to end the epoch, in nanoseconds.
-        - 'description': Description or label associated with the epoch.
-        If provided, `t_ref`, `t_before`, `t_after`, `description`, `global_t_ref`, and `time_unit` are ignored.
-    t_ref : np.ndarray or list, optional
-        Array or list of reference times for the epochs. Units specified by `time_unit`.
-    t_before : float, np.ndarray, or list, optional
-        Time before the reference time to start the epoch, in **seconds**.
-    t_after : float, np.ndarray, or list, optional
-        Time after the reference time to end the epoch, in **seconds**.
-    description : str, np.ndarray, or list, optional
-        Description or label associated with the epoch.
-    global_t_ref : int or float, optional
-        Global reference time to be added to each reference time in `t_ref`. Units specified by `time_unit`. Default is 0.
-    time_unit : str, optional
-        Unit of time for the reference times and `global_t_ref` ('ns' for nanoseconds or 's' for seconds). Default is 'ns'.
+
+            ``t_ref``: Reference time of the epoch, in nanoseconds.\n
+            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.\n
+            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.\n
+            ``description``: Description or label associated with the epoch.
+
+        Must not have empty values. If provided, the rest of the parameters are ignored.
+    t_ref : numpy.ndarray, optional
+        Array of reference times for the epochs. Units specified by ``t_ref_unit``.
+    t_before : numpy.ndarray or Number, optional
+        Time before the reference time to start the epoch. Could be an array of
+        equal length as ``t_ref`` or a single number (to be repeated for all epochs).
+        Units specified by ``t_other_unit``.
+    t_after : numpy.ndarray or Number, optional
+        Time after the reference time to end the epoch. Could be an array of
+        equal length as ``t_ref`` or a single number (to be repeated for all epochs).
+        Units specified by ``t_other_unit``.
+    description : numpy.ndarray or str, optional
+        Description or label associated with the epochs. Could be an array of
+        equal length as ``t_ref`` or a single string (to be repeated for all epochs).
+    global_t_ref : int, optional
+        Global reference time (in nanoseconds) to be added to `t_ref`.
+        Unit is nanosecond. Defaults to 0. This is useful when the reference times
+        are relative to a global start time
+        (e.g. attr:`pyneon.stream.NeonStream.first_ts`).
+    t_ref_unit : str, optional
+        Unit of time for the reference times. Default is 'ns'.
+    t_other_unit : str, optional
+        Unit of time for ``t_before`` and ``t_after``. Default is 's'.
 
     Notes
     -----
-    - If `times_df` is provided, it is used to create epochs, and the other time-related parameters are ignored.
-    - If `times_df` is not provided, `t_ref`, `t_before`, `t_after`, and `description` must be provided.
-    - The `t_before` and `t_after` parameters are always expected in **seconds** and will be converted to nanoseconds internally.
+    If ``times_df`` is provided, it is used to create epochs, and the other time-related parameters are ignored.
+    Otherwise, ``t_ref``, ``t_before``, ``t_after``, and ``description`` are required.
+
+    Attributes
+    ----------
+    epochs : pandas.DataFrame
+        DataFrame containing epoch information with the following columns:
+
+            ``t_ref`` (int64): Reference time of the epoch, in nanoseconds.\n
+            ``t_before`` (int64): Time before the reference time to start the epoch, in nanoseconds.\n
+            ``t_after`` (int64): Time after the reference time to end the epoch, in nanoseconds.\n
+            ``description`` (str): Description or label associated with the epoch.\n
+            ``data`` (object): DataFrame containing the data for each epoch.
+
+    data : pandas.DataFrame
+        DataFrame containing the data for each epoch.
     """
 
     def __init__(
         self,
-        source: "NeonTabular",
+        source: NeonStream | NeonEV,
         times_df: pd.DataFrame | None = None,
         t_ref: np.ndarray | None = None,
         t_before: np.ndarray | Number | None = None,
@@ -186,7 +209,7 @@ class Epochs:
 
         Returns
         -------
-        epochs_np : np.ndarray
+        epochs_np : numpy.ndarray
             NumPy array of shape (n_epochs, n_times, n_channels).
         info : dict
             A dictionary containing:
@@ -271,7 +294,7 @@ class Epochs:
 
 
 def _create_epochs(
-    source: "NeonTabular", times_df: pd.DataFrame
+    source: NeonStream | NeonEV, times_df: pd.DataFrame
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Create epochs DataFrame and annotate the data with epoch information.
@@ -319,7 +342,7 @@ def events_to_times_df(
     event: "NeonEV",
     t_before: Number,
     t_after: Number,
-    time_unit: Literal["s", "ms", "us", "ns"] = "s",
+    t_unit: Literal["s", "ms", "us", "ns"] = "s",
     type_name: str = "all",
 ) -> pd.DataFrame:
     """
@@ -330,10 +353,10 @@ def events_to_times_df(
     event : NeonEV
         NeonEV instance containing the event times.
     t_before : Number
-        Time before the event start time to start the epoch. Units specified by `time_unit`.
+        Time before the event start time to start the epoch. Units specified by `t_unit`.
     t_after : Number
-        Time after the event start time to end the epoch. Units specified by `time_unit`.
-    time_unit : str, optional
+        Time after the event start time to end the epoch. Units specified by `t_unit`.
+    t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``. Can be 's' (seconds), 'ms' (milliseconds),
         'us' (microseconds), or 'ns' (nanoseconds). Defaults to 's'.
 
@@ -342,12 +365,9 @@ def events_to_times_df(
     pandas.DataFrame
         DataFrame containing epoch information with the following columns:
 
-            ``t_ref``: Reference time of the epoch, in nanoseconds.
-
-            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.
-
-            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.
-
+            ``t_ref``: Reference time of the epoch, in nanoseconds.\n
+            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.\n
+            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.\n
             ``description``: Description or label associated with the epoch.
     """
 
@@ -377,7 +397,7 @@ def events_to_times_df(
         t_after,
         description,
         "ns",
-        time_unit,
+        t_unit,
     )
     return times_df
 
@@ -395,36 +415,6 @@ def _construct_times_df(
     Handles the construction of the times_df DataFrame for creating epochs. It populates
     single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
     and converts all times to UTC timestamps in nanoseconds.
-
-    Parameters
-    ----------
-    t_ref : array of Number, shape (n_epoch,)
-        Array or list of reference times for the epochs. Units specified by `time_unit`.
-    t_before : array of Number, shape (n_epoch,) or Number
-        Time before the reference time to start the epoch. Units specified by `time_unit`.
-    t_after : array of Number, shape (n_epoch,) or Number
-        Time after the reference time to end the epoch. Units specified by `time_unit`.
-    description : array of str, shape (n_epoch,) or str
-        Description or label associated with the epoch.
-    global_t_ref : int
-        Global reference time to be added to each reference time in `t_ref`.
-        Should represent UTC timestamp in nanoseconds. Defaults to 0.
-    time_unit : str
-        Unit of time for the reference times and `global_t_ref` ('ns' for nanoseconds or 's' for seconds).
-        Defaults to 'ns'.
-
-    Returns
-    -------
-    pandas.DataFrame
-        DataFrame containing epoch information with the following columns:
-
-            ``t_ref``: Reference time of the epoch, in nanoseconds.
-
-            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.
-
-            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.
-
-            ``description``: Description or label associated with the epoch.
     """
     if n_epoch := len(t_ref) == 0:
         raise ValueError("t_ref must not be empty")

@@ -211,7 +211,7 @@ class CustomEvents(NeonEV):
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : pandas.DataFrame
         Event data. Must be indexed by 'timestamp [ns]' or 'start timestamp [ns]'.
     """
 

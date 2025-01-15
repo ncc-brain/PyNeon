@@ -27,21 +27,21 @@ class NeonDataset:
         ├── enrichment_info.txt
         └── sections.csv
 
-    Individual recordings will be read into :class:`NeonRecording` objects based on
+    Individual recordings will be read into NeonRecording objects based on
     ``sections.csv``. They are accessible through the ``recordings`` attribute.
 
     Parameters
     ----------
-    dataset_dir : str or :class:`pathlib.Path`
+    dataset_dir : str or pathlib.Path
         Path to the directory containing the dataset.
 
     Attributes
     ----------
-    dataset_dir : :class:`pathlib.Path`
+    dataset_dir : pathlib.Path
         Path to the directory containing the dataset.
     recordings : list of NeonRecording
         List of NeonRecording objects for each recording in the dataset.
-    sections : :class:`pandas.DataFrame`
+    sections : pandas.DataFrame`
         DataFrame containing the sections of the dataset.
     """
 
@@ -100,7 +100,7 @@ class NeonDataset:
 
         Parameters
         ----------
-        enrichment_dir : str or :class:`pathlib.Path`
+        enrichment_dir : str or pathlib.Path
             Path to the directory containing the enrichment information.
         """
         pass

@@ -17,12 +17,12 @@ class NeonStream(NeonTabular):
 
     Parameters
     ----------
-    file : :class:`pathlib.Path`
+    file : pathlib.Path
         Path to the CSV file containing the stream data.
 
     Attributes
     ----------
-    file : :class:`pathlib.Path`
+    file : pathlib.Path
         Path to the CSV file containing the stream data.
     data : pandas.DataFrame
         DataFrame containing the stream data.
@@ -112,10 +112,10 @@ class NeonStream(NeonTabular):
 
         Parameters
         ----------
-        tmin : number, optional
+        tmin : numbers.Number, optional
             Start timestamp/time/row to crop the data to. If ``None``,
             the minimum timestamp/time/row in the data is used. Defaults to ``None``.
-        tmax : number, optional
+        tmax : numbers.Number, optional
             End timestamp/time/row to crop the data to. If ``None``,
             the maximum timestamp/time/row in the data is used. Defaults to ``None``.
         by : "timestamp" or "time" or "row", optional
@@ -192,7 +192,7 @@ class NeonStream(NeonTabular):
 
         Parameters
         ----------
-        new_ts : np.ndarray, optional
+        new_ts : numpy.ndarray, optional
             An array of new timestamps (in nanoseconds)
             at which to evaluate the interpolant. If ``None`` (default), new timestamps
             are generated according to the nominal sampling frequency of the stream as
@@ -243,7 +243,7 @@ class NeonStream(NeonTabular):
 
         Parameters
         ----------
-        new_ts : np.ndarray
+        new_ts : numpy.ndarray
             An array of new timestamps (in nanoseconds)
             at which to compute the windowed averages.
             The median interval between these new timestamps must be larger than
@@ -299,7 +299,8 @@ class NeonGaze(NeonStream):
 
 class NeonEyeStates(NeonStream):
     """
-    3D eye states data that inherits attributes and methods from :class:`NeonStream`.
+    3D eye states data that inherits attributes and methods
+    from :class:`NeonStream`.
     """
 
     sampling_freq_nominal = int(200)
@@ -328,7 +329,8 @@ class NeonEyeStates(NeonStream):
 
 class NeonIMU(NeonStream):
     """
-    IMU data that inherits attributes and methods from :class:`NeonStream`.
+    IMU data that inherits attributes and methods
+    from :class:`NeonStream`.
     """
 
     sampling_freq_nominal = int(110)
@@ -356,7 +358,9 @@ class NeonIMU(NeonStream):
 
 class CustomStream(NeonStream):
     """
-    Custom stream data that inherits attributes and methods from :class:`NeonStream`.
+    Custom stream data that inherits attributes and methods
+    from :class:`NeonStream`. ``file`` and ``sampling_freq_nominal`` attributes are
+    ``None`` because of the custom nature of the data.
     """
 
     file = None

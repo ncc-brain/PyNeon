@@ -23,10 +23,10 @@ def interpolate(
 
     Parameters
     ----------
-    new_ts : np.ndarray
+    new_ts : numpy.ndarray
         An array of new timestamps (in nanoseconds)
         at which to evaluate the interpolant.
-    data : pd.DataFrame
+    data : pandas.DataFrame
         Data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
     float_kind : str, optional
@@ -76,14 +76,14 @@ def window_average(
 
     Parameters
     ----------
-    new_ts : np.ndarray
+    new_ts : numpy.ndarray
         An array of new timestamps (in nanoseconds)
         at which to compute the windowed averages.
         The median interval between these new timestamps must be larger than
         the median interval between the original data timestamps, i.e.,
         ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
         In other words, only downsampling is supported.
-    data : pd.DataFrame
+    data : pandas.DataFrame
         Data to apply window average to. Must have a monotonically increasing
         index named ``timestamp [ns]``.
     window_size : int, optional
@@ -96,7 +96,7 @@ def window_average(
 
     Returns
     -------
-    pd.DataFrame
+    pandas.DataFrame
         Data with window average applied.
     """
     _check_stream_data(data)
@@ -164,7 +164,7 @@ def concat_streams(
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         NeonRecording object containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all", then all streams will be used.
@@ -188,7 +188,7 @@ def concat_streams(
 
     Returns
     -------
-    concat_data : :class:`pandas.DataFrame`
+    concat_data : pandas.DataFrame
         Concatenated data.
     """
     if isinstance(stream_names, str):
@@ -344,7 +344,7 @@ def concat_events(
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         NeonRecording object containing the events to concatenate.
     event_names : list of str
         List of event names to concatenate. Event names must be in
@@ -353,7 +353,7 @@ def concat_events(
 
     Returns
     -------
-    concat_events : :class:`pandas.DataFrame`
+    pandas.DataFrame
         Concatenated events.
     """
     if isinstance(event_names, str):

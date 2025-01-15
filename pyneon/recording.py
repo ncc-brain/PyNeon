@@ -47,23 +47,23 @@ class NeonRecording:
         ├── labels.csv
         ├── world_timestamps.csv
         ├── scene_camera.json
-        ├── <scene_video>.mp4 (if present)
-        ├── scanpath.pkl (after executing `estimate_scanpath`)
-        └── video_with_scanpath.mp4 (after executing `overlay_scanpath_on_video`)
+        ├── <scene_video>.mp4
+        └── derivatives/ (PyNeon-generated derivatives)
+            └── ...
 
     Streams, events, (and scene video) will be located but not loaded until
     accessed as properties such as ``gaze``, ``imu``, and ``eye_states``.
 
     Parameters
     ----------
-    recording_dir : str or :class:`pathlib.Path`
+    recording_dir : str or pathlib.Path
         Path to the directory containing the recording.
 
     Attributes
     ----------
     recording_id : str
         Recording ID.
-    recording_dir : :class:`pathlib.Path`
+    recording_dir : pathlib.Path
         Path to the recording directory.
     info : dict
         Information about the recording. Read from ``info.json``. For details, see
@@ -74,7 +74,7 @@ class NeonRecording:
     start_datetime : :class:`datetime.datetime`
         Start time (datetime) of the recording as in ``info.json``.
         May not match the start time of each data stream.
-    contents : :class:`pandas.DataFrame`
+    contents : pandas.DataFrame
         Contents of the recording directory. Each index is a stream or event name
         (e.g. ``gaze`` or ``imu``) and columns are ``exist`` (bool),
         ``filename`` (str), and ``path`` (Path).
@@ -308,7 +308,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        concat_data : :class:`pandas.DataFrame`
+        pandas.DataFrame
             Concatenated data.
         """
         new_data = concat_streams(
@@ -339,7 +339,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        concat_events : :class:`pandas.DataFrame`
+        pandas.DataFrame
             Concatenated events.
         """
         return concat_events(self, event_names)
@@ -362,7 +362,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        rec : :class:`NeonRecording`
+        rec : NeonRecording
             Recording object containing the gaze and video data.
         heatmap_source : {'gaze', 'fixations', None}
             Source of the data to plot as a heatmap. If None, no heatmap is plotted.
@@ -381,7 +381,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             specify the heatmap dimensions. Defaults to (1600, 1200).
         cmap : str
             Colormap to use for the heatmap. Defaults to 'inferno'.
-        ax : :class:`matplotlib.axes.Axes` or None
+        ax : matplotlib.axes.Axes or None
             Axis to plot the frame on. If ``None``, a new figure is created.
             Defaults to ``None``.
         show : bool
@@ -389,9 +389,9 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        fig : :class:`matplotlib.figure.Figure`
+        fig : matplotlib.figure.Figure
             Figure object containing the plot.
-        ax : :class:`matplotlib.axes.Axes`
+        ax : matplotlib.axes.Axes
             Axis object containing the plot.
         """
         return plot_distribution(
@@ -447,13 +447,18 @@ Recording duration: {self.info["duration"] / 1e9}s
         """
         Map fixations to video frames.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         sync_gaze : NeonGaze
             Gaze data synchronized to video frames. If None (default),
             a windowed average is applied to synchronize gaze data to video frames.
         lk_params : dict
             Parameters for the Lucas-Kanade optical flow algorithm.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame containing the scanpath with updated fixation points.
         """
         if sync_gaze is None:
             sync_gaze = self.sync_gaze_to_video()
@@ -475,7 +480,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        scanpath : :class:`pandas.DataFrame`
+        scanpath : pandas.DataFrame
             DataFrame containing the fixations and gaze data.
         circle_radius : int
             Radius of the fixation circles in pixels. Defaults to 10.
@@ -486,7 +491,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             Maximum number of fixations to plot per frame. Defaults to 10.
         show_video : bool
             Whether to display the video with fixations overlaid. Defaults to False.
-        video_output_path : :class:`pathlib.Path` or str or None
+        video_output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'scanpath.mp4'.
         """
@@ -518,13 +523,15 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        motion_dir : str or :class:`pathlib.Path`
+        motion_dir : str or pathlib.Path
             Output directory to save the Motion-BIDS formatted data.
         prefix : str, optional
             Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
             The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
             (Fields in [] are optional). Files will be saved as
             ``{prefix}_motion.<tsv|json>``.
+        extra_metadata : dict, optional
+            Extra metadata to include in the .json file. Keys must be valid BIDS fields.
 
         Notes
         -----
@@ -553,7 +560,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         Parameters
         ----------
 
-        output_dir : str or :class:`pathlib.Path`
+        output_dir : str or pathlib.Path
             Output directory to save the Eye-tracking-BIDS formatted data.
         prefix : str, optional
             Prefix for the BIDS filenames, by default "sub-XX_recording-eye".

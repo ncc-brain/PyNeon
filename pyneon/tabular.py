@@ -15,7 +15,7 @@ class NeonTabular:
 
     Attributes
     ----------
-    data : pd.DataFrame
+    data : pandas.DataFrame
         The processed data with the timestamp index.
     """
 
