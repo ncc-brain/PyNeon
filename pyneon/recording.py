@@ -71,7 +71,7 @@ class NeonRecording:
     start_time : int
         Start time (in ns) of the recording as in ``info.json``.
         May not match the start time of each data stream.
-    start_datetime : :class:`datetime.datetime`
+    start_datetime : datetime.datetime
         Start time (datetime) of the recording as in ``info.json``.
         May not match the start time of each data stream.
     contents : pandas.DataFrame

@@ -41,7 +41,7 @@ class NeonDataset:
         Path to the directory containing the dataset.
     recordings : list of NeonRecording
         List of NeonRecording objects for each recording in the dataset.
-    sections : pandas.DataFrame`
+    sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
     """
 
