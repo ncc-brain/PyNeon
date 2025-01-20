@@ -18,7 +18,7 @@ def plot_frame(
     ax: Optional[plt.Axes] = None,
     auto_title: bool = True,
     show: bool = True,
-):
+) -> tuple[plt.Figure, plt.Axes]:
     """
     Plot a frame from the video on a matplotlib axis.
 
