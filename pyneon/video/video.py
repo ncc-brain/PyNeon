@@ -125,7 +125,8 @@ class NeonVideo(cv2.VideoCapture):
             - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
             - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
         """
-        detect_apriltags(self, tag_family)
+    
+        return detect_apriltags(self, tag_family)
 
 
     def overlay_scanpath(

@@ -40,8 +40,8 @@ def smooth_camera_pose(
         A DataFrame with 'frame_idx' and 'smoothed_camera_pos'.
     """
 
-    state_dim = 3,
-    meas_dim = 3,
+    state_dim = 3
+    meas_dim = 3
 
     # Ensure the DataFrame is sorted by frame_idx
     camera_position_raw = camera_position_raw.sort_values("frame_idx")

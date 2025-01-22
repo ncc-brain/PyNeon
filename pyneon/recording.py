@@ -583,8 +583,6 @@ Recording duration: {self.info["duration"] / 1e9}s
     def smooth_camera_pose(
         self,
         camera_pose_raw: pd.DataFrame = pd.DataFrame(),
-        state_dim: int = 3,
-        meas_dim: int = 3,
         initial_state_noise: float = 0.1,
         process_noise: float = 0.1,
         measurement_noise: float = 0.01,
@@ -600,10 +598,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         ----------
         camera_pose_raw : pd.DataFrame
             DataFrame containing 'frame_idx' and 'camera_pos' columns.
-        state_dim : int, optional
-            Dimensionality of the state vector. Default is 3 (x, y, z).
-        meas_dim : int, optional
-            Dimensionality of the measurement vector. Default is 3 (x, y, z).
         process_noise : float, optional
             Process noise covariance scaling factor. Default is 0.005.
         measurement_noise : float, optional
@@ -632,8 +626,6 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         smoothed_pose = smooth_camera_pose(
             camera_pose_raw,
-            state_dim,
-            meas_dim,
             initial_state_noise,
             process_noise,
             measurement_noise,
