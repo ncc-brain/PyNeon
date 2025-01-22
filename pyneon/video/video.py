@@ -5,8 +5,10 @@ from pathlib import Path
 from typing import Optional
 import matplotlib.pyplot as plt
 import json
+from tqdm import tqdm
 
-from ..vis import plot_frame, plot_scanpath_on_video
+from ..vis import plot_frame, overlay_scanpath
+from .apriltag import detect_apriltags
 
 
 class NeonVideo(cv2.VideoCapture):
@@ -58,8 +60,20 @@ class NeonVideo(cv2.VideoCapture):
         self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+        self.camera_matrix = np.array(self.info["camera_matrix"])
+        self.dist_coeffs = np.array(self.info["distortion_coefficients"])
+
     def __len__(self) -> int:
         return int(len(self.ts))
+
+    def reset(self):
+        print("Resetting video...")
+        if self.isOpened():
+            self.release()
+        super().__init__(self.video_file)
+        self.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        if not self.isOpened():
+            raise IOError(f"Failed to reopen video file: {self.video_file}")
 
     def plot_frame(
         self,
@@ -92,14 +106,36 @@ class NeonVideo(cv2.VideoCapture):
         """
         return plot_frame(self, index, ax, auto_title, show)
 
-    def plot_scanpath_on_video(
+    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+        """
+        Detect AprilTags in the video frames.
+
+        Parameters
+        ----------
+        tag_family : str, optional
+            The AprilTag family to detect (default is 'tag36h11').
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing AprilTag detections, with columns:
+            - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
+            - 'frame_idx': The frame number
+            - 'tag_id': The ID of the detected AprilTag
+            - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
+            - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
+        """
+
+        return detect_apriltags(self, tag_family)
+
+    def overlay_scanpath(
         self,
         scanpath: pd.DataFrame,
         circle_radius: int = 10,
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = "scanpath.mp4",
+        video_output_path: Path | str = "derivatives/scanpath.mp4",
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -121,7 +157,7 @@ class NeonVideo(cv2.VideoCapture):
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'scanpath.mp4'.
         """
-        plot_scanpath_on_video(
+        overlay_scanpath(
             self,
             scanpath,
             circle_radius,
@@ -130,3 +166,61 @@ class NeonVideo(cv2.VideoCapture):
             show_video,
             video_output_path,
         )
+
+    def undistort(
+        self,
+        output_video_path: Optional[Path | str] = "undistorted_video.mp4",
+    ) -> None:
+        """
+        Undistort a video using the known camera matrix and distortion coefficients.
+
+        Parameters
+        output_video_path : str
+            Path to save the undistorted output video.
+        """
+        # Open the input video
+        cap = self
+        cap.reset()
+        camera_matrix = self.camera_matrix
+        dist_coeffs = self.dist_coeffs
+
+        # Get self properties
+        frame_width, frame_height = self.width, self.height
+        fps = self.fps
+        frame_count = len(self)
+
+        # Prepare output video writer
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Adjust codec as needed
+        out = cv2.VideoWriter(
+            output_video_path, fourcc, fps, (frame_width, frame_height)
+        )
+
+        # Precompute the optimal new camera matrix and undistortion map
+        optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
+            camera_matrix,
+            dist_coeffs,
+            (frame_width, frame_height),
+            1,
+            (frame_width, frame_height),
+        )
+        map1, map2 = cv2.initUndistortRectifyMap(
+            camera_matrix,
+            dist_coeffs,
+            None,
+            optimal_camera_matrix,
+            (frame_width, frame_height),
+            cv2.CV_16SC2,
+        )
+
+        for frame_idx in tqdm(range(frame_count), desc="Undistorting video"):
+            ret, frame = self.read()
+            if not ret:
+                break
+
+            undistorted_frame = cv2.remap(
+                frame, map1, map2, interpolation=cv2.INTER_LINEAR
+            )
+            out.write(undistorted_frame)
+
+        out.release()
+        print(f"Undistorted video saved to {output_video_path}")

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal, Optional
 import pandas as pd
+import numpy as np
 import json
 from datetime import datetime
 import warnings
@@ -9,9 +10,9 @@ from numbers import Number
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
-from .preprocess import concat_streams, concat_events
-from .video import NeonVideo, estimate_scanpath
-from .vis import plot_distribution, plot_scanpath_on_video
+from .preprocess import concat_streams, concat_events, smooth_camera_pose
+from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose
+from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
 
 
@@ -94,6 +95,10 @@ class NeonRecording:
 
         self.recording_id = self.info["recording_id"]
         self.recording_dir = recording_dir
+
+        self.der_dir = recording_dir / "derivatives"
+        if not self.der_dir.is_dir():
+            self.der_dir.mkdir()
 
         self._gaze = None
         self._eye_states = None
@@ -466,7 +471,176 @@ Recording duration: {self.info["duration"] / 1e9}s
             raise ValueError("Estimating scanpath requires video data.")
         return estimate_scanpath(video, sync_gaze, lk_params)
 
-    def plot_scanpath_on_video(
+    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+        """
+        Detect AprilTags in a video and report their data for every frame using the apriltag library.
+
+        Parameters
+        ----------
+        tag_family : str, optional
+            The AprilTag family to detect (default is 'tag36h11').
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing AprilTag detections, with columns:
+            - 'frame_idx': The frame number
+            - 'tag_id': The ID of the detected AprilTag
+            - 'corners': A 4x2 array of the tag corner coordinates
+            - 'center': A 1x2 array with the tag center coordinates
+        """
+        # Check if JSON already exists
+        if (json_file := self.der_dir / "apriltags.json").is_file():
+            return pd.read_json(json_file, orient="records", lines=True)
+
+        all_detections = detect_apriltags(self.video, tag_family)
+        # Save to JSON
+        all_detections.to_json(
+            self.der_dir / "apriltags.json", orient="records", lines=True
+        )
+
+        return all_detections
+
+    def estimate_camera_pose(
+        self,
+        tag_locations_df: pd.DataFrame,
+        all_detections: pd.DataFrame = pd.DataFrame(),
+        overwrite: bool = False,
+    ) -> pd.DataFrame:
+        """
+        Compute the camera positions from AprilTag detections in a video.
+
+        Parameters
+        ----------
+        tag_locations_df : pd.DataFrame
+            A DataFrame containing AprilTag 3D locations, orientations, and sizes.
+            Required columns:
+                - 'tag_id': int, ID of the tag
+                - 'x', 'y', 'z': float, coordinates of the tag's center
+                - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
+                - 'size': float, the side length of the tag in meters
+
+        all_detections : pd.DataFrame, optional
+            DataFrame containing AprilTag detections for each frame, with columns:
+                - 'frame_idx': The frame number (int)
+                - 'tag_id': The ID of the detected AprilTag (int)
+                - 'corners': A (4x2) array of the tag corner pixel coordinates (np.ndarray)
+                - 'center': A (1x2) array of the tag center pixel coordinates (np.ndarray)
+            If empty, the detections are computed using the `detect_apriltags` function.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing the camera positions for each frame, with columns:
+            - 'frame_idx': The frame number
+            - 'translation_vector': A (3,) array with the camera translation vector
+            - 'rotation_vector': A (3,) array with the camera rotation vector (Rodrigues form)
+            - 'camera_pos': A (3,) array with the camera position in world coordinates
+        """
+
+        required_columns = {
+            "tag_id",
+            "x",
+            "y",
+            "z",
+            "normal_x",
+            "normal_y",
+            "normal_z",
+            "size",
+        }
+        if not required_columns.issubset(tag_locations_df.columns):
+            missing = required_columns - set(tag_locations_df.columns)
+            raise ValueError(f"tag_locations_df is missing required columns: {missing}")
+
+        # check for detections dataframe
+        if all_detections.empty:
+            detection_file = self.der_dir / "apriltags.json"
+            # open apriltags
+            if detection_file.is_file():
+                all_detections = pd.read_json(
+                    detection_file, orient="records", lines=True
+                )
+            else:
+                all_detections = self.detect_apriltags()
+
+        # Check if result JSON already exists
+        json_file = self.der_dir / "camera_pose.json"
+        if json_file.is_file() and not overwrite:
+            return pd.read_json(json_file, orient="records")
+
+        # Compute camera positions
+        camera_pose = estimate_camera_pose(
+            video=self.video,
+            tag_locations_df=tag_locations_df,
+            all_detections=all_detections,
+        )
+
+        # Save to JSON
+        camera_pose.to_json(json_file, orient="records")
+
+        return camera_pose
+
+    def smooth_camera_pose(
+        self,
+        camera_pose_raw: pd.DataFrame = pd.DataFrame(),
+        initial_state_noise: float = 0.1,
+        process_noise: float = 0.1,
+        measurement_noise: float = 0.01,
+        gating_threshold: float = 2.0,
+        bidirectional: bool = False,
+    ) -> pd.DataFrame:
+        """
+        Apply a Kalman filter to smooth camera positions and gate outliers based on Mahalanobis distance.
+        Expects a DataFrame containing 'frame_idx' and 'camera_pos' columns, where 'camera_pos' is a
+        length-3 array-like object representing [x, y, z] coordinates.
+
+        Parameters
+        ----------
+        camera_pose_raw : pd.DataFrame
+            DataFrame containing 'frame_idx' and 'camera_pos' columns.
+        process_noise : float, optional
+            Process noise covariance scaling factor. Default is 0.005.
+        measurement_noise : float, optional
+            Measurement noise covariance scaling factor. Default is 0.005.
+        gating_threshold : float, optional
+            Mahalanobis distance threshold for gating outliers. Default is 3.0.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with the same 'frame_idx' as input and an additional column 'smoothed_camera_pos'
+            containing the smoothed positions.
+        """
+
+        if camera_pose_raw.empty:
+            # Check if JSON already exists
+            if (json_file := self.der_dir / "camera_pose.json").is_file():
+                camera_pose_raw = pd.read_json(json_file, orient="records")
+                # Ensure 'camera_pos' is parsed as NumPy arrays
+                camera_pose_raw["camera_pos"] = camera_pose_raw["camera_pos"].apply(
+                    lambda pos: np.array(pos, dtype=float)
+                )
+            else:
+                # Run the function to get the data
+                camera_pose_raw = self.estimate_camera_pose()
+
+        smoothed_pose = smooth_camera_pose(
+            camera_pose_raw,
+            initial_state_noise,
+            process_noise,
+            measurement_noise,
+            gating_threshold,
+            bidirectional,
+        )
+
+        # Save to JSON
+        smoothed_pose.to_json(
+            self.der_dir / "smoothed_camera_pose.json", orient="records"
+        )
+
+        return smoothed_pose
+
+    def overlay_scanpath(
         self,
         scanpath: Optional[pd.DataFrame] = None,
         circle_radius: int = 10,
@@ -499,7 +673,8 @@ Recording duration: {self.info["duration"] / 1e9}s
             scanpath = self.estimate_scanpath()
         if self.video is None:
             raise ValueError("Plotting scanpath on video requires video data.")
-        plot_scanpath_on_video(
+
+        overlay_scanpath(
             self,
             scanpath,
             circle_radius,
@@ -507,6 +682,51 @@ Recording duration: {self.info["duration"] / 1e9}s
             max_fixations,
             show_video,
             video_output_path,
+        )
+
+    def overlay_detections_and_pose(
+        self,
+        april_detections: pd.DataFrame,
+        camera_positions: pd.DataFrame,
+        room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
+        video_output_path: Path | str | None = None,
+        graph_size: np.ndarray = np.array([300, 300]),
+        show_video: bool = True,
+    ):
+        """
+        Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        april_detections : :class:`pandas.DataFrame`
+            DataFrame containing the AprilTag detections.
+        camera_positions : :class:`pandas.DataFrame`
+            DataFrame containing the camera positions.
+        room_corners : :class:`numpy.ndarray`
+            Array containing the room corners coordinates. Defaults to a unit square.
+        video_output_path : :class:`pathlib.Path` or str
+            Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
+        graph_size : :class:`numpy.ndarray`
+            Size of the graph to overlay on the video. Defaults to [300, 300].
+        show_video : bool
+            Whether to display the video with detections and poses overlaid. Defaults to True.
+        """
+        if self.video is None:
+            raise ValueError(
+                "Overlaying detections and pose on video requires video data."
+            )
+
+        if video_output_path is None:
+            video_output_path = self.der_dir / "detection_and_pose.mp4"
+
+        overlay_detections_and_pose(
+            self,
+            april_detections,
+            camera_positions,
+            room_corners,
+            video_output_path,
+            graph_size,
+            show_video,
         )
 
     def export_motion_bids(
