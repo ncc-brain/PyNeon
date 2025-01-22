@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 import matplotlib.pyplot as plt
 import json
+from tqdm import tqdm
 
 from ..vis import plot_frame, overlay_scanpath
 
@@ -60,6 +61,15 @@ class NeonVideo(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
+    
+    def reset(self):
+        print("Resetting video...")
+        if self.isOpened():
+            self.release()
+        super().__init__(self.video_path)
+        self.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        if not self.isOpened():
+            raise IOError(f"Failed to reopen video file: {self.video_path}")
 
     def plot_frame(
         self,
@@ -130,3 +140,57 @@ class NeonVideo(cv2.VideoCapture):
             show_video,
             video_output_path,
         )
+
+    def undistort_video(
+    self,
+    output_video_path: Optional[Path | str] = "undistorted_video.mp4",
+    ) -> None:
+        """
+        Undistort a video using camera matrix and distortion coefficients.
+
+        Parameters
+        ----------
+        input_video_path : str
+            Path to the input video file.
+        output_video_path : str
+            Path to save the undistorted output video.
+        camera_matrix : np.ndarray
+            Camera matrix for the video camera.
+        dist_coeffs : np.ndarray
+            Distortion coefficients for the video camera.
+        """
+        # Open the input video
+        cap = self
+        cap.reset()
+        camera_matrix = self.camera_matrix
+        dist_coeffs = self.dist_coeffs
+
+        # Get self properties
+        frame_width, frame_height = self.width, self.height
+        fps = self.fps
+        frame_count = self.len
+
+        # Prepare output video writer
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Adjust codec as needed
+        out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+
+        # Precompute the optimal new camera matrix and undistortion map
+        optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
+            camera_matrix, dist_coeffs, (frame_width, frame_height), 1, (frame_width, frame_height)
+        )
+        map1, map2 = cv2.initUndistortRectifyMap(
+            camera_matrix, dist_coeffs, None, optimal_camera_matrix, (frame_width, frame_height), cv2.CV_16SC2
+        )
+
+        for frame_idx in tqdm(range(frame_count), desc="Undistorting video"):
+            ret, frame = self.read()
+            if not ret:
+                break
+
+            undistorted_frame = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR)
+            out.write(undistorted_frame)
+
+        out.release()
+        print(f"Undistorted video saved to {output_video_path}")
+
+

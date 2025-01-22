@@ -36,10 +36,6 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     # Initialize the detector with the specified tag family
     detector = Detector(families=tag_family)
 
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    if not video.isOpened():
-        raise ValueError("Unable to open video")
-
     all_detections = []
     frame_idx = 0
 
@@ -73,8 +69,6 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
             )
 
         frame_idx += 1
-
-    video.release()
 
     # convert to pandas DataFrame
     all_detections = pd.DataFrame(all_detections)

@@ -407,6 +407,7 @@ def overlay_detections_and_pose(
         detections_by_frame[fidx].append((row["tag_id"], row["corners"]))
 
     cap = recording.video
+    cap.reset()
     frame_idx = 0
 
     # Track last known detections and positions
@@ -504,23 +505,13 @@ def overlay_detections_and_pose(
 
     # Try reading a frame to determine size
     ret, test_frame = cap.read()
-    if not ret:
-        raise RuntimeError("Could not read initial frame from video.")
-    height, width = test_frame.shape[:2]
-
-    # Reset video to start
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    height, width = cap.height, cap.width
+    fps = cap.fps or 30
 
     # Initialize VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    if fps <= 0:
-        fps = 30  # fallback if FPS is not available
     video_output_path = Path(video_output_path)
     out = cv2.VideoWriter(str(video_output_path), fourcc, fps, (width, height))
-
-    # Re-insert the frame we took out to measure size
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     while True:
         ret, frame = cap.read()
@@ -600,72 +591,5 @@ def overlay_detections_and_pose(
         out.write(frame)
         frame_idx += 1
 
-    cap.release()
     out.release()
     cv2.destroyAllWindows()
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-
-
-def undistort_video(
-        video: "NeonVideo",
-        output_video_path: str = "undistorted_video.mp4",
-        ) -> None:
-    """
-    Undistort a video using camera matrix and distortion coefficients.
-
-    Parameters
-    ----------
-    input_video_path : str
-        Path to the input video file.
-    output_video_path : str
-        Path to save the undistorted output video.
-    camera_matrix : np.ndarray
-        Camera matrix for the video camera.
-    dist_coeffs : np.ndarray
-        Distortion coefficients for the video camera.
-    """
-    # Open the input video
-    cap = video
-    camera_matrix = video.camera_matrix
-    dist_coeffs = video.dist_coeffs
-
-    # Get video properties
-    frame_width = video.width
-    frame_height = video.height
-    fps = video.fps
-    frame_count = video.len
-
-    # Prepare output video writer
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Adjust codec as needed
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
-
-    # Precompute the optimal new camera matrix and undistortion map
-    optimal_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(
-        camera_matrix, dist_coeffs, (frame_width, frame_height), 1, (frame_width, frame_height)
-    )
-    map1, map2 = cv2.initUndistortRectifyMap(
-        camera_matrix, dist_coeffs, None, optimal_camera_matrix, (frame_width, frame_height), cv2.CV_16SC2
-    )
-
-    print(f"Processing {frame_count} frames...")
-    frame_idx = 0
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Undistort the frame
-        undistorted_frame = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR)
-
-        # Write the undistorted frame to the output video
-        out.write(undistorted_frame)
-
-        frame_idx += 1
-        if frame_idx % 100 == 0:
-            print(f"Processed {frame_idx}/{frame_count} frames...")
-
-    # Release resources
-    cap.release()
-    out.release()
-    print(f"Undistorted video saved to: {output_video_path}")
