@@ -59,6 +59,9 @@ class NeonVideo(cv2.VideoCapture):
         self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+        self.camera_matrix = np.array(self.info["camera_matrix"])
+        self.dist_coeffs = np.array(self.info["distortion_coefficients"])
+
     def __len__(self) -> int:
         return int(len(self.ts))
     
@@ -66,10 +69,10 @@ class NeonVideo(cv2.VideoCapture):
         print("Resetting video...")
         if self.isOpened():
             self.release()
-        super().__init__(self.video_path)
+        super().__init__(self.video_file)
         self.set(cv2.CAP_PROP_POS_FRAMES, 0)
         if not self.isOpened():
-            raise IOError(f"Failed to reopen video file: {self.video_path}")
+            raise IOError(f"Failed to reopen video file: {self.video_file}")
 
     def plot_frame(
         self,
@@ -141,7 +144,7 @@ class NeonVideo(cv2.VideoCapture):
             video_output_path,
         )
 
-    def undistort_video(
+    def undistort(
     self,
     output_video_path: Optional[Path | str] = "undistorted_video.mp4",
     ) -> None:
@@ -149,15 +152,8 @@ class NeonVideo(cv2.VideoCapture):
         Undistort a video using camera matrix and distortion coefficients.
 
         Parameters
-        ----------
-        input_video_path : str
-            Path to the input video file.
         output_video_path : str
             Path to save the undistorted output video.
-        camera_matrix : np.ndarray
-            Camera matrix for the video camera.
-        dist_coeffs : np.ndarray
-            Distortion coefficients for the video camera.
         """
         # Open the input video
         cap = self
@@ -168,7 +164,7 @@ class NeonVideo(cv2.VideoCapture):
         # Get self properties
         frame_width, frame_height = self.width, self.height
         fps = self.fps
-        frame_count = self.len
+        frame_count = len(self)
 
         # Prepare output video writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Adjust codec as needed

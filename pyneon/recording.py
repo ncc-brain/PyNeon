@@ -681,6 +681,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             scanpath = self.estimate_scanpath()
         if self.video is None:
             raise ValueError("Plotting scanpath on video requires video data.")
+        
         overlay_scanpath(
             self,
             scanpath,
@@ -727,7 +728,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             video_output_path = self.der_dir / "detection_and_pose.mp4"
 
         overlay_detections_and_pose(
-            self.video,
+            self,
             april_detections,
             camera_positions,
             room_corners,

@@ -93,7 +93,7 @@ def smooth_camera_pose(
     if not bidirectional:
         smoothed_positions = [x.flatten() for x in x_fwd]
         result_df = pd.DataFrame(
-            {"frame_idx": all_frames, "smoothed_camera_pos": smoothed_positions}
+            {"frame_idx": all_frames, "camera_pos": smoothed_positions}
         )
         return result_df
 
@@ -114,6 +114,6 @@ def smooth_camera_pose(
 
     # Return results
     result_df = pd.DataFrame(
-        {"frame_idx": all_frames, "smoothed_camera_pos": smoothed_positions}
+        {"frame_idx": all_frames, "camera_pos": smoothed_positions}
     )
     return result_df

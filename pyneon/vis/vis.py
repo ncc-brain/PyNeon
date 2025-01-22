@@ -221,7 +221,7 @@ def overlay_scanpath(
         raise ValueError("Gaze and video timestamps do not match.")
 
     # reset video to the beginning
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video.reset()
 
     # Initialize video capture and writer
     if video_output_path is not None:
@@ -583,7 +583,9 @@ def overlay_detections_and_pose(
                 )
 
         if show_video:
-            cv2.imshow("Video with Overlays", frame)
+            # Resize the frame for display
+            resized_frame = cv2.resize(frame, (width // 2, height // 2))  # Adjust scaling factor as needed
+            cv2.imshow("Video with Overlays", resized_frame)
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC key
                 break
