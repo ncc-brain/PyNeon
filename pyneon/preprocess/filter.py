@@ -3,6 +3,7 @@ import pandas as pd
 
 from typing import Optional
 
+
 def smooth_camera_pose(
     camera_position_raw: pd.DataFrame,
     initial_state_noise: float = 0.1,

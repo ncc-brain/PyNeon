@@ -73,7 +73,7 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     # convert to pandas DataFrame
     all_detections = pd.DataFrame(all_detections)
 
-    #set the index to timestamp
+    # set the index to timestamp
     all_detections.set_index("timestamp [ns]", inplace=True)
 
     return all_detections

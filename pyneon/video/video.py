@@ -65,7 +65,7 @@ class NeonVideo(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
-    
+
     def reset(self):
         print("Resetting video...")
         if self.isOpened():
@@ -105,7 +105,7 @@ class NeonVideo(cv2.VideoCapture):
             Axis object containing the plot.
         """
         return plot_frame(self, index, ax, auto_title, show)
-    
+
     def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
         """
         Detect AprilTags in the video frames.
@@ -125,9 +125,8 @@ class NeonVideo(cv2.VideoCapture):
             - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
             - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
         """
-    
-        return detect_apriltags(self, tag_family)
 
+        return detect_apriltags(self, tag_family)
 
     def overlay_scanpath(
         self,
@@ -169,8 +168,8 @@ class NeonVideo(cv2.VideoCapture):
         )
 
     def undistort(
-    self,
-    output_video_path: Optional[Path | str] = "undistorted_video.mp4",
+        self,
+        output_video_path: Optional[Path | str] = "undistorted_video.mp4",
     ) -> None:
         """
         Undistort a video using the known camera matrix and distortion coefficients.
@@ -191,15 +190,26 @@ class NeonVideo(cv2.VideoCapture):
         frame_count = len(self)
 
         # Prepare output video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Adjust codec as needed
-        out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Adjust codec as needed
+        out = cv2.VideoWriter(
+            output_video_path, fourcc, fps, (frame_width, frame_height)
+        )
 
         # Precompute the optimal new camera matrix and undistortion map
         optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
-            camera_matrix, dist_coeffs, (frame_width, frame_height), 1, (frame_width, frame_height)
+            camera_matrix,
+            dist_coeffs,
+            (frame_width, frame_height),
+            1,
+            (frame_width, frame_height),
         )
         map1, map2 = cv2.initUndistortRectifyMap(
-            camera_matrix, dist_coeffs, None, optimal_camera_matrix, (frame_width, frame_height), cv2.CV_16SC2
+            camera_matrix,
+            dist_coeffs,
+            None,
+            optimal_camera_matrix,
+            (frame_width, frame_height),
+            cv2.CV_16SC2,
         )
 
         for frame_idx in tqdm(range(frame_count), desc="Undistorting video"):
@@ -207,10 +217,10 @@ class NeonVideo(cv2.VideoCapture):
             if not ret:
                 break
 
-            undistorted_frame = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR)
+            undistorted_frame = cv2.remap(
+                frame, map1, map2, interpolation=cv2.INTER_LINEAR
+            )
             out.write(undistorted_frame)
 
         out.release()
         print(f"Undistorted video saved to {output_video_path}")
-
-
