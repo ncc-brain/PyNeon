@@ -584,7 +584,9 @@ def overlay_detections_and_pose(
 
         if show_video:
             # Resize the frame for display
-            resized_frame = cv2.resize(frame, (width // 2, height // 2))  # Adjust scaling factor as needed
+            resized_frame = cv2.resize(
+                frame, (width // 2, height // 2)
+            )  # Adjust scaling factor as needed
             cv2.imshow("Video with Overlays", resized_frame)
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC key

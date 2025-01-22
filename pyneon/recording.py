@@ -470,7 +470,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         if (video := self.video) is None:
             raise ValueError("Estimating scanpath requires video data.")
         return estimate_scanpath(video, sync_gaze, lk_params)
-    
+
     def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
         """
         Detect AprilTags in a video and report their data for every frame using the apriltag library.
@@ -673,7 +673,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             scanpath = self.estimate_scanpath()
         if self.video is None:
             raise ValueError("Plotting scanpath on video requires video data.")
-        
+
         overlay_scanpath(
             self,
             scanpath,
