@@ -193,6 +193,7 @@ class Epochs:
         return self.epochs["description"].to_numpy()
 
     @property
+    def columns(self) -> pd.Index:
         return self.data.columns[:-3]
 
     @property
