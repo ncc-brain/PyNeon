@@ -28,6 +28,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+apriltags = [
+    "pupil-apriltags"
+]
 dev = [
     "pytest",
     "ruff",
@@ -42,4 +45,4 @@ doc = [
     "pydata-sphinx-theme",
     "nbsphinx",
 ]
-full = ["pyneon[dev,doc]"]
+full = ["pyneon[apriltags,dev,doc]"]
