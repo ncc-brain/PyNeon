@@ -46,7 +46,7 @@ class Epochs:
     ----------
     source : NeonStream or NeonEV
         Data to create epochs from.
-    times_df : pandas.DataFrame, optional
+    times_df : pandas.DataFrame, shape (n_epochs, 4), optional
         DataFrame containing epoch information with the following columns:
 
             ``t_ref``: Reference time of the epoch, in nanoseconds.\n
@@ -80,8 +80,17 @@ class Epochs:
 
     Notes
     -----
-    If ``times_df`` is provided, it is used to create epochs, and the other time-related parameters are ignored.
-    Otherwise, ``t_ref``, ``t_before``, ``t_after``, and ``description`` are required.
+    An epoch spans the temporal range of ``t_ref - t_before`` to ``t_ref + t_after`` as shown below:
+
+    ::
+
+                        t_ref[0]                            t_ref[1]
+            <--t_before[0]--|--t_after[0]-->      <-t_before[1]-|-t_after[1]->
+        ├--------------------------------------------------------------------------------┤
+
+    If ``times_df`` is provided, it is used to create epochs, and the other
+    time-related parameters are ignored. Otherwise, ``t_ref``, ``t_before``,
+    ``t_after``, and ``description`` are required.
 
     Attributes
     ----------
@@ -93,9 +102,15 @@ class Epochs:
             ``t_after`` (int64): Time after the reference time to end the epoch, in nanoseconds.\n
             ``description`` (str): Description or label associated with the epoch.\n
             ``data`` (object): DataFrame containing the data for each epoch.
-
     data : pandas.DataFrame
-        DataFrame containing the data for each epoch.
+        Annotated data with epoch information. In addition to the original data columns,
+        the following columns are added:
+
+            ``epoch index`` (Int32): ID of the epoch the data belongs to.\n
+            ``epoch time`` (Int64): Time relative to the epoch reference time, in nanoseconds.\n
+            ``epoch description`` (str): Description or label associated with the epoch.
+
+        If epochs overlap, data annotations are always overwritten by the latest epoch.
     """
 
     def __init__(
@@ -130,6 +145,7 @@ class Epochs:
             )
 
         # Sort by t_ref
+        assert times_df.shape[0] > 0, "times_df must have at least one row"
         times_df = times_df.sort_values("t_ref").reset_index(drop=True)
         # Set columns to appropriate data types (check if columns are present along the way)
         times_df = times_df.astype(
@@ -141,24 +157,17 @@ class Epochs:
             }
         )
 
+        if isinstance(source, NeonStream):
+            self.source_type = "stream"
+            self.is_uniformly_sampled = source.is_uniformly_sampled
+            self.sf = source.sampling_freq_effective
+        elif isinstance(source, NeonEV):
+            self.source_type = "event"
+            self.is_uniformly_sampled = None
+            self.sf = None
+
         # Create epochs
         self.epochs, self.data = _create_epochs(source, times_df)
-
-        # # Check epoch lengths
-        # data_len = self.epochs["epoch data"].apply(lambda x: x.shape[0])
-        # self.min_len = data_len.min()
-        # self.max_len = data_len.max()
-        # self.equal_times = data_len.nunique() == 1
-
-        # # Check if t_ref differences are equal
-        # t_ref_diff = self.epochs["t_ref"].diff().dropna().unique()
-        # self.equal_dist = len(t_ref_diff) == 1
-
-        # # Check if t_before and t_after are the same across epochs
-        # self.equal_length = (
-        #     self.epochs["t_before"].nunique() == 1
-        #     and self.epochs["t_after"].nunique() == 1
-        # )
 
     def __len__(self):
         return self.epochs.shape[0]
@@ -184,6 +193,15 @@ class Epochs:
         return self.epochs["description"].to_numpy()
 
     @property
+    def columns(self) -> pd.Index:
+        return self.data.columns[:-3]
+
+    @property
+    def dtypes(self) -> pd.Series:
+        """The data types of the epoched data."""
+        return self.data.dtypes[:-3]
+
+    @property
     def is_equal_length(self) -> bool:
         """Whether all epochs have the same length."""
         return np.allclose(self.t_before, self.t_before[0]) and np.allclose(
@@ -195,102 +213,91 @@ class Epochs:
         """Whether any adjacent epochs overlap."""
         return _check_overlap(self.epochs)
 
-    def to_numpy(self, sampling_rate=100, columns=None):
+    def to_numpy(
+        self,
+        column_names: str | list[str] = "all",
+    ) -> tuple[np.ndarray, dict]:
         """
-        Converts epochs into a NumPy array with dimensions (n_epochs, n_times, n_channels).
-        Resamples epochs to a fixed sampling rate.
+        Converts epochs into a 3D array with dimensions (n_epochs, n_channels, n_times).
+        Acts similarly as :meth:`mne.Epochs.get_data`.
+        Requires the epoch to be created from a uniformly-sampled :class:`pyneon.stream.NeonStream`.
 
         Parameters
         ----------
-        sampling_rate : int
-            The sampling rate to resample the data to, in **Hz** (samples per second).
-        columns : list of str, optional
-            List of column names to extract from the DataFrame. If None, all columns except 't_rel' are used.
+        columns : str or list of str, optional
+            Column names to include in the NumPy array. If 'all', all columns are included.
+            Only columns that can be converted to int or float can be included.
 
         Returns
         -------
-        epochs_np : numpy.ndarray
-            NumPy array of shape (n_epochs, n_times, n_channels).
+        numpy_epochs : numpy.ndarray
+            NumPy array of shape (n_epochs, n_channels, n_times).
+
         info : dict
             A dictionary containing:
-            - 'column_ids': List of provided column names.
-            - 't_rel': The common time grid, in nanoseconds.
-            - 'nan_status': String indicating whether NaN values were found in the data.
+
+                ``"column_ids"``: List of provided column names.\n
+                ``"t_rel"``: The common time grid, in nanoseconds.\n
+                ``"nan_flag"``: String indicating whether NaN values were found in the data.
 
         Notes
         -----
         - The time grid (`t_rel`) is in nanoseconds.
-        - If `NaN` values are present after interpolation, they are noted in `nan_status`.
+        - If `NaN` values are present after interpolation, they are noted in `nan_flag`.
         """
-        # Ensure there are epochs to process
-        if len(self.epochs) == 0:
-            raise ValueError("No epochs with data to convert to NumPy array.")
+        if self.source_type != "stream" or self.is_uniformly_sampled is False:
+            raise ValueError(
+                "The source must be a uniformly-sampled NeonStream to convert to NumPy array."
+            )
+        if not self.is_equal_length:
+            raise ValueError("Epochs must have equal length to convert to NumPy array.")
 
-        # Remove epochs with empty data
-        self.epochs = self.epochs[self.epochs["epoch data"].apply(len) > 0].reset_index(
-            drop=True
+        t_before = self.t_before[0]
+        t_after = self.t_after[0]
+
+        times = np.linspace(
+            -t_before, t_after, int((t_before + t_after) * self.sf * 1e-9) + 1
         )
-        n_epochs = len(self.epochs)
+        n_times = len(times)
 
-        # Define the common time grid
-        t_before = self.epochs["t_before"].iloc[0]
-        t_after = self.epochs["t_after"].iloc[0]
-        total_duration = t_after + t_before
-        n_times = int(total_duration / 1e9 * sampling_rate) + 1
-        common_times = np.linspace(-t_before, t_after, n_times)
-
-        # Select the relevant data columns
-        if columns is None:
-            # If no columns are provided, use all columns except 't_rel'
-            data_columns = self.epochs.iloc[0]["epoch data"].columns.drop("t_rel")
+        if column_names == "all":
+            columns = self.columns.to_list()
         else:
-            # Use the explicitly provided columns
-            data_columns = [
-                col
-                for col in columns
-                if col in self.epochs.iloc[0]["epoch data"].columns
-            ]
+            columns = [column_names] if isinstance(column_names, str) else column_names
+            if not all(col in self.columns for col in columns):
+                raise ValueError(f"Column '{col}'' doesn't exist in the epoch data.")
 
-        if len(data_columns) == 0:
-            raise ValueError("None of the provided columns exist in the epoch data.")
-
-        n_channels = len(data_columns)
+        n_columns = len(columns)
 
         # Initialize the NumPy array
         # MNE convention: (n_epochs, n_channels, n_times)
-        epochs_np = np.full((n_epochs, n_times, n_channels), np.nan)
+        epochs_np = np.full((len(self), n_columns, n_times - 2), np.nan)
 
         # Interpolate each epoch onto the common time grid
-        for i, (_, epoch) in enumerate(self.epochs.iterrows()):
-            epoch_data = epoch["epoch data"].copy()
-            t_rel = epoch_data["t_rel"].values
-            for idx, col in enumerate(data_columns):
-                y = epoch_data[col].values
-                # Interpolate using numpy.interp
+        for i, epoch in self.epochs.iterrows():
+            epoch_data = epoch["data"].copy()
+            epoch_time = epoch_data["epoch time"].to_numpy()
+            for j, col in enumerate(columns):
+                y = epoch_data[col].to_numpy()
                 interp_values = np.interp(
-                    common_times, t_rel, y, left=np.nan, right=np.nan
+                    times, epoch_time, y, left=np.nan, right=np.nan
                 )
-                epochs_np[i, :, idx] = interp_values
+                interp_values = interp_values[1:-1]  # Exclude the first and last values
+                epochs_np[i, j, :] = interp_values
 
         # check if there are any NaN values in the data
         nan_flag = np.isnan(epochs_np).any()
         if nan_flag:
-            nan_text = "NaN values were found in the data."
-        else:
-            nan_text = "No NaN values were found in the data."
+            warnings.warn("NaN values were found in the data.", RuntimeWarning)
 
         # Return an object holding the column ids, times, and data
         info = {
-            "column_ids": data_columns,
-            "t_rel": common_times,
-            "nan_status": nan_text,
+            "column_ids": columns,
+            "epoch_times": times[1:-1] * 1e-9,  # Convert to seconds
+            "nan_flag": nan_flag,
         }
-        print(nan_text)
 
         return epochs_np, info
-
-    def __len__(self):
-        return len(self.epochs)
 
 
 def _create_epochs(
@@ -302,8 +309,8 @@ def _create_epochs(
     _check_overlap(times_df)
 
     data = source.data.copy()
-    data["epoch id"] = pd.Series(dtype="Int32")
-    data["epoch time"] = pd.Series(dtype="int64")
+    data["epoch index"] = pd.Series(dtype="Int32")
+    data["epoch time"] = pd.Series(dtype="Int64")
     data["epoch description"] = pd.Series(dtype="str")
     ts = source.ts
 
@@ -325,14 +332,14 @@ def _create_epochs(
             epochs.at[i, "epoch data"] = pd.DataFrame()
             continue
 
-        data.loc[mask, "epoch id"] = i
+        data.loc[mask, "epoch index"] = i
         data.loc[mask, "epoch description"] = str(description_i)
         data.loc[mask, "epoch time"] = (
             data.loc[mask].index.to_numpy() - t_ref_i
         ).astype("int64")
 
         local_data = data.loc[mask].copy()
-        local_data.drop(columns=["epoch id", "epoch description"], inplace=True)
+        local_data.drop(columns=["epoch index", "epoch description"], inplace=True)
         epochs.at[i, "data"] = local_data
 
     return epochs, data
@@ -352,9 +359,9 @@ def events_to_times_df(
     ----------
     event : NeonEV
         NeonEV instance containing the event times.
-    t_before : Number
+    t_before : numbers.Number
         Time before the event start time to start the epoch. Units specified by `t_unit`.
-    t_after : Number
+    t_after : numbers.Number
         Time after the event start time to end the epoch. Units specified by `t_unit`.
     t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``. Can be 's' (seconds), 'ms' (milliseconds),
