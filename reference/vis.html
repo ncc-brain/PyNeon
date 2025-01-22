@@ -418,8 +418,8 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="pyneon.vis.plot_scanpath_on_video">
-<span class="sig-prename descclassname"><span class="pre">pyneon.vis.</span></span><span class="sig-name descname"><span class="pre">plot_scanpath_on_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="video.html#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><span class="pre">NeonVideo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">scanpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">circle_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_thickness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fixations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'scanpath.mp4'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.vis.plot_scanpath_on_video" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="pyneon.vis.overlay_scanpath">
+<span class="sig-prename descclassname"><span class="pre">pyneon.vis.</span></span><span class="sig-name descname"><span class="pre">overlay_scanpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="video.html#pyneon.video.NeonVideo" title="pyneon.video.NeonVideo"><span class="pre">NeonVideo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">scanpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">circle_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_thickness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fixations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'scanpath.mp4'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.vis.overlay_scanpath" title="Link to this definition">#</a></dt>
 <dd><p>Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -436,6 +436,85 @@ Defaults to ‘scanpath.mp4’.</p></li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.vis.overlay_detections_and_pose">
+<span class="sig-prename descclassname"><span class="pre">pyneon.vis.</span></span><span class="sig-name descname"><span class="pre">overlay_detections_and_pose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording"><span class="pre">NeonRecording</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">april_detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_positions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">room_corners</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([[0,</span> <span class="pre">0],</span> <span class="pre">[0,</span> <span class="pre">1],</span> <span class="pre">[1,</span> <span class="pre">1],</span> <span class="pre">[1,</span> <span class="pre">0]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'detection_and_pose.mp4'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([300,</span> <span class="pre">300])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.vis.overlay_detections_and_pose" title="Link to this definition">#</a></dt>
+<dd><p>Overlay AprilTag detections and camera positions on top of the recording’s video frames.
+Additionally, draw an inset plot showing the camera’s trajectory within known environmental
+(room) boundaries.</p>
+<p>This function reads frames from the provided recording video and overlays:
+- AprilTag detections (if present in the current frame)
+- The camera position, using a mini-map inset showing all previously visited positions,</p>
+<blockquote>
+<div><p>as well as the current/last known position of the camera.</p>
+</div></blockquote>
+<p>The mini-map inset uses predetermined room boundaries derived from the provided
+<cite>room_corners</cite> array to map positions onto a fixed coordinate system, allowing consistent
+visualization of the camera’s movement over time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>recording</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NeonRecording</span></code>) – Recording object containing the video and related metadata.</p></li>
+<li><p><strong>april_detections</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – <dl class="simple">
+<dt>DataFrame containing AprilTag detections for each frame, with columns:</dt><dd><ul>
+<li><dl class="simple">
+<dt>’frame_idx’: int</dt><dd><p>The frame number.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>’tag_id’: int</dt><dd><p>The ID of the detected AprilTag.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>’corners’: np.ndarray of shape (4,2)</dt><dd><p>Pixel coordinates of the tag’s corners.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>camera_positions</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – <dl class="simple">
+<dt>DataFrame containing the camera positions for each frame, with at least:</dt><dd><ul>
+<li><dl class="simple">
+<dt>’frame_idx’: int</dt><dd><p>The frame number.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>’smoothed_camera_pos’: np.ndarray of shape (3,)</dt><dd><p>The camera position [x, y, z] in world coordinates.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>room_corners</strong> (<em>np.ndarray</em><em> of </em><em>shape</em><em> (</em><em>N</em><em>, </em><em>2</em><em>)</em><em>, </em><em>optional</em>) – Array defining the polygon corners of the room in world coordinates.
+Defaults to a simple unit square: [[0,0],[0,1],[1,1],[1,0]].</p></li>
+<li><p><strong>video_output_path</strong> (str or <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>, optional) – Path to save the output video with overlays. Defaults to ‘output_with_overlays.mp4’.</p></li>
+<li><p><strong>graph_size</strong> (<em>np.ndarray</em><em> of </em><em>shape</em><em> (</em><em>2</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].</p></li>
+<li><p><strong>show_video</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to display the video with overlays as it is processed. Press ‘ESC’ to stop early.
+Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function saves the processed video to the specified output path and optionally displays
+it during processing. No value is returned.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If the video cannot be read, a RuntimeError is raised.</p></li>
+<li><p>Press ‘ESC’ to stop playback if show_video is True.</p></li>
+</ul>
 </dd></dl>
 
 </section>
@@ -489,7 +568,8 @@ Defaults to ‘scanpath.mp4’.</p></li>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.vis.plot_frame"><code class="docutils literal notranslate"><span class="pre">plot_frame()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.vis.plot_distribution"><code class="docutils literal notranslate"><span class="pre">plot_distribution()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.vis.plot_scanpath_on_video"><code class="docutils literal notranslate"><span class="pre">plot_scanpath_on_video()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.vis.overlay_scanpath"><code class="docutils literal notranslate"><span class="pre">overlay_scanpath()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.vis.overlay_detections_and_pose"><code class="docutils literal notranslate"><span class="pre">overlay_detections_and_pose()</span></code></a></li>
 </ul>
   </nav></div>
 
