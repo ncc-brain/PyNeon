@@ -363,7 +363,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>source</strong> (<a class="reference internal" href="stream.html#pyneon.stream.NeonStream" title="pyneon.stream.NeonStream"><em>NeonStream</em></a><em> or </em><a class="reference internal" href="events.html#pyneon.events.NeonEV" title="pyneon.events.NeonEV"><em>NeonEV</em></a>) – Data to create epochs from.</p></li>
-<li><p><strong>times_df</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a><em>, </em><em>optional</em>) – <p>DataFrame containing epoch information with the following columns:</p>
+<li><p><strong>times_df</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a><em>, </em><em>shape</em><em> (</em><em>n_epochs</em><em>, </em><em>4</em><em>)</em><em>, </em><em>optional</em>) – <p>DataFrame containing epoch information with the following columns:</p>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">t_ref</span></code>: Reference time of the epoch, in nanoseconds.</p>
 <p><code class="docutils literal notranslate"><span class="pre">t_before</span></code>: Time before the reference time to start the epoch, in nanoseconds.</p>
@@ -391,8 +391,15 @@ are relative to a global start time
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>If <code class="docutils literal notranslate"><span class="pre">times_df</span></code> is provided, it is used to create epochs, and the other time-related parameters are ignored.
-Otherwise, <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>, <code class="docutils literal notranslate"><span class="pre">t_after</span></code>, and <code class="docutils literal notranslate"><span class="pre">description</span></code> are required.</p>
+<p>An epoch spans the temporal range of <code class="docutils literal notranslate"><span class="pre">t_ref</span> <span class="pre">-</span> <span class="pre">t_before</span></code> to <code class="docutils literal notranslate"><span class="pre">t_ref</span> <span class="pre">+</span> <span class="pre">t_after</span></code> as shown below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                t_ref[0]                            t_ref[1]
+    &lt;--t_before[0]--|--t_after[0]--&gt;      &lt;-t_before[1]-|-t_after[1]-&gt;
+├--------------------------------------------------------------------------------┤
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">times_df</span></code> is provided, it is used to create epochs, and the other
+time-related parameters are ignored. Otherwise, <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>,
+<code class="docutils literal notranslate"><span class="pre">t_after</span></code>, and <code class="docutils literal notranslate"><span class="pre">description</span></code> are required.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.Epochs.epochs">
 <span class="sig-name descname"><span class="pre">epochs</span></span><a class="headerlink" href="#pyneon.Epochs.epochs" title="Link to this definition">#</a></dt>
@@ -414,7 +421,14 @@ Otherwise, <code class="docutils literal notranslate"><span class="pre">t_ref</s
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.Epochs.data">
 <span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.Epochs.data" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the data for each epoch.</p>
+<dd><p>Annotated data with epoch information. In addition to the original data columns,
+the following columns are added:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">index</span></code> (Int32): ID of the epoch the data belongs to.</p>
+<p><code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">time</span></code> (Int64): Time relative to the epoch reference time, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">description</span></code> (str): Description or label associated with the epoch.</p>
+</div></blockquote>
+<p>If epochs overlap, data annotations are always overwritten by the latest epoch.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
