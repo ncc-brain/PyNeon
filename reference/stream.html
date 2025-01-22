@@ -454,6 +454,18 @@ It’s indexed by <code class="docutils literal notranslate"><span class="pre">t
 <dd><p>Whether the stream is uniformly sampled.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.columns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">columns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.2.3)"><span class="pre">Index</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.columns" title="Link to this definition">#</a></dt>
+<dd><p>Column names of the stream data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.stream.NeonStream.dtypes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.3)"><span class="pre">Series</span></a></em><a class="headerlink" href="#pyneon.stream.NeonStream.dtypes" title="Link to this definition">#</a></dt>
+<dd><p>Data types of the columns in the stream data.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.stream.NeonStream.time_to_ts">
 <span class="sig-name descname"><span class="pre">time_to_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></span><a class="headerlink" href="#pyneon.stream.NeonStream.time_to_ts" title="Link to this definition">#</a></dt>
@@ -665,6 +677,8 @@ from <a class="reference internal" href="#pyneon.stream.NeonStream" title="pyneo
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.duration"><code class="docutils literal notranslate"><span class="pre">NeonStream.duration</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.sampling_freq_effective"><code class="docutils literal notranslate"><span class="pre">NeonStream.sampling_freq_effective</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.is_uniformly_sampled"><code class="docutils literal notranslate"><span class="pre">NeonStream.is_uniformly_sampled</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.columns"><code class="docutils literal notranslate"><span class="pre">NeonStream.columns</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.dtypes"><code class="docutils literal notranslate"><span class="pre">NeonStream.dtypes</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.time_to_ts"><code class="docutils literal notranslate"><span class="pre">NeonStream.time_to_ts()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.crop"><code class="docutils literal notranslate"><span class="pre">NeonStream.crop()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.stream.NeonStream.restrict"><code class="docutils literal notranslate"><span class="pre">NeonStream.restrict()</span></code></a></li>
