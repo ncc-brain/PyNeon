@@ -87,11 +87,13 @@ class NeonStream(NeonTabular):
         return np.allclose(self.ts_diff, self.ts_diff[0])
 
     @property
-    def columns(self):
+    def columns(self) -> pd.Index:
+        """Column names of the stream data."""
         return self.data.columns
 
     @property
-    def dtypes(self):
+    def dtypes(self) -> pd.Series:
+        """Data types of the columns in the stream data."""
         return self.data.dtypes
 
     def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
