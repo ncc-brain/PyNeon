@@ -83,7 +83,7 @@ class Epochs:
     An epoch spans the temporal range of ``t_ref - t_before`` to ``t_ref + t_after`` as shown below:
 
     ::
-    
+
                         t_ref[0]                            t_ref[1]
             <--t_before[0]--|--t_after[0]-->      <-t_before[1]-|-t_after[1]->
         ├--------------------------------------------------------------------------------┤
@@ -106,11 +106,11 @@ class Epochs:
     data : pandas.DataFrame
         Annotated data with epoch information. In addition to the original data columns,
         the following columns are added:
-        
+
             ``epoch index`` (Int32): ID of the epoch the data belongs to.\n
             ``epoch time`` (Int64): Time relative to the epoch reference time, in nanoseconds.\n
             ``epoch description`` (str): Description or label associated with the epoch.
-        
+
         If epochs overlap, data annotations are always overwritten by the latest epoch.
     """
 
