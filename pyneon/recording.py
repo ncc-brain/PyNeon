@@ -10,7 +10,7 @@ from numbers import Number
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
-from .preprocess import concat_streams, concat_events
+from .preprocess import concat_streams, concat_events, smooth_camera_pose
 from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
@@ -95,6 +95,10 @@ class NeonRecording:
 
         self.recording_id = self.info["recording_id"]
         self.recording_dir = recording_dir
+
+        self.der_dir = recording_dir / "derivatives"
+        if not self.der_dir.is_dir():
+            self.der_dir.mkdir()
 
         self._gaze = None
         self._eye_states = None

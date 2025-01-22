@@ -109,7 +109,7 @@ class NeonVideo(cv2.VideoCapture):
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = "scanpath.mp4",
+        video_output_path: Path | str = "derivatives/scanpath.mp4",
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
