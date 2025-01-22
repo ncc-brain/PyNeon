@@ -46,7 +46,7 @@ class Epochs:
     ----------
     source : NeonStream or NeonEV
         Data to create epochs from.
-    times_df : pandas.DataFrame, optional
+    times_df : pandas.DataFrame, shape (n_epochs, 4), optional
         DataFrame containing epoch information with the following columns:
 
             ``t_ref``: Reference time of the epoch, in nanoseconds.\n
@@ -80,8 +80,17 @@ class Epochs:
 
     Notes
     -----
-    If ``times_df`` is provided, it is used to create epochs, and the other time-related parameters are ignored.
-    Otherwise, ``t_ref``, ``t_before``, ``t_after``, and ``description`` are required.
+    An epoch spans the temporal range of ``t_ref - t_before`` to ``t_ref + t_after`` as shown below:
+
+    ::
+    
+                        t_ref[0]                            t_ref[1]
+            <--t_before[0]--|--t_after[0]-->      <-t_before[1]-|-t_after[1]->
+        ├--------------------------------------------------------------------------------┤
+
+    If ``times_df`` is provided, it is used to create epochs, and the other
+    time-related parameters are ignored. Otherwise, ``t_ref``, ``t_before``,
+    ``t_after``, and ``description`` are required.
 
     Attributes
     ----------
@@ -95,7 +104,14 @@ class Epochs:
             ``data`` (object): DataFrame containing the data for each epoch.
 
     data : pandas.DataFrame
-        DataFrame containing the data for each epoch.
+        Annotated data with epoch information. In addition to the original data columns,
+        the following columns are added:
+        
+            ``epoch index`` (Int32): ID of the epoch the data belongs to.\n
+            ``epoch time`` (Int64): Time relative to the epoch reference time, in nanoseconds.\n
+            ``epoch description`` (str): Description or label associated with the epoch.
+        
+        If epochs overlap, data annotations are always overwritten by the latest epoch.
     """
 
     def __init__(
@@ -302,8 +318,8 @@ def _create_epochs(
     _check_overlap(times_df)
 
     data = source.data.copy()
-    data["epoch id"] = pd.Series(dtype="Int32")
-    data["epoch time"] = pd.Series(dtype="int64")
+    data["epoch index"] = pd.Series(dtype="Int32")
+    data["epoch time"] = pd.Series(dtype="Int64")
     data["epoch description"] = pd.Series(dtype="str")
     ts = source.ts
 
@@ -325,14 +341,14 @@ def _create_epochs(
             epochs.at[i, "epoch data"] = pd.DataFrame()
             continue
 
-        data.loc[mask, "epoch id"] = i
+        data.loc[mask, "epoch index"] = i
         data.loc[mask, "epoch description"] = str(description_i)
         data.loc[mask, "epoch time"] = (
             data.loc[mask].index.to_numpy() - t_ref_i
         ).astype("int64")
 
         local_data = data.loc[mask].copy()
-        local_data.drop(columns=["epoch id", "epoch description"], inplace=True)
+        local_data.drop(columns=["epoch index", "epoch description"], inplace=True)
         epochs.at[i, "data"] = local_data
 
     return epochs, data
