@@ -8,6 +8,7 @@ import json
 from tqdm import tqdm
 
 from ..vis import plot_frame, overlay_scanpath
+from .apriltag import detect_apriltags
 
 
 class NeonVideo(cv2.VideoCapture):
@@ -104,6 +105,28 @@ class NeonVideo(cv2.VideoCapture):
             Axis object containing the plot.
         """
         return plot_frame(self, index, ax, auto_title, show)
+    
+    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+        """
+        Detect AprilTags in the video frames.
+
+        Parameters
+        ----------
+        tag_family : str, optional
+            The AprilTag family to detect (default is 'tag36h11').
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing AprilTag detections, with columns:
+            - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
+            - 'frame_idx': The frame number
+            - 'tag_id': The ID of the detected AprilTag
+            - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
+            - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
+        """
+        detect_apriltags(self, tag_family)
+
 
     def overlay_scanpath(
         self,
@@ -149,7 +172,7 @@ class NeonVideo(cv2.VideoCapture):
     output_video_path: Optional[Path | str] = "undistorted_video.mp4",
     ) -> None:
         """
-        Undistort a video using camera matrix and distortion coefficients.
+        Undistort a video using the known camera matrix and distortion coefficients.
 
         Parameters
         output_video_path : str

@@ -5,8 +5,6 @@ from typing import Optional
 
 def smooth_camera_pose(
     camera_position_raw: pd.DataFrame,
-    state_dim: int = 3,
-    meas_dim: int = 3,
     initial_state_noise: float = 0.1,
     process_noise: float = 0.1,
     measurement_noise: float = 0.01,
@@ -41,6 +39,10 @@ def smooth_camera_pose(
     pd.DataFrame
         A DataFrame with 'frame_idx' and 'smoothed_camera_pos'.
     """
+
+    state_dim = 3,
+    meas_dim = 3,
+
     # Ensure the DataFrame is sorted by frame_idx
     camera_position_raw = camera_position_raw.sort_values("frame_idx")
 

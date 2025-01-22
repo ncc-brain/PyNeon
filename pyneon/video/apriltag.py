@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 import pandas as pd
-import os
-import pickle
 from typing import TYPE_CHECKING, Union, Optional, Dict, List
 from pupil_apriltags import Detector
 
@@ -27,6 +25,7 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     -------
     pd.DataFrame
         A DataFrame containing AprilTag detections, with columns:
+        - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
         - 'frame_idx': The frame number
         - 'tag_id': The ID of the detected AprilTag
         - 'corners': A 4x2 array of the tag corner coordinates
@@ -62,6 +61,7 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
             all_detections.append(
                 {
                     "frame_idx": frame_idx,
+                    "timestamp [ns]": video.ts[frame_idx],
                     "tag_id": tag_id,
                     "corners": corners,
                     "center": center,
@@ -72,6 +72,9 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
 
     # convert to pandas DataFrame
     all_detections = pd.DataFrame(all_detections)
+
+    #set the index to timestamp
+    all_detections.set_index("timestamp [ns]", inplace=True)
 
     return all_detections
 
