@@ -394,7 +394,7 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView
 └── boardView_MARKER-MAPPER_boardMapping_csv
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> folder contains what PyNeon refers to as a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>. It consists of two recordings, each with its own <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file and data files. These recordings can be loaded either individually as a <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> as a collective <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> folder contains what PyNeon refers to as a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>. It consists of two recordings, each with its own <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file and data files. These recordings can be loaded either individually as a <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code>, or as a collective <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>.</p>
 <p>To load a <code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code>, specify the path to the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> folder:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -414,12 +414,12 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView
 NeonDataset | 2 recordings
 </pre></div></div>
 </div>
-<p>NeonDataset has a <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute containing a list of <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> objects. You can access individual recordings by index:</p>
+<p><code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code> provides an index-based access to its recordings. The recordings are stored in the <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute, which contains a list of <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> instances. You can access individual recordings by index:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Internally accesses the recordings attribute</span>
 <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">recording</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">recording_dir</span><span class="p">)</span>
 </pre></div>
@@ -458,7 +458,7 @@ C:\Users\qian.chu\Documents\GitHub\pyneon\data\boardView\Timeseries Data + Scene
 </section>
 <section id="Data-and-metadata-of-a-NeonRecording">
 <h2>Data and metadata of a NeonRecording<a class="headerlink" href="#Data-and-metadata-of-a-NeonRecording" title="Link to this heading">#</a></h2>
-<p>You can quickly get an overview of the metadata and contents of a <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> by printing the object. The basic metadata (e.g., recording and wearer ID, recording start time and duration) and the path to available data will be displayed. At this point, the data is simply located from the recording’s folder path, but it is not yet loaded into memory.</p>
+<p>You can quickly get an overview of the metadata and contents of a <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> by printing the instance. The basic metadata (e.g., recording and wearer ID, recording start time and duration) and the path to available data will be displayed. At this point, the data is simply located from the recording’s folder path, but it is not yet loaded into memory.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -494,7 +494,7 @@ scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\Git
 </pre></div></div>
 </div>
 <p>As seen in the output, this recording includes all data files. This tutorial will focus on non-video data. For processing video, refer to the <a class="reference internal" href="video.html"><span class="doc">Neon video tutorial</span></a>.</p>
-<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> object. For example, the gaze data can be accessed as <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code>, and upon accessing, the tabular data is loaded into memory. On the other hand, if you try to access unavailable data, PyNeon will return <code class="docutils literal notranslate"><span class="pre">None</span></code> and a warning message.</p>
+<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code> instance. For example, the gaze data can be accessed as <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code>, and upon accessing, the tabular data is loaded into memory. On the other hand, if you try to access unavailable data, PyNeon will return <code class="docutils literal notranslate"><span class="pre">None</span></code> and a warning message.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
@@ -502,8 +502,10 @@ scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\Git
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Gaze and fixation data are available</span>
 <span class="n">gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">gaze</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.gaze is </span><span class="si">{</span><span class="n">gaze</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
 <span class="n">saccades</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">saccades</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.saccades is </span><span class="si">{</span><span class="n">saccades</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
 <span class="n">video</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">video</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.video is </span><span class="si">{</span><span class="n">video</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
@@ -538,6 +540,7 @@ recording.video is &lt; cv2.VideoCapture 00000199629C75D0&gt;
 <section id="Data-as-DataFrames">
 <h2>Data as DataFrames<a class="headerlink" href="#Data-as-DataFrames" title="Link to this heading">#</a></h2>
 <p>The essence of <code class="docutils literal notranslate"><span class="pre">NeonTabular</span></code> is the <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute—a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>. This is a common data structure in Python for handling tabular data. For example, you can print the first 5 rows of the gaze data by calling <code class="docutils literal notranslate"><span class="pre">gaze.data.head()</span></code>, and inspect the data type of each column by calling <code class="docutils literal notranslate"><span class="pre">gaze.data.dtypes</span></code>.</p>
+<p>Theoretically, you could re-assign <code class="docutils literal notranslate"><span class="pre">gaze.data</span></code> to <code class="docutils literal notranslate"><span class="pre">gaze_df</span></code>, however the conversion scripts written in the next section only work at the class level and not on the dataframe level.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -747,7 +750,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
 </section>
 <section id="An-example-plot-of-cropped-data">
 <h2>An example plot of cropped data<a class="headerlink" href="#An-example-plot-of-cropped-data" title="Link to this heading">#</a></h2>
-<p>Below we show how to easily plot the gaze and saccade data we cropped just now. Since PyNeon data are stored in <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>, you can use any plotting library that supports <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> as input. Here we use <code class="docutils literal notranslate"><span class="pre">seaaborn</span></code> and <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> to plot the gaze x, y coordinates and the saccade durations (shadowed areas).</p>
+<p>Below we show how to easily plot the gaze and saccade data we cropped just now. Since PyNeon data are stored in <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>, you can use any plotting library that supports <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> as input. Here we use <code class="docutils literal notranslate"><span class="pre">seaborn</span></code> and <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> to plot the gaze x, y coordinates and the saccade durations (shadowed areas).</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
