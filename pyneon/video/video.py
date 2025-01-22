@@ -6,7 +6,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import json
 
-from ..vis import plot_frame, plot_scanpath_on_video
+from ..vis import plot_frame, overlay_scanpath
 
 
 class NeonVideo(cv2.VideoCapture):
@@ -92,7 +92,7 @@ class NeonVideo(cv2.VideoCapture):
         """
         return plot_frame(self, index, ax, auto_title, show)
 
-    def plot_scanpath_on_video(
+    def overlay_scanpath(
         self,
         scanpath: pd.DataFrame,
         circle_radius: int = 10,
@@ -121,7 +121,7 @@ class NeonVideo(cv2.VideoCapture):
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'scanpath.mp4'.
         """
-        plot_scanpath_on_video(
+        overlay_scanpath(
             self,
             scanpath,
             circle_radius,
