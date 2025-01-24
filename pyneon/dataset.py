@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
@@ -28,25 +27,25 @@ class NeonDataset:
         ├── enrichment_info.txt
         └── sections.csv
 
-    Individual recordings will be read into :class:`NeonRecording` objects based on
+    Individual recordings will be read into NeonRecording objects based on
     ``sections.csv``. They are accessible through the ``recordings`` attribute.
 
     Parameters
     ----------
-    dataset_dir : str or :class:`pathlib.Path`
+    dataset_dir : str or pathlib.Path
         Path to the directory containing the dataset.
 
     Attributes
     ----------
-    dataset_dir : :class:`pathlib.Path`
+    dataset_dir : pathlib.Path
         Path to the directory containing the dataset.
     recordings : list of NeonRecording
         List of NeonRecording objects for each recording in the dataset.
-    sections : :class:`pandas.DataFrame`
+    sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
     """
 
-    def __init__(self, dataset_dir: Union[str, Path]):
+    def __init__(self, dataset_dir: str | Path):
         dataset_dir = Path(dataset_dir)
         if not dataset_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {dataset_dir}")
@@ -69,11 +68,11 @@ class NeonDataset:
                     self.recordings.append(NeonRecording(rec_dir))
                 except Exception as e:
                     raise RuntimeWarning(
-                        f"Skipping reading recording {rec_id} " f"due to error:\n{e}"
+                        f"Skipping reading recording {rec_id} due to error:\n{e}"
                     )
             elif len(rec_dir) == 0:
                 raise FileNotFoundError(
-                    "Recording directory not found for recording id " f"{rec_id_start}"
+                    f"Recording directory not found for recording id {rec_id_start}"
                 )
             else:
                 raise FileNotFoundError(
@@ -91,7 +90,7 @@ class NeonDataset:
         """Get a NeonRecording by index."""
         return self.recordings[index]
 
-    def load_enrichment(self, enrichment_dir: Union[str, Path]):
+    def load_enrichment(self, enrichment_dir: str | Path):
         """
         Load enrichment information from an enrichment directory. The directory must
         contain an enrichment_info.txt file. Enrichment data will be parsed for each
@@ -101,7 +100,7 @@ class NeonDataset:
 
         Parameters
         ----------
-        enrichment_dir : str or :class:`pathlib.Path`
+        enrichment_dir : str or pathlib.Path
             Path to the directory containing the enrichment information.
         """
         pass

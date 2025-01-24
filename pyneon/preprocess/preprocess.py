@@ -1,64 +1,21 @@
 import pandas as pd
 import numpy as np
-
-from typing import TYPE_CHECKING, Union, Literal
-from scipy.interpolate import interp1d
+from tqdm import tqdm
 
 from numbers import Number
+from typing import TYPE_CHECKING, Optional
+from scipy.interpolate import interp1d
+
+from ..utils import _check_stream_data
 
 if TYPE_CHECKING:
     from ..recording import NeonRecording
 
 
-def _check_data(data: pd.DataFrame, t_col_name: str = "timestamp [ns]") -> None:
-    if t_col_name not in data.columns:
-        raise ValueError(f"Data must contain a {t_col_name} column")
-    if np.any(np.diff(data[t_col_name]) < 0):
-        raise ValueError(f"{t_col_name} must be monotonically increasing")
-
-
-def crop(
-    data: pd.DataFrame,
-    tmin: Union[Number, None] = None,
-    tmax: Union[Number, None] = None,
-    by: Literal["timestamp", "time"] = "timestamp",
-) -> pd.DataFrame:
-    """
-    Crop data to a specific time range.
-
-    Parameters
-    ----------
-    data : pd.DataFrame
-        Data to crop. Must contain a monotonically increasing
-        ``timestamp [ns]`` or ``time [s]`` column.
-    tmin : number, optional
-        Start time or timestamp to crop the data to. If ``None``,
-        the minimum timestamp or time in the data is used. Defaults to ``None``.
-    tmax : number, optional
-        End time or timestamp to crop the data to. If ``None``,
-        the maximum timestamp or time in the data is used. Defaults to ``None``.
-    by : "timestamp" or "time", optional
-        Whether tmin and tmax are UTC timestamps in nanoseconds
-        or relative times in seconds. Defaults to "timestamp".
-
-    Returns
-    -------
-    pd.DataFrame
-        Cropped data.
-    """
-    if tmin is None and tmax is None:
-        raise ValueError("At least one of tmin or tmax must be provided")
-    t_col_name = "timestamp [ns]" if by == "timestamp" else "time [s]"
-    _check_data(data, t_col_name=t_col_name)
-    tmin = tmin if tmin is not None else data[t_col_name].min()
-    tmax = tmax if tmax is not None else data[t_col_name].max()
-    return data[(data[t_col_name] >= tmin) & (data[t_col_name] <= tmax)]
-
-
 def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
-    float_kind: str = "linear",
+    float_kind: str = "cubic",
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
@@ -66,35 +23,32 @@ def interpolate(
 
     Parameters
     ----------
-    new_ts : np.ndarray, optional
-        New timestamps to evaluate the interpolant at.
-    data : pd.DataFrame
-        Data to interpolate. Must contain a monotonically increasing
-        ``timestamp [ns]`` column.
+    new_ts : numpy.ndarray
+        An array of new timestamps (in nanoseconds)
+        at which to evaluate the interpolant.
+    data : pandas.DataFrame
+        Data to interpolate. Must have a monotonically increasing
+        index named ``timestamp [ns]``.
     float_kind : str, optional
         Kind of interpolation applied on columns of float type,
-        by default "linear". For details see :class:`scipy.interpolate.interp1d`.
+        by default ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
     other_kind : str, optional
         Kind of interpolation applied on columns of other types,
-        by default "nearest".
+        by default ``"nearest"``. For details see :class:`scipy.interpolate.interp1d`.
 
     Returns
     -------
     pandas.DataFrame
         Interpolated data.
     """
-    _check_data(data)
-    new_ts = np.sort(new_ts)
-    new_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
-    new_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
+    _check_stream_data(data)
+    new_ts = np.sort(new_ts).astype(np.int64)
+    new_data = pd.DataFrame(index=new_ts, columns=data.columns)
     for col in data.columns:
-        # Skip time columns
-        if col == "timestamp [ns]" or col == "time [s]":
-            continue
         # Float columns are interpolated with float_kind
         if pd.api.types.is_float_dtype(data[col]):
             new_data[col] = interp1d(
-                data["timestamp [ns]"],
+                data.index,
                 data[col],
                 kind=float_kind,
                 bounds_error=False,
@@ -102,7 +56,7 @@ def interpolate(
         # Other columns are interpolated with other_kind
         else:
             new_data[col] = interp1d(
-                data["timestamp [ns]"],
+                data.index,
                 data[col],
                 kind=other_kind,
                 bounds_error=False,
@@ -115,63 +69,77 @@ def interpolate(
 def window_average(
     new_ts: np.ndarray,
     data: pd.DataFrame,
-    window_size: Union[int, None] = None,
+    window_size: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Take the average over a time window to obtain smoothed data at new timestamps.
 
     Parameters
     ----------
-    new_ts : np.ndarray
-        New timestamps to evaluate the window average at. The median of the differences
-        between the new timestamps must be larger than the median of the differences
-        between the old timestamps. In other words, only downsampling is supported.
-    data : pd.DataFrame
-        Data to apply window average to. Must contain a monotonically increasing
-        ``timestamp [ns]`` column.
+    new_ts : numpy.ndarray
+        An array of new timestamps (in nanoseconds)
+        at which to compute the windowed averages.
+        The median interval between these new timestamps must be larger than
+        the median interval between the original data timestamps, i.e.,
+        ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
+        In other words, only downsampling is supported.
+    data : pandas.DataFrame
+        Data to apply window average to. Must have a monotonically increasing
+        index named ``timestamp [ns]``.
     window_size : int, optional
-        Size of the time window in nanoseconds. If ``None``, the window size is
-        set to the median of the differences between the new timestamps.
-        Defaults to ``None``.
+        The size of the time window (in nanoseconds)
+        over which to compute the average around each new timestamp.
+        If ``None`` (default), the window size is set to the median interval
+        between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
+        The window size must be larger than the median interval between the original data timestamps,
+        i.e., ``window_size > np.median(np.diff(data.index))``.
 
     Returns
     -------
-    pd.DataFrame
+    pandas.DataFrame
         Data with window average applied.
     """
-    _check_data(data)
-    new_ts = np.sort(new_ts)
+    _check_stream_data(data)
+    new_ts = np.sort(new_ts).astype(np.int64)
     new_ts_median_diff = np.median(np.diff(new_ts))
-    # Assert that the new_ts has a lower sampling frequency than the old data
-    if new_ts_median_diff < np.mean(np.diff(data["timestamp [ns]"])):
+    original_ts_median_diff = np.median(np.diff(data.index))
+
+    # Check for downsampling
+    if new_ts_median_diff < original_ts_median_diff:
         raise ValueError(
             "new_ts must have a lower sampling frequency than the old data"
         )
+
     if window_size is None:
         window_size = int(new_ts_median_diff)
-    new_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
-    new_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
-    for col in data.columns:
-        # Skip time columns
-        if col == "timestamp [ns]" or col == "time [s]":
-            continue
-        new_values = []  # List to store the downsampled values
-        for ts in new_ts:
-            # Define the time window around the current new timestamp
-            lower_bound = ts - window_size / 2
-            upper_bound = ts + window_size / 2
-            # Select rows from old_data that fall within the time window
-            window_data = data[
-                (data["timestamp [ns]"] >= lower_bound)
-                & (data["timestamp [ns]"] <= upper_bound)
-            ]
-            # Append data within this window
-            if not window_data.empty:
-                new_values.append(window_data[col].mean())
-            else:
-                new_values.append(np.nan)
-        # Assign the downsampled values to the new DataFrame
-        new_data[col] = new_values
+
+    if window_size < original_ts_median_diff:
+        raise ValueError(
+            "Window size must be larger than the median difference "
+            "between the old timestamps, otherwise data could be interleaved by NAs."
+        )
+
+    new_data = pd.DataFrame(index=new_ts, columns=data.columns).astype(data.dtypes)
+    non_float_cols = data.select_dtypes(exclude="float").columns
+
+    for ts in tqdm(new_ts, desc="Computing window averages"):
+        lower_bound = ts - window_size / 2
+        upper_bound = ts + window_size / 2
+
+        # Select data within the window
+        window_data = data[
+            (data.index >= lower_bound) & (data.index <= upper_bound)
+        ].copy()
+        if not window_data.empty:
+            # Take the mean of the window data
+            mean_values = window_data.mean(axis=0)
+            # Round non-float columns so that they can be safely set to the original data type
+            for non_float_col in non_float_cols:
+                if not pd.isna(col_value := mean_values[non_float_col]):
+                    mean_values[non_float_col] = round(col_value)
+            new_data.loc[ts, :] = mean_values
+        else:
+            new_data.loc[ts, :] = pd.NA
 
     return new_data
 
@@ -181,9 +149,9 @@ _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 def concat_streams(
     rec: "NeonRecording",
-    stream_names: Union[str, list[str]] = "all",
-    sampling_freq: Union[Number, str] = "min",
-    interp_float_kind: str = "linear",
+    stream_names: str | list[str] = "all",
+    sampling_freq: Number | str = "min",
+    interp_float_kind: str = "cubic",
     interp_other_kind: str = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
@@ -196,7 +164,7 @@ def concat_streams(
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         NeonRecording object containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all", then all streams will be used.
@@ -205,13 +173,12 @@ def concat_streams(
     sampling_freq : float or int or str, optional
         Sampling frequency of the concatenated streams.
         If numeric, the streams will be interpolated to this frequency.
-        If ``"min"``, the lowest nominal sampling frequency
+        If ``"min"`` (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If ``"max"``, the highest nominal sampling frequency will be used.
-        Defaults to ``"min"``.
     interp_float_kind : str, optional
         Kind of interpolation applied on columns of float type,
-        Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
     interp_other_kind : str, optional
         Kind of interpolation applied on columns of other types.
         Defaults to ``"nearest"``.
@@ -221,7 +188,7 @@ def concat_streams(
 
     Returns
     -------
-    concat_data : :class:`pandas.DataFrame`
+    concat_data : pandas.DataFrame
         Concatenated data.
     """
     if isinstance(stream_names, str):
@@ -339,18 +306,15 @@ def concat_streams(
         dtype=np.int64,
     )
 
-    concat_data = pd.DataFrame(data=new_ts, columns=["timestamp [ns]"], dtype="Int64")
-    concat_data["time [s]"] = (new_ts - new_ts[0]) / 1e9
+    concat_data = pd.DataFrame(index=new_ts)
     for stream in stream_info["stream"]:
-        resamp_df = stream.interpolate(
+        interp_data = stream.interpolate(
             new_ts, interp_float_kind, interp_other_kind, inplace=inplace
-        )
-        assert concat_data.shape[0] == resamp_df.shape[0]
-        assert concat_data["timestamp [ns]"].equals(resamp_df["timestamp [ns]"])
-        concat_data = pd.merge(
-            concat_data, resamp_df, on=["timestamp [ns]", "time [s]"], how="inner"
-        )
-        assert concat_data.shape[0] == resamp_df.shape[0]
+        ).data
+        assert concat_data.shape[0] == interp_data.shape[0]
+        assert concat_data.index.equals(interp_data.index)
+        concat_data = pd.concat([concat_data, interp_data], axis=1)
+        assert concat_data.shape[0] == interp_data.shape[0]
     return concat_data
 
 
@@ -368,19 +332,19 @@ VALID_EVENTS = {
 
 def concat_events(
     rec: "NeonRecording",
-    event_names: Union[str, list[str]],
+    event_names: str | list[str],
 ) -> pd.DataFrame:
     """
     Concatenate different events. All columns in the selected event type will be
     present in the final DataFrame. An additional ``type`` column denotes the event
     type. If ``"events"`` is in ``event_names``, its ``timestamp [ns]`` column will be
     renamed to ``start timestamp [ns]``, and the ``name`` and ``type`` columns will
-    be renamed to ``message name`` and ``message type`` respectively to provide
-    a more readable output.
+    be renamed to ``message name`` and ``message type`` respectively to prevent confusion
+    between physiological events and user-supplied messages.
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         NeonRecording object containing the events to concatenate.
     event_names : list of str
         List of event names to concatenate. Event names must be in
@@ -389,7 +353,7 @@ def concat_events(
 
     Returns
     -------
-    concat_events : :class:`pandas.DataFrame`
+    pandas.DataFrame
         Concatenated events.
     """
     if isinstance(event_names, str):
@@ -410,10 +374,9 @@ def concat_events(
 
     concat_data = pd.DataFrame(
         {
-            "type": pd.Series(dtype="str"),
-            "start timestamp [ns]": pd.Series(dtype="Int64"),
             "end timestamp [ns]": pd.Series(dtype="Int64"),
             "duration [ms]": pd.Series(dtype="float64"),
+            "type": pd.Series(dtype="str"),
         }
     )
     print("Concatenating events:")
@@ -422,33 +385,46 @@ def concat_events(
             raise ValueError("Cannnot load blink data.")
         data = rec.blinks.data
         data["type"] = "blink"
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tBlinks")
     if "fixations" in event_names or "fixation" in event_names:
         if rec.fixations is None:
             raise ValueError("Cannnot load fixation data.")
         data = rec.fixations.data
         data["type"] = "fixation"
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tFixations")
     if "saccades" in event_names or "saccade" in event_names:
         if rec.saccades is None:
             raise ValueError("Cannnot load saccade data.")
         data = rec.saccades.data
         data["type"] = "saccade"
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tSaccades")
     if "events" in event_names or "event" in event_names:
         if rec.events is None:
             raise ValueError("Cannnot load event data.")
         data = rec.events.data
-        data.rename(
-            columns={"name": "message name", "type": "message type"}, inplace=True
-        )
+        data.index.name = "start timestamp [ns]"
+        data = data.rename(columns={"name": "message name", "type": "message type"})
         data["type"] = "event"
-        data.rename(columns={"timestamp [ns]": "start timestamp [ns]"}, inplace=True)
-        concat_data = pd.concat([concat_data, data], ignore_index=True)
+        concat_data = (
+            data
+            if concat_data.empty
+            else pd.concat([concat_data, data], ignore_index=False)
+        )
         print("\tEvents")
-    concat_data.sort_values("start timestamp [ns]", inplace=True)
-    concat_data.reset_index(drop=True, inplace=True)
+    concat_data = concat_data.sort_index()
     return concat_data

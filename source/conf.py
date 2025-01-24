@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "PyNeon"
-copyright = "2024, PyNeon developers"
+copyright = "2024-%Y, PyNeon developers"
 author = "PyNeon developers"
 release = "dev"
 
@@ -30,6 +30,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
+    "mne": ("https://mne.tools/stable/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -40,7 +41,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/NCCLabMPI/PyNeon",
+            "url": "https://github.com/ncc-brain/PyNeon",
             "icon": "fa-brands fa-square-github",
             "type": "fontawesome",
         },

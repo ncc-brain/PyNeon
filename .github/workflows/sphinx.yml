@@ -21,8 +21,7 @@ jobs:
 
     - name: Install Sphinx & Dependencies
       run: |
-        pip install .[doc]
-        pip install ruff
+        pip install .[full]
     
     - name: Format Code
       env:

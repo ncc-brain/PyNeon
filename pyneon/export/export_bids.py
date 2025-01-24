@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import datetime
 import re
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ._bids_parameters import MOTION_META_DEFAULT
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 def export_motion_bids(
     rec: "NeonRecording",
-    motion_dir: Union[str, Path],
+    motion_dir: str | Path,
     prefix: str = "",
     extra_metadata: dict = {},
 ):
@@ -25,9 +25,9 @@ def export_motion_bids(
 
     Parameters
     ----------
-    rec : :class:`NeonRecording`
+    rec : NeonRecording
         Recording object containing the IMU data.
-    motion_dir : str or :class:`pathlib.Path`
+    motion_dir : str or pathlib.Path
         Output directory to save the Motion-BIDS formatted data.
     prefix : str, optional
         Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
@@ -52,6 +52,10 @@ def export_motion_bids(
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():
         raise FileNotFoundError(f"Directory not found: {motion_dir}")
+    if motion_dir.name != "motion":
+        raise RuntimeWarning(
+            f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS"
+        )
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
     motion_json_path = motion_dir / f"{prefix}_motion.json"
     channels_tsv_path = motion_dir / f"{prefix}_channels.tsv"
@@ -123,7 +127,10 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def exports_eye_bids(rec: "NeonRecording", output_dir: Union[str, Path]):
+def export_eye_bids(rec: "NeonRecording", output_dir: str | Path):
+    """
+    Under development. Export eye tracking data to Eye-BIDS format.
+    """
     gaze = rec.gaze
     eye_states = rec.eye_states
     output_dir = Path(output_dir)
