@@ -15,6 +15,14 @@ authors = [
     { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" }
 ]
 requires-python = ">=3.9"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+]
 dependencies = [
     "pandas",
     "numpy",
@@ -24,6 +32,7 @@ dependencies = [
     "typeguard",
     "requests",
 ]
+license =  { text = "MIT" }
 
 [project.optional-dependencies]
 dev = [
@@ -38,3 +47,7 @@ doc = [
     "pydata-sphinx-theme",
     "nbsphinx",
 ]
+
+[project.urls]
+Homepage = "https://ncc-brain.github.io/PyNeon/"
+Issues = "https://github.com/ncc-brain/PyNeon/issues"
