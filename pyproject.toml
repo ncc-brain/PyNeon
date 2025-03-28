@@ -32,7 +32,6 @@ apriltags = [
     "pupil-apriltags"
 ]
 dev = [
-    "seaborn",
     "pytest",
     "numpydoc",
     "codespell",
@@ -41,6 +40,7 @@ dev = [
 doc = [
     "ruff",
     "jupyter",
+    "seaborn",
     "sphinx",
     "pydata-sphinx-theme",
     "nbsphinx",
