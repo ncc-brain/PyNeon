@@ -1,12 +1,9 @@
 import cv2
 import numpy as np
 import pandas as pd
-from typing import TYPE_CHECKING, Union, Optional, Dict, List
-from pupil_apriltags import Detector
-
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
     from .video import NeonVideo
 
 
@@ -31,7 +28,14 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
         - 'corners': A 4x2 array of the tag corner coordinates
         - 'center': A 1x2 array with the tag center coordinates
     """
-
+    try:
+        from pupil_apriltags import Detector
+    except ImportError:
+        raise ImportError(
+            "To detect AprilTags, the module `pupil-apriltags` is needed. "
+            "You can install it using the following command:\n"
+            "pip install pupil-apriltags"
+        )
     # Initialize the detector with the specified tag family
     detector = Detector(families=tag_family)
 

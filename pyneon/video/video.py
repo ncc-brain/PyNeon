@@ -55,11 +55,9 @@ class NeonVideo(cv2.VideoCapture):
             f"Number of timestamps ({len(self.timestamps)}) does not match "
             f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
         )
-
         self.fps = self.get(cv2.CAP_PROP_FPS)
         self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
         self.camera_matrix = np.array(self.info["camera_matrix"])
         self.dist_coeffs = np.array(self.info["distortion_coefficients"])
 
