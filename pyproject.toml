@@ -32,15 +32,15 @@ apriltags = [
     "pupil-apriltags"
 ]
 dev = [
+    "jupyter",
+    "seaborn",
     "pytest",
-    "ruff",
     "numpydoc",
     "codespell",
     "pre-commit",
 ]
 doc = [
-    "jupyter",
-    "seaborn",
+    "ruff",
     "sphinx",
     "pydata-sphinx-theme",
     "nbsphinx",
