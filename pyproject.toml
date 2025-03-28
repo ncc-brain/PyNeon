@@ -17,10 +17,9 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
+    "pupil-labs-neon-recording",
     "pandas",
-    "numpy",
     "matplotlib",
-    "scipy",
     "opencv-python",
     "typeguard",
     "requests",
