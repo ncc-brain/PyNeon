@@ -535,7 +535,83 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         return all_detections
 
-    
+    def detect_apriltags_parallel(
+        video,
+        output_dir: Path,
+        tag_family: str = "tag36h11",
+        n_jobs: int = -1,
+        nthreads_per_worker: int = 1,
+        quad_decimate: float = 1.0,
+        chunk_size: int = 500,
+        overwrite: bool = False
+    ) -> pd.DataFrame:
+        """
+        High-level function that uses parallel processing to detect AprilTags in a video,
+        and caches the results in JSON. If the cache file exists and overwrite=False,
+        it loads the data from disk instead of re-running detection.
+
+        Parameters
+        ----------
+        video : OpenCV-like or custom video object
+            Must support:
+            - .read() -> (ret, frame)
+            - .ts -> array of timestamps (same length as the total frames) 
+        output_dir : Path
+            Directory in which to store/read the resulting JSON file (named 'apriltags_parallel.json').
+        tag_family : str, optional
+            AprilTag family to detect (default 'tag36h11').
+        n_jobs : int, optional
+            Number of parallel workers (default -1 means "use all cores").
+        nthreads_per_worker : int, optional
+            Number of CPU threads the AprilTag detector can use within each worker.
+            If you have multiple processes, setting this to 1 or 2 can help avoid oversubscription.
+        quad_decimate : float, optional
+            Downsample factor for detection (default 1.0). Larger values can speed up detection
+            but may fail to detect smaller tags.
+        chunk_size : int, optional
+            Number of frames to batch before distributing them among parallel processes (default 500).
+        overwrite : bool, optional
+            If False (default) and the output file already exists, we load the cached data.
+            If True, we re-run detection and overwrite the cache.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame of detections with columns:
+            - 'timestamp [ns]': index of timestamps in nanoseconds
+            - 'orig_frame_idx': original frame index in the full video
+            - 'tag_id': the detected tag's ID
+            - 'corners': (4,2) array of corner coordinates
+            - 'center': (1,2) array with the tag center coordinates
+        """
+        json_file = output_dir / "apriltags.json"
+
+        # If a cached file exists and we are not overwriting, load and return it
+        if json_file.is_file() and not overwrite:
+            df_cached = pd.read_json(json_file, orient="records", lines=True)
+            if not df_cached.empty:
+                df_cached.set_index("timestamp [ns]", inplace=True)
+            return df_cached
+
+        # Otherwise, run the parallel detection
+        from .video import detect_apriltags_parallel
+        df = detect_apriltags_parallel(
+            video=video,
+            tag_family=tag_family,
+            n_jobs=n_jobs,
+            nthreads_per_worker=nthreads_per_worker,
+            quad_decimate=quad_decimate,
+            chunk_size=chunk_size
+        )
+        
+        # Save to JSON
+        if not df.empty:
+            df.reset_index(inplace=True)  # so 'timestamp [ns]' becomes a column
+            df.to_json(json_file, orient="records", lines=True)
+            df.set_index("timestamp [ns]", inplace=True)
+
+        return df
+
 
     def gaze_to_screen(
         self,

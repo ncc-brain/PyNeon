@@ -107,6 +107,7 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
     df.set_index("timestamp [ns]", inplace=True)
     return df
 
+
 def estimate_camera_pose(
     video: "NeonVideo",
     tag_locations_df: pd.DataFrame,
@@ -518,3 +519,213 @@ def gaze_to_screen(
 
     # Done
     return gaze_df, homography_for_frame
+
+
+
+def detect_apriltags_in_batch(
+    frames_batch,
+    timestamps,
+    start_frame_idx,
+    tag_family="tag36h11",
+    nthreads=1,
+    quad_decimate=1.0
+):
+    """
+    Detect AprilTags on a batch of frames (already read from the video).
+
+    Parameters
+    ----------
+    frames_batch : list of np.ndarray
+        A list of BGR frames to process.
+    timestamps : list of int
+        The corresponding timestamps for each frame in the batch.
+    start_frame_idx : int
+        The index of the first frame in the *original* video sequence. We'll use
+        this to keep track of 'orig_frame_idx'.
+    tag_family : str
+        AprilTag family (default 'tag36h11').
+    nthreads : int
+        Number of CPU threads to let the detector use for each worker.
+    quad_decimate : float
+        Downsample factor for speed/accuracy tradeoff.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns:
+        - 'timestamp [ns]'
+        - 'orig_frame_idx'
+        - 'tag_id'
+        - 'corners'
+        - 'center'
+    """
+
+    try:
+        from pupil_apriltags import Detector
+    except ImportError:
+        raise ImportError(
+            "To detect AprilTags, the module `pupil-apriltags` is needed. "
+            "Install via: pip install pupil-apriltags"
+        )
+
+    # Create a detector (in each worker)
+    detector = Detector(
+        families=tag_family,
+        nthreads=nthreads,
+        quad_decimate=quad_decimate
+    )
+
+    all_detections = []
+
+    for i, frame in enumerate(frames_batch):
+        frame_idx = start_frame_idx + i  # actual frame index in the full video
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        detections = detector.detect(gray_frame)
+
+        for detection in detections:
+            corners = detection.corners
+            center = np.mean(corners, axis=0)
+            all_detections.append({
+                "timestamp [ns]": timestamps[i],  # match to frames_batch
+                "orig_frame_idx": frame_idx,
+                "tag_id": detection.tag_id,
+                "corners": corners,
+                "center": center,
+            })
+
+    df = pd.DataFrame(all_detections)
+    return df
+
+
+def detect_apriltags_parallel(
+    video,
+    tag_family="tag36h11",
+    n_jobs=-1,
+    nthreads_per_worker=1,
+    quad_decimate=1.0,
+    chunk_size=500
+):
+    """
+    Parallel AprilTag detection by batching video frames across multiple CPU processes.
+
+    Parameters
+    ----------
+    video : OpenCV-like or custom object
+        Must allow .read() -> (ret, frame) and have .ts or a known way to get timestamps.
+    tag_family : str, optional
+        AprilTag family (default 'tag36h11').
+    n_jobs : int, optional
+        Number of parallel workers (default -1 means 'all cores').
+    nthreads_per_worker : int, optional
+        Number of CPU threads within each detector (pupil_apriltags). If you're
+        spawning multiple processes, each can be set to 1 or 2 so you don't
+        oversubscribe the CPU.
+    quad_decimate : float, optional
+        Downsampling factor for detection (default 1.0).
+    chunk_size : int, optional
+        Number of frames to read in each chunk (default 500). Adjust based on memory.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with columns:
+        - 'timestamp [ns]'
+        - 'orig_frame_idx'
+        - 'tag_id'
+        - 'corners'
+        - 'center'
+    """
+
+    try:
+        from joblib import Parallel, delayed
+    except ImportError:
+        raise ImportError(
+            "To use parallel processing, the module `joblib` is needed. "
+            "Install via: pip install joblib"
+        )
+
+    # Step 1: Read all frames (or chunk them) from the video
+    #         We'll do it in lumps of chunk_size to avoid huge memory usage
+    all_dfs = []
+    total_frames = len(video.ts)
+
+    # index of the next frame to read
+    frame_index = 0
+
+    while frame_index < total_frames:
+        end_index = min(frame_index + chunk_size, total_frames)
+        frames_batch = []
+        timestamps_batch = []
+
+        # read frames in [frame_index, end_index)
+        for idx in range(frame_index, end_index):
+            ret, frame = video.read()
+            if not ret:
+                break
+            frames_batch.append(frame)
+            timestamps_batch.append(video.ts[idx])
+
+        # Step 2: Split frames_batch among multiple sub-batches for each worker
+        #         We'll do a simple balanced split. Alternatively, you can pass
+        #         the entire chunk to each worker if chunk_size is small enough.
+        #         But let's do sub-splitting for bigger chunk_size.
+        num_frames_in_batch = len(frames_batch)
+        if num_frames_in_batch == 0:
+            break
+
+        # We'll define how many sub-batches to create from 'frames_batch' -> n_jobs * 2 is typical
+        # but you can do anything that leads to somewhat balanced sub-batches.
+        # For instance, let's just do n_jobs sub-batches if chunk_size is large.
+        sub_batches = []
+        if n_jobs <= 0:
+            import multiprocessing
+            n_jobs_used = multiprocessing.cpu_count()
+        else:
+            n_jobs_used = n_jobs
+
+        # chunk the frames_batch into n_jobs_used pieces
+        sub_batch_size = max(1, num_frames_in_batch // n_jobs_used)
+        start_sub = 0
+        while start_sub < num_frames_in_batch:
+            end_sub = min(start_sub + sub_batch_size, num_frames_in_batch)
+            sub_frames = frames_batch[start_sub:end_sub]
+            sub_times = timestamps_batch[start_sub:end_sub]
+            # We'll store a tuple with (sub_frames, sub_times, start_frame_idx_for_this_sub)
+            sub_info = (
+                sub_frames,
+                sub_times,
+                frame_index + start_sub  # the absolute start index in the video
+            )
+            sub_batches.append(sub_info)
+            start_sub = end_sub
+
+        # Step 3: Parallel processing of these sub-batches
+        # We pass the needed arguments to detect_apriltags_in_batch
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(detect_apriltags_in_batch)(
+                frames_batch=sub_b[0],
+                timestamps=sub_b[1],
+                start_frame_idx=sub_b[2],
+                tag_family=tag_family,
+                nthreads=nthreads_per_worker,
+                quad_decimate=quad_decimate
+            ) for sub_b in sub_batches
+        )
+
+        # Combine all partial results for this chunk
+        chunk_df = pd.concat(results, ignore_index=True)
+        all_dfs.append(chunk_df)
+
+        frame_index = end_index  # move to the next chunk
+
+    # Combine all chunk DataFrames
+    if not all_dfs:
+        return pd.DataFrame()
+    final_df = pd.concat(all_dfs, ignore_index=True)
+
+    # set index to timestamp [ns]
+    if not final_df.empty:
+        final_df.set_index("timestamp [ns]", inplace=True)
+
+    return final_df
+
