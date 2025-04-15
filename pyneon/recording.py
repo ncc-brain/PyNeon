@@ -630,6 +630,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         screen_size: tuple[int, int] = (1920, 1200),
         coordinate_system: str = "opencv",
         overwrite: bool = False,
+        parallel: bool = False,
+        n_jobs: int = 2,
+        chunk_size: int = 500,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Convert gaze coordinates to screen coordinates using AprilTag marker information.
@@ -663,9 +666,25 @@ Recording duration: {self.info["duration"] / 1e9}s
                 homographies = pd.read_json(homographies_file, orient="records")
                 return gaze_on_screen, homographies
 
-        detection_df = self.detect_apriltags()
-        synced_gaze = self.sync_gaze_to_video()
-        gaze_on_screen, homographies = gaze_to_screen(self.video, detection_df, marker_info, synced_gaze, screen_size, coordinate_system)
+        if not parallel:
+            detection_df = self.detect_apriltags()
+            synced_gaze = self.sync_gaze_to_video()
+            gaze_on_screen, homographies = gaze_to_screen(self.video, detection_df, marker_info, synced_gaze, screen_size, coordinate_system)
+        else:
+            # Parallel processing
+            from .video import detect_apriltags_parallel, gaze_to_screen_parallel
+            detection_df = self.detect_apriltags_parallel(n_jobs=n_jobs)
+            synced_gaze = self.sync_gaze_to_video()
+            gaze_on_screen, homographies = gaze_to_screen_parallel(
+                self.video,
+                detection_df,
+                marker_info,
+                synced_gaze,
+                screen_size,
+                coordinate_system,
+                n_jobs=n_jobs,
+                chunk_size=chunk_size,
+            )
 
         #save gaze on screen to csv
         gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)

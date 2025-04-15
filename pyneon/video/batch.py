@@ -215,12 +215,6 @@ def detect_apriltags_parallel(
     return final_df
 
 
-import cv2
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
-from joblib import Parallel, delayed
-
 def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     """
     Transform 2D points by a 3x3 homography.
@@ -308,7 +302,8 @@ def gaze_to_screen_parallel(
     frame_size: tuple[int, int],
     coordinate_system: str = "opencv",
     undistort: bool = True,
-    n_jobs: int = 1
+    n_jobs: int = 1,
+    chunk_size: int = 500,
 ) -> tuple[pd.DataFrame, dict]:
     """
     Parallelized pipeline that uses all available AprilTags in each frame to compute
@@ -378,10 +373,10 @@ def gaze_to_screen_parallel(
 
         # Convert gaze points
         gaze_df = gaze_df.copy()
-        xy = gaze_df[["x", "y"]].values.astype(np.float32)
+        xy = gaze_df[["gaze x [px]", "gaze y [px]"]].values.astype(np.float32)
         xy_cv = psychopy_coords_to_opencv(xy, frame_size)
-        gaze_df["x"] = xy_cv[:, 0]
-        gaze_df["y"] = xy_cv[:, 1]
+        gaze_df["gaze x [px]"] = xy_cv[:, 0]
+        gaze_df["gaze y [px]"] = xy_cv[:, 1]
     else:
         # Just copy to avoid mutating the original
         detection_df = detection_df.copy()
@@ -432,55 +427,66 @@ def gaze_to_screen_parallel(
 
         marker_dict[mid] = np.array(row["marker_corners"], dtype=np.float32)
 
-    # --------------------------------------
-    # 4) Compute homography per frame (Parallel)
-    # --------------------------------------
-    frames = detection_df["frame_idx"].unique()
-    # We'll group detection_df by frame to avoid slicing each time inside the worker
+    # Group detection_df by frame
     grouped = detection_df.groupby("frame_idx")
 
-    # Prepare parallel tasks
-    tasks = []
-    for frame in frames:
-        # sub_df for this frame
-        sub_df = grouped.get_group(frame)
-        tasks.append((frame, sub_df))
+    # List all frames we need to process
+    frames = sorted(detection_df["frame_idx"].unique())
+    total_frames = len(frames)
 
-    # We'll define an inline function that calls our worker
-    def compute_one_frame(args):
-        frame, sub_df = args
-        return _compute_homography_for_frame(frame, sub_df, marker_dict)
+    # We'll store homographies here
+    homographies = {}
 
-    # Launch parallel
-    # We can wrap in tqdm if desired, e.g.:
-    results = []
-    for res in tqdm(Parallel(n_jobs=n_jobs)(
-        delayed(compute_one_frame)(arg) for arg in tasks
-    ), total=len(tasks), desc="Computing homographies (parallel)"):
-        results.append(res)
 
-    # results is a list of (frame, H)
-    homography_for_frame = {}
-    for frame, H in results:
-        homography_for_frame[frame] = H
+    # ----------------------------------------------------------------
+    # 4) Chunking + Parallel or Serial
+    # ----------------------------------------------------------------
+    num_chunks = math.ceil(total_frames / chunk_size)
+    current_index = 0
 
-    # --------------------------------------
-    # 5) Apply homography to gaze
-    # --------------------------------------
+    with tqdm(total=total_frames, desc="Computing homographies by chunk") as pbar:
+        for chunk_idx in range(num_chunks):
+            start = chunk_idx * chunk_size
+            end = min((chunk_idx + 1) * chunk_size, total_frames)
+            chunk_frames = frames[start:end]
+
+            # Build tasks
+            tasks = []
+            for frame in chunk_frames:
+                if frame in grouped.groups:
+                    sub_df = grouped.get_group(frame)
+                else:
+                    sub_df = pd.DataFrame()  # no detections
+                tasks.append((frame, sub_df))
+
+                # Use joblib Parallel
+                results = Parallel(n_jobs=n_jobs)(
+                    delayed(_compute_homography_for_frame)(int(frame), sub_df, marker_dict)
+                    for (frame, sub_df) in tasks)
+
+            # Store results
+            for (frame, H) in results:
+                homographies[frame] = H
+
+            # Update progress bar by how many frames we processed in this chunk
+            pbar.update(len(chunk_frames))
+
+    # ----------------------------------------------------------------
+    # 5) Apply homographies to gaze
+    # ----------------------------------------------------------------
+    
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
+    unique_gaze_frames = gaze_df["frame_idx"].unique()
 
-    unique_frames_gaze = gaze_df["frame_idx"].unique()
-
-    for frame in tqdm(unique_frames_gaze, desc="Applying homography to gaze points"):
-        idx_sel = (gaze_df["frame_idx"] == frame)
-        H = homography_for_frame.get(frame, None)
+    for frame in tqdm(unique_gaze_frames, desc="Applying homography to gaze"):
+        H = homographies.get(frame, None)
         if H is None:
-            continue  # no valid homography
-
+            continue
+        idx_sel = (gaze_df["frame_idx"] == frame)
         gaze_points = gaze_df.loc[idx_sel, ["x", "y"]].values
-        gaze_trans = apply_homography(gaze_points, H)
-        gaze_df.loc[idx_sel, "x_trans"] = gaze_trans[:, 0]
-        gaze_df.loc[idx_sel, "y_trans"] = gaze_trans[:, 1]
+        trans = apply_homography(gaze_points, H)
+        gaze_df.loc[idx_sel, "x_trans"] = trans[:, 0]
+        gaze_df.loc[idx_sel, "y_trans"] = trans[:, 1]
 
-    return gaze_df, homography_for_frame
+    return gaze_df, homographies
