@@ -629,7 +629,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         marker_info: pd.DataFrame,
         screen_size: tuple[int, int] = (1920, 1200),
         coordinate_system: str = "opencv",
-        homography_settings: dict = None,
+        homography_settings: Optional[dict] = None,
         overwrite_detection: bool = False,
         overwrite_homographies: bool = False,
         overwrite_gaze: bool = False,
@@ -663,15 +663,15 @@ Recording duration: {self.info["duration"] / 1e9}s
         if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not all([overwrite_gaze, overwrite_homographies, overwrite_detection]):
             gaze_on_screen = pd.read_csv(gaze_file)
             if (homographies_file := self.der_dir / "homographies.json").is_file():
-                homographies = pd.read_json(homographies_file, orient="records")
-                return gaze_on_screen, homographies
+                homographies = pd.read_json(homographies_file, orient="records", lines=True)
+                return gaze_on_screen
 
         
         detection_df = self.detect_apriltags(overwrite=overwrite_detection)
         
         #check if homographies already exist
         if (homographies_file := self.der_dir / "homographies.json").is_file() and not overwrite_homographies:
-            homographies = pd.read_json(homographies_file, orient="records")
+            homographies = pd.read_json(homographies_file, orient="records", lines=True)
             if homographies.empty:
                 raise ValueError("Homographies data is empty.")
             
@@ -820,7 +820,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # Check if result JSON already exists
         json_file = self.der_dir / "camera_pose.json"
         if json_file.is_file() and not overwrite:
-            return pd.read_json(json_file, orient="records")
+            return pd.read_json(json_file, orient="records", lines=True)
 
         # Compute camera positions
         camera_pose = estimate_camera_pose(
@@ -869,7 +869,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         if camera_pose_raw.empty:
             # Check if JSON already exists
             if (json_file := self.der_dir / "camera_pose.json").is_file():
-                camera_pose_raw = pd.read_json(json_file, orient="records")
+                camera_pose_raw = pd.read_json(json_file, orient="records", lines=True)
                 # Ensure 'camera_pos' is parsed as NumPy arrays
                 camera_pose_raw["camera_pos"] = camera_pose_raw["camera_pos"].apply(
                     lambda pos: np.array(pos, dtype=float)

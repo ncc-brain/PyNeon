@@ -312,7 +312,14 @@ def _create_epochs(
     data["epoch index"] = pd.Series(dtype="Int32")
     data["epoch time"] = pd.Series(dtype="Int64")
     data["epoch description"] = pd.Series(dtype="str")
-    ts = source.ts
+    
+    #check for source type
+    if isinstance(source, NeonStream):
+        ts = source.ts
+    elif isinstance(source, NeonEV):
+        ts = source.start_ts
+    else:
+        raise ValueError("Source must be a NeonStream or NeonEV.")
 
     epochs = times_df.copy().reset_index(drop=True)
     epochs["data"] = pd.Series(dtype="object")
@@ -389,12 +396,12 @@ def events_to_times_df(
     t_ref = event.start_ts
 
     if isinstance(event, CustomEvents):
-        if "type" not in event.data.columns:
+        if "name" not in event.data.columns:
             raise ValueError("Custom event data must have a 'type' column.")
         if type_name == "all":
-            description = event.data["type"].to_numpy()
+            description = event.data["name"].to_numpy()
         else:
-            mask = event.data["type"] == type_name
+            mask = event.data["name"] == type_name
             t_ref = event.data.index.to_numpy()[mask]
             description = type_name
 

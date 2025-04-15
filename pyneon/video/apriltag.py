@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .video import NeonVideo
@@ -353,7 +353,7 @@ def find_homographies(
     frame_size: tuple[int, int],
     coordinate_system: str = "opencv",
     undistort: bool = True,
-    settings: dict = None,
+    settings: Optional[dict] = None,
 ) -> dict:
     """
     Compute a homography for each frame using available AprilTag detections.
