@@ -11,7 +11,7 @@ from numbers import Number
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .preprocess import concat_streams, concat_events, smooth_camera_pose
-from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose, gaze_to_screen
+from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose, find_homographies, transform_gaze_to_screen
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
 
@@ -630,10 +630,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         screen_size: tuple[int, int] = (1920, 1200),
         coordinate_system: str = "opencv",
         overwrite: bool = False,
-        parallel: bool = False,
-        n_jobs: int = 2,
-        chunk_size: int = 500,
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        homography_settings: dict = None,
+    ) -> pd.DataFrame:
         """
         Convert gaze coordinates to screen coordinates using AprilTag marker information.
         We use frame wise homographies to convert gaze coordinates to screen coordinates.
@@ -666,32 +664,52 @@ Recording duration: {self.info["duration"] / 1e9}s
                 homographies = pd.read_json(homographies_file, orient="records")
                 return gaze_on_screen, homographies
 
-        if not parallel:
-            detection_df = self.detect_apriltags()
-            synced_gaze = self.sync_gaze_to_video()
-            gaze_on_screen, homographies = gaze_to_screen(self.video, detection_df, marker_info, synced_gaze, screen_size, coordinate_system)
+        
+        detection_df = self.detect_apriltags()
+        
+        #check if homographies already exist
+        if (homographies_file := self.der_dir / "homographies.json").is_file() and not overwrite:
+            homographies = pd.read_json(homographies_file, orient="records")
+            if homographies.empty:
+                raise ValueError("Homographies data is empty.")
+            
         else:
-            # Parallel processing
-            from .video import detect_apriltags_parallel, gaze_to_screen_parallel
-            detection_df = self.detect_apriltags_parallel(n_jobs=n_jobs)
-            synced_gaze = self.sync_gaze_to_video()
-            gaze_on_screen, homographies = gaze_to_screen_parallel(
+            homographies = find_homographies(
                 self.video,
                 detection_df,
                 marker_info,
-                synced_gaze,
                 screen_size,
-                coordinate_system,
-                n_jobs=n_jobs,
-                chunk_size=chunk_size,
+                coordinate_system=coordinate_system,
+                settings=homography_settings,
             )
+            #save homographies to json
+            homographies.to_json(self.der_dir / "homographies.json", orient="records")
 
-        #save gaze on screen to csv
-        gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)
-        #save homographies to json
-        homographies.to_json(self.der_dir / "homographies.json", orient="records")
+        #check if synced gaze already exists
+        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file():
+            synced_gaze = pd.read_csv(gaze_file)
+            if synced_gaze.empty:
+                raise ValueError("Gaze data is empty.")
+        else:
+            synced_gaze = self.sync_gaze_to_video()
+            #save synced gaze to csv
+            synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
 
-        return gaze_on_screen, homographies
+        #check if transformations already exist
+        if (gaze_on_screen_file := self.der_dir / "gaze_on_screen.csv").is_file() and not overwrite:
+            gaze_on_screen = pd.read_csv(gaze_on_screen_file)
+            if gaze_on_screen.empty:
+                raise ValueError("Gaze on screen data is empty.")
+        else:
+            # Transform gaze to screen coordinates
+            gaze_on_screen = transform_gaze_to_screen(
+                synced_gaze,
+                homographies,
+            )
+            #save gaze on screen to csv
+            gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)
+
+        return gaze_on_screen
         
     def fixations_to_screen(
             self,

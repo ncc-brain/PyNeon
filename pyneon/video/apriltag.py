@@ -346,51 +346,72 @@ def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
     return transformed_2d
 
-
-def gaze_to_screen(
+def find_homographies(
     video,
     detection_df: pd.DataFrame,
     marker_info: pd.DataFrame,
-    gaze_df: pd.DataFrame,
     frame_size: tuple[int, int],
     coordinate_system: str = "opencv",
     undistort: bool = True,
-) -> pd.DataFrame:
+    settings: dict = None,
+) -> dict:
     """
-    Pipeline that uses all available AprilTags in each frame to compute one homography,
-    then applies that homography to gaze data for the same frame.
+    Compute a homography for each frame using available AprilTag detections.
+
+    This function identifies all markers detected in a given frame, looks up their
+    "ideal" (reference) positions from `marker_info`, and calls OpenCV's
+    `cv2.findHomography` to compute a 3x3 transformation matrix mapping from
+    detected corners in the video image to the reference plane (e.g., screen coordinates).
+
+    If the coordinate system is "psychopy", corners in both `marker_info` and
+    `detection_df` are first converted to an OpenCV-like pixel coordinate system.
+    If `undistort=True` and camera intrinsics are available in the `video` object,
+    the marker corners are also undistorted.
+
+    The optional `homography_settings` dictionary allows customizing parameters like
+    RANSAC thresholds and maximum iterations. The default is an OpenCV RANSAC method
+    with moderate thresholds.
 
     Parameters
     ----------
     video : NeonVideo-like
         An object containing camera intrinsics (camera_matrix, dist_coeffs) and possibly timestamps.
+        If `undistort=True`, these intrinsics are used to undistort marker corners.
     detection_df : pd.DataFrame
         Must contain:
         - 'frame_idx': int
         - 'tag_id': int
-        - 'corners': np.ndarray of shape (4, 2) in *video* coordinates (or psychopy coords, see below).
+        - 'corners': np.ndarray of shape (4, 2) in video or PsychoPy coordinates
     marker_info : pd.DataFrame
         Must contain:
-        - 'marker_id' or 'tag_id': int
-        - 'marker_corners': np.ndarray of shape (4, 2) giving the "ideal" or reference positions
-        for each corner of this tag in some target coordinate system (e.g., screen coordinates).
-        The row for each marker_id should define the "destination" corners for that tag.
-    gaze_df : pd.DataFrame
-        Must contain:
-        - 'frame_idx': int (or you can do a timestamp-based merge_asof first)
-        - 'x', 'y': raw gaze points (in either psychopy or opencv coords).
+        - 'marker_id' (or 'tag_id'): int
+        - 'marker_corners': np.ndarray of shape (4, 2) giving the reference positions
+            for each corner (e.g., on a screen plane)
     frame_size : (width, height)
-        The pixel resolution of your video frames, used if you need to convert from psychoPy to OpenCV coordinates.
+        The pixel resolution of the video frames. Used if `coordinate_system="psychopy"`
+        to convert from PsychoPy to OpenCV-style coordinates.
     coordinate_system : str, optional
-        One of {"opencv", "psychopy"}. If "psychopy", corners and gaze points will be converted to OpenCV pixel coords.
+        One of {"opencv", "psychopy"}. If "psychopy", corners in `detection_df` and
+        `marker_info` are converted to OpenCV pixel coords before the homography is computed.
     undistort : bool, optional
-        Whether to undistort corners and gaze points using video.camera_matrix and video.dist_coeffs.
+        Whether to undistort marker corners using the camera intrinsics in `video`.
+        Default is True.
+    settings : dict, optional
+        A dictionary of parameters passed to `cv2.findHomography`. For example:
+        {
+            "method": cv2.RANSAC,
+            "ransacReprojThreshold": 2.0,
+            "maxIters": 500,
+            "confidence": 0.98,
+        }
+        The defaults are set to a moderate RANSAC approach.
 
     Returns
     -------
-    pd.DataFrame
-        A copy of `gaze_df` with additional columns 'x_trans', 'y_trans' that are
-        the gaze coordinates transformed by the per-frame homography.
+    dict
+        A dictionary mapping each frame index (`frame_idx`: int) to its corresponding
+        homography matrix (3x3 NumPy array) or None if insufficient markers or points
+        were available to compute a valid homography.
     """
 
     # -----------------------------------------------------------------
@@ -439,6 +460,17 @@ def gaze_to_screen(
     # -----------------------------------------------------------------
     # 3. Compute a homography for each frame using *all* tag detections
     # -----------------------------------------------------------------
+    default_settings = {
+        "method": cv2.RANSAC,
+        "ransacReprojThreshold": 3.0,
+        "maxIters": 1000,
+        "confidence": 0.995,
+    }
+
+    # Merge user-provided settings with defaults
+    if settings is not None:
+        default_settings.update(settings)
+
     frames = detection_df["frame_idx"].unique()
     homography_for_frame = {}
 
@@ -484,13 +516,30 @@ def gaze_to_screen(
             homography_for_frame[frame] = None
             continue
 
-        H, mask = cv2.findHomography(world_points, screen_points, cv2.RANSAC, 5.0)
+        H, mask = cv2.findHomography(world_points, screen_points, **default_settings)
         homography_for_frame[frame] = H
 
-    # -----------------------------------------------------------------
-    # 4. Apply that homography to gaze points per frame
-    # -----------------------------------------------------------------
-    # We'll add "x_trans", "y_trans" columns to the gaze DataFrame
+    return homography_for_frame
+
+def transform_gaze_to_screen(gaze_df: pd.DataFrame, homography_for_frame: dict) -> pd.DataFrame:
+    """
+    Apply per-frame homographies to gaze points to transform them into a new coordinate system.
+
+    Parameters
+    ----------
+    gaze_df : pd.DataFrame
+        DataFrame containing gaze points with columns:
+        - 'frame_idx': int, the frame index
+        - 'x', 'y': float, the gaze coordinates in the original coordinate system.
+    homography_for_frame : dict
+        A dictionary mapping frame indices to 3x3 homography matrices.
+
+    Returns
+    -------
+    pd.DataFrame
+        A copy of `gaze_df` with additional columns:
+        - 'x_trans', 'y_trans': the transformed gaze coordinates.
+    """
     gaze_df = gaze_df.copy()
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
@@ -502,11 +551,9 @@ def gaze_to_screen(
             # no valid homography
             continue
         # transform the gaze coords
-        gaze_points = gaze_df.loc[idx_sel, ["x", "y"]].values
+        gaze_points = gaze_df.loc[idx_sel, ["gaze x [px]", "gaze y [px]"]].values
         gaze_trans = apply_homography(gaze_points, H)
         gaze_df.loc[idx_sel, "x_trans"] = gaze_trans[:, 0]
         gaze_df.loc[idx_sel, "y_trans"] = gaze_trans[:, 1]
 
-    # Done
-    return gaze_df, homography_for_frame
-
+    return gaze_df
