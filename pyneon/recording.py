@@ -11,7 +11,7 @@ from numbers import Number
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .preprocess import concat_streams, concat_events, smooth_camera_pose
-from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose
+from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose, gaze_to_screen
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
 
@@ -442,6 +442,8 @@ Recording duration: {self.info["duration"] / 1e9}s
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
         new_gaze = self.gaze.window_average(self.video.ts, window_size, inplace)
+        #add a column with video frames
+        new_gaze["frame_idx"] = self.video.frame_idx
         return new_gaze
 
     def estimate_scanpath(
@@ -500,6 +502,94 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
         return all_detections
+    
+
+    def gaze_to_screen(
+        self,
+        marker_info: pd.DataFrame,
+        screen_size: tuple[int, int] = (1920, 1200),
+        coordinate_system: str = "opencv",
+        overwrite: bool = False,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Convert gaze coordinates to screen coordinates using AprilTag marker information.
+        We use frame wise homographies to convert gaze coordinates to screen coordinates.
+
+        Parameters
+        ----------
+        marker_info : pd.DataFrame
+            DataFrame containing AprilTag marker information with columns:
+                - 'tag_id': int, ID of the tag
+                - 'x', 'y', 'z': float, coordinates of the tag's center
+                - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
+                - 'size': float, the side length of the tag in meters
+        screen_size : tuple[int, int], optional
+            Size of the screen in pixels. Defaults to (1920, 1200).
+        coordinate_system : str, optional
+            Coordinate system to use for conversion. Defaults to "opencv".
+            Options are "opencv" or "psychopy".
+        overwrite : bool, optional
+            If True, overwrite existing files. Defaults to False.
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing gaze coordinates in screen space.
+        """
+
+        # Check if JSON already exists
+        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not overwrite:
+            gaze_on_screen = pd.read_csv(gaze_file)
+            if (homographies_file := self.der_dir / "homographies.json").is_file():
+                homographies = pd.read_json(homographies_file, orient="records")
+                return gaze_on_screen, homographies
+
+        detection_df = self.detect_apriltags()
+        synced_gaze = self.sync_gaze_to_video()
+        gaze_on_screen, homographies = gaze_to_screen(detection_df, marker_info, synced_gaze, screen_size, coordinate_system)
+
+        #save gaze on screen to csv
+        gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)
+        #save homographies to json
+        homographies.to_json(self.der_dir / "homographies.json", orient="records")
+
+        return gaze_on_screen, homographies
+        
+    def fixations_to_screen(
+            self,
+    ) -> pd.DataFrame:
+        """
+        Updates fixation data with gaze coordinates in screen space.
+        """
+        #collect gaze on screen or compute it   
+        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file():
+            gaze_on_screen = pd.read_csv(gaze_file)
+        else:
+            gaze_on_screen = self.gaze_to_screen()[0]
+        #check if fixations exist
+
+        fixation = self.fixations.data.copy()
+
+        if fixation is None:
+            raise ValueError("Fixations data not found.")
+        
+        # Summarize gaze points first:
+        gaze_means = (gaze_on_screen
+                    .groupby("fixation id", as_index=False)
+                    [["gaze x [px]", "gaze y [px]"]]
+                    .mean()
+                    .rename(columns={
+                        "gaze x [px]": "gaze x [screen px]",
+                        "gaze y [px]": "gaze y [screen px]",
+                    }))
+
+        # Merge back into fixations:
+        fixation = fixation.merge(gaze_means, on="fixation id", how="left")
+
+        #save fixations to csv
+        fixation.to_csv(self.der_dir / "fixations_on_screen.csv", index=False)
+
+        return fixation 
+
 
     def estimate_camera_pose(
         self,
