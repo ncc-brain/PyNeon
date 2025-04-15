@@ -7,25 +7,39 @@ if TYPE_CHECKING:
     from .video import NeonVideo
 
 
-def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
+def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
+                    nthreads: int = 4, quad_decimate: float = 2.0,
+                    skip_frames: int = 1):
     """
-    Detect AprilTags in a video and report their data for every frame using the apriltag library.
+    Detect AprilTags in a video and report their data for every frame using pupil_apriltags.
 
     Parameters
     ----------
-    video : cv2.VideoCapture or similar video object
-        A video capture object from which frames can be read.
+    video : NeonVideo-like
+        A video-like object with:
+        - .read() -> returns (ret, frame)
+        - .ts -> array/list of timestamps (in nanoseconds)
+        Alternatively, a cv2.VideoCapture-like object plus a separate timestamp strategy.
     tag_family : str, optional
-        The AprilTag family to detect (default is 'tag36h11').
+        The AprilTag family to detect (default 'tag36h11').
+    nthreads : int, optional
+        Number of CPU threads for the detector (default 4).
+    quad_decimate : float, optional
+        Downsample input frames by this factor for detection (default 2.0).
+        Larger values = faster detection, but might miss smaller tags.
+    skip_frames : int, optional
+        If > 1, skip every N-1 frames (process every skip_frames-th frame).
+        This can drastically reduce computation if you only need sparse detection.
 
     Returns
     -------
     pd.DataFrame
         A DataFrame containing AprilTag detections, with columns:
-        - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
-        - 'frame_idx': The frame number
+        - 'timestamp [ns]' (as index): The timestamp of the frame in nanoseconds
+        - 'frame_idx': The processed frame number (0-based among the frames you actually read)
+        - 'orig_frame_idx': The actual frame index in the video
         - 'tag_id': The ID of the detected AprilTag
-        - 'corners': A 4x2 array of the tag corner coordinates
+        - 'corners': A 4x2 array of the tag corner coordinates (float)
         - 'center': A 1x2 array with the tag center coordinates
     """
     try:
@@ -33,55 +47,66 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11"):
     except ImportError:
         raise ImportError(
             "To detect AprilTags, the module `pupil-apriltags` is needed. "
-            "You can install it using the following command:\n"
-            "pip install pupil-apriltags"
+            "Install via: pip install pupil-apriltags"
         )
-    # Initialize the detector with the specified tag family
-    detector = Detector(families=tag_family)
+
+    # ------------------------------------------------------------------
+    # Initialize the detector with multi-threading and optional decimation
+    # ------------------------------------------------------------------
+    detector = Detector(
+        families=tag_family,
+        nthreads=nthreads,
+        quad_decimate=quad_decimate,
+        # You can also tweak other params like quad_sigma, refine_edges, etc.
+    )
 
     all_detections = []
-    frame_idx = 0
+    processed_frame_idx = 0  # How many frames we've actually processed
+    actual_frame_idx = 0     # Tracks the real frame index in the video
 
     while True:
         ret, frame = video.read()
         if not ret:
             break
 
-        # Convert frame to grayscale for detection
+        # Possibly skip frames (e.g. skip_frames=2 means process every 2nd frame)
+        if actual_frame_idx % skip_frames != 0:
+            actual_frame_idx += 1
+            continue
+
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Detect AprilTags
+        # Detect AprilTags in the current frame
         detections = detector.detect(gray_frame)
 
+        # If you find no tags, that's okay; we still store an empty set or skip
+        # for that frame, depending on your needs.
         for detection in detections:
-            # Extract the tag ID and corners
-            tag_id = detection.tag_id
-            corners = detection.corners
-
-            # Calculate the center of the tag
+            corners = detection.corners  # shape (4,2)
             center = np.mean(corners, axis=0)
 
-            # Store the detection data
-            all_detections.append(
-                {
-                    "frame_idx": frame_idx,
-                    "timestamp [ns]": video.ts[frame_idx],
-                    "tag_id": tag_id,
-                    "corners": corners,
-                    "center": center,
-                }
-            )
+            all_detections.append({
+                "frame_idx": processed_frame_idx,  # index among processed frames
+                "orig_frame_idx": actual_frame_idx,  # actual frame in the raw video
+                "timestamp [ns]": video.ts[actual_frame_idx],
+                "tag_id": detection.tag_id,
+                "corners": corners,
+                "center": center,
+            })
 
-        frame_idx += 1
+        processed_frame_idx += 1
+        actual_frame_idx += 1
 
-    # convert to pandas DataFrame
-    all_detections = pd.DataFrame(all_detections)
+    # ------------------------------------------------------------------
+    # Convert to DataFrame
+    # ------------------------------------------------------------------
+    df = pd.DataFrame(all_detections)
+    if df.empty:
+        return df  # no detections at all
 
-    # set the index to timestamp
-    all_detections.set_index("timestamp [ns]", inplace=True)
-
-    return all_detections
-
+    # Set the index to the 'timestamp [ns]' column
+    df.set_index("timestamp [ns]", inplace=True)
+    return df
 
 def estimate_camera_pose(
     video: "NeonVideo",
