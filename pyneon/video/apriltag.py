@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
-                    nthreads: int = 4, quad_decimate: float = 2.0,
+                    nthreads: int = 4, quad_decimate: float = 1.0,
                     skip_frames: int = 1):
     """
     Detect AprilTags in a video and report their data for every frame using pupil_apriltags.
@@ -25,7 +25,7 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
     nthreads : int, optional
         Number of CPU threads for the detector (default 4).
     quad_decimate : float, optional
-        Downsample input frames by this factor for detection (default 2.0).
+        Downsample input frames by this factor for detection (default 1.0).
         Larger values = faster detection, but might miss smaller tags.
     skip_frames : int, optional
         If > 1, skip every N-1 frames (process every skip_frames-th frame).
