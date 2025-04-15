@@ -415,7 +415,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         self,
         window_size: Optional[int] = None,
         inplace: bool = False,
-    ) -> Optional[NeonGaze]:
+    ) -> pd.DataFrame:
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around timestamps of each video frame.
@@ -438,13 +438,25 @@ Recording duration: {self.info["duration"] / 1e9}s
         NeonGaze
             Gaze object containing data synchronized to video frames.
         """
+
+        #check if synced gaze already exists
+        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file():
+            synced_gaze = pd.read_csv(gaze_file)
+            if synced_gaze.empty:
+                raise ValueError("Gaze data is empty.")
+            return synced_gaze
+
         if self.gaze is None or self.video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
+        
+        synced_gaze = self.gaze.window_average(self.video.ts, window_size, inplace).data
+        #create an index by counting the number of rows in new gaze
+        synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
 
-        new_gaze = self.gaze.window_average(self.video.ts, window_size, inplace)
-        #add a column with video frames
-        new_gaze["frame_idx"] = self.video.frame_idx
-        return new_gaze
+        #save synced gaze to csv
+        synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
+
+        return synced_gaze
 
     def estimate_scanpath(
         self,
@@ -536,8 +548,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         return all_detections
 
     def detect_apriltags_parallel(
-        video,
-        output_dir: Path,
+        self,
         tag_family: str = "tag36h11",
         n_jobs: int = -1,
         nthreads_per_worker: int = 1,
@@ -584,7 +595,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             - 'corners': (4,2) array of corner coordinates
             - 'center': (1,2) array with the tag center coordinates
         """
-        json_file = output_dir / "apriltags.json"
+        json_file = self.der_dir / "apriltags.json"
 
         # If a cached file exists and we are not overwriting, load and return it
         if json_file.is_file() and not overwrite:
@@ -596,7 +607,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # Otherwise, run the parallel detection
         from .video import detect_apriltags_parallel
         df = detect_apriltags_parallel(
-            video=video,
+            video=self.video,
             tag_family=tag_family,
             n_jobs=n_jobs,
             nthreads_per_worker=nthreads_per_worker,
@@ -654,7 +665,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         detection_df = self.detect_apriltags()
         synced_gaze = self.sync_gaze_to_video()
-        gaze_on_screen, homographies = gaze_to_screen(detection_df, marker_info, synced_gaze, screen_size, coordinate_system)
+        gaze_on_screen, homographies = gaze_to_screen(self.video, detection_df, marker_info, synced_gaze, screen_size, coordinate_system)
 
         #save gaze on screen to csv
         gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)
