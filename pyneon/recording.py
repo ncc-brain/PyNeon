@@ -473,35 +473,68 @@ Recording duration: {self.info["duration"] / 1e9}s
             raise ValueError("Estimating scanpath requires video data.")
         return estimate_scanpath(video, sync_gaze, lk_params)
 
-    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+    def detect_apriltags(
+    self,
+    tag_family: str = "tag36h11",
+    nthreads: int = 4,
+    quad_decimate: float = 1.0,
+    skip_frames: int = 1,
+    overwrite: bool = False
+) -> pd.DataFrame:
+        
         """
-        Detect AprilTags in a video and report their data for every frame using the apriltag library.
+        Detect AprilTags in a video and save their data to JSON. If a cached JSON already
+        exists and `overwrite=False`, returns the cached data. Otherwise, processes
+        the video using pupil_apriltags with optional multi-threading, downsampling,
+        and frame skipping.
 
         Parameters
         ----------
         tag_family : str, optional
             The AprilTag family to detect (default is 'tag36h11').
+        nthreads : int, optional
+            Number of CPU threads to use for detection (default 4).
+        quad_decimate : float, optional
+            Downsample input frames by this factor for faster detection (default 1.0, therefore no downsampling).
+            Higher values reduce detection accuracy for small tags but speed up processing.
+        skip_frames : int, optional
+            If > 1, process only every N-th frame (default is 1, i.e., no skipping).
+            This can drastically reduce computation if fewer detections are acceptable.
+        overwrite : bool, optional
+            If True, re-run detection and overwrite existing JSON (default False).
 
         Returns
         -------
         pd.DataFrame
-            A DataFrame containing AprilTag detections, with columns:
-            - 'frame_idx': The frame number
+            A DataFrame with one row per detected tag and columns:
+            - 'timestamp [ns]': The timestamp of the frame in nanoseconds (index)
+            - 'frame_idx': The processed frame index among frames read
+            - 'orig_frame_idx': The actual frame index in the video (if skipping frames)
             - 'tag_id': The ID of the detected AprilTag
-            - 'corners': A 4x2 array of the tag corner coordinates
-            - 'center': A 1x2 array with the tag center coordinates
+            - 'corners': A 4x2 float array of the tag corner coordinates
+            - 'center': A 1x2 float array of the tag center coordinates
         """
-        # Check if JSON already exists
-        if (json_file := self.der_dir / "apriltags.json").is_file():
+        import pandas as pd
+
+        json_file = self.der_dir / "apriltags.json"
+
+        # If a cached file exists and overwrite is False, just read and return it
+        if json_file.is_file() and not overwrite:
             return pd.read_json(json_file, orient="records", lines=True)
 
-        all_detections = detect_apriltags(self.video, tag_family)
-        # Save to JSON
-        all_detections.to_json(
-            self.der_dir / "apriltags.json", orient="records", lines=True
+        all_detections = detect_apriltags(
+            video=self.video, 
+            tag_family=tag_family,
+            nthreads=nthreads,
+            quad_decimate=quad_decimate,
+            skip_frames=skip_frames
         )
 
+        # Save results to JSON
+        all_detections.to_json(json_file, orient="records", lines=True)
+
         return all_detections
+
     
 
     def gaze_to_screen(

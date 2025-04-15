@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -9,17 +10,17 @@ if TYPE_CHECKING:
 
 def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
                     nthreads: int = 4, quad_decimate: float = 1.0,
-                    skip_frames: int = 1):
+                    skip_frames: int = 1) -> pd.DataFrame:
     """
-    Detect AprilTags in a video and report their data for every frame using pupil_apriltags.
+    Detect AprilTags in a video and report their data for every frame using pupil_apriltags,
+    showing progress with a tqdm progress bar.
 
     Parameters
     ----------
     video : NeonVideo-like
         A video-like object with:
         - .read() -> returns (ret, frame)
-        - .ts -> array/list of timestamps (in nanoseconds)
-        Alternatively, a cv2.VideoCapture-like object plus a separate timestamp strategy.
+        - .ts -> array/list of timestamps (in nanoseconds), same length as total frames
     tag_family : str, optional
         The AprilTag family to detect (default 'tag36h11').
     nthreads : int, optional
@@ -42,6 +43,7 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
         - 'corners': A 4x2 array of the tag corner coordinates (float)
         - 'center': A 1x2 array with the tag center coordinates
     """
+
     try:
         from pupil_apriltags import Detector
     except ImportError:
@@ -50,44 +52,44 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
             "Install via: pip install pupil-apriltags"
         )
 
-    # ------------------------------------------------------------------
-    # Initialize the detector with multi-threading and optional decimation
-    # ------------------------------------------------------------------
+    # Initialize the detector
     detector = Detector(
         families=tag_family,
         nthreads=nthreads,
         quad_decimate=quad_decimate,
-        # You can also tweak other params like quad_sigma, refine_edges, etc.
     )
 
-    all_detections = []
-    processed_frame_idx = 0  # How many frames we've actually processed
-    actual_frame_idx = 0     # Tracks the real frame index in the video
+    # We assume the total number of frames is len(video.ts)
+    # If you're using cv2.VideoCapture, you may do something like:
+    # total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    total_frames = len(video.ts)
 
-    while True:
+    all_detections = []
+    processed_frame_idx = 0
+
+    # Use a for-loop with tqdm for progress
+    for actual_frame_idx in tqdm(range(total_frames), desc="Detecting AprilTags"):
         ret, frame = video.read()
         if not ret:
+            # No more frames could be read
             break
 
-        # Possibly skip frames (e.g. skip_frames=2 means process every 2nd frame)
+        # Possibly skip frames
         if actual_frame_idx % skip_frames != 0:
-            actual_frame_idx += 1
             continue
 
+        # Convert to grayscale
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Detect AprilTags in the current frame
+        # Detect AprilTags
         detections = detector.detect(gray_frame)
 
-        # If you find no tags, that's okay; we still store an empty set or skip
-        # for that frame, depending on your needs.
         for detection in detections:
-            corners = detection.corners  # shape (4,2)
+            corners = detection.corners  # shape (4, 2)
             center = np.mean(corners, axis=0)
-
             all_detections.append({
-                "frame_idx": processed_frame_idx,  # index among processed frames
-                "orig_frame_idx": actual_frame_idx,  # actual frame in the raw video
+                "frame_idx": processed_frame_idx,  # among processed frames
+                "orig_frame_idx": actual_frame_idx,  # actual frame index
                 "timestamp [ns]": video.ts[actual_frame_idx],
                 "tag_id": detection.tag_id,
                 "corners": corners,
@@ -95,16 +97,13 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
             })
 
         processed_frame_idx += 1
-        actual_frame_idx += 1
 
-    # ------------------------------------------------------------------
     # Convert to DataFrame
-    # ------------------------------------------------------------------
     df = pd.DataFrame(all_detections)
     if df.empty:
         return df  # no detections at all
 
-    # Set the index to the 'timestamp [ns]' column
+    # Set timestamp [ns] as index
     df.set_index("timestamp [ns]", inplace=True)
     return df
 
