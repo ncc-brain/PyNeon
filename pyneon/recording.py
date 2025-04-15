@@ -629,8 +629,10 @@ Recording duration: {self.info["duration"] / 1e9}s
         marker_info: pd.DataFrame,
         screen_size: tuple[int, int] = (1920, 1200),
         coordinate_system: str = "opencv",
-        overwrite: bool = False,
         homography_settings: dict = None,
+        overwrite_detection: bool = False,
+        overwrite_homographies: bool = False,
+        overwrite_gaze: bool = False,
     ) -> pd.DataFrame:
         """
         Convert gaze coordinates to screen coordinates using AprilTag marker information.
@@ -658,17 +660,17 @@ Recording duration: {self.info["duration"] / 1e9}s
         """
 
         # Check if JSON already exists
-        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not overwrite:
+        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not all([overwrite_gaze, overwrite_homographies, overwrite_detection]):
             gaze_on_screen = pd.read_csv(gaze_file)
             if (homographies_file := self.der_dir / "homographies.json").is_file():
                 homographies = pd.read_json(homographies_file, orient="records")
                 return gaze_on_screen, homographies
 
         
-        detection_df = self.detect_apriltags()
+        detection_df = self.detect_apriltags(overwrite=overwrite_detection)
         
         #check if homographies already exist
-        if (homographies_file := self.der_dir / "homographies.json").is_file() and not overwrite:
+        if (homographies_file := self.der_dir / "homographies.json").is_file() and not overwrite_homographies:
             homographies = pd.read_json(homographies_file, orient="records")
             if homographies.empty:
                 raise ValueError("Homographies data is empty.")
@@ -682,11 +684,16 @@ Recording duration: {self.info["duration"] / 1e9}s
                 coordinate_system=coordinate_system,
                 settings=homography_settings,
             )
-            #save homographies to json
-            homographies.to_json(self.der_dir / "homographies.json", orient="records")
+            # Convert homographies dict to a DataFrame for easier storage and manipulation
+            homographies_df = pd.DataFrame.from_dict(
+                {"frame_idx": list(homographies.keys()), 
+                "homography": [v.tolist() for v in homographies.values()]}
+            )
+            # Save homographies DataFrame to a JSON file
+            homographies_df.to_json(self.der_dir / "homographies.json", orient="records", lines=True)
 
         #check if synced gaze already exists
-        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file():
+        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file() and not overwrite_gaze:
             synced_gaze = pd.read_csv(gaze_file)
             if synced_gaze.empty:
                 raise ValueError("Gaze data is empty.")
@@ -696,7 +703,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
 
         #check if transformations already exist
-        if (gaze_on_screen_file := self.der_dir / "gaze_on_screen.csv").is_file() and not overwrite:
+        if (gaze_on_screen_file := self.der_dir / "gaze_on_screen.csv").is_file() and not overwrite_gaze:
             gaze_on_screen = pd.read_csv(gaze_on_screen_file)
             if gaze_on_screen.empty:
                 raise ValueError("Gaze on screen data is empty.")

@@ -462,7 +462,7 @@ def find_homographies(
     # -----------------------------------------------------------------
     default_settings = {
         "method": cv2.RANSAC,
-        "ransacReprojThreshold": 3.0,
+        "ransacReprojThreshold": 5.0,
         "maxIters": 1000,
         "confidence": 0.995,
     }
@@ -518,6 +518,7 @@ def find_homographies(
 
         H, mask = cv2.findHomography(world_points, screen_points, **default_settings)
         homography_for_frame[frame] = H
+
 
     return homography_for_frame
 
