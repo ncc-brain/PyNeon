@@ -741,11 +741,11 @@ Recording duration: {self.info["duration"] / 1e9}s
         # Summarize gaze points first:
         gaze_means = (gaze_on_screen
                     .groupby("fixation id", as_index=False)
-                    [["gaze x [px]", "gaze y [px]"]]
+                    [["x_trans", "y_trans"]]
                     .mean()
                     .rename(columns={
-                        "gaze x [px]": "gaze x [screen px]",
-                        "gaze y [px]": "gaze y [screen px]",
+                        "x_trans": "gaze x [screen px]",
+                        "y_trans": "gaze y [screen px]",
                     }))
 
         fixation = fixation.reset_index(drop=False)
