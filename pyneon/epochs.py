@@ -312,8 +312,8 @@ def _create_epochs(
     data["epoch index"] = pd.Series(dtype="Int32")
     data["epoch time"] = pd.Series(dtype="Int64")
     data["epoch description"] = pd.Series(dtype="str")
-    
-    #check for source type
+
+    # check for source type
     if isinstance(source, NeonStream):
         ts = source.ts
     elif isinstance(source, NeonEV):
@@ -434,7 +434,7 @@ def _construct_times_df(
 
     if n_epoch := len(t_ref) == 0:
         raise ValueError("t_ref must not be empty")
-    else: 
+    else:
         n_epoch = len(t_ref)
 
     time_factors = {"s": 1e9, "ms": 1e6, "us": 1e3, "ns": 1}

@@ -12,7 +12,14 @@ from functools import cached_property
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
 from .preprocess import concat_streams, concat_events, smooth_camera_pose
-from .video import NeonVideo, estimate_scanpath, detect_apriltags, estimate_camera_pose, find_homographies, transform_gaze_to_screen
+from .video import (
+    NeonVideo,
+    estimate_scanpath,
+    detect_apriltags,
+    estimate_camera_pose,
+    find_homographies,
+    transform_gaze_to_screen,
+)
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
 
@@ -440,7 +447,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             Gaze object containing data synchronized to video frames.
         """
 
-        #check if synced gaze already exists
+        # check if synced gaze already exists
         if (gaze_file := self.der_dir / "gaze_synced.csv").is_file():
             synced_gaze = pd.read_csv(gaze_file)
             if synced_gaze.empty:
@@ -449,12 +456,12 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         if self.gaze is None or self.video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
-        
+
         synced_gaze = self.gaze.window_average(self.video.ts, window_size, inplace).data
-        #create an index by counting the number of rows in new gaze
+        # create an index by counting the number of rows in new gaze
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
 
-        #save synced gaze to csv
+        # save synced gaze to csv
         synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
 
         return synced_gaze
@@ -487,14 +494,13 @@ Recording duration: {self.info["duration"] / 1e9}s
         return estimate_scanpath(video, sync_gaze, lk_params)
 
     def detect_apriltags(
-    self,
-    tag_family: str = "tag36h11",
-    nthreads: int = 4,
-    quad_decimate: float = 1.0,
-    skip_frames: int = 1,
-    overwrite: bool = False
-) -> pd.DataFrame:
-        
+        self,
+        tag_family: str = "tag36h11",
+        nthreads: int = 4,
+        quad_decimate: float = 1.0,
+        skip_frames: int = 1,
+        overwrite: bool = False,
+    ) -> pd.DataFrame:
         """
         Detect AprilTags in a video and save their data to JSON. If a cached JSON already
         exists and `overwrite=False`, returns the cached data. Otherwise, processes
@@ -536,11 +542,11 @@ Recording duration: {self.info["duration"] / 1e9}s
             return pd.read_json(json_file, orient="records", lines=True)
 
         all_detections = detect_apriltags(
-            video=self.video, 
+            video=self.video,
             tag_family=tag_family,
             nthreads=nthreads,
             quad_decimate=quad_decimate,
-            skip_frames=skip_frames
+            skip_frames=skip_frames,
         )
 
         # Save results to JSON
@@ -555,7 +561,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         nthreads_per_worker: int = 1,
         quad_decimate: float = 1.0,
         chunk_size: int = 500,
-        overwrite: bool = False
+        overwrite: bool = False,
     ) -> pd.DataFrame:
         """
         High-level function that uses parallel processing to detect AprilTags in a video,
@@ -567,7 +573,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         video : OpenCV-like or custom video object
             Must support:
             - .read() -> (ret, frame)
-            - .ts -> array of timestamps (same length as the total frames) 
+            - .ts -> array of timestamps (same length as the total frames)
         output_dir : Path
             Directory in which to store/read the resulting JSON file (named 'apriltags_parallel.json').
         tag_family : str, optional
@@ -607,15 +613,16 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         # Otherwise, run the parallel detection
         from .video import detect_apriltags_parallel
+
         df = detect_apriltags_parallel(
             video=self.video,
             tag_family=tag_family,
             n_jobs=n_jobs,
             nthreads_per_worker=nthreads_per_worker,
             quad_decimate=quad_decimate,
-            chunk_size=chunk_size
+            chunk_size=chunk_size,
         )
-        
+
         # Save to JSON
         if not df.empty:
             df.reset_index(inplace=True)  # so 'timestamp [ns]' becomes a column
@@ -623,7 +630,6 @@ Recording duration: {self.info["duration"] / 1e9}s
             df.set_index("timestamp [ns]", inplace=True)
 
         return df
-
 
     def gaze_to_screen(
         self,
@@ -662,21 +668,28 @@ Recording duration: {self.info["duration"] / 1e9}s
         """
 
         # Check if JSON already exists
-        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not all([overwrite_gaze, overwrite_homographies, overwrite_detection]):
+        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not all(
+            [overwrite_gaze, overwrite_homographies, overwrite_detection]
+        ):
             gaze_on_screen = pd.read_csv(gaze_file)
             if (homographies_file := self.der_dir / "homographies.json").is_file():
-                homographies = pd.read_json(homographies_file, orient="records", lines=True)
+                homographies = pd.read_json(
+                    homographies_file, orient="records", lines=True
+                )
                 return gaze_on_screen
 
-        
-        detection_df = self.detect_apriltags(overwrite=overwrite_detection, skip_frames=skip_frames)
-        
-        #check if homographies already exist
-        if (homographies_file := self.der_dir / "homographies.json").is_file() and not overwrite_homographies:
+        detection_df = self.detect_apriltags(
+            overwrite=overwrite_detection, skip_frames=skip_frames
+        )
+
+        # check if homographies already exist
+        if (
+            homographies_file := self.der_dir / "homographies.json"
+        ).is_file() and not overwrite_homographies:
             homographies = pd.read_json(homographies_file, orient="records", lines=True)
             if homographies.empty:
                 raise ValueError("Homographies data is empty.")
-            
+
         else:
             homographies = find_homographies(
                 self.video,
@@ -689,24 +702,32 @@ Recording duration: {self.info["duration"] / 1e9}s
             )
             # Convert homographies dict to a DataFrame for easier storage and manipulation
             homographies_df = pd.DataFrame.from_dict(
-                {"frame_idx": list(homographies.keys()), 
-                "homography": [v.tolist() for v in homographies.values()]}
+                {
+                    "frame_idx": list(homographies.keys()),
+                    "homography": [v.tolist() for v in homographies.values()],
+                }
             )
             # Save homographies DataFrame to a JSON file
-            homographies_df.to_json(self.der_dir / "homographies.json", orient="records", lines=True)
+            homographies_df.to_json(
+                self.der_dir / "homographies.json", orient="records", lines=True
+            )
 
-        #check if synced gaze already exists
-        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file() and not overwrite_gaze:
+        # check if synced gaze already exists
+        if (
+            gaze_file := self.der_dir / "gaze_synced.csv"
+        ).is_file() and not overwrite_gaze:
             synced_gaze = pd.read_csv(gaze_file)
             if synced_gaze.empty:
                 raise ValueError("Gaze data is empty.")
         else:
             synced_gaze = self.sync_gaze_to_video()
-            #save synced gaze to csv
+            # save synced gaze to csv
             synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
 
-        #check if transformations already exist
-        if (gaze_on_screen_file := self.der_dir / "gaze_on_screen.csv").is_file() and not overwrite_gaze:
+        # check if transformations already exist
+        if (
+            gaze_on_screen_file := self.der_dir / "gaze_on_screen.csv"
+        ).is_file() and not overwrite_gaze:
             gaze_on_screen = pd.read_csv(gaze_on_screen_file)
             if gaze_on_screen.empty:
                 raise ValueError("Gaze on screen data is empty.")
@@ -716,38 +737,42 @@ Recording duration: {self.info["duration"] / 1e9}s
                 synced_gaze,
                 homographies,
             )
-            #save gaze on screen to csv
+            # save gaze on screen to csv
             gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)
 
         return gaze_on_screen
-        
+
     def fixations_to_screen(
-            self,
+        self,
     ) -> pd.DataFrame:
         """
         Updates fixation data with gaze coordinates in screen space.
         """
-        #collect gaze on screen or compute it   
+        # collect gaze on screen or compute it
         if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file():
             gaze_on_screen = pd.read_csv(gaze_file)
         else:
             gaze_on_screen = self.gaze_to_screen()[0]
-        #check if fixations exist
+        # check if fixations exist
 
         fixation = self.fixations.data.copy()
 
         if fixation is None:
             raise ValueError("Fixations data not found.")
-        
+
         # Summarize gaze points first:
-        gaze_means = (gaze_on_screen
-                    .groupby("fixation id", as_index=False)
-                    [["x_trans", "y_trans"]]
-                    .mean()
-                    .rename(columns={
-                        "x_trans": "gaze x [screen px]",
-                        "y_trans": "gaze y [screen px]",
-                    }))
+        gaze_means = (
+            gaze_on_screen.groupby("fixation id", as_index=False)[
+                ["x_trans", "y_trans"]
+            ]
+            .mean()
+            .rename(
+                columns={
+                    "x_trans": "gaze x [screen px]",
+                    "y_trans": "gaze y [screen px]",
+                }
+            )
+        )
 
         fixation = fixation.reset_index(drop=False)
 
@@ -756,11 +781,10 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         fixation = fixation.set_index("start timestamp [ns]")
 
-        #save fixations to csv
+        # save fixations to csv
         fixation.to_csv(self.der_dir / "fixations_on_screen.csv")
 
-        return fixation 
-
+        return fixation
 
     def estimate_camera_pose(
         self,

@@ -13,10 +13,15 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
-                    nthreads: int = 4, quad_decimate: float = 1.0,
-                    skip_frames: int = 1,
-                    random_access: bool = True) -> pd.DataFrame:
+
+def detect_apriltags(
+    video: "NeonVideo",
+    tag_family: str = "tag36h11",
+    nthreads: int = 4,
+    quad_decimate: float = 1.0,
+    skip_frames: int = 1,
+    random_access: bool = True,
+) -> pd.DataFrame:
     """
     Detect AprilTags in a video and report their data for every processed frame,
     optionally using random access instead of sequential reading.
@@ -36,11 +41,11 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
         Downsample input frames by this factor for detection (default 1.0).
         Larger values = faster detection, but might miss smaller tags.
     skip_frames : int, optional
-        If > 1, detect tags only in every Nth frame. 
+        If > 1, detect tags only in every Nth frame.
         E.g., skip_frames=5 will process frames 0, 5, 10, 15, etc.
     random_access : bool, optional
         If True, jump directly to the frames you need (faster for large skip_frames).
-        If False, read frames sequentially and skip in a loop (may be faster for 
+        If False, read frames sequentially and skip in a loop (may be faster for
         small skip_frames or if random access is expensive).
 
     Returns
@@ -72,7 +77,9 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
     if skip_frames < 1:
         raise ValueError("skip_frames must be >= 1")
     if skip_frames < 5:
-        print("Warning: skip_frames < 5 may be inefficient with random access. Switching to sequential access.")
+        print(
+            "Warning: skip_frames < 5 may be inefficient with random access. Switching to sequential access."
+        )
         random_access = False  # sequential access is faster for small skips
 
     total_frames = len(video.ts)
@@ -84,7 +91,9 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
     # -----------------------------------------------------------------------
     if random_access:
         frames_to_process = range(0, total_frames, skip_frames)
-        for actual_frame_idx in tqdm(frames_to_process, desc="Detecting AprilTags (random access)"):
+        for actual_frame_idx in tqdm(
+            frames_to_process, desc="Detecting AprilTags (random access)"
+        ):
             # Seek directly to the desired frame
             video.set(cv2.CAP_PROP_POS_FRAMES, actual_frame_idx)
             ret, frame = video.read()
@@ -101,14 +110,16 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
             for detection in detections:
                 corners = detection.corners
                 center = np.mean(corners, axis=0)
-                all_detections.append({
-                    "processed_frame_idx": processed_frame_idx,
-                    "frame_idx": actual_frame_idx,
-                    "timestamp [ns]": video.ts[actual_frame_idx],
-                    "tag_id": detection.tag_id,
-                    "corners": corners,
-                    "center": center,
-                })
+                all_detections.append(
+                    {
+                        "processed_frame_idx": processed_frame_idx,
+                        "frame_idx": actual_frame_idx,
+                        "timestamp [ns]": video.ts[actual_frame_idx],
+                        "tag_id": detection.tag_id,
+                        "corners": corners,
+                        "center": center,
+                    }
+                )
 
             processed_frame_idx += 1
 
@@ -117,7 +128,9 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
     # -----------------------------------------------------------------------
     else:
         # We'll just read frames in order, skipping those we don't want
-        for actual_frame_idx in tqdm(range(total_frames), desc="Detecting AprilTags (sequential)"):
+        for actual_frame_idx in tqdm(
+            range(total_frames), desc="Detecting AprilTags (sequential)"
+        ):
             ret, frame = video.read()
             if not ret:
                 break
@@ -135,14 +148,16 @@ def detect_apriltags(video: "NeonVideo", tag_family: str = "tag36h11",
             for detection in detections:
                 corners = detection.corners
                 center = np.mean(corners, axis=0)
-                all_detections.append({
-                    "processed_frame_idx": processed_frame_idx,
-                    "frame_idx": actual_frame_idx,
-                    "timestamp [ns]": video.ts[actual_frame_idx],
-                    "tag_id": detection.tag_id,
-                    "corners": corners,
-                    "center": center,
-                })
+                all_detections.append(
+                    {
+                        "processed_frame_idx": processed_frame_idx,
+                        "frame_idx": actual_frame_idx,
+                        "timestamp [ns]": video.ts[actual_frame_idx],
+                        "tag_id": detection.tag_id,
+                        "corners": corners,
+                        "center": center,
+                    }
+                )
 
             processed_frame_idx += 1
 
@@ -337,6 +352,7 @@ def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
     return transformed_2d
 
+
 def find_homographies(
     video,
     detection_df: pd.DataFrame,
@@ -416,14 +432,17 @@ def find_homographies(
             coords = np.array(coords)  # Convert list to ndarray
             x_opencv = coords[:, 0] + (w / 2)
             y_opencv = (h / 2) - coords[:, 1]
-            return np.column_stack((x_opencv, y_opencv)).tolist()  # Convert back to list
+            return np.column_stack(
+                (x_opencv, y_opencv)
+            ).tolist()  # Convert back to list
 
         # Convert the reference corners in marker_info
         def convert_marker_corners(c):
             return psychopy_coords_to_opencv(c, frame_size)
-        
-        marker_info["marker_corners"] = marker_info["marker_corners"].apply(convert_marker_corners)
 
+        marker_info["marker_corners"] = marker_info["marker_corners"].apply(
+            convert_marker_corners
+        )
 
     # -----------------------------------------------------------------
     # 2. Undistort corners & gaze if desired
@@ -434,13 +453,16 @@ def find_homographies(
         dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
     if undistort and camera_matrix is not None:
-        def undistort_points(points: np.ndarray, K: np.ndarray, D: np.ndarray) -> np.ndarray:
+
+        def undistort_points(
+            points: np.ndarray, K: np.ndarray, D: np.ndarray
+        ) -> np.ndarray:
             pts_for_cv = points.reshape((-1, 1, 2)).astype(np.float32)
             undist = cv2.undistortPoints(pts_for_cv, K, D)
             # undistortPoints outputs normalized coords => multiply back by K
             ones = np.ones((undist.shape[0], 1, 1), dtype=np.float32)
             undist_hom = np.concatenate([undist, ones], axis=2)
-            pixel = np.einsum('ij,nkj->nki', K, undist_hom)
+            pixel = np.einsum("ij,nkj->nki", K, undist_hom)
             pixel = pixel[:, 0, :2] / pixel[:, 0, 2:]
             return pixel
 
@@ -448,7 +470,10 @@ def find_homographies(
         def undistort_detection_corners(row):
             c = np.array(row["corners"])
             return undistort_points(c, camera_matrix, dist_coeffs)
-        detection_df["corners"] = detection_df.apply(undistort_detection_corners, axis=1)
+
+        detection_df["corners"] = detection_df.apply(
+            undistort_detection_corners, axis=1
+        )
 
     # -----------------------------------------------------------------
     # 3. Compute a homography for each frame using *all* tag detections
@@ -466,7 +491,9 @@ def find_homographies(
 
     marker_dict = {}
     for _, row in marker_info.iterrows():
-        marker_dict[row["marker_id"]] = np.array(row["marker_corners"], dtype=np.float32)
+        marker_dict[row["marker_id"]] = np.array(
+            row["marker_corners"], dtype=np.float32
+        )
 
     frames = detection_df["frame_idx"].unique()
     homography_for_frame = {}
@@ -477,7 +504,7 @@ def find_homographies(
             homography_for_frame[frame] = None
             continue
 
-        world_points = []   # from the camera's perspective (detected corners)
+        world_points = []  # from the camera's perspective (detected corners)
         screen_points = []  # from the reference plane or "ideal" positions
 
         for _, detection in frame_detections.iterrows():
@@ -496,7 +523,7 @@ def find_homographies(
 
             # Extend our list of corner correspondences
             world_points.extend(corners_detected)  # add 4 corner coords
-            screen_points.extend(ref_corners)      # add 4 reference coords
+            screen_points.extend(ref_corners)  # add 4 reference coords
 
         world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
         screen_points = np.array(screen_points, dtype=np.float32).reshape(-1, 2)
@@ -516,7 +543,10 @@ def find_homographies(
 
     return homography_for_frame
 
-def transform_gaze_to_screen(gaze_df: pd.DataFrame, homography_for_frame: dict) -> pd.DataFrame:
+
+def transform_gaze_to_screen(
+    gaze_df: pd.DataFrame, homography_for_frame: dict
+) -> pd.DataFrame:
     """
     Apply per-frame homographies to gaze points to transform them into a new coordinate system.
 
@@ -539,8 +569,10 @@ def transform_gaze_to_screen(gaze_df: pd.DataFrame, homography_for_frame: dict) 
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
 
-    for frame in tqdm(gaze_df["frame_idx"].unique(), desc="Applying homography to gaze points"):
-        idx_sel = (gaze_df["frame_idx"] == frame)
+    for frame in tqdm(
+        gaze_df["frame_idx"].unique(), desc="Applying homography to gaze points"
+    ):
+        idx_sel = gaze_df["frame_idx"] == frame
         H = homography_for_frame.get(frame, None)
         if H is None:
             # no valid homography
@@ -553,6 +585,7 @@ def transform_gaze_to_screen(gaze_df: pd.DataFrame, homography_for_frame: dict) 
 
     return gaze_df
 
+
 def _upsample_homographies(
     homographies_dict: dict[int | np.int64, np.ndarray],
     max_frame: int | np.int64,
@@ -563,20 +596,20 @@ def _upsample_homographies(
     possibly with np.int64 keys.
     Interpolates linearly between each known pair of frames for each 3x3 entry,
     and then ensures keys are plain Python int.
-    
+
     Parameters
     ----------
     homographies_dict : dict
         Keys are frame indices (int or np.int64), values are 3x3 np.ndarray (float).
     max_frame : int
         The highest frame index you want to fill in.
-    
+
     Returns
     -------
     dict[int, np.ndarray]
         A dictionary with a 3x3 homography for every frame from 0..max_frame.
         Keys will be standard Python int.
-        If a frame is not within the known range, it will be extrapolated 
+        If a frame is not within the known range, it will be extrapolated
         from the closest known pair.
     """
     # ------------------------------------------------------------------
@@ -585,7 +618,7 @@ def _upsample_homographies(
     homographies_fixed_keys = {}
     for frame_idx, H in homographies_dict.items():
         homographies_fixed_keys[int(frame_idx)] = H
-    
+
     # ------------------------------------------------------------------
     # 2) Sort frames that have known homographies
     # ------------------------------------------------------------------
@@ -593,43 +626,43 @@ def _upsample_homographies(
     if not known_frames:
         # No known frames => return empty dict
         return {}
-    
+
     upsampled = {}
-    
+
     # ------------------------------------------------------------------
     # 3) Interpolate between consecutive known frames
     # ------------------------------------------------------------------
     for i in range(len(known_frames) - 1):
         f1 = known_frames[i]
         f2 = known_frames[i + 1]
-        
+
         H1 = homographies_fixed_keys[f1]  # 3x3
         H2 = homographies_fixed_keys[f2]  # 3x3
-        
+
         frame_diff = f2 - f1
-        
+
         # Fill from f1..(f2-1)
         for offset in range(frame_diff):
             current_frame = f1 + offset
             if current_frame > max_frame:
                 break
-            
+
             alpha = offset / float(frame_diff)
             H_interp = (1 - alpha) * H1 + alpha * H2
             upsampled[current_frame] = H_interp
-    
+
     # Make sure we include the last known frame
     last_frame = known_frames[-1]
     if last_frame <= max_frame:
         upsampled[last_frame] = homographies_fixed_keys[last_frame]
-    
+
     # ------------------------------------------------------------------
     # 4) Fill frames beyond the last known up to max_frame (extrapolate)
     # ------------------------------------------------------------------
     for f in range(last_frame + 1, max_frame + 1):
         upsampled[f] = homographies_fixed_keys[last_frame]
-    
+
     # Now, "upsampled" is already using Python int keys,
     # so no further conversion is strictly needed.
-    
+
     return upsampled

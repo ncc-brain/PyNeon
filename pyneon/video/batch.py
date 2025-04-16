@@ -15,13 +15,12 @@ except ImportError:
         "Install via: pip install joblib"
     )
 try:
-    from pupil_apriltags import Detector 
+    from pupil_apriltags import Detector
 except ImportError:
     raise ImportError(
         "To detect AprilTags, the module `pupil-apriltags` is needed. "
         "Install via: pip install pupil-apriltags"
     )
-
 
 
 def detect_apriltags_in_batch(
@@ -30,7 +29,7 @@ def detect_apriltags_in_batch(
     start_frame_idx,
     tag_family="tag36h11",
     nthreads=1,
-    quad_decimate=1.0
+    quad_decimate=1.0,
 ):
     """
     Detect AprilTags on a batch of frames (already read from the video).
@@ -64,9 +63,7 @@ def detect_apriltags_in_batch(
 
     # Create a detector (in each worker)
     detector = Detector(
-        families=tag_family,
-        nthreads=nthreads,
-        quad_decimate=quad_decimate
+        families=tag_family, nthreads=nthreads, quad_decimate=quad_decimate
     )
 
     all_detections = []
@@ -79,13 +76,15 @@ def detect_apriltags_in_batch(
         for detection in detections:
             corners = detection.corners
             center = np.mean(corners, axis=0)
-            all_detections.append({
-                "timestamp [ns]": timestamps[i],  # match to frames_batch
-                "frame_idx": frame_idx,
-                "tag_id": detection.tag_id,
-                "corners": corners,
-                "center": center,
-            })
+            all_detections.append(
+                {
+                    "timestamp [ns]": timestamps[i],  # match to frames_batch
+                    "frame_idx": frame_idx,
+                    "tag_id": detection.tag_id,
+                    "corners": corners,
+                    "center": center,
+                }
+            )
 
     df = pd.DataFrame(all_detections)
     return df
@@ -97,7 +96,7 @@ def detect_apriltags_parallel(
     n_jobs=-1,
     nthreads_per_worker=1,
     quad_decimate=1.0,
-    chunk_size=500
+    chunk_size=500,
 ) -> pd.DataFrame:
     """
     Parallel AprilTag detection by batching video frames across multiple CPU processes,
@@ -162,6 +161,7 @@ def detect_apriltags_parallel(
             #    so each parallel worker gets a slice of this chunk.
             if n_jobs <= 0:
                 import multiprocessing
+
                 n_jobs_used = multiprocessing.cpu_count()
             else:
                 n_jobs_used = n_jobs
@@ -176,7 +176,7 @@ def detect_apriltags_parallel(
                 sub_info = (
                     sub_frames,
                     sub_times,
-                    frame_index + start_sub  # absolute start idx in full video
+                    frame_index + start_sub,  # absolute start idx in full video
                 )
                 sub_batches.append(sub_info)
                 start_sub = end_sub
@@ -189,8 +189,9 @@ def detect_apriltags_parallel(
                     start_frame_idx=sub_b[2],
                     tag_family=tag_family,
                     nthreads=nthreads_per_worker,
-                    quad_decimate=quad_decimate
-                ) for sub_b in sub_batches
+                    quad_decimate=quad_decimate,
+                )
+                for sub_b in sub_batches
             )
 
             chunk_df = pd.concat(results, ignore_index=True)
@@ -240,10 +241,9 @@ def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     transformed_2d = transformed_h[:, :2] / np.maximum(transformed_h[:, 2:], 1e-9)
     return transformed_2d
 
+
 def _compute_homography_for_frame(
-    frame: int,
-    detection_df: pd.DataFrame,
-    marker_dict: dict
+    frame: int, detection_df: pd.DataFrame, marker_dict: dict
 ) -> tuple[int, np.ndarray]:
     """
     Worker function to compute the homography for a single frame.
@@ -283,7 +283,7 @@ def _compute_homography_for_frame(
             continue
 
         world_points.extend(corners_detected)  # add 4 detected corners
-        screen_points.extend(ref_corners)      # add 4 reference corners
+        screen_points.extend(ref_corners)  # add 4 reference corners
 
     world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
     screen_points = np.array(screen_points, dtype=np.float32).reshape(-1, 2)
@@ -293,6 +293,7 @@ def _compute_homography_for_frame(
 
     H, _ = cv2.findHomography(world_points, screen_points, cv2.RANSAC, 5.0)
     return (frame, H)
+
 
 def gaze_to_screen_parallel(
     video,
@@ -350,6 +351,7 @@ def gaze_to_screen_parallel(
     # 1) If needed: Convert psychoPy coords -> OpenCV
     # --------------------------------------
     if coordinate_system.lower() == "psychopy":
+
         def psychopy_coords_to_opencv(coords, frame_size):
             w, h = frame_size
             coords = np.array(coords, dtype=np.float32)
@@ -361,13 +363,17 @@ def gaze_to_screen_parallel(
         def convert_marker_corners(c):
             arr = psychopy_coords_to_opencv(c, frame_size)
             return arr.tolist()  # keep it consistent
-        marker_info["marker_corners"] = marker_info["marker_corners"].apply(convert_marker_corners)
+
+        marker_info["marker_corners"] = marker_info["marker_corners"].apply(
+            convert_marker_corners
+        )
 
         # Convert corners in detection_df
         def convert_detection_corners(row):
             coords = row["corners"]
             arr = psychopy_coords_to_opencv(coords, frame_size)
             return arr
+
         detection_df = detection_df.copy()
         detection_df["corners"] = detection_df.apply(convert_detection_corners, axis=1)
 
@@ -391,13 +397,16 @@ def gaze_to_screen_parallel(
         dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
     if undistort and camera_matrix is not None:
-        def undistort_points(points: np.ndarray, K: np.ndarray, D: np.ndarray) -> np.ndarray:
+
+        def undistort_points(
+            points: np.ndarray, K: np.ndarray, D: np.ndarray
+        ) -> np.ndarray:
             pts_for_cv = points.reshape((-1, 1, 2)).astype(np.float32)
             undist = cv2.undistortPoints(pts_for_cv, K, D)
             # undistortPoints outputs normalized coords => multiply back by K
             ones = np.ones((undist.shape[0], 1, 1), dtype=np.float32)
             undist_hom = np.concatenate([undist, ones], axis=2)
-            pixel = np.einsum('ij,nkj->nki', K, undist_hom)
+            pixel = np.einsum("ij,nkj->nki", K, undist_hom)
             pixel = pixel[:, 0, :2] / pixel[:, 0, 2:]
             return pixel
 
@@ -405,7 +414,10 @@ def gaze_to_screen_parallel(
             # row["corners"] should be Nx2
             c = np.array(row["corners"], dtype=np.float32)
             return undistort_points(c, camera_matrix, dist_coeffs)
-        detection_df["corners"] = detection_df.apply(undistort_detection_corners, axis=1)
+
+        detection_df["corners"] = detection_df.apply(
+            undistort_detection_corners, axis=1
+        )
 
         # If you want to undistort gaze points as well:
         #   (Often for "x,y" on screen you might skip, but here's how if needed.)
@@ -437,7 +449,6 @@ def gaze_to_screen_parallel(
     # We'll store homographies here
     homographies = {}
 
-
     # ----------------------------------------------------------------
     # 4) Chunking + Parallel or Serial
     # ----------------------------------------------------------------
@@ -461,11 +472,14 @@ def gaze_to_screen_parallel(
 
                 # Use joblib Parallel
                 results = Parallel(n_jobs=n_jobs)(
-                    delayed(_compute_homography_for_frame)(int(frame), sub_df, marker_dict)
-                    for (frame, sub_df) in tasks)
+                    delayed(_compute_homography_for_frame)(
+                        int(frame), sub_df, marker_dict
+                    )
+                    for (frame, sub_df) in tasks
+                )
 
             # Store results
-            for (frame, H) in results:
+            for frame, H in results:
                 homographies[frame] = H
 
             # Update progress bar by how many frames we processed in this chunk
@@ -474,7 +488,7 @@ def gaze_to_screen_parallel(
     # ----------------------------------------------------------------
     # 5) Apply homographies to gaze
     # ----------------------------------------------------------------
-    
+
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
     unique_gaze_frames = gaze_df["frame_idx"].unique()
@@ -483,7 +497,7 @@ def gaze_to_screen_parallel(
         H = homographies.get(frame, None)
         if H is None:
             continue
-        idx_sel = (gaze_df["frame_idx"] == frame)
+        idx_sel = gaze_df["frame_idx"] == frame
         gaze_points = gaze_df.loc[idx_sel, ["x", "y"]].values
         trans = apply_homography(gaze_points, H)
         gaze_df.loc[idx_sel, "x_trans"] = trans[:, 0]
