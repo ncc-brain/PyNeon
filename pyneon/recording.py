@@ -7,6 +7,7 @@ from datetime import datetime
 import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
+from functools import cached_property
 
 from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
 from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
@@ -162,7 +163,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             )
         self.contents = contents
 
-    @property
+    @cached_property
     def gaze(self) -> Optional[NeonGaze]:
         """
         Returns a NeonGaze object or None if no gaze data is found.
@@ -175,7 +176,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 warnings.warn("Gaze data not loaded because no file was found.")
         return self._gaze
 
-    @property
+    @cached_property
     def imu(self) -> Optional[NeonIMU]:
         """
         Returns a NeonIMU object or None if no IMU data is found.
@@ -188,7 +189,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 warnings.warn("IMU data not loaded because no file was found.")
         return self._imu
 
-    @property
+    @cached_property
     def eye_states(self) -> Optional[NeonEyeStates]:
         """
         Returns a NeonEyeStates object or None if no eye states data is found.
@@ -203,7 +204,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 )
         return self._eye_states
 
-    @property
+    @cached_property
     def blinks(self) -> Optional[NeonBlinks]:
         """
         Returns a NeonBlinks object or None if no blinks data is found.
@@ -216,7 +217,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 warnings.warn("Blinks data not loaded because no file was found.")
         return self._blinks
 
-    @property
+    @cached_property
     def fixations(self) -> Optional[NeonFixations]:
         """
         Returns a NeonFixations object or None if no fixations data is found.
@@ -229,7 +230,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 warnings.warn("Fixations data not loaded because no file was found.")
         return self._fixations
 
-    @property
+    @cached_property
     def saccades(self) -> Optional[NeonSaccades]:
         """
         Returns a NeonSaccades object or None if no saccades data is found.
@@ -242,7 +243,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 warnings.warn("Saccades data not loaded because no file was found.")
         return self._saccades
 
-    @property
+    @cached_property
     def events(self) -> Optional[NeonEvents]:
         """
         Returns a NeonEvents object or None if no events data is found.
@@ -255,7 +256,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 warnings.warn("Events data not loaded because no file was found.")
         return self._events
 
-    @property
+    @cached_property
     def video(self) -> Optional[NeonVideo]:
         """
         Returns a NeonVideo object or None if no scene video is found.
