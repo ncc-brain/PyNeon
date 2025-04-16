@@ -627,8 +627,9 @@ Recording duration: {self.info["duration"] / 1e9}s
     def gaze_to_screen(
         self,
         marker_info: pd.DataFrame,
-        screen_size: tuple[int, int] = (1920, 1200),
+        screen_size: tuple[int, int] = (1920, 1080),
         coordinate_system: str = "opencv",
+        skip_frames: int = 1,
         homography_settings: Optional[dict] = None,
         overwrite_detection: bool = False,
         overwrite_homographies: bool = False,
@@ -647,7 +648,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
                 - 'size': float, the side length of the tag in meters
         screen_size : tuple[int, int], optional
-            Size of the screen in pixels. Defaults to (1920, 1200).
+            Size of the screen in pixels. Defaults to (1920, 1080).
         coordinate_system : str, optional
             Coordinate system to use for conversion. Defaults to "opencv".
             Options are "opencv" or "psychopy".
@@ -667,7 +668,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 return gaze_on_screen
 
         
-        detection_df = self.detect_apriltags(overwrite=overwrite_detection)
+        detection_df = self.detect_apriltags(overwrite=overwrite_detection, skip_frames=skip_frames)
         
         #check if homographies already exist
         if (homographies_file := self.der_dir / "homographies.json").is_file() and not overwrite_homographies:
@@ -682,6 +683,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 marker_info,
                 screen_size,
                 coordinate_system=coordinate_system,
+                skip_frames=skip_frames,
                 settings=homography_settings,
             )
             # Convert homographies dict to a DataFrame for easier storage and manipulation
@@ -746,11 +748,15 @@ Recording duration: {self.info["duration"] / 1e9}s
                         "gaze y [px]": "gaze y [screen px]",
                     }))
 
+        fixation = fixation.reset_index(drop=False)
+
         # Merge back into fixations:
-        fixation = fixation.merge(gaze_means, on="fixation id", how="left")
+        fixation = fixation.merge(gaze_means, on="fixation id", how="outer")
+
+        fixation = fixation.set_index("start timestamp [ns]")
 
         #save fixations to csv
-        fixation.to_csv(self.der_dir / "fixations_on_screen.csv", index=False)
+        fixation.to_csv(self.der_dir / "fixations_on_screen.csv")
 
         return fixation 
 

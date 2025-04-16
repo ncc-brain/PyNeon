@@ -397,13 +397,14 @@ def events_to_times_df(
 
     if isinstance(event, CustomEvents):
         if "name" not in event.data.columns:
-            raise ValueError("Custom event data must have a 'type' column.")
+            raise ValueError("Custom event data must have a 'name' column.")
         if type_name == "all":
             description = event.data["name"].to_numpy()
+            t_ref = event.data.index.to_numpy()
         else:
             mask = event.data["name"] == type_name
             t_ref = event.data.index.to_numpy()[mask]
-            description = type_name
+            description = event.data["name"].to_numpy()[mask]
 
     times_df = _construct_times_df(
         t_ref,
@@ -430,8 +431,11 @@ def _construct_times_df(
     single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
     and converts all times to UTC timestamps in nanoseconds.
     """
+
     if n_epoch := len(t_ref) == 0:
         raise ValueError("t_ref must not be empty")
+    else: 
+        n_epoch = len(t_ref)
 
     time_factors = {"s": 1e9, "ms": 1e6, "us": 1e3, "ns": 1}
 
