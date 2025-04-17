@@ -315,6 +315,7 @@ def concat_streams(
         assert concat_data.index.equals(interp_data.index)
         concat_data = pd.concat([concat_data, interp_data], axis=1)
         assert concat_data.shape[0] == interp_data.shape[0]
+    concat_data.index.name = "timestamp [ns]"
     return concat_data
 
 
