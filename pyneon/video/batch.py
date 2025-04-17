@@ -7,20 +7,22 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .video import NeonVideo
 
-try:
-    from joblib import Parallel, delayed
-except ImportError:
-    raise ImportError(
-        "To use parallel processing, the module `joblib` is needed. "
-        "Install via: pip install joblib"
-    )
-try:
-    from pupil_apriltags import Detector
-except ImportError:
-    raise ImportError(
-        "To detect AprilTags, the module `pupil-apriltags` is needed. "
-        "Install via: pip install pupil-apriltags"
-    )
+
+def _import_modules():
+    try:
+        from joblib import Parallel, delayed
+    except ImportError:
+        raise ImportError(
+            "To use parallel processing, the module `joblib` is needed. "
+            "Install via: pip install joblib"
+        )
+    try:
+        from pupil_apriltags import Detector
+    except ImportError:
+        raise ImportError(
+            "To detect AprilTags, the module `pupil-apriltags` is needed. "
+            "Install via: pip install pupil-apriltags"
+        )
 
 
 def detect_apriltags_in_batch(
@@ -60,6 +62,7 @@ def detect_apriltags_in_batch(
         - 'corners'
         - 'center'
     """
+    _import_modules()
 
     # Create a detector (in each worker)
     detector = Detector(
@@ -133,6 +136,7 @@ def detect_apriltags_parallel(
 
         If empty, no tags were detected or no frames were read.
     """
+    _import_modules()
 
     total_frames = len(video.ts)  # total number of frames in the video
     all_dfs = []
@@ -347,6 +351,7 @@ def gaze_to_screen_parallel(
     import warnings
     import math
 
+    _import_modules()
     # --------------------------------------
     # 1) If needed: Convert psychoPy coords -> OpenCV
     # --------------------------------------
