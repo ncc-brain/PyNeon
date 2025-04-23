@@ -694,7 +694,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             homographies = find_homographies(
                 self.video,
                 detection_df,
-                marker_info,
+                marker_info.copy(),
                 screen_size,
                 coordinate_system=coordinate_system,
                 skip_frames=skip_frames,
