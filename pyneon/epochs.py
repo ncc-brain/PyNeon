@@ -125,11 +125,10 @@ class Epochs:
         t_other_unit: Literal["s", "ms", "us", "ns"] = "s",
         global_t_ref: int = 0,
     ):
-
         if times_df is not None:
             if times_df.isnull().values.any():
                 raise ValueError("times_df should not have any empty values")
-            
+
         else:
             # Ensure the input arrays are not None
             if any(x is None for x in [t_ref, t_before, t_after, description]):
@@ -170,7 +169,6 @@ class Epochs:
 
         # Create epochs
         self.epochs, self.data = _create_epochs(source, times_df)
-
 
     def __len__(self):
         return self.epochs.shape[0]
@@ -320,7 +318,7 @@ class Epochs:
             up to the last sample”.  Default: (None, 0.0) -> the pre‑trigger
             part of each epoch.
         method : {"mean", "linear"}, default "mean"
-            * "mean"   – subtract the scalar mean of the baseline window.  
+            * "mean"   – subtract the scalar mean of the baseline window.
             * "linear" – fit a first‑order (y = a·t + b) model *within* the
             baseline window and remove the fitted trend from the entire
             epoch (a very small, fast version of MNE’s regression
@@ -343,6 +341,7 @@ class Epochs:
         * The three annotation columns
         ``["epoch index", "epoch time", "epoch description"]`` are preserved.
         """
+
         # ------------------------------------------------------------------
         # 0. Helpers
         # ------------------------------------------------------------------
@@ -466,6 +465,7 @@ def _create_epochs(
 
     return epochs, data
 
+
 def events_to_times_df(
     event: "NeonEV",
     t_before: Number,
@@ -495,7 +495,7 @@ def events_to_times_df(
     pandas.DataFrame
         DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
     """
-    
+
     if isinstance(event, (NeonBlinks, NeonFixations, NeonSaccades)):
         if isinstance(event, NeonBlinks):
             description = "blink"
