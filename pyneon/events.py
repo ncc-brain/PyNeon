@@ -31,13 +31,16 @@ class Events(BaseTabular):
         Name of the column containing the event ID.
     """
 
-    def __init__(self, data: pd.DataFrame | Path, id_name: str = None):
+    def __init__(
+        self, data: pd.DataFrame | Path, event_name: str = "custom", id_name: str = None
+    ):
         if isinstance(data, Path):
             self.file = data
             data = pd.read_csv(data)
         else:
             self.file = None
         super().__init__(data)
+        self.event_name = event_name
         self.id_name = id_name
 
     @property

@@ -204,7 +204,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         or ``None`` if no ``blinks.csv`` is present.
         """
         if self.contents.loc["blinks", "exist"]:
-            return Events(self.contents.loc["blinks", "path"], id_name="blink id")
+            return Events(self.contents.loc["blinks", "path"], "blinks", "blink id")
         else:
             warnings.warn("Blinks data not loaded because no file was found.")
             return None
@@ -216,7 +216,11 @@ Recording duration: {self.info["duration"] / 1e9}s
         or ``None`` if no ``fixations.csv`` is present.
         """
         if self.contents.loc["fixations", "exist"]:
-            return Events(self.contents.loc["fixations", "path"], id_name="fixation id")
+            return Events(
+                self.contents.loc["fixations", "path"],
+                "fixations",
+                "fixation id",
+            )
         else:
             warnings.warn("Fixations data not loaded because no file was found.")
             return None
@@ -228,7 +232,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         or ``None`` if no ``saccades.csv`` is present.
         """
         if self.contents.loc["saccades", "exist"]:
-            return Events(self.contents.loc["saccades", "path"], id_name="saccade id")
+            return Events(
+                self.contents.loc["saccades", "path"], "saccades", "saccade id"
+            )
         else:
             warnings.warn("Saccades data not loaded because no file was found.")
             return None
@@ -241,7 +247,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         """
         if self.contents.loc["events", "exist"]:
             events_file = self.contents.loc["events", "path"]
-            return Events(events_file)
+            return Events(events_file, "events")
         else:
             warnings.warn("Events data not loaded because no file was found.")
             return None

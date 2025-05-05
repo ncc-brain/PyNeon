@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from numbers import Number
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 import warnings
 
 from .stream import Stream
@@ -405,69 +405,60 @@ def _create_epochs(
 
 
 def events_to_times_df(
-    event: "Events",
+    events: "Events",
     t_before: Number,
     t_after: Number,
     t_unit: Literal["s", "ms", "us", "ns"] = "s",
     event_name: str | list[str] = "all",
 ) -> pd.DataFrame:
     """
-    Construct a times_df DataFrame suitable for creating epochs from event data.
+    Construct a ``times_df`` DataFrame suitable for creating epochs from event data.
+    For "simple" ``events`` (blinks, fixations, saccades), all events are used.
+    For more complex ``events`` (e.g., from "events.csv", or concatenated events),
+    the user can specify which events to include by a ``name`` column.
 
     Parameters
     ----------
     event : Events
         Events instance containing the event times.
     t_before : numbers.Number
-        Time before the event start time to start the epoch. Units specified by `t_unit`.
+        Time before the event start time to start the epoch. Units specified by ``t_unit``.
     t_after : numbers.Number
-        Time after the event start time to end the epoch. Units specified by `t_unit`.
+        Time after the event start time to end the epoch. Units specified by ``t_unit``.
     t_unit : str, optional
-        Unit of time for ``t_before`` and ``t_after``. Can be 's', 'ms', 'us', or 'ns'. Default is 's'.
+        Unit of time for ``t_before`` and ``t_after``.
+        Can be ``'s'``, ``'ms'``, ``'us'``, or ``'ns'``. Default is ``'s'``.
     event_name : str or list of str, optional
-        Name(s) of the event(s) to use for creating epochs from Eventsents or CustomEvents.
-        If 'all', all events are used. Default is 'all'.
+        Only used if ``events`` includes more than one event type.
+        If ``"all"``, all events are used. Otherwise, the ``name`` column is used to filter events
+        whose names are in the list. Default to ``"all"``.
 
     Returns
     -------
     pandas.DataFrame
         DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
     """
+    if events.event_name in ["blinks", "fixations", "saccades", "events"]:
+        description = events.event_name[:-1]  # Remove the 's' at the end
+        t_ref = events.start_ts
+    else:
+        if "name" not in events.columns:
+            raise ValueError(
+                "Event data must have a 'name' column to filter by event name."
+            )
 
-    if isinstance(event, (NeonBlinks, NeonFixations, NeonSaccades)):
-        if isinstance(event, NeonBlinks):
-            description = "blink"
-        elif isinstance(event, NeonFixations):
-            description = "fixation"
-        elif isinstance(event, NeonSaccades):
-            description = "saccade"
-        t_ref = event.start_ts
-
-    elif isinstance(event, (CustomEvents, Eventsents)):
-        if "name" not in event.data.columns:
-            raise ValueError("Event data must have a 'name' column.")
-
-        names = event.data["name"]
-
+        names = events.data["name"]
         if event_name == "all":
-            t_ref = event.data.index.to_numpy()
+            t_ref = events.data.index.to_numpy()
             description = names.to_numpy()
-
         else:
             if isinstance(event_name, str):
                 event_name = [event_name]
-
-            event_name = list(set(event_name))  # Remove duplicates
-            mask = names.isin(event_name)
-
+            mask = names.isin(set(event_name))
             if not mask.any():
                 raise ValueError(f"No events found matching names: {event_name}")
-
-            t_ref = event.data.index.to_numpy()[mask]
+            t_ref = events.data.index.to_numpy()[mask]
             description = names.to_numpy()[mask]
-
-    else:
-        raise TypeError("Unsupported event type. Must be a Events-derived class.")
 
     times_df = construct_times_df(
         t_ref,
@@ -515,9 +506,11 @@ def construct_times_df(
         are relative to a global start time
         (for instance :attr:`pyneon.stream.Stream.first_ts`).
     t_ref_unit : str, optional
-        Unit of time for the reference times. Default is 'ns'.
+        Unit of time for ``t_ref``.
+        Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"ns"``.
     t_other_unit : str, optional
-        Unit of time for ``t_before`` and ``t_after``. Default is 's'.
+        Unit of time for ``t_before`` and ``t_after``.
+        Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"s"``.
 
     Returns
     -------

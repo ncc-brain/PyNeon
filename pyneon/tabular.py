@@ -71,3 +71,13 @@ class BaseTabular:
     @property
     def shape(self) -> tuple[int, int]:
         return self.data.shape
+
+    @property
+    def columns(self) -> pd.Index:
+        """Column names of the stream data."""
+        return self.data.columns
+
+    @property
+    def dtypes(self) -> pd.Series:
+        """Data types of the columns in the stream data."""
+        return self.data.dtypes

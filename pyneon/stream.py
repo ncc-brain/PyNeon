@@ -92,16 +92,6 @@ class Stream(BaseTabular):
         """Whether the stream is uniformly sampled."""
         return np.allclose(self.ts_diff, self.ts_diff[0])
 
-    @property
-    def columns(self) -> pd.Index:
-        """Column names of the stream data."""
-        return self.data.columns
-
-    @property
-    def dtypes(self) -> pd.Series:
-        """Data types of the columns in the stream data."""
-        return self.data.dtypes
-
     def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
         """Convert relative time(s) in seconds to closest timestamp(s) in nanoseconds."""
         time = np.array([time])
