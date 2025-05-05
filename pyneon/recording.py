@@ -22,6 +22,7 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
+from .utils import load_or_compute
 
 
 def _check_file(dir_path: Path, stem: str):
@@ -468,8 +469,9 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def estimate_scanpath(
         self,
-        sync_gaze: Optional["NeonGaze"] = None,
         lk_params: Optional[dict] = None,
+        overwrite_scanpath: bool = False,
+        overwrite_sync: bool = False,
     ) -> pd.DataFrame:
         """
         Map fixations to video frames.
@@ -487,11 +489,32 @@ Recording duration: {self.info["duration"] / 1e9}s
         pandas.DataFrame
             DataFrame containing the scanpath with updated fixation points.
         """
-        if sync_gaze is None:
-            sync_gaze = self.sync_gaze_to_video()
-        if (video := self.video) is None:
+
+        if self.video is None:
             raise ValueError("Estimating scanpath requires video data.")
-        return estimate_scanpath(video, sync_gaze, lk_params)
+
+        scanpath_path = self.der_dir / "scanpath.pkl"
+
+        # Try to load cached scanpath unless overwrite is True
+        if scanpath_path.is_file() and not overwrite_scanpath:
+            return pd.read_pickle(scanpath_path)
+
+        sync_gaze = load_or_compute(
+            self.der_dir / "gaze_synced.csv",
+            self.sync_gaze_to_video,
+            overwrite=overwrite_sync,
+        )
+
+        scanpath = estimate_scanpath(
+            self.video,
+            sync_gaze,
+            lk_params=lk_params,
+        )
+
+        # Save scanpath to pickle
+        scanpath.to_pickle(scanpath_path)
+
+        return scanpath
 
     def detect_apriltags(
         self,
@@ -554,83 +577,6 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         return all_detections
 
-    def detect_apriltags_parallel(
-        self,
-        tag_family: str = "tag36h11",
-        n_jobs: int = -1,
-        nthreads_per_worker: int = 1,
-        quad_decimate: float = 1.0,
-        chunk_size: int = 500,
-        overwrite: bool = False,
-    ) -> pd.DataFrame:
-        """
-        High-level function that uses parallel processing to detect AprilTags in a video,
-        and caches the results in JSON. If the cache file exists and overwrite=False,
-        it loads the data from disk instead of re-running detection.
-
-        Parameters
-        ----------
-        video : OpenCV-like or custom video object
-            Must support:
-            - .read() -> (ret, frame)
-            - .ts -> array of timestamps (same length as the total frames)
-        output_dir : Path
-            Directory in which to store/read the resulting JSON file (named 'apriltags_parallel.json').
-        tag_family : str, optional
-            AprilTag family to detect (default 'tag36h11').
-        n_jobs : int, optional
-            Number of parallel workers (default -1 means "use all cores").
-        nthreads_per_worker : int, optional
-            Number of CPU threads the AprilTag detector can use within each worker.
-            If you have multiple processes, setting this to 1 or 2 can help avoid oversubscription.
-        quad_decimate : float, optional
-            Downsample factor for detection (default 1.0). Larger values can speed up detection
-            but may fail to detect smaller tags.
-        chunk_size : int, optional
-            Number of frames to batch before distributing them among parallel processes (default 500).
-        overwrite : bool, optional
-            If False (default) and the output file already exists, we load the cached data.
-            If True, we re-run detection and overwrite the cache.
-
-        Returns
-        -------
-        pd.DataFrame
-            A DataFrame of detections with columns:
-            - 'timestamp [ns]': index of timestamps in nanoseconds
-            - 'orig_frame_idx': original frame index in the full video
-            - 'tag_id': the detected tag's ID
-            - 'corners': (4,2) array of corner coordinates
-            - 'center': (1,2) array with the tag center coordinates
-        """
-        json_file = self.der_dir / "apriltags.json"
-
-        # If a cached file exists and we are not overwriting, load and return it
-        if json_file.is_file() and not overwrite:
-            df_cached = pd.read_json(json_file, orient="records", lines=True)
-            if not df_cached.empty:
-                df_cached.set_index("timestamp [ns]", inplace=True)
-            return df_cached
-
-        # Otherwise, run the parallel detection
-        from .video import detect_apriltags_parallel
-
-        df = detect_apriltags_parallel(
-            video=self.video,
-            tag_family=tag_family,
-            n_jobs=n_jobs,
-            nthreads_per_worker=nthreads_per_worker,
-            quad_decimate=quad_decimate,
-            chunk_size=chunk_size,
-        )
-
-        # Save to JSON
-        if not df.empty:
-            df.reset_index(inplace=True)  # so 'timestamp [ns]' becomes a column
-            df.to_json(json_file, orient="records", lines=True)
-            df.set_index("timestamp [ns]", inplace=True)
-
-        return df
-
     def gaze_to_screen(
         self,
         marker_info: pd.DataFrame,
@@ -638,109 +584,116 @@ Recording duration: {self.info["duration"] / 1e9}s
         coordinate_system: str = "opencv",
         skip_frames: int = 1,
         homography_settings: Optional[dict] = None,
-        overwrite_detection: bool = False,
-        overwrite_homographies: bool = False,
-        overwrite_gaze: bool = False,
+        overwrite: list[str] = None, 
     ) -> pd.DataFrame:
+        
         """
-        Convert gaze coordinates to screen coordinates using AprilTag marker information.
-        We use frame wise homographies to convert gaze coordinates to screen coordinates.
+        Project gaze coordinates from eye space to screen space using AprilTag markers and homographies.
+
+        This function computes (or loads) frame-wise homographies based on AprilTag detections
+        and uses them to transform gaze coordinates into screen coordinates. Optionally, intermediate
+        steps such as detection, homography computation, and gaze transformation can be recomputed
+        by specifying overwrite options.
 
         Parameters
         ----------
         marker_info : pd.DataFrame
-            DataFrame containing AprilTag marker information with columns:
-                - 'tag_id': int, ID of the tag
-                - 'x', 'y', 'z': float, coordinates of the tag's center
-                - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
-                - 'size': float, the side length of the tag in meters
-        screen_size : tuple[int, int], optional
-            Size of the screen in pixels. Defaults to (1920, 1080).
-        coordinate_system : str, optional
-            Coordinate system to use for conversion. Defaults to "opencv".
-            Options are "opencv" or "psychopy".
-        overwrite : bool, optional
-            If True, overwrite existing files. Defaults to False.
+            DataFrame containing AprilTag marker information, with one row per tag and the following columns:
+                - 'tag_id' : int
+                    ID of the tag.
+                - 'x', 'y', 'z' : float
+                    3D coordinates of the tag's center in meters.
+                - 'normal_x', 'normal_y', 'normal_z' : float
+                    Normal vector of the tag's surface in world coordinates.
+                - 'size' : float
+                    Side length of the tag in meters.
+        screen_size : tuple of int, default=(1920, 1080)
+            Pixel dimensions (width, height) of the target screen.
+        coordinate_system : {"opencv", "psychopy"}, default="opencv"
+            Defines the screen coordinate convention to use:
+                - "opencv": origin is top-left, y increases downward.
+                - "psychopy": origin is center, y increases upward.
+        skip_frames : int, default=1
+            Frame sampling rate for tag detection and homography estimation.
+            E.g., skip_frames=2 will process every 3rd frame.
+        homography_settings : dict, optional
+            Dictionary of additional parameters passed to the homography estimation function.
+            Can include solver-specific options such as 'robust', 'max_iter', etc.
+        overwrite : list of str, optional
+            List of pipeline stages to force recompute, ignoring any cached output.
+            Valid entries include:
+                - "detection": rerun AprilTag detection
+                - "homographies": recompute homography matrices
+                - "gaze": resync gaze and recompute screen projection
+            If None or empty, all cached outputs will be used if available.
+
         Returns
         -------
         pd.DataFrame
-            DataFrame containing gaze coordinates in screen space.
+            Gaze coordinates in screen space, indexed by video frame and including:
+                - 'frame_idx' : int
+                    Index of the video frame.
+                - 'x_screen', 'y_screen' : float
+                    Gaze coordinates in screen space (pixel units).
+                - plus any other fields retained from the original gaze stream.
+
         """
 
-        # Check if JSON already exists
-        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file() and not all(
-            [overwrite_gaze, overwrite_homographies, overwrite_detection]
-        ):
-            gaze_on_screen = pd.read_csv(gaze_file)
-            if (homographies_file := self.der_dir / "homographies.json").is_file():
-                homographies = pd.read_json(
-                    homographies_file, orient="records", lines=True
-                )
-                return gaze_on_screen
+        overwrite = overwrite or []
+        should_overwrite = {
+            "detection": "detection" in overwrite,
+            "homographies": "homographies" in overwrite,
+            "gaze": "gaze" in overwrite,
+        }
 
+        # 1. Tag Detection
         detection_df = self.detect_apriltags(
-            overwrite=overwrite_detection, skip_frames=skip_frames
+            overwrite=should_overwrite["detection"],
+            skip_frames=skip_frames
         )
 
-        # check if homographies already exist
-        if (
-            homographies_file := self.der_dir / "homographies.json"
-        ).is_file() and not overwrite_homographies:
-            homographies = pd.read_json(homographies_file, orient="records", lines=True)
-            if homographies.empty:
-                raise ValueError("Homographies data is empty.")
 
-        else:
-            homographies = find_homographies(
-                self.video,
-                detection_df,
-                marker_info.copy(),
-                screen_size,
-                coordinate_system=coordinate_system,
-                skip_frames=skip_frames,
-                settings=homography_settings,
-            )
-            # Convert homographies dict to a DataFrame for easier storage and manipulation
-            homographies_df = pd.DataFrame.from_dict(
-                {
-                    "frame_idx": list(homographies.keys()),
-                    "homography": [v.tolist() for v in homographies.values()],
-                }
-            )
-            # Save homographies DataFrame to a JSON file
-            homographies_df.to_json(
-                self.der_dir / "homographies.json", orient="records", lines=True
-            )
+        # 2. Homographies
+        homographies_path = self.der_dir / "homographies.json"
+        homographies_df = load_or_compute(
+            homographies_path,
+            lambda: pd.DataFrame({
+                "frame_idx": list((h := find_homographies(
+                    self.video,
+                    detection_df,
+                    marker_info.copy(),
+                    screen_size,
+                    coordinate_system=coordinate_system,
+                    skip_frames=skip_frames,
+                    settings=homography_settings,
+                )).keys()),
+                "homography": [v.tolist() for v in h.values()],
+            }),
+            overwrite=should_overwrite["homographies"],
+        )
 
-        # check if synced gaze already exists
-        if (
-            gaze_file := self.der_dir / "gaze_synced.csv"
-        ).is_file() and not overwrite_gaze:
-            synced_gaze = pd.read_csv(gaze_file)
-            if synced_gaze.empty:
-                raise ValueError("Gaze data is empty.")
-        else:
-            synced_gaze = self.sync_gaze_to_video()
-            # save synced gaze to csv
-            synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
+        # 3. Gaze Sync
+        synced_gaze_path = self.der_dir / "gaze_synced.csv"
+        synced_gaze = load_or_compute(
+            synced_gaze_path,
+            self.sync_gaze_to_video,
+            overwrite=should_overwrite["gaze"]
+        )
 
-        # check if transformations already exist
-        if (
-            gaze_on_screen_file := self.der_dir / "gaze_on_screen.csv"
-        ).is_file() and not overwrite_gaze:
-            gaze_on_screen = pd.read_csv(gaze_on_screen_file)
-            if gaze_on_screen.empty:
-                raise ValueError("Gaze on screen data is empty.")
-        else:
-            # Transform gaze to screen coordinates
-            gaze_on_screen = transform_gaze_to_screen(
-                synced_gaze,
-                homographies,
-            )
-            # save gaze on screen to csv
-            gaze_on_screen.to_csv(self.der_dir / "gaze_on_screen.csv", index=False)
+        # 4. Gaze on Screen
+        gaze_screen_path = self.der_dir / "gaze_on_screen.csv"
+        homographies_dict = {
+            row["frame_idx"]: np.array(row["homography"]) for _, row in homographies_df.iterrows()
+        }
+
+        gaze_on_screen = load_or_compute(
+            gaze_screen_path,
+            lambda: transform_gaze_to_screen(synced_gaze, homographies_dict),
+            overwrite=should_overwrite["gaze"],
+        )
 
         return gaze_on_screen
+
 
     def fixations_to_screen(
         self,

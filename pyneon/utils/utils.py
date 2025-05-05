@@ -1,4 +1,6 @@
 import pandas as pd
+import pathlib as Path
+from typing import Callable
 
 
 def _check_stream_data(data: pd.DataFrame) -> None:
@@ -34,3 +36,25 @@ def _check_event_data(data: pd.DataFrame) -> None:
         raise ValueError(
             "Event index must be in UTC time in ns and thus convertible to int64"
         )
+
+def load_or_compute(
+    path: Path,
+    compute_fn: Callable[[], pd.DataFrame],
+    overwrite: bool = False,
+) -> pd.DataFrame:
+    if path.is_file() and not overwrite:
+        df = (
+            pd.read_csv(path)
+            if path.suffix == ".csv"
+            else pd.read_json(path, orient="records", lines=True)
+        )
+        if df.empty:
+            raise ValueError(f"{path.name} is empty.")
+        return df
+    else:
+        df = compute_fn()
+        if path.suffix == ".csv":
+            df.to_csv(path, index=False)
+        else:
+            df.to_json(path, orient="records", lines=True)
+        return df
