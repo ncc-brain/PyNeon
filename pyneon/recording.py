@@ -584,7 +584,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         coordinate_system: str = "opencv",
         skip_frames: int = 1,
         homography_settings: Optional[dict] = None,
-        overwrite: list[str] = None, 
+        overwrite: list[str] = [] 
     ) -> pd.DataFrame:
         
         """
@@ -639,7 +639,8 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         """
 
-        overwrite = overwrite or []
+        overwrite = overwrite
+
         should_overwrite = {
             "detection": "detection" in overwrite,
             "homographies": "homographies" in overwrite,
