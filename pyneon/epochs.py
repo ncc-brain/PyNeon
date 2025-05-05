@@ -54,29 +54,7 @@ class Epochs:
             ``t_after``: Time after the reference time to end the epoch, in nanoseconds.\n
             ``description``: Description or label associated with the epoch.
 
-        Must not have empty values. If provided, the rest of the parameters are ignored.
-    t_ref : numpy.ndarray, optional
-        Array of reference times for the epochs. Units specified by ``t_ref_unit``.
-    t_before : numpy.ndarray or Number, optional
-        Time before the reference time to start the epoch. Could be an array of
-        equal length as ``t_ref`` or a single number (to be repeated for all epochs).
-        Units specified by ``t_other_unit``.
-    t_after : numpy.ndarray or Number, optional
-        Time after the reference time to end the epoch. Could be an array of
-        equal length as ``t_ref`` or a single number (to be repeated for all epochs).
-        Units specified by ``t_other_unit``.
-    description : numpy.ndarray or str, optional
-        Description or label associated with the epochs. Could be an array of
-        equal length as ``t_ref`` or a single string (to be repeated for all epochs).
-    global_t_ref : int, optional
-        Global reference time (in nanoseconds) to be added to `t_ref`.
-        Unit is nanosecond. Defaults to 0. This is useful when the reference times
-        are relative to a global start time
-        (for instance :attr:`pyneon.stream.NeonStream.first_ts`).
-    t_ref_unit : str, optional
-        Unit of time for the reference times. Default is 'ns'.
-    t_other_unit : str, optional
-        Unit of time for ``t_before`` and ``t_after``. Default is 's'.
+        Must not have empty values.
 
     Notes
     -----
@@ -87,10 +65,6 @@ class Epochs:
                         t_ref[0]                            t_ref[1]
             <--t_before[0]--|--t_after[0]-->      <-t_before[1]-|-t_after[1]->
         ├--------------------------------------------------------------------------------┤
-
-    If ``times_df`` is provided, it is used to create epochs, and the other
-    time-related parameters are ignored. Otherwise, ``t_ref``, ``t_before``,
-    ``t_after``, and ``description`` are required.
 
     Attributes
     ----------
@@ -116,34 +90,10 @@ class Epochs:
     def __init__(
         self,
         source: NeonStream | NeonEV,
-        times_df: pd.DataFrame | None = None,
-        t_ref: np.ndarray | None = None,
-        t_before: np.ndarray | Number | None = None,
-        t_after: np.ndarray | Number | None = None,
-        description: np.ndarray | str | None = None,
-        t_ref_unit: Literal["s", "ms", "us", "ns"] = "ns",
-        t_other_unit: Literal["s", "ms", "us", "ns"] = "s",
-        global_t_ref: int = 0,
+        times_df: pd.DataFrame
     ):
-        if times_df is not None:
-            if times_df.isnull().values.any():
-                raise ValueError("times_df should not have any empty values")
-
-        else:
-            # Ensure the input arrays are not None
-            if any(x is None for x in [t_ref, t_before, t_after, description]):
-                raise ValueError(
-                    "t_ref, t_before, t_after, and description must be provided if times_df is None"
-                )
-            times_df = _construct_times_df(
-                t_ref,
-                t_before,
-                t_after,
-                description,
-                t_ref_unit,
-                t_other_unit,
-                global_t_ref,
-            )
+        if times_df.isnull().values.any():
+            raise ValueError("times_df should not have any empty values")
 
         # Sort by t_ref
         assert times_df.shape[0] > 0, "times_df must have at least one row"
@@ -307,20 +257,20 @@ class Epochs:
         inplace: bool = True,
     ) -> pd.DataFrame:
         """
-        Baseline‑correct every epoch (MNE‑style).
+        Baseline-correct every epoch (MNE-style).
 
         Parameters
         ----------
         baseline : (t_min, t_max), iterable of float | None
             Start and end of the baseline window **in seconds**, relative to
             the event trigger (t_ref = 0).  ``None`` means “from the first /
-            up to the last sample”.  Default: (None, 0.0) -> the pre‑trigger
+            up to the last sample”.  Default: (None, 0.0) -> the pre-trigger
             part of each epoch.
         method : {"mean", "linear"}, default "mean"
-            * "mean"   – subtract the scalar mean of the baseline window.
-            * "linear" – fit a first‑order (y = a·t + b) model *within* the
+            * "mean" - subtract the scalar mean of the baseline window.
+            * "linear" - fit a first-order (y = a·t + b) model *within* the
             baseline window and remove the fitted trend from the entire
-            epoch (a very small, fast version of MNE’s regression
+            epoch (a very small, fast version of MNE's regression
             detrending).
         inplace : bool, default True
             If True, overwrite :pyattr:`self.data` / :pyattr:`self.epochs`.
@@ -330,7 +280,7 @@ class Epochs:
         Returns
         -------
         pandas.DataFrame
-            The baseline‑corrected data (same shape & dtypes as
+            The baseline-corrected data (same shape & dtypes as
             :pyattr:`self.data`).
 
         Notes
@@ -345,7 +295,7 @@ class Epochs:
         # 0. Helpers
         # ------------------------------------------------------------------
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:
-            """In‑place mean or linear detrend on *one* epoch DF."""
+            """In-place mean or linear detrend on *one* epoch DF."""
             # mask rows within the baseline window (epoch time is int64 ns)
             t_rel_sec = epoch_df["epoch time"].to_numpy() * 1e-9
             if t_min is None:
@@ -384,9 +334,9 @@ class Epochs:
         chan_cols = self.columns.to_list()
 
         # ------------------------------------------------------------------
-        # 2. Operate epoch‑by‑epoch
+        # 2. Operate epoch-by-epoch
         # ------------------------------------------------------------------
-        # Work on a copy unless the caller wants in‑place modification
+        # Work on a copy unless the caller wants in-place modification
         if inplace:
             epochs_copy = self.epochs
             data_copy = self.data
@@ -405,7 +355,7 @@ class Epochs:
                 data_copy.loc[mask, chan_cols] = epoch_df[chan_cols].to_numpy()
 
         # ------------------------------------------------------------------
-        # 3. Return or leave in‑place
+        # 3. Return or leave in-place
         # ------------------------------------------------------------------
         if inplace:
             return self.data  # type: ignore[return-value]
@@ -530,7 +480,7 @@ def events_to_times_df(
     else:
         raise TypeError("Unsupported event type. Must be a NeonEV-derived class.")
 
-    times_df = _construct_times_df(
+    times_df = construct_times_df(
         t_ref,
         t_before,
         t_after,
@@ -541,7 +491,7 @@ def events_to_times_df(
     return times_df
 
 
-def _construct_times_df(
+def construct_times_df(
     t_ref: np.ndarray,
     t_before: np.ndarray | Number,
     t_after: np.ndarray | Number,
@@ -551,9 +501,39 @@ def _construct_times_df(
     global_t_ref: int = 0,
 ) -> pd.DataFrame:
     """
-    Handles the construction of the times_df DataFrame for creating epochs. It populates
+    Handles the construction of the ``times_df`` DataFrame for creating epochs. It populates
     single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
     and converts all times to UTC timestamps in nanoseconds.
+    
+    Parameters
+    ----------
+    t_ref : numpy.ndarray, optional
+        Array of reference times for the epochs. Units specified by ``t_ref_unit``.
+    t_before : numpy.ndarray or Number, optional
+        Time before the reference time to start the epoch. Could be an array of
+        equal length as ``t_ref`` or a single number (to be repeated for all epochs).
+        Units specified by ``t_other_unit``.
+    t_after : numpy.ndarray or Number, optional
+        Time after the reference time to end the epoch. Could be an array of
+        equal length as ``t_ref`` or a single number (to be repeated for all epochs).
+        Units specified by ``t_other_unit``.
+    description : numpy.ndarray or str, optional
+        Description or label associated with the epochs. Could be an array of
+        equal length as ``t_ref`` or a single string (to be repeated for all epochs).
+    global_t_ref : int, optional
+        Global reference time (in nanoseconds) to be added to `t_ref`.
+        Unit is nanosecond. Defaults to 0. This is useful when the reference times
+        are relative to a global start time
+        (for instance :attr:`pyneon.stream.NeonStream.first_ts`).
+    t_ref_unit : str, optional
+        Unit of time for the reference times. Default is 'ns'.
+    t_other_unit : str, optional
+        Unit of time for ``t_before`` and ``t_after``. Default is 's'.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
     """
 
     if n_epoch := len(t_ref) == 0:
