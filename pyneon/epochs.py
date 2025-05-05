@@ -326,7 +326,7 @@ class Epochs:
             DataFrame containing the baseline-corrected data.
         """
         raise NotImplementedError("Baseline correction is not implemented yet.")
-    
+
     def mean_epoch(
         self,
         t_before: Number | None = None,
