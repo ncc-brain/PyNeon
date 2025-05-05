@@ -165,7 +165,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def gaze(self) -> Optional[Stream]:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing gaze data or ``None`` if no ``gaze.csv`` is present.
+        Returns a (cached) :class:`pyneon.Stream` object containing gaze data or
+        ``None`` if no ``gaze.csv`` is present.
         """
         if self.contents.loc["gaze", "exist"]:
             return Stream(self.contents.loc["gaze", "path"], 200)
@@ -175,7 +176,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def imu(self) -> Optional[Stream]:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing IMU data or ``None`` if no ``imu.csv`` is present.
+        Returns a (cached) :class:`pyneon.Stream` object containing IMU data
+        or ``None`` if no ``imu.csv`` is present.
         """
         if self.contents.loc["imu", "exist"]:
             return Stream(self.contents.loc["imu", "path"], 110)
@@ -186,7 +188,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def eye_states(self) -> Optional[Stream]:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing eye states data or ``None`` if no ``3d_eye_states.csv`` is present.
+        Returns a (cached) :class:`pyneon.Stream` object containing eye states data
+        or ``None`` if no ``3d_eye_states.csv`` is present.
         """
         if self.contents.loc["3d_eye_states", "exist"]:
             return Stream(self.contents.loc["3d_eye_states", "path"], 200)
@@ -197,7 +200,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def blinks(self) -> Optional[Events]:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing blinks data or ``None`` if no ``blinks.csv`` is present.
+        Returns a (cached) :class:`pyneon.Events` object containing blinks data
+        or ``None`` if no ``blinks.csv`` is present.
         """
         if self.contents.loc["blinks", "exist"]:
             return Events(self.contents.loc["blinks", "path"], id_name="blink id")
@@ -208,7 +212,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def fixations(self) -> Optional[Events]:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing fixations data or ``None`` if no ``fixations.csv`` is present.
+        Returns a (cached) :class:`pyneon.Events` object containing fixations data
+        or ``None`` if no ``fixations.csv`` is present.
         """
         if self.contents.loc["fixations", "exist"]:
             return Events(self.contents.loc["fixations", "path"], id_name="fixation id")
@@ -219,7 +224,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def saccades(self) -> Optional[Events]:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing saccades data or ``None`` if no ``saccades.csv`` is present.
+        Returns a (cached) :class:`pyneon.Events` object containing saccades data
+        or ``None`` if no ``saccades.csv`` is present.
         """
         if self.contents.loc["saccades", "exist"]:
             return Events(self.contents.loc["saccades", "path"], id_name="saccade id")
@@ -230,7 +236,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def events(self) -> Optional[Events]:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing events data or ``None`` if no ``events.csv`` is present.
+        Returns a (cached) :class:`pyneon.Events` object containing events data
+        or ``None`` if no ``events.csv`` is present.
         """
         if self.contents.loc["events", "exist"]:
             events_file = self.contents.loc["events", "path"]
@@ -242,7 +249,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     @cached_property
     def video(self) -> Optional[SceneVideo]:
         """
-        Returns a (cached) :class:`pyneon.SceneVideo` object containing scene video data or ``None`` if no ``scene_video.mp4`` is present.
+        Returns a (cached) :class:`pyneon.SceneVideo` object containing scene video data
+        or ``None`` if no ``scene_video.mp4`` is present.
         """
         if (
             (video_file := self.contents.loc["scene_video", "path"])
