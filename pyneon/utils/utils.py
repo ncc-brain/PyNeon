@@ -43,12 +43,18 @@ def load_or_compute(
     compute_fn: Callable[[], pd.DataFrame],
     overwrite: bool = False,
 ) -> pd.DataFrame:
+    """
+    Load a DataFrame from a file or compute it if the file does not exist.
+    """
     if path.is_file() and not overwrite:
-        df = (
-            pd.read_csv(path)
-            if path.suffix == ".csv"
-            else pd.read_json(path, orient="records", lines=True)
-        )
+        if path.suffix == ".csv":
+            df = pd.read_csv(path)
+        elif path.suffix == ".json":
+            pd.read_json(path, orient="records", lines=True)
+        elif path.suffix == ".pkl":
+            df = pd.read_pickle(path)
+        else:
+            raise ValueError(f"Unsupported file type: {path.suffix}")
         if df.empty:
             raise ValueError(f"{path.name} is empty.")
         return df
@@ -56,6 +62,12 @@ def load_or_compute(
         df = compute_fn()
         if path.suffix == ".csv":
             df.to_csv(path, index=False)
-        else:
+        elif path.suffix == ".json":
             df.to_json(path, orient="records", lines=True)
+        elif path.suffix == ".pkl":
+            df.to_pickle(path)
+        else:
+            raise ValueError(f"Unsupported file type: {path.suffix}")
+        if df.empty:
+            raise ValueError(f"{path.name} is empty.")
         return df
