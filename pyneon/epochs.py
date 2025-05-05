@@ -302,9 +302,6 @@ class Epochs:
 
         return epochs_np, info
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def baseline_correction(
         self,
@@ -416,71 +413,6 @@ class Epochs:
             return self.data  # type: ignore[return-value]
         else:
             return data_copy
-
-    # ------------------------------------------------------------------
-
-    def grand_average(
-        self,
-        ignore: list[int] | np.ndarray | None = None,
-    ) -> pd.DataFrame:
-        """
-        Compute the grand‑average epoch (⟨epochs⟩).
-
-        Parameters
-        ----------
-        ignore : list of int, optional
-            Indices of epochs to exclude from the mean (bad epochs, artefact
-            trials, …).  Empty or None means “use them all”.
-
-        Returns
-        -------
-        pandas.DataFrame
-            One row per **time point**, one column per channel,
-            plus an ``"epoch time"`` column (int64 ns).
-
-        Raises
-        ------
-        ValueError
-            If the object was not created from a uniformly sampled stream
-            *or* the epochs do not all have equal length.
-        """
-        if self.source_type != "stream" or self.is_uniformly_sampled is False:
-            raise ValueError("mean_epoch() requires a uniformly sampled NeonStream.")
-        if not self.is_equal_length:
-            raise ValueError("Epochs must all have equal length.")
-
-        # ------------------------------------------------------------------
-        # 1. Convert to NumPy (drops first/last sample to mirror your code)
-        # ------------------------------------------------------------------
-        epochs_np, info = self.to_numpy()  # shape = (n_epochs, n_chan, n_times)
-        times_sec = info["epoch_times"]    # ndarray, shape (n_times,)
-
-        # ------------------------------------------------------------------
-        # 2. Pick the epochs we want
-        # ------------------------------------------------------------------
-        if ignore is not None and len(ignore):
-            mask_epochs = np.ones(len(self), dtype=bool)
-            mask_epochs[np.asarray(ignore, dtype=int)] = False
-            epochs_np = epochs_np[mask_epochs]
-
-        if epochs_np.size == 0:
-            raise ValueError("After ignoring epochs, no data remain.")
-
-        # ------------------------------------------------------------------
-        # 3. Average (nan‑safe)
-        # ------------------------------------------------------------------
-        mean_data = np.nanmean(epochs_np, axis=0)  # -> (n_chan, n_times)
-
-        # ------------------------------------------------------------------
-        # 4. Return as DataFrame
-        # ------------------------------------------------------------------
-        df_mean = pd.DataFrame(
-            mean_data.T,  # -> (n_times, n_chan)
-            columns=info["column_ids"],
-        )
-        df_mean.insert(0, "epoch time", (times_sec * 1e9).astype("int64"))
-
-        return df_mean
 
 
 def _create_epochs(
