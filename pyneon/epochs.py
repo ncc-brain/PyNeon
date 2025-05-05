@@ -125,9 +125,11 @@ class Epochs:
         t_other_unit: Literal["s", "ms", "us", "ns"] = "s",
         global_t_ref: int = 0,
     ):
+
         if times_df is not None:
             if times_df.isnull().values.any():
                 raise ValueError("times_df should not have any empty values")
+            
         else:
             # Ensure the input arrays are not None
             if any(x is None for x in [t_ref, t_before, t_after, description]):
@@ -168,6 +170,7 @@ class Epochs:
 
         # Create epochs
         self.epochs, self.data = _create_epochs(source, times_df)
+
 
     def __len__(self):
         return self.epochs.shape[0]
@@ -299,57 +302,185 @@ class Epochs:
 
         return epochs_np, info
 
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     def baseline_correction(
         self,
-        t_before: Number | None = None,
-        t_after: Number | None = None,
-        baseline: tuple[Number, Number] | None = None,
+        baseline: tuple[float | None, float | None] = (None, 0.0),
+        method: str = "mean",
+        inplace: bool = True,
     ) -> pd.DataFrame:
         """
-        Apply baseline correction to the epochs.
+        Baseline‑correct every epoch (MNE‑style).
 
         Parameters
         ----------
-        t_before : Number, optional
-            Time before the reference time for the baseline period. If not provided,
-            the default value from the epoch is used.
-        t_after : Number, optional
-            Time after the reference time for the baseline period. If not provided,
-            the default value from the epoch is used.
-        baseline : tuple of Numbers, optional
-            Tuple specifying the start and end times for the baseline period.
-            If not provided, the default value from the epoch is used.
+        baseline : (t_min, t_max), iterable of float | None
+            Start and end of the baseline window **in seconds**, relative to
+            the event trigger (t_ref = 0).  ``None`` means “from the first /
+            up to the last sample”.  Default: (None, 0.0) -> the pre‑trigger
+            part of each epoch.
+        method : {"mean", "linear"}, default "mean"
+            * "mean"   – subtract the scalar mean of the baseline window.  
+            * "linear" – fit a first‑order (y = a·t + b) model *within* the
+            baseline window and remove the fitted trend from the entire
+            epoch (a very small, fast version of MNE’s regression
+            detrending).
+        inplace : bool, default True
+            If True, overwrite :pyattr:`self.data` / :pyattr:`self.epochs`.
+            Otherwise return a **new, corrected** :class:`pandas.DataFrame`
+            and leave the object unchanged.
 
         Returns
         -------
         pandas.DataFrame
-            DataFrame containing the baseline-corrected data.
-        """
-        raise NotImplementedError("Baseline correction is not implemented yet.")
+            The baseline‑corrected data (same shape & dtypes as
+            :pyattr:`self.data`).
 
-    def mean_epoch(
+        Notes
+        -----
+        * Works for both uniformly and irregularly sampled streams because we
+        operate on the original timestamps.
+        * The three annotation columns
+        ``["epoch index", "epoch time", "epoch description"]`` are preserved.
+        """
+        # ------------------------------------------------------------------
+        # 0. Helpers
+        # ------------------------------------------------------------------
+        def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:
+            """In‑place mean or linear detrend on *one* epoch DF."""
+            # mask rows within the baseline window (epoch time is int64 ns)
+            t_rel_sec = epoch_df["epoch time"].to_numpy() * 1e-9
+            if t_min is None:
+                mask = t_rel_sec <= t_max
+            elif t_max is None:
+                mask = t_rel_sec >= t_min
+            else:
+                mask = (t_rel_sec >= t_min) & (t_rel_sec <= t_max)
+
+            if not mask.any():
+                warnings.warn(
+                    "Baseline window is empty for at least one epoch.",
+                    RuntimeWarning,
+                )
+                return  # nothing to correct
+
+            if method == "mean":
+                baseline_mean = epoch_df.loc[mask, chan_cols].mean()
+                epoch_df.loc[:, chan_cols] = epoch_df[chan_cols] - baseline_mean
+            elif method == "linear":
+                t_base = t_rel_sec[mask]
+                for col in chan_cols:
+                    y = epoch_df.loc[mask, col].to_numpy()
+                    a, b = np.polyfit(t_base, y, 1)
+                    epoch_df.loc[:, col] = epoch_df[col] - (a * t_rel_sec + b)
+            else:
+                raise ValueError("method must be 'mean' or 'linear'")
+
+        # ------------------------------------------------------------------
+        # 1. Parse parameters
+        # ------------------------------------------------------------------
+        t_min, t_max = baseline
+        if t_min is not None and t_max is not None and (t_max < t_min):
+            raise ValueError("baseline[1] must be >= baseline[0]")
+
+        chan_cols = self.columns.to_list()
+
+        # ------------------------------------------------------------------
+        # 2. Operate epoch‑by‑epoch
+        # ------------------------------------------------------------------
+        # Work on a copy unless the caller wants in‑place modification
+        if inplace:
+            epochs_copy = self.epochs
+            data_copy = self.data
+        else:
+            epochs_copy = self.epochs.copy(deep=True)
+            data_copy = self.data.copy(deep=True)
+
+        for idx, row in epochs_copy.iterrows():
+            epoch_df: pd.DataFrame = row["data"]
+            _fit_and_subtract(epoch_df, chan_cols)
+            # write back (only needed when we are working on a *copy*)
+            if not inplace:
+                epochs_copy.at[idx, "data"] = epoch_df
+                # update the global data DF as well
+                mask = data_copy["epoch index"] == idx
+                data_copy.loc[mask, chan_cols] = epoch_df[chan_cols].to_numpy()
+
+        # ------------------------------------------------------------------
+        # 3. Return or leave in‑place
+        # ------------------------------------------------------------------
+        if inplace:
+            return self.data  # type: ignore[return-value]
+        else:
+            return data_copy
+
+    # ------------------------------------------------------------------
+
+    def grand_average(
         self,
-        t_before: Number | None = None,
-        t_after: Number | None = None,
+        ignore: list[int] | np.ndarray | None = None,
     ) -> pd.DataFrame:
         """
-        Compute the mean epoch across all epochs.
+        Compute the grand‑average epoch (⟨epochs⟩).
 
         Parameters
         ----------
-        t_before : Number, optional
-            Time before the reference time for the mean epoch. If not provided,
-            the default value from the epoch is used.
-        t_after : Number, optional
-            Time after the reference time for the mean epoch. If not provided,
-            the default value from the epoch is used.
+        ignore : list of int, optional
+            Indices of epochs to exclude from the mean (bad epochs, artefact
+            trials, …).  Empty or None means “use them all”.
 
         Returns
         -------
         pandas.DataFrame
-            DataFrame containing the mean epoch data.
+            One row per **time point**, one column per channel,
+            plus an ``"epoch time"`` column (int64 ns).
+
+        Raises
+        ------
+        ValueError
+            If the object was not created from a uniformly sampled stream
+            *or* the epochs do not all have equal length.
         """
-        raise NotImplementedError("Mean epoch computation is not implemented yet.")
+        if self.source_type != "stream" or self.is_uniformly_sampled is False:
+            raise ValueError("mean_epoch() requires a uniformly sampled NeonStream.")
+        if not self.is_equal_length:
+            raise ValueError("Epochs must all have equal length.")
+
+        # ------------------------------------------------------------------
+        # 1. Convert to NumPy (drops first/last sample to mirror your code)
+        # ------------------------------------------------------------------
+        epochs_np, info = self.to_numpy()  # shape = (n_epochs, n_chan, n_times)
+        times_sec = info["epoch_times"]    # ndarray, shape (n_times,)
+
+        # ------------------------------------------------------------------
+        # 2. Pick the epochs we want
+        # ------------------------------------------------------------------
+        if ignore is not None and len(ignore):
+            mask_epochs = np.ones(len(self), dtype=bool)
+            mask_epochs[np.asarray(ignore, dtype=int)] = False
+            epochs_np = epochs_np[mask_epochs]
+
+        if epochs_np.size == 0:
+            raise ValueError("After ignoring epochs, no data remain.")
+
+        # ------------------------------------------------------------------
+        # 3. Average (nan‑safe)
+        # ------------------------------------------------------------------
+        mean_data = np.nanmean(epochs_np, axis=0)  # -> (n_chan, n_times)
+
+        # ------------------------------------------------------------------
+        # 4. Return as DataFrame
+        # ------------------------------------------------------------------
+        df_mean = pd.DataFrame(
+            mean_data.T,  # -> (n_times, n_chan)
+            columns=info["column_ids"],
+        )
+        df_mean.insert(0, "epoch time", (times_sec * 1e9).astype("int64"))
+
+        return df_mean
 
 
 def _create_epochs(
@@ -403,13 +534,12 @@ def _create_epochs(
 
     return epochs, data
 
-
 def events_to_times_df(
     event: "NeonEV",
     t_before: Number,
     t_after: Number,
     t_unit: Literal["s", "ms", "us", "ns"] = "s",
-    type_name: str = "all",
+    event_name: str | list[str] = "all",
 ) -> pd.DataFrame:
     """
     Construct a times_df DataFrame suitable for creating epochs from event data.
@@ -423,40 +553,51 @@ def events_to_times_df(
     t_after : numbers.Number
         Time after the event start time to end the epoch. Units specified by `t_unit`.
     t_unit : str, optional
-        Unit of time for ``t_before`` and ``t_after``. Can be 's' (seconds), 'ms' (milliseconds),
-        'us' (microseconds), or 'ns' (nanoseconds). Defaults to 's'.
+        Unit of time for ``t_before`` and ``t_after``. Can be 's', 'ms', 'us', or 'ns'. Default is 's'.
+    event_name : str or list of str, optional
+        Name(s) of the event(s) to use for creating epochs from NeonEvents or CustomEvents.
+        If 'all', all events are used. Default is 'all'.
 
     Returns
     -------
     pandas.DataFrame
-        DataFrame containing epoch information with the following columns:
-
-            ``t_ref``: Reference time of the epoch, in nanoseconds.\n
-            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.\n
-            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.\n
-            ``description``: Description or label associated with the epoch.
+        DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
     """
+    
+    if isinstance(event, (NeonBlinks, NeonFixations, NeonSaccades)):
+        if isinstance(event, NeonBlinks):
+            description = "blink"
+        elif isinstance(event, NeonFixations):
+            description = "fixation"
+        elif isinstance(event, NeonSaccades):
+            description = "saccade"
+        t_ref = event.start_ts
 
-    if isinstance(event, NeonBlinks):
-        description = "blink"
-    elif isinstance(event, NeonFixations):
-        description = "fixation"
-    elif isinstance(event, NeonSaccades):
-        description = "saccade"
-    elif isinstance(event, NeonEvents):
-        description = "event"
-    t_ref = event.start_ts
-
-    if isinstance(event, CustomEvents):
+    elif isinstance(event, (CustomEvents, NeonEvents)):
         if "name" not in event.data.columns:
-            raise ValueError("Custom event data must have a 'name' column.")
-        if type_name == "all":
-            description = event.data["name"].to_numpy()
+            raise ValueError("Event data must have a 'name' column.")
+
+        names = event.data["name"]
+
+        if event_name == "all":
             t_ref = event.data.index.to_numpy()
+            description = names.to_numpy()
+
         else:
-            mask = event.data["name"] == type_name
+            if isinstance(event_name, str):
+                event_name = [event_name]
+
+            event_name = list(set(event_name))  # Remove duplicates
+            mask = names.isin(event_name)
+
+            if not mask.any():
+                raise ValueError(f"No events found matching names: {event_name}")
+
             t_ref = event.data.index.to_numpy()[mask]
-            description = event.data["name"].to_numpy()[mask]
+            description = names.to_numpy()[mask]
+
+    else:
+        raise TypeError("Unsupported event type. Must be a NeonEV-derived class.")
 
     times_df = _construct_times_df(
         t_ref,
