@@ -300,7 +300,6 @@ class Epochs:
 
         return epochs_np, info
 
-
     def baseline_correction(
         self,
         baseline: tuple[float | None, float | None] = (None, 0.0),
