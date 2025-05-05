@@ -37,6 +37,7 @@ def _check_event_data(data: pd.DataFrame) -> None:
             "Event index must be in UTC time in ns and thus convertible to int64"
         )
 
+
 def load_or_compute(
     path: Path,
     compute_fn: Callable[[], pd.DataFrame],

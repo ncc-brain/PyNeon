@@ -584,9 +584,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         coordinate_system: str = "opencv",
         skip_frames: int = 1,
         homography_settings: Optional[dict] = None,
-        overwrite: list[str] = [] 
+        overwrite: list[str] = [],
     ) -> pd.DataFrame:
-        
         """
         Project gaze coordinates from eye space to screen space using AprilTag markers and homographies.
 
@@ -649,27 +648,31 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         # 1. Tag Detection
         detection_df = self.detect_apriltags(
-            overwrite=should_overwrite["detection"],
-            skip_frames=skip_frames
+            overwrite=should_overwrite["detection"], skip_frames=skip_frames
         )
-
 
         # 2. Homographies
         homographies_path = self.der_dir / "homographies.json"
         homographies_df = load_or_compute(
             homographies_path,
-            lambda: pd.DataFrame({
-                "frame_idx": list((h := find_homographies(
-                    self.video,
-                    detection_df,
-                    marker_info.copy(),
-                    screen_size,
-                    coordinate_system=coordinate_system,
-                    skip_frames=skip_frames,
-                    settings=homography_settings,
-                )).keys()),
-                "homography": [v.tolist() for v in h.values()],
-            }),
+            lambda: pd.DataFrame(
+                {
+                    "frame_idx": list(
+                        (
+                            h := find_homographies(
+                                self.video,
+                                detection_df,
+                                marker_info.copy(),
+                                screen_size,
+                                coordinate_system=coordinate_system,
+                                skip_frames=skip_frames,
+                                settings=homography_settings,
+                            )
+                        ).keys()
+                    ),
+                    "homography": [v.tolist() for v in h.values()],
+                }
+            ),
             overwrite=should_overwrite["homographies"],
         )
 
@@ -678,13 +681,14 @@ Recording duration: {self.info["duration"] / 1e9}s
         synced_gaze = load_or_compute(
             synced_gaze_path,
             self.sync_gaze_to_video,
-            overwrite=should_overwrite["gaze"]
+            overwrite=should_overwrite["gaze"],
         )
 
         # 4. Gaze on Screen
         gaze_screen_path = self.der_dir / "gaze_on_screen.csv"
         homographies_dict = {
-            row["frame_idx"]: np.array(row["homography"]) for _, row in homographies_df.iterrows()
+            row["frame_idx"]: np.array(row["homography"])
+            for _, row in homographies_df.iterrows()
         }
 
         gaze_on_screen = load_or_compute(
@@ -694,7 +698,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
         return gaze_on_screen
-
 
     def fixations_to_screen(
         self,
