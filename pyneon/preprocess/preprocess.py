@@ -429,3 +429,30 @@ def concat_events(
         print("\tEvents")
     concat_data = concat_data.sort_index()
     return concat_data
+
+
+def interpolate_blinks(
+    rec: "NeonRecording",
+    blink_data: pd.DataFrame,
+    blink_duration: int = 100,
+) -> pd.DataFrame:
+    """
+    Interpolate blinks in the gaze data.
+
+    Parameters
+    ----------
+    rec : NeonRecording
+        NeonRecording object containing the gaze data.
+    blink_data : pandas.DataFrame
+        DataFrame containing the blink events.
+        Must have a column named ``"start timestamp [ns]"``.
+    blink_duration : int, optional
+        Duration of the blink in milliseconds, by default 100.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with interpolated gaze data.
+    """
+    if rec.gaze is None:
+        raise NotImplementedError("Mean epoch computation is not implemented yet.")

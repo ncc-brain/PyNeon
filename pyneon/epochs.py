@@ -299,6 +299,58 @@ class Epochs:
 
         return epochs_np, info
 
+    def baseline_correction(
+        self,
+        t_before: Number | None = None,
+        t_after: Number | None = None,
+        baseline: tuple[Number, Number] | None = None,
+    ) -> pd.DataFrame:
+        """
+        Apply baseline correction to the epochs.
+
+        Parameters
+        ----------
+        t_before : Number, optional
+            Time before the reference time for the baseline period. If not provided,
+            the default value from the epoch is used.
+        t_after : Number, optional
+            Time after the reference time for the baseline period. If not provided,
+            the default value from the epoch is used.
+        baseline : tuple of Numbers, optional
+            Tuple specifying the start and end times for the baseline period.
+            If not provided, the default value from the epoch is used.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame containing the baseline-corrected data.
+        """
+        raise NotImplementedError("Baseline correction is not implemented yet.")
+    
+    def mean_epoch(
+        self,
+        t_before: Number | None = None,
+        t_after: Number | None = None,
+    ) -> pd.DataFrame:
+        """
+        Compute the mean epoch across all epochs.
+
+        Parameters
+        ----------
+        t_before : Number, optional
+            Time before the reference time for the mean epoch. If not provided,
+            the default value from the epoch is used.
+        t_after : Number, optional
+            Time after the reference time for the mean epoch. If not provided,
+            the default value from the epoch is used.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame containing the mean epoch data.
+        """
+        raise NotImplementedError("Mean epoch computation is not implemented yet.")
+
 
 def _create_epochs(
     source: NeonStream | NeonEV, times_df: pd.DataFrame
