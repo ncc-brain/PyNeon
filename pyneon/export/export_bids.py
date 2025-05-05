@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 from ._bids_parameters import MOTION_META_DEFAULT
 
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
+    from ..recording import Recording
 
 
 def export_motion_bids(
-    rec: "NeonRecording",
+    rec: "Recording",
     motion_dir: str | Path,
     prefix: str = "",
     extra_metadata: dict = {},
@@ -25,7 +25,7 @@ def export_motion_bids(
 
     Parameters
     ----------
-    rec : NeonRecording
+    rec : Recording
         Recording object containing the IMU data.
     motion_dir : str or pathlib.Path
         Output directory to save the Motion-BIDS formatted data.
@@ -127,7 +127,7 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def export_eye_bids(rec: "NeonRecording", output_dir: str | Path):
+def export_eye_bids(rec: "Recording", output_dir: str | Path):
     """
     Under development. Export eye tracking data to Eye-BIDS format.
     """

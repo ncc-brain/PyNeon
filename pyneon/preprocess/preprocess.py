@@ -6,10 +6,10 @@ from numbers import Number
 from typing import TYPE_CHECKING, Optional
 from scipy.interpolate import interp1d
 
-from ..utils import _check_stream_data
+from ..utils import _check_data
 
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
+    from ..recording import Recording
 
 
 def interpolate(
@@ -41,7 +41,7 @@ def interpolate(
     pandas.DataFrame
         Interpolated data.
     """
-    _check_stream_data(data)
+    _check_data(data)
     new_ts = np.sort(new_ts).astype(np.int64)
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
     for col in data.columns:
@@ -99,7 +99,7 @@ def window_average(
     pandas.DataFrame
         Data with window average applied.
     """
-    _check_stream_data(data)
+    _check_data(data)
     new_ts = np.sort(new_ts).astype(np.int64)
     new_ts_median_diff = np.median(np.diff(new_ts))
     original_ts_median_diff = np.median(np.diff(data.index))
@@ -148,7 +148,7 @@ _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
 def concat_streams(
-    rec: "NeonRecording",
+    rec: "Recording",
     stream_names: str | list[str] = "all",
     sampling_freq: Number | str = "min",
     interp_float_kind: str = "cubic",
@@ -164,8 +164,8 @@ def concat_streams(
 
     Parameters
     ----------
-    rec : NeonRecording
-        NeonRecording object containing the streams to concatenate.
+    rec : Recording
+        Recording object containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all", then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
@@ -332,7 +332,7 @@ VALID_EVENTS = {
 
 
 def concat_events(
-    rec: "NeonRecording",
+    rec: "Recording",
     event_names: str | list[str],
 ) -> pd.DataFrame:
     """
@@ -345,8 +345,8 @@ def concat_events(
 
     Parameters
     ----------
-    rec : NeonRecording
-        NeonRecording object containing the events to concatenate.
+    rec : Recording
+        Recording object containing the events to concatenate.
     event_names : list of str
         List of event names to concatenate. Event names must be in
         ``{"blinks", "fixations", "saccades", "events"}``
@@ -432,7 +432,7 @@ def concat_events(
 
 
 def interpolate_blinks(
-    rec: "NeonRecording",
+    rec: "Recording",
     blink_data: pd.DataFrame,
     blink_duration: int = 100,
 ) -> pd.DataFrame:
@@ -441,8 +441,8 @@ def interpolate_blinks(
 
     Parameters
     ----------
-    rec : NeonRecording
-        NeonRecording object containing the gaze data.
+    rec : Recording
+        Recording object containing the gaze data.
     blink_data : pandas.DataFrame
         DataFrame containing the blink events.
         Must have a column named ``"start timestamp [ns]"``.

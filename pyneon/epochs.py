@@ -5,15 +5,8 @@ from numbers import Number
 from typing import TYPE_CHECKING, Literal
 import warnings
 
-from .stream import NeonStream
-from .events import (
-    NeonEV,
-    NeonBlinks,
-    NeonFixations,
-    NeonSaccades,
-    NeonEvents,
-    CustomEvents,
-)
+from .stream import Stream
+from .events import Events
 
 
 def _check_overlap(times_df: pd.DataFrame) -> bool:
@@ -44,7 +37,7 @@ class Epochs:
 
     Parameters
     ----------
-    source : NeonStream or NeonEV
+    source : Stream or Events
         Data to create epochs from.
     times_df : pandas.DataFrame, shape (n_epochs, 4), optional
         DataFrame containing epoch information with the following columns:
@@ -87,11 +80,7 @@ class Epochs:
         If epochs overlap, data annotations are always overwritten by the latest epoch.
     """
 
-    def __init__(
-        self,
-        source: NeonStream | NeonEV,
-        times_df: pd.DataFrame
-    ):
+    def __init__(self, source: Stream | Events, times_df: pd.DataFrame):
         if times_df.isnull().values.any():
             raise ValueError("times_df should not have any empty values")
 
@@ -108,11 +97,11 @@ class Epochs:
             }
         )
 
-        if isinstance(source, NeonStream):
+        if isinstance(source, Stream):
             self.source_type = "stream"
             self.is_uniformly_sampled = source.is_uniformly_sampled
             self.sf = source.sampling_freq_effective
-        elif isinstance(source, NeonEV):
+        elif isinstance(source, Events):
             self.source_type = "event"
             self.is_uniformly_sampled = None
             self.sf = None
@@ -171,7 +160,7 @@ class Epochs:
         """
         Converts epochs into a 3D array with dimensions (n_epochs, n_channels, n_times).
         Acts similarly as :meth:`mne.Epochs.get_data`.
-        Requires the epoch to be created from a uniformly-sampled :class:`pyneon.stream.NeonStream`.
+        Requires the epoch to be created from a uniformly-sampled :class:`pyneon.stream.Stream`.
 
         Parameters
         ----------
@@ -198,7 +187,7 @@ class Epochs:
         """
         if self.source_type != "stream" or self.is_uniformly_sampled is False:
             raise ValueError(
-                "The source must be a uniformly-sampled NeonStream to convert to NumPy array."
+                "The source must be a uniformly-sampled Stream to convert to NumPy array."
             )
         if not self.is_equal_length:
             raise ValueError("Epochs must have equal length to convert to NumPy array.")
@@ -364,7 +353,7 @@ class Epochs:
 
 
 def _create_epochs(
-    source: NeonStream | NeonEV, times_df: pd.DataFrame
+    source: Stream | Events, times_df: pd.DataFrame
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Create epochs DataFrame and annotate the data with epoch information.
@@ -377,12 +366,12 @@ def _create_epochs(
     data["epoch description"] = pd.Series(dtype="str")
 
     # check for source type
-    if isinstance(source, NeonStream):
+    if isinstance(source, Stream):
         ts = source.ts
-    elif isinstance(source, NeonEV):
+    elif isinstance(source, Events):
         ts = source.start_ts
     else:
-        raise ValueError("Source must be a NeonStream or NeonEV.")
+        raise ValueError("Source must be a Stream or Events.")
 
     epochs = times_df.copy().reset_index(drop=True)
     epochs["data"] = pd.Series(dtype="object")
@@ -416,7 +405,7 @@ def _create_epochs(
 
 
 def events_to_times_df(
-    event: "NeonEV",
+    event: "Events",
     t_before: Number,
     t_after: Number,
     t_unit: Literal["s", "ms", "us", "ns"] = "s",
@@ -427,8 +416,8 @@ def events_to_times_df(
 
     Parameters
     ----------
-    event : NeonEV
-        NeonEV instance containing the event times.
+    event : Events
+        Events instance containing the event times.
     t_before : numbers.Number
         Time before the event start time to start the epoch. Units specified by `t_unit`.
     t_after : numbers.Number
@@ -436,7 +425,7 @@ def events_to_times_df(
     t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``. Can be 's', 'ms', 'us', or 'ns'. Default is 's'.
     event_name : str or list of str, optional
-        Name(s) of the event(s) to use for creating epochs from NeonEvents or CustomEvents.
+        Name(s) of the event(s) to use for creating epochs from Eventsents or CustomEvents.
         If 'all', all events are used. Default is 'all'.
 
     Returns
@@ -454,7 +443,7 @@ def events_to_times_df(
             description = "saccade"
         t_ref = event.start_ts
 
-    elif isinstance(event, (CustomEvents, NeonEvents)):
+    elif isinstance(event, (CustomEvents, Eventsents)):
         if "name" not in event.data.columns:
             raise ValueError("Event data must have a 'name' column.")
 
@@ -478,7 +467,7 @@ def events_to_times_df(
             description = names.to_numpy()[mask]
 
     else:
-        raise TypeError("Unsupported event type. Must be a NeonEV-derived class.")
+        raise TypeError("Unsupported event type. Must be a Events-derived class.")
 
     times_df = construct_times_df(
         t_ref,
@@ -504,7 +493,7 @@ def construct_times_df(
     Handles the construction of the ``times_df`` DataFrame for creating epochs. It populates
     single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
     and converts all times to UTC timestamps in nanoseconds.
-    
+
     Parameters
     ----------
     t_ref : numpy.ndarray, optional
@@ -524,12 +513,12 @@ def construct_times_df(
         Global reference time (in nanoseconds) to be added to `t_ref`.
         Unit is nanosecond. Defaults to 0. This is useful when the reference times
         are relative to a global start time
-        (for instance :attr:`pyneon.stream.NeonStream.first_ts`).
+        (for instance :attr:`pyneon.stream.Stream.first_ts`).
     t_ref_unit : str, optional
         Unit of time for the reference times. Default is 'ns'.
     t_other_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``. Default is 's'.
-        
+
     Returns
     -------
     pandas.DataFrame

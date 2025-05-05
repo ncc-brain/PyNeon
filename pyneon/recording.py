@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 from numbers import Number
 from functools import cached_property
 
-from .stream import NeonGaze, NeonIMU, NeonEyeStates, CustomStream
-from .events import NeonBlinks, NeonFixations, NeonSaccades, NeonEvents
+from .stream import Stream
+from .events import Events
 from .preprocess import concat_streams, concat_events, smooth_camera_pose
 from .video import (
-    NeonVideo,
+    SceneVideo,
     estimate_scanpath,
     detect_apriltags,
     estimate_camera_pose,
@@ -36,7 +36,7 @@ def _check_file(dir_path: Path, stem: str):
         return False, None, None
 
 
-class NeonRecording:
+class Recording:
     """
     Data from a single recording. The recording directory could be downloaded from
     either a single recording or a project on Pupil Cloud. In either case, the directory
@@ -109,15 +109,6 @@ class NeonRecording:
         if not self.der_dir.is_dir():
             self.der_dir.mkdir()
 
-        self._gaze = None
-        self._eye_states = None
-        self._imu = None
-        self._blinks = None
-        self._fixations = None
-        self._saccades = None
-        self._events = None
-        self._video = None
-
         self._get_contents()
 
     def __repr__(self) -> str:
@@ -172,116 +163,99 @@ Recording duration: {self.info["duration"] / 1e9}s
         self.contents = contents
 
     @cached_property
-    def gaze(self) -> Optional[NeonGaze]:
+    def gaze(self) -> Optional[Stream]:
         """
-        Returns a NeonGaze object or None if no gaze data is found.
+        Returns a (cached) :class:`pyneon.Stream` object containing gaze data or ``None`` if no ``gaze.csv`` is present.
         """
-        if self._gaze is None:
-            if self.contents.loc["gaze", "exist"]:
-                gaze_file = self.contents.loc["gaze", "path"]
-                self._gaze = NeonGaze(gaze_file)
-            else:
-                warnings.warn("Gaze data not loaded because no file was found.")
-        return self._gaze
+        if self.contents.loc["gaze", "exist"]:
+            return Stream(self.contents.loc["gaze", "path"], 200)
+        else:
+            warnings.warn("Gaze data not loaded because no file was found.")
 
     @cached_property
-    def imu(self) -> Optional[NeonIMU]:
+    def imu(self) -> Optional[Stream]:
         """
-        Returns a NeonIMU object or None if no IMU data is found.
+        Returns a (cached) :class:`pyneon.Stream` object containing IMU data or ``None`` if no ``imu.csv`` is present.
         """
-        if self._imu is None:
-            if self.contents.loc["imu", "exist"]:
-                imu_file = self.contents.loc["imu", "path"]
-                self._imu = NeonIMU(imu_file)
-            else:
-                warnings.warn("IMU data not loaded because no file was found.")
-        return self._imu
+        if self.contents.loc["imu", "exist"]:
+            return Stream(self.contents.loc["imu", "path"], 110)
+        else:
+            warnings.warn("IMU data not loaded because no file was found.")
+        return None
 
     @cached_property
-    def eye_states(self) -> Optional[NeonEyeStates]:
+    def eye_states(self) -> Optional[Stream]:
         """
-        Returns a NeonEyeStates object or None if no eye states data is found.
+        Returns a (cached) :class:`pyneon.Stream` object containing eye states data or ``None`` if no ``3d_eye_states.csv`` is present.
         """
-        if self._eye_states is None:
-            if self.contents.loc["3d_eye_states", "exist"]:
-                eye_states_file = self.contents.loc["3d_eye_states", "path"]
-                self._eye_states = NeonEyeStates(eye_states_file)
-            else:
-                warnings.warn(
-                    "3D eye states data not loaded because no file was found."
-                )
-        return self._eye_states
+        if self.contents.loc["3d_eye_states", "exist"]:
+            return Stream(self.contents.loc["3d_eye_states", "path"], 200)
+        else:
+            warnings.warn("3D eye states data not loaded because no file was found.")
+            return None
 
     @cached_property
-    def blinks(self) -> Optional[NeonBlinks]:
+    def blinks(self) -> Optional[Events]:
         """
-        Returns a NeonBlinks object or None if no blinks data is found.
+        Returns a (cached) :class:`pyneon.Events` object containing blinks data or ``None`` if no ``blinks.csv`` is present.
         """
-        if self._blinks is None:
-            if self.contents.loc["blinks", "exist"]:
-                blinks_file = self.contents.loc["blinks", "path"]
-                self._blinks = NeonBlinks(blinks_file)
-            else:
-                warnings.warn("Blinks data not loaded because no file was found.")
-        return self._blinks
+        if self.contents.loc["blinks", "exist"]:
+            return Events(self.contents.loc["blinks", "path"], id_name="blink id")
+        else:
+            warnings.warn("Blinks data not loaded because no file was found.")
+            return None
 
     @cached_property
-    def fixations(self) -> Optional[NeonFixations]:
+    def fixations(self) -> Optional[Events]:
         """
-        Returns a NeonFixations object or None if no fixations data is found.
+        Returns a (cached) :class:`pyneon.Events` object containing fixations data or ``None`` if no ``fixations.csv`` is present.
         """
-        if self._fixations is None:
-            if self.contents.loc["fixations", "exist"]:
-                fixations_file = self.contents.loc["fixations", "path"]
-                self._fixations = NeonFixations(fixations_file)
-            else:
-                warnings.warn("Fixations data not loaded because no file was found.")
-        return self._fixations
+        if self.contents.loc["fixations", "exist"]:
+            return Events(self.contents.loc["fixations", "path"], id_name="fixation id")
+        else:
+            warnings.warn("Fixations data not loaded because no file was found.")
+            return None
 
     @cached_property
-    def saccades(self) -> Optional[NeonSaccades]:
+    def saccades(self) -> Optional[Events]:
         """
-        Returns a NeonSaccades object or None if no saccades data is found.
+        Returns a (cached) :class:`pyneon.Events` object containing saccades data or ``None`` if no ``saccades.csv`` is present.
         """
-        if self._saccades is None:
-            if self.contents.loc["saccades", "exist"]:
-                saccades_file = self.contents.loc["saccades", "path"]
-                self._saccades = NeonSaccades(saccades_file)
-            else:
-                warnings.warn("Saccades data not loaded because no file was found.")
-        return self._saccades
+        if self.contents.loc["saccades", "exist"]:
+            return Events(self.contents.loc["saccades", "path"], id_name="saccade id")
+        else:
+            warnings.warn("Saccades data not loaded because no file was found.")
+            return None
 
     @cached_property
-    def events(self) -> Optional[NeonEvents]:
+    def events(self) -> Optional[Events]:
         """
-        Returns a NeonEvents object or None if no events data is found.
+        Returns a (cached) :class:`pyneon.Events` object containing events data or ``None`` if no ``events.csv`` is present.
         """
-        if self._events is None:
-            if self.contents.loc["events", "exist"]:
-                events_file = self.contents.loc["events", "path"]
-                self._events = NeonEvents(events_file)
-            else:
-                warnings.warn("Events data not loaded because no file was found.")
-        return self._events
+        if self.contents.loc["events", "exist"]:
+            events_file = self.contents.loc["events", "path"]
+            return Events(events_file)
+        else:
+            warnings.warn("Events data not loaded because no file was found.")
+            return None
 
     @cached_property
-    def video(self) -> Optional[NeonVideo]:
+    def video(self) -> Optional[SceneVideo]:
         """
-        Returns a NeonVideo object or None if no scene video is found.
+        Returns a (cached) :class:`pyneon.SceneVideo` object containing scene video data or ``None`` if no ``scene_video.mp4`` is present.
         """
-        if self._video is None:
-            if (
-                (video_file := self.contents.loc["scene_video", "path"])
-                and (timestamp_file := self.contents.loc["world_timestamps", "path"])
-                and (video_info_file := self.contents.loc["scene_video_info", "path"])
-            ):
-                self._video = NeonVideo(video_file, timestamp_file, video_info_file)
-            else:
-                warnings.warn(
-                    "Scene video not loaded because not all video-related files "
-                    "(video, scene_camera.json, world_timestamps.csv) are found."
-                )
-        return self._video
+        if (
+            (video_file := self.contents.loc["scene_video", "path"])
+            and (timestamp_file := self.contents.loc["world_timestamps", "path"])
+            and (video_info_file := self.contents.loc["scene_video_info", "path"])
+        ):
+            return SceneVideo(video_file, timestamp_file, video_info_file)
+        else:
+            warnings.warn(
+                "Scene video not loaded because not all video-related files "
+                "(video, scene_camera.json, world_timestamps.csv) are found."
+            )
+            return None
 
     def concat_streams(
         self,
@@ -290,7 +264,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         interp_float_kind: str = "cubic",
         interp_other_kind: str = "nearest",
         inplace: bool = False,
-    ) -> CustomStream:
+    ) -> Stream:
         """
         Concatenate data from different streams under common timestamps.
         Since the streams may have different timestamps and sampling frequencies,
@@ -318,7 +292,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             Defaults to ``"nearest"``.
         inplace : bool, optional
             Replace selected stream data with interpolated data during concatenation
-            if``True``. Defaults to ``False``.
+            if ``True``. Defaults to ``False``.
 
         Returns
         -------
@@ -333,7 +307,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             interp_other_kind,
             inplace,
         )
-        return CustomStream(new_data)
+        return Stream(new_data)
 
     def concat_events(self, event_names: str | list[str]) -> pd.DataFrame:
         """
@@ -376,7 +350,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        rec : NeonRecording
+        rec : Recording
             Recording object containing the gaze and video data.
         heatmap_source : {'gaze', 'fixations', None}
             Source of the data to plot as a heatmap. If None, no heatmap is plotted.
@@ -428,7 +402,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around timestamps of each video frame.
-        See :meth:`pyneon.stream.NeonStream.window_average` for details.
+        See :meth:`pyneon.stream.Stream.window_average` for details.
 
         Parameters
         ----------

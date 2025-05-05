@@ -1,5 +1,5 @@
 from pathlib import Path
-from pyneon import NeonRecording
+from pyneon import Recording
 from matplotlib import pyplot as plt
 
 from pyneon import get_sample_data
@@ -12,7 +12,7 @@ recording_dir = dataset_path / "Timeseries Data" / "walk1-e116e606"
 test_output_dir = "data/outputs"
 test_output_dir.mkdir(exist_ok=True)
 
-recording = NeonRecording(recording_dir)
+recording = Recording(recording_dir)
 raw_gaze_data = recording.gaze.data
 raw_eye_states_data = recording.eye_states.data
 raw_imu_data = recording.imu.data

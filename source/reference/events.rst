@@ -1,6 +1,6 @@
-Event classes (blinks, fixations, saccades, events)
-===================================================
+Events classes (blinks, fixations, saccades, events)
+====================================================
 
-.. automodule:: pyneon.events
+.. autoclass:: pyneon.Events
     :members:
     :show-inheritance:

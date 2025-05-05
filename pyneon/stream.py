@@ -5,20 +5,20 @@ from numbers import Number
 from typing import Literal, Optional
 import copy
 
-from .tabular import NeonTabular
+from .tabular import BaseTabular
 from .preprocess import interpolate, window_average
-from .utils import _check_stream_data
 
 
-class NeonStream(NeonTabular):
+class Stream(BaseTabular):
     """
-    Base for Neon continuous data (gaze, eye states, IMU).
-    It's indexed by ``timestamp [ns]``.
+    Base for a continuous data stream (gaze, eye states, IMU).
+    Indexed by ``timestamp [ns]``.
 
     Parameters
     ----------
-    file : pathlib.Path
-        Path to the CSV file containing the stream data.
+    data : pandas.DataFrame or pathlib.Path
+        DataFrame or path to the CSV file containing the stream data.
+        The data must be indexed by ``timestamp [ns]``.
 
     Attributes
     ----------
@@ -31,10 +31,16 @@ class NeonStream(NeonTabular):
         (https://pupil-labs.com/products/neon/specs).
     """
 
-    def __init__(self, file: Path):
-        super().__init__(file)
-        if self.data.index.name != "timestamp [ns]":
-            raise ValueError("Stream data should be indexed by `timestamp [ns]`.")
+    def __init__(
+        self, data: pd.DataFrame | Path, sampling_freq_nominal: Optional[int] = None
+    ):
+        if isinstance(data, Path):
+            self.file = data
+            data = pd.read_csv(data)
+        else:
+            self.file = None
+        super().__init__(data)
+        self.sampling_freq_nominal = sampling_freq_nominal
 
     def __getitem__(self, index: str) -> pd.Series:
         if index not in self.data.columns:
@@ -107,7 +113,7 @@ class NeonStream(NeonTabular):
         tmax: Optional[Number] = None,
         by: Literal["timestamp", "time", "row"] = "timestamp",
         inplace: bool = False,
-    ) -> Optional["NeonStream"]:
+    ) -> Optional["Stream"]:
         """
         Crop data to a specific time range based on timestamps,
         relative times since start, or row numbers.
@@ -130,7 +136,7 @@ class NeonStream(NeonTabular):
 
         Returns
         -------
-        NeonStream or None
+        Stream or None
             Cropped stream if ``inplace=False``, otherwise ``None``.
         """
         if tmin is None and tmax is None:
@@ -156,23 +162,23 @@ class NeonStream(NeonTabular):
 
     def restrict(
         self,
-        other: "NeonStream",
+        other: "Stream",
         inplace: bool = False,
-    ) -> Optional["NeonStream"]:
+    ) -> Optional["Stream"]:
         """
         Temporally restrict the stream to the timestamps of another stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
-        other : NeonStream
+        other : Stream
             The other stream whose timestamps are used to restrict the data.
         inplace : bool, optional
             Whether to replace the data in the object with the restricted data.
 
         Returns
         -------
-        NeonStream or None
+        Stream or None
             Restricted stream if ``inplace=False``, otherwise ``None``.
         """
         new_stream = self.crop(
@@ -188,7 +194,7 @@ class NeonStream(NeonTabular):
         float_kind: str = "cubic",
         other_kind: str = "nearest",
         inplace: bool = False,
-    ) -> Optional["NeonStream"]:
+    ) -> Optional["Stream"]:
         """
         Interpolate the stream to a new set of timestamps.
 
@@ -211,7 +217,7 @@ class NeonStream(NeonTabular):
 
         Returns
         -------
-        NeonStream or None
+        Stream or None
             Interpolated stream if ``inplace=False``, otherwise ``None``.
         """
         # If new_ts is not provided, generate a evenly spaced array of timestamps
@@ -239,7 +245,7 @@ class NeonStream(NeonTabular):
         new_ts: np.ndarray,
         window_size: Optional[int] = None,
         inplace: bool = False,
-    ) -> Optional["NeonStream"]:
+    ) -> Optional["Stream"]:
         """
         Take the average over a time window to obtain smoothed data at new timestamps.
 
@@ -265,7 +271,7 @@ class NeonStream(NeonTabular):
 
         Returns
         -------
-        NeonStream or None
+        Stream or None
             Stream with window average applied on data if ``inplace=False``, otherwise ``None``.
         """
         new_data = window_average(new_ts, self.data, window_size)
@@ -275,99 +281,3 @@ class NeonStream(NeonTabular):
             new_instance = copy.copy(self)
             new_instance.data = new_data
             return new_instance
-
-
-class NeonGaze(NeonStream):
-    """
-    Gaze data that inherits attributes and methods from :class:`NeonStream`.
-    """
-
-    sampling_freq_nominal = int(200)
-
-    def __init__(self, file: Path):
-        super().__init__(file)
-        self.data = self.data.astype(
-            {
-                "gaze x [px]": float,
-                "gaze y [px]": float,
-                "worn": "Int32",
-                "fixation id": "Int32",
-                "blink id": "Int32",
-                "azimuth [deg]": float,
-                "elevation [deg]": float,
-            }
-        )
-
-
-class NeonEyeStates(NeonStream):
-    """
-    3D eye states data that inherits attributes and methods
-    from :class:`NeonStream`.
-    """
-
-    sampling_freq_nominal = int(200)
-
-    def __init__(self, file: Path):
-        super().__init__(file)
-        self.data = self.data.astype(
-            {
-                "pupil diameter left [mm]": float,
-                "pupil diameter right [mm]": float,
-                "eyeball center left x [mm]": float,
-                "eyeball center left y [mm]": float,
-                "eyeball center left z [mm]": float,
-                "eyeball center right x [mm]": float,
-                "eyeball center right y [mm]": float,
-                "eyeball center right z [mm]": float,
-                "optical axis left x": float,
-                "optical axis left y": float,
-                "optical axis left z": float,
-                "optical axis right x": float,
-                "optical axis right y": float,
-                "optical axis right z": float,
-            }
-        )
-
-
-class NeonIMU(NeonStream):
-    """
-    IMU data that inherits attributes and methods
-    from :class:`NeonStream`.
-    """
-
-    sampling_freq_nominal = int(110)
-
-    def __init__(self, file: Path):
-        super().__init__(file)
-        self.data = self.data.astype(
-            {
-                "gyro x [deg/s]": float,
-                "gyro y [deg/s]": float,
-                "gyro z [deg/s]": float,
-                "acceleration x [g]": float,
-                "acceleration y [g]": float,
-                "acceleration z [g]": float,
-                "roll [deg]": float,
-                "pitch [deg]": float,
-                "yaw [deg]": float,
-                "quaternion w": float,
-                "quaternion x": float,
-                "quaternion y": float,
-                "quaternion z": float,
-            }
-        )
-
-
-class CustomStream(NeonStream):
-    """
-    Custom stream data that inherits attributes and methods
-    from :class:`NeonStream`. ``file`` and ``sampling_freq_nominal`` attributes are
-    ``None`` because of the custom nature of the data.
-    """
-
-    file = None
-    sampling_freq_nominal = None
-
-    def __init__(self, data: pd.DataFrame):
-        _check_stream_data(data)
-        self.data = data

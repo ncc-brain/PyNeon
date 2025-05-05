@@ -5,7 +5,7 @@ from tqdm import tqdm
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from .video import NeonVideo
+    from .video import SceneVideo
 
 
 import cv2
@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 
 def detect_apriltags(
-    video: "NeonVideo",
+    video: "SceneVideo",
     tag_family: str = "tag36h11",
     nthreads: int = 4,
     quad_decimate: float = 1.0,
@@ -28,7 +28,7 @@ def detect_apriltags(
 
     Parameters
     ----------
-    video : NeonVideo-like
+    video : SceneVideo-like
         A video-like object with:
         - .read() -> returns (ret, frame)
         - .ts -> array/list of timestamps (in nanoseconds), same length as total frames
@@ -173,7 +173,7 @@ def detect_apriltags(
 
 
 def estimate_camera_pose(
-    video: "NeonVideo",
+    video: "SceneVideo",
     tag_locations_df: pd.DataFrame,
     all_detections: pd.DataFrame = None,
 ) -> pd.DataFrame:
@@ -183,7 +183,7 @@ def estimate_camera_pose(
 
     Parameters
     ----------
-    video : NeonVideo
+    video : SceneVideo
         Video object containing camera parameters.
     tag_locations_df : pd.DataFrame
         DataFrame containing AprilTag 3D positions, normals, and sizes with columns:
@@ -382,7 +382,7 @@ def find_homographies(
 
     Parameters
     ----------
-    video : NeonVideo-like
+    video : SceneVideo-like
         An object containing camera intrinsics (camera_matrix, dist_coeffs) and possibly timestamps.
         If `undistort=True`, these intrinsics are used to undistort marker corners.
     detection_df : pd.DataFrame

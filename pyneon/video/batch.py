@@ -5,7 +5,7 @@ from tqdm import tqdm
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .video import NeonVideo
+    from .video import SceneVideo
 
 
 def _import_modules():
@@ -316,7 +316,7 @@ def gaze_to_screen_parallel(
 
     Parameters
     ----------
-    video : NeonVideo-like
+    video : SceneVideo-like
         An object with .camera_matrix, .dist_coeffs, etc.
     detection_df : pd.DataFrame
         Must contain columns:
