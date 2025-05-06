@@ -461,7 +461,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # create an index by counting the number of rows in new gaze
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
         
-        synced_gaze.to_csv(gaze_file, index=False)
+        synced_gaze.to_csv(gaze_file, index=True)
 
         return synced_gaze
 
@@ -592,8 +592,8 @@ Recording duration: {self.info["duration"] / 1e9}s
             self,
             marker_info: pd.DataFrame,
             all_detections: Optional[pd.DataFrame] = None,
-            screen_size: tuple[int, int] = (1920, 1080),
             coordinate_system: str = "opencv",
+            screen_size: tuple[int, int] = (1920, 1080),
             settings: Optional[dict] = None,
             overwrite: bool = False,
             output_path: Optional[str | Path] = None,
@@ -613,14 +613,14 @@ Recording duration: {self.info["duration"] / 1e9}s
                     Normal vector of the tag's surface in world coordinates.
                 - 'size' : float
                     Side length of the tag in meters.
-        all_detections : pd.DataFrame, optional
-            DataFrame containing AprilTag detections for each frame. If empty, detections will be computed.
-        screen_size : tuple of int, default=(1920, 1080)
-            Pixel dimensions (width, height) of the target screen.
         coordinate_system : {"opencv", "psychopy"}, default="opencv"
-            Defines the screen coordinate convention to use:
+            Defines the screen coordinate convention to assume for marker coordinates:
                 - "opencv": origin is top-left, y increases downward.
                 - "psychopy": origin is center, y increases upward.
+        all_detections : pd.DataFrame, optional
+            DataFrame containing AprilTag detections for each frame. If empty, detections will be computed with default settings.
+        screen_size : tuple of int, default=(1920, 1080)
+            Pixel dimensions (width, height) of the target screen.
         settings : dict, optional
             Dictionary of additional parameters passed to the homography estimation function.
             Can include solver-specific options such as 'robust', 'max_iter', etc.
@@ -703,6 +703,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             - 'x_screen', 'y_screen': Gaze coordinates in screen space (px)
             - Any additional columns from the input gaze data
         """
+
         if output_path is None:
             gaze_on_screen_path = self.der_dir / "gaze_on_screen.csv"
         else:
@@ -818,7 +819,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     def estimate_camera_pose(
         self,
         tag_locations_df: pd.DataFrame,
-        all_detections: pd.DataFrame = pd.DataFrame(),
+        all_detections: Optional[pd.DataFrame] = None,
+        output_path: Optional[str | Path] = None, 
         overwrite: bool = False,
     ) -> pd.DataFrame:
         """
@@ -840,7 +842,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'tag_id': The ID of the detected AprilTag (int)
                 - 'corners': A (4x2) array of the tag corner pixel coordinates (np.ndarray)
                 - 'center': A (1x2) array of the tag center pixel coordinates (np.ndarray)
-            If empty, the detections are computed using the `detect_apriltags` function.
+            If empty, the detections are computed using the `detect_apriltags` function with default settings.
 
         Returns
         -------
@@ -862,25 +864,32 @@ Recording duration: {self.info["duration"] / 1e9}s
             "normal_z",
             "size",
         }
+
         if not required_columns.issubset(tag_locations_df.columns):
             missing = required_columns - set(tag_locations_df.columns)
             raise ValueError(f"tag_locations_df is missing required columns: {missing}")
 
+
+        if output_path is None:
+            json_file = self.der_dir / "camera_pose.json"
+        else:
+            json_file = Path(output_path)
+
         # check for detections dataframe
-        if all_detections.empty:
-            detection_file = self.der_dir / "apriltags.json"
-            # open apriltags
-            if detection_file.is_file():
-                all_detections = pd.read_json(
-                    detection_file, orient="records", lines=True
-                )
-            else:
-                all_detections = self.detect_apriltags()
+        if all_detections == None:
+            # Check if detections already exist
+            all_detections = self.detect_apriltags()
+            if all_detections.empty:
+                raise ValueError("No AprilTag detections found.")
+            
 
         # Check if result JSON already exists
-        json_file = self.der_dir / "camera_pose.json"
         if json_file.is_file() and not overwrite:
-            return pd.read_json(json_file, orient="records", lines=True)
+            print(f"Loading cached camera pose from {json_file}")
+            camera_pose = pd.read_json(json_file, orient="records", lines=True)
+            if camera_pose.empty:
+                raise ValueError("Camera pose data is empty.")
+            return camera_pose
 
         # Compute camera positions
         camera_pose = estimate_camera_pose(
