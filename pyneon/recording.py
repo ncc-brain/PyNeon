@@ -744,21 +744,36 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def fixations_to_screen(
         self,
+        gaze_on_screen: Optional[pd.DataFrame] = None,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
-        Updates fixation data with gaze coordinates in screen space.
+        Map fixations to screen coordinates using gaze data.
+
+        
+
         """
-        # collect gaze on screen or compute it
-        if (gaze_file := self.der_dir / "gaze_on_screen.csv").is_file():
-            gaze_on_screen = pd.read_csv(gaze_file)
+        if output_path is None:
+            fixation_on_screen_path = self.der_dir / "fixations_on_screen.csv"
         else:
-            gaze_on_screen = self.gaze_to_screen()[0]
-        # check if fixations exist
+            fixation_on_screen_path = Path(output_path)
 
-        fixation = self.fixations.data.copy()
+        # Check if fixations already exist
+        if fixation_on_screen_path.is_file() and not overwrite:
+            fixation_on_screen = pd.read_csv(fixation_on_screen_path)
+            if fixation_on_screen.empty:
+                raise ValueError("Fixations data is empty.")
+            return fixation_on_screen
 
-        if fixation is None:
-            raise ValueError("Fixations data not found.")
+        raw_fixations = self.fixations.data
+
+        if raw_fixations.empty:
+            raise ValueError("No fixations data found.")
+        
+        if gaze_on_screen is None:
+            # Check if gaze on screen already exists
+            gaze_on_screen = self.gaze_to_screen()
 
         # Summarize gaze points first:
         gaze_means = (
@@ -774,17 +789,16 @@ Recording duration: {self.info["duration"] / 1e9}s
             )
         )
 
-        fixation = fixation.reset_index(drop=False)
+        raw_fixations = raw_fixations.reset_index(drop=False)
 
         # Merge back into fixations:
-        fixation = fixation.merge(gaze_means, on="fixation id", how="outer")
-
-        fixation = fixation.set_index("start timestamp [ns]")
+        fixation_on_screen = raw_fixations.merge(gaze_means, on="fixation id", how="outer")
+        fixation_on_screen = fixation_on_screen.set_index("start timestamp [ns]")
 
         # save fixations to csv
-        fixation.to_csv(self.der_dir / "fixations_on_screen.csv")
+        fixation_on_screen.to_csv(fixation_on_screen_path, index=False)
 
-        return fixation
+        return fixation_on_screen
 
     def estimate_camera_pose(
         self,
