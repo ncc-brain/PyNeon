@@ -411,7 +411,8 @@ Recording duration: {self.info["duration"] / 1e9}s
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-        inplace: bool = False,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None, 
     ) -> pd.DataFrame:
         """
         Synchronize gaze data to video frames by applying windowed averaging
@@ -436,8 +437,13 @@ Recording duration: {self.info["duration"] / 1e9}s
             Gaze object containing data synchronized to video frames.
         """
 
+        if output_path is None:
+            gaze_file = self.der_dir / "gaze_synced.csv"
+        else:
+            gaze_file = Path(output_path)
+
         # check if synced gaze already exists
-        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file():
+        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file() and not overwrite:
             synced_gaze = pd.read_csv(gaze_file)
             if synced_gaze.empty:
                 raise ValueError("Gaze data is empty.")
@@ -446,12 +452,12 @@ Recording duration: {self.info["duration"] / 1e9}s
         if self.gaze is None or self.video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
-        synced_gaze = self.gaze.window_average(self.video.ts, window_size, inplace).data
+        synced_gaze = self.gaze.window_average(self.video.ts, window_size).data
+
         # create an index by counting the number of rows in new gaze
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
-
-        # save synced gaze to csv
-        synced_gaze.to_csv(self.der_dir / "gaze_synced.csv", index=False)
+        
+        synced_gaze.to_csv(gaze_file, index=False)
 
         return synced_gaze
 
@@ -511,6 +517,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         quad_decimate: float = 1.0,
         skip_frames: int = 1,
         overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
         Detect AprilTags in a video and save their data to JSON. If a cached JSON already
@@ -532,6 +539,8 @@ Recording duration: {self.info["duration"] / 1e9}s
             This can drastically reduce computation if fewer detections are acceptable.
         overwrite : bool, optional
             If True, re-run detection and overwrite existing JSON (default False).
+        output_path : str or Path, optional
+            Path to save the JSON file. If None, defaults to 'apriltags.json' in the derivatives directory.
 
         Returns
         -------
@@ -544,12 +553,14 @@ Recording duration: {self.info["duration"] / 1e9}s
             - 'corners': A 4x2 float array of the tag corner coordinates
             - 'center': A 1x2 float array of the tag center coordinates
         """
-        import pandas as pd
-
-        json_file = self.der_dir / "apriltags.json"
+        if output_path is None:
+            json_file = self.der_dir / "apriltags.json"
+        else:
+            json_file = Path(output_path)
 
         # If a cached file exists and overwrite is False, just read and return it
         if json_file.is_file() and not overwrite:
+            print(f"Loading cached detections from {json_file}")
             return pd.read_json(json_file, orient="records", lines=True)
 
         all_detections = detect_apriltags(
@@ -565,14 +576,92 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         return all_detections
 
+    def find_homographies(
+            self,
+            marker_info: pd.DataFrame,
+            all_detections: Optional[pd.DataFrame] = None,
+            screen_size: tuple[int, int] = (1920, 1080),
+            coordinate_system: str = "opencv",
+            settings: Optional[dict] = None,
+            overwrite: bool = False,
+            output_path: Optional[str | Path] = None,
+    ) -> dict[int, np.ndarray]:
+        """
+        Compute homographies for each frame based on AprilTag detections and marker information.
+
+        Parameters
+        ----------
+        marker_info : pd.DataFrame
+            DataFrame containing AprilTag marker information, with one row per tag and the following columns:
+                - 'tag_id' : int
+                    ID of the tag.
+                - 'x', 'y', 'z' : float
+                    3D coordinates of the tag's center in meters.
+                - 'normal_x', 'normal_y', 'normal_z' : float
+                    Normal vector of the tag's surface in world coordinates.
+                - 'size' : float
+                    Side length of the tag in meters.
+        all_detections : pd.DataFrame, optional
+            DataFrame containing AprilTag detections for each frame. If empty, detections will be computed.
+        screen_size : tuple of int, default=(1920, 1080)
+            Pixel dimensions (width, height) of the target screen.
+        coordinate_system : {"opencv", "psychopy"}, default="opencv"
+            Defines the screen coordinate convention to use:
+                - "opencv": origin is top-left, y increases downward.
+                - "psychopy": origin is center, y increases upward.
+        settings : dict, optional
+            Dictionary of additional parameters passed to the homography estimation function.
+            Can include solver-specific options such as 'robust', 'max_iter', etc.
+        overwrite : bool, optional
+            If True, re-run homography estimation and overwrite existing JSON (default False).
+        output_path : str or Path, optional
+            Path to save the JSON file. If None, defaults to 'homographies.json' in the derivatives directory.
+
+        Returns
+        -------
+        dict[int, np.ndarray]
+            Dictionary mapping frame indices to homography matrices.
+
+        """
+        if output_path is None:
+            json_file = self.der_dir / "homographies.json"
+        else:
+            json_file = Path(output_path)
+
+        # If a cached file exists and overwrite is False, just read and return it
+        if json_file.is_file() and not overwrite:
+            print(f"Loading cached homographies from {json_file}")
+            return pd.read_json(json_file, orient="records", lines=True)
+
+        if all_detections is None:
+            all_detections = self.detect_apriltags()
+
+        if all_detections.empty:
+            raise ValueError("No AprilTag detections found.")
+
+        homographies = find_homographies(
+            self.video,
+            all_detections,
+            marker_info,
+            screen_size,
+            coordinate_system=coordinate_system,
+            settings=settings,
+        )
+
+        # Save results to JSON
+        with open(json_file, "w") as f:
+            json.dump(homographies, f)
+
+        return
+
+
     def gaze_to_screen(
         self,
-        marker_info: pd.DataFrame,
-        screen_size: tuple[int, int] = (1920, 1080),
-        coordinate_system: str = "opencv",
-        skip_frames: int = 1,
-        homography_settings: Optional[dict] = None,
-        overwrite: list[str] = [],
+        homographies: Optional[dict[int, np.ndarray]] = None,
+        marker_info: Optional[pd.DataFrame] = None,
+        synced_gaze: Optional[pd.DataFrame] = None,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
         Project gaze coordinates from eye space to screen space using AprilTag markers and homographies.
@@ -625,65 +714,31 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - plus any other fields retained from the original gaze stream.
 
         """
+        if output_path is None:
+            gaze_on_screen_path = self.der_dir / "gaze_on_screen.csv"
+        else:
+            gaze_on_screen_path = Path(output_path)
 
-        overwrite = overwrite
+        if gaze_on_screen_path.is_file() and not overwrite:
+            # Load cached gaze on screen data
+            gaze_on_screen = pd.read_csv(gaze_on_screen_path)
+            if gaze_on_screen.empty:
+                raise ValueError("Gaze data is empty.")
+            return gaze_on_screen
 
-        should_overwrite = {
-            "detection": "detection" in overwrite,
-            "homographies": "homographies" in overwrite,
-            "gaze": "gaze" in overwrite,
-        }
+        if homographies is None:
+            if marker_info is None:
+                raise ValueError("Marker information is required for homography estimation.")
+            homographies = self.find_homographies(marker_info=marker_info)  
 
-        # 1. Tag Detection
-        detection_df = self.detect_apriltags(
-            overwrite=should_overwrite["detection"], skip_frames=skip_frames
-        )
+        if synced_gaze is None:
+            # Check if synced gaze already exists
+            synced_gaze = self.sync_gaze_to_video()
 
-        # 2. Homographies
-        homographies_path = self.der_dir / "homographies.json"
-        homographies_df = load_or_compute(
-            homographies_path,
-            lambda: pd.DataFrame(
-                {
-                    "frame_idx": list(
-                        (
-                            h := find_homographies(
-                                self.video,
-                                detection_df,
-                                marker_info.copy(),
-                                screen_size,
-                                coordinate_system=coordinate_system,
-                                skip_frames=skip_frames,
-                                settings=homography_settings,
-                            )
-                        ).keys()
-                    ),
-                    "homography": [v.tolist() for v in h.values()],
-                }
-            ),
-            overwrite=should_overwrite["homographies"],
-        )
+        gaze_on_screen = transform_gaze_to_screen(synced_gaze, homographies)
 
-        # 3. Gaze Sync
-        synced_gaze_path = self.der_dir / "gaze_synced.csv"
-        synced_gaze = load_or_compute(
-            synced_gaze_path,
-            self.sync_gaze_to_video,
-            overwrite=should_overwrite["gaze"],
-        )
-
-        # 4. Gaze on Screen
-        gaze_screen_path = self.der_dir / "gaze_on_screen.csv"
-        homographies_dict = {
-            row["frame_idx"]: np.array(row["homography"])
-            for _, row in homographies_df.iterrows()
-        }
-
-        gaze_on_screen = load_or_compute(
-            gaze_screen_path,
-            lambda: transform_gaze_to_screen(synced_gaze, homographies_dict),
-            overwrite=should_overwrite["gaze"],
-        )
+        # Save gaze on screen data to CSV
+        gaze_on_screen.to_csv(gaze_on_screen_path, index=False)
 
         return gaze_on_screen
 
