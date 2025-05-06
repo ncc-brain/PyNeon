@@ -450,12 +450,15 @@ Recording duration: {self.info["duration"] / 1e9}s
         if self.gaze is None or self.video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
+        ### TODO: optimize window perfomance
         synced_gaze = self.gaze.window_average(self.video.ts, window_size).data
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
 
         synced_gaze.index.name = "timestamp [ns]"
         synced_gaze.to_csv(gaze_file, index=True)
 
+
+        ### TODO: unknown columns in the output, will raise warnings ("frame_idx")
         return Stream(synced_gaze)
 
     def estimate_scanpath(
@@ -508,7 +511,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         scanpath = estimate_scanpath(
             self.video,
-            sync_gaze.data,
+            sync_gaze,
             lk_params=lk_params,
         )
 
@@ -583,6 +586,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # Save results to JSON
         all_detections.reset_index().to_json(json_file, orient="records", lines=True)
 
+        ### TODO: unknown columns in the output, will raise warnings ("processed_frame_idx", "frame_idx", "tag_id", "corners", "center")
         return Stream(all_detections)
 
     def find_homographies(
@@ -641,7 +645,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         if all_detections is None:
             all_detections = self.detect_apriltags()
 
-        if all_detections.empty:
+        if all_detections.data.empty:
             raise ValueError("No AprilTag detections found.")
 
         homographies_df = find_homographies(
@@ -654,7 +658,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
         homographies_df.reset_index().to_json(json_file, orient="records", lines=True)
-
+        ### TODO: unknown columns in the output, will raise warnings (frame_idx, homography)
         return Stream(homographies_df)
 
 
