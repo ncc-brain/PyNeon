@@ -427,7 +427,7 @@ def events_to_times_df(
         Time after the event start time to end the epoch. Units specified by ``t_unit``.
     t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``.
-        Can be ``'s'``, ``'ms'``, ``'us'``, or ``'ns'``. Default is ``'s'``.
+        Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"s"``.
     event_name : str or list of str, optional
         Only used if ``events`` includes more than one event type.
         If ``"all"``, all events are used. Otherwise, the ``name`` column is used to filter events
