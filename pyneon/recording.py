@@ -409,61 +409,54 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
     def sync_gaze_to_video(
-        self,
-        window_size: Optional[int] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None, 
-    ) -> pd.DataFrame:
+    self,
+    window_size: Optional[int] = None,
+    overwrite: bool = False,
+    output_path: Optional[str | Path] = None,
+) -> Stream:
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around timestamps of each video frame.
-        See :meth:`pyneon.stream.Stream.window_average` for details.
 
         Parameters
         ----------
         window_size : int, optional
-            The size of the time window (in nanoseconds)
-            over which to compute the average around each new timestamp.
-            If ``None`` (default), the window size is set to the median interval
-            between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
-            The window size must be larger than the median interval between the original data timestamps,
-            i.e., ``window_size > np.median(np.diff(data.index))``.
+            Size of the time window in nanoseconds used for averaging.
+            If None, defaults to the median interval between video frame timestamps.
         overwrite : bool, optional
-            If ``True``, overwrite existing synchronized gaze data.
-            If ``False`` (default), load existing synchronized gaze data if available.
+            If True, force recomputation even if cached data exists. Default is False.
         output_path : str or Path, optional
-            Path to save the synchronized gaze data. If ``None`` (default),
-            the data is saved to ``<der_dir>/gaze_synced.csv``.
+            Path to save the resulting CSV file. Defaults to `<der_dir>/gaze_synced.csv`.
 
         Returns
         -------
-        NeonGaze
-            Gaze object containing data synchronized to video frames.
+        Stream
+            A Stream indexed by `"timestamp [ns]"`, containing:
+                - 'gaze x [px]': Gaze x-coordinate in pixels
+                - 'gaze y [px]': Gaze y-coordinate in pixels
+                - 'frame_idx': Index of the video frame corresponding to the gaze data
         """
-
         if output_path is None:
             gaze_file = self.der_dir / "gaze_synced.csv"
         else:
             gaze_file = Path(output_path)
 
-        # check if synced gaze already exists
-        if (gaze_file := self.der_dir / "gaze_synced.csv").is_file() and not overwrite:
-            synced_gaze = pd.read_csv(gaze_file)
+        if gaze_file.is_file() and not overwrite:
+            synced_gaze = pd.read_csv(gaze_file, index_col="timestamp [ns]")
             if synced_gaze.empty:
                 raise ValueError("Gaze data is empty.")
-            return synced_gaze
+            return Stream(synced_gaze)
 
         if self.gaze is None or self.video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
         synced_gaze = self.gaze.window_average(self.video.ts, window_size).data
-
-        # create an index by counting the number of rows in new gaze
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
-        
+
+        synced_gaze.index.name = "timestamp [ns]"
         synced_gaze.to_csv(gaze_file, index=True)
 
-        return synced_gaze
+        return Stream(synced_gaze)
 
     def estimate_scanpath(
         self,
@@ -473,26 +466,28 @@ Recording duration: {self.info["duration"] / 1e9}s
         overwrite : bool = False,
     ) -> Stream:
         """
-        Map fixations to video frames.
+        Estimate scanpaths by mapping fixations across video frames using optical flow.
+
+        Computes frame-by-frame gaze propagation using the Lucas-Kanade algorithm, based on
+        synchronized gaze data. If a cached result exists and `overwrite` is False, it is loaded
+        from disk. The result includes nested fixation information for each frame.
 
         Parameters
         ----------
-        sync_gaze : NeonGaze
-            Gaze data synchronized to video frames. If None (default),
-            a windowed average is applied to synchronize gaze data to video frames.
-        lk_params : dict
-            Parameters for the Lucas-Kanade optical flow algorithm.
-            See :meth:`pyneon.video.estimate_scanpath` for details.
+        sync_gaze : Stream, optional
+            Gaze data synchronized to video frames. If None, computed via `sync_gaze_to_video()`.
+        lk_params : dict, optional
+            Parameters passed to the Lucas-Kanade optical flow method. Defaults to recommended values.
         output_path : str or Path, optional
-            Path to save the scanpath data. If None (default),
-            the data is saved to ``<der_dir>/scanpath.pkl``.
+            Path to save the output file. Defaults to `<der_dir>/scanpath.pkl`.
         overwrite : bool, optional
-            If True, overwrite existing scanpath data. Defaults to False.
+            If True, recompute and overwrite any existing cached result.
 
         Returns
         -------
-        pandas.DataFrame
-            DataFrame containing the scanpath with updated fixation points.
+        Stream
+            A Stream indexed by `"timestamp [ns]"`, containing:
+                - 'fixations': A nested DataFrame of fixations per frame
         """
 
         if output_path is None:
@@ -503,10 +498,10 @@ Recording duration: {self.info["duration"] / 1e9}s
         # Check if scanpath already exists
         if scanpath_path.is_file() and not overwrite:
             print(f"Loading cached scanpath from {scanpath_path}")
-            scanpath = pd.read_csv(scanpath_path)
+            scanpath = pd.read_pickle(scanpath_path)
             if scanpath.empty:
                 raise ValueError("Scanpath data is empty.")
-            return scanpath
+            return Stream(scanpath)
 
         if sync_gaze is None:
             sync_gaze = self.sync_gaze_to_video()
@@ -533,38 +528,35 @@ Recording duration: {self.info["duration"] / 1e9}s
         output_path: Optional[str | Path] = None,
     ) -> Stream:
         """
-        Detect AprilTags in a video and save their data to JSON. If a cached JSON already
-        exists and `overwrite=False`, returns the cached data. Otherwise, processes
-        the video using pupil_apriltags with optional multi-threading, downsampling,
-        and frame skipping.
+        Detect AprilTags in a video and return their positions per frame.
+
+        Runs AprilTag detection on video frames using the `pupil_apriltags` backend.
+        Uses cached results if available unless `overwrite=True`.
 
         Parameters
         ----------
         tag_family : str, optional
-            The AprilTag family to detect (default is 'tag36h11').
+            The AprilTag family to detect (e.g., "tag36h11"). Default is "tag36h11".
         nthreads : int, optional
-            Number of CPU threads to use for detection (default 4).
+            Number of threads to use for detection. Default is 4.
         quad_decimate : float, optional
-            Downsample input frames by this factor for faster detection (default 1.0, therefore no downsampling).
-            Higher values reduce detection accuracy for small tags but speed up processing.
+            Downsampling factor applied before detection. Higher values increase speed and reduce accuracy. Default is 1.0.
         skip_frames : int, optional
-            If > 1, process only every N-th frame (default is 1, i.e., no skipping).
-            This can drastically reduce computation if fewer detections are acceptable.
+            Process every N-th frame (1 = no skipping). Speeds up processing at the cost of temporal resolution.
         overwrite : bool, optional
-            If True, re-run detection and overwrite existing JSON (default False).
+            If True, reruns detection even if cached results exist.
         output_path : str or Path, optional
-            Path to save the JSON file. If None, defaults to 'apriltags.json' in the derivatives directory.
+            Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
 
         Returns
         -------
-        pd.DataFrame
-            A DataFrame with one row per detected tag and columns:
-            - 'timestamp [ns]': The timestamp of the frame in nanoseconds (index)
-            - 'frame_idx': The processed frame index among frames read
-            - 'orig_frame_idx': The actual frame index in the video (if skipping frames)
-            - 'tag_id': The ID of the detected AprilTag
-            - 'corners': A 4x2 float array of the tag corner coordinates
-            - 'center': A 1x2 float array of the tag center coordinates
+        Stream
+            Stream indexed by `"timestamp [ns]"` with one row per detected tag, including:
+                - 'frame_idx': Index in the downsampled video sequence
+                - 'orig_frame_idx': Original frame index in the full video
+                - 'tag_id': ID of the detected AprilTag
+                - 'corners': A 4×2 array of tag corner coordinates
+                - 'center': A 1×2 array of the tag center
         """
         if output_path is None:
             json_file = self.der_dir / "apriltags.json"
@@ -578,6 +570,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             all_detections = all_detections.set_index("timestamp [ns]")
             if all_detections.empty:
                 raise ValueError("AprilTag detection data is empty.")
+            return Stream(all_detections)
 
         all_detections = detect_apriltags(
             video=self.video,
@@ -588,7 +581,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
         # Save results to JSON
-        all_detections.reset_index.to_json(json_file, orient="records", lines=True)
+        all_detections.reset_index().to_json(json_file, orient="records", lines=True)
 
         return Stream(all_detections)
 
@@ -603,41 +596,37 @@ Recording duration: {self.info["duration"] / 1e9}s
             output_path: Optional[str | Path] = None,
     ) -> Stream:
         """
-        Compute homographies for each frame based on AprilTag detections and marker information.
+        Compute and return homographies for each frame using AprilTag detections and reference marker layout.
 
         Parameters
         ----------
         marker_info : pd.DataFrame
-            DataFrame containing AprilTag marker information, with one row per tag and the following columns:
-                - 'tag_id' : int
-                    ID of the tag.
-                - 'x', 'y', 'z' : float
-                    3D coordinates of the tag's center in meters.
-                - 'normal_x', 'normal_y', 'normal_z' : float
-                    Normal vector of the tag's surface in world coordinates.
-                - 'size' : float
-                    Side length of the tag in meters.
+            DataFrame containing AprilTag reference positions and orientations, with columns:
+                - 'tag_id': ID of the tag
+                - 'x', 'y', 'z': 3D coordinates of the tag's center
+                - 'normal_x', 'normal_y', 'normal_z': Normal vector of the tag surface
+                - 'size': Side length of the tag in meters
+        all_detections : Stream, optional
+            Stream containing AprilTag detection results per frame. If None, detections are recomputed.
         coordinate_system : {"opencv", "psychopy"}, default="opencv"
-            Defines the screen coordinate convention to assume for marker coordinates:
-                - "opencv": origin is top-left, y increases downward.
-                - "psychopy": origin is center, y increases upward.
-        all_detections : pd.DataFrame, optional
-            DataFrame containing AprilTag detections for each frame. If empty, detections will be computed with default settings.
+            Defines the coordinate convention used for screen and marker layout:
+                - "opencv": Origin top-left, y increases downward
+                - "psychopy": Origin center, y increases upward
         screen_size : tuple of int, default=(1920, 1080)
-            Pixel dimensions (width, height) of the target screen.
+            Pixel dimensions of the target screen.
         settings : dict, optional
-            Dictionary of additional parameters passed to the homography estimation function.
-            Can include solver-specific options such as 'robust', 'max_iter', etc.
+            Optional parameters for homography computation (e.g., RANSAC thresholds).
         overwrite : bool, optional
-            If True, re-run homography estimation and overwrite existing JSON (default False).
+            Whether to force recomputation even if cached homographies exist.
         output_path : str or Path, optional
-            Path to save the JSON file. If None, defaults to 'homographies.json' in the derivatives directory.
+            Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
 
         Returns
         -------
-        dict[int, np.ndarray]
-            Dictionary mapping frame indices to homography matrices.
-
+        Stream
+            A Stream object indexed by `"timestamp [ns]"` containing:
+                - 'frame_idx': Video frame index
+                - 'homography': 3x3 NumPy array representing the homography matrix for that frame
         """
         if output_path is None:
             json_file = self.der_dir / "homographies.json"
@@ -664,7 +653,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             settings=settings,
         )
 
-        homographies_df.reset_index.to_json(json_file, orient="records", lines=True)
+        homographies_df.reset_index().to_json(json_file, orient="records", lines=True)
 
         return Stream(homographies_df)
 
@@ -677,33 +666,34 @@ Recording duration: {self.info["duration"] / 1e9}s
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
     ) -> Stream:
+        
         """
         Project gaze coordinates from eye space to screen space using homographies.
 
         Computes or loads frame-wise homographies and applies them to the synchronized
-        gaze data to transform it into screen coordinates. If cached results exist and
-        `overwrite` is False, cached data is returned.
+        gaze data to transform it into screen coordinates. If a cached version exists
+        and `overwrite` is False, the data is loaded from disk.
 
         Parameters
         ----------
-        homographies : dict[int, np.ndarray], optional
-            Precomputed homography matrices per frame index. If None, will be computed from `marker_info`.
+        homographies : Stream, optional
+            Stream containing precomputed homographies. If None, they are computed from `marker_info`.
         marker_info : pd.DataFrame, optional
-            AprilTag marker data required for homography estimation. Required if `homographies` is not provided.
-        synced_gaze : pd.DataFrame, optional
-            Gaze data synchronized to video frames. If None, will be computed via `sync_gaze_to_video()`.
+            AprilTag marker info used to compute homographies. Required if `homographies` is None.
+        synced_gaze : Stream, optional
+            Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
         overwrite : bool, optional
-            Whether to force recomputation and overwrite any existing screen-transformed gaze CSV.
+            If True, recompute and overwrite any existing screen-transformed gaze data. Default is False.
         output_path : str or Path, optional
-            Custom output path for the resulting CSV. Defaults to `<der_dir>/gaze_on_screen.csv`.
+            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_screen.csv`.
 
         Returns
         -------
-        pd.DataFrame
-            Gaze data with screen coordinates per frame, including:
-            - 'frame_idx': Video frame index
-            - 'x_screen', 'y_screen': Gaze coordinates in screen space (px)
-            - Any additional columns from the input gaze data
+        Stream
+            A Stream containing gaze data with screen coordinates, including:
+                - 'frame_idx': Frame index
+                - 'x_trans', 'y_trans': Gaze coordinates in screen pixel space
+                - Any additional columns from the synchronized gaze input
         """
 
         if output_path is None:
@@ -730,7 +720,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         gaze_on_screen = transform_gaze_to_screen(synced_gaze.data, homographies.data)
 
         # Save gaze on screen data to CSV
-        gaze_on_screen.to_csv(gaze_on_screen_path, index=False)
+        gaze_on_screen.to_csv(gaze_on_screen_path, index=True)
 
         return Stream(gaze_on_screen)
 
