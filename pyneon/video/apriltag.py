@@ -362,7 +362,7 @@ def find_homographies(
     skip_frames: int = 1,
     undistort: bool = True,
     settings: Optional[dict] = None,
-) -> dict:
+) -> pd.DataFrame:
     """
     Compute a homography for each frame using available AprilTag detections.
 
@@ -541,7 +541,27 @@ def find_homographies(
         max_frame = max(frames)
         homography_for_frame = _upsample_homographies(homography_for_frame, max_frame)
 
-    return homography_for_frame
+
+    # Get timestamps for each frame_idx
+    frame_idx_to_ts = dict(zip(
+        range(len(video.ts)),
+        video.ts
+    ))
+
+    records = [
+        {
+            "timestamp [ns]": frame_idx_to_ts[frame],
+            "frame_idx": frame,
+            "homography": H
+        }
+        for frame, H in homography_for_frame.items()
+        if frame in frame_idx_to_ts
+    ]
+
+    df = pd.DataFrame.from_records(records)
+    df = df.set_index("timestamp [ns]")
+
+    return df
 
 
 def transform_gaze_to_screen(

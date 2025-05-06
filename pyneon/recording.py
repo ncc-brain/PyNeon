@@ -467,11 +467,11 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def estimate_scanpath(
         self,
-        sync_gaze: Optional[pd.DataFrame] = None,
+        sync_gaze: Optional[Stream] = None,
         lk_params: Optional[dict] = None,
         output_path: Optional[str | Path] = None,
         overwrite : bool = False,
-    ) -> pd.DataFrame:
+    ) -> Stream:
         """
         Map fixations to video frames.
 
@@ -513,14 +513,15 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         scanpath = estimate_scanpath(
             self.video,
-            sync_gaze,
+            sync_gaze.data,
             lk_params=lk_params,
         )
 
         # Save scanpath to pickle
         scanpath.to_pickle(scanpath_path)
 
-        return scanpath
+        ### TODO: scanpath contains nested dataframes, which will yield warnings
+        return Stream(scanpath)
 
     def detect_apriltags(
         self,
@@ -530,7 +531,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         skip_frames: int = 1,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-    ) -> pd.DataFrame:
+    ) -> Stream:
         """
         Detect AprilTags in a video and save their data to JSON. If a cached JSON already
         exists and `overwrite=False`, returns the cached data. Otherwise, processes
@@ -573,7 +574,10 @@ Recording duration: {self.info["duration"] / 1e9}s
         # If a cached file exists and overwrite is False, just read and return it
         if json_file.is_file() and not overwrite:
             print(f"Loading cached detections from {json_file}")
-            return pd.read_json(json_file, orient="records", lines=True)
+            all_detections = pd.read_json(json_file, orient="records", lines=True)
+            all_detections = all_detections.set_index("timestamp [ns]")
+            if all_detections.empty:
+                raise ValueError("AprilTag detection data is empty.")
 
         all_detections = detect_apriltags(
             video=self.video,
@@ -584,20 +588,20 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
         # Save results to JSON
-        all_detections.to_json(json_file, orient="records", lines=True)
+        all_detections.reset_index.to_json(json_file, orient="records", lines=True)
 
-        return all_detections
+        return Stream(all_detections)
 
     def find_homographies(
             self,
             marker_info: pd.DataFrame,
-            all_detections: Optional[pd.DataFrame] = None,
+            all_detections: Optional[Stream] = None,
             coordinate_system: str = "opencv",
             screen_size: tuple[int, int] = (1920, 1080),
             settings: Optional[dict] = None,
             overwrite: bool = False,
             output_path: Optional[str | Path] = None,
-    ) -> dict[int, np.ndarray]:
+    ) -> Stream:
         """
         Compute homographies for each frame based on AprilTag detections and marker information.
 
@@ -643,7 +647,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # If a cached file exists and overwrite is False, just read and return it
         if json_file.is_file() and not overwrite:
             print(f"Loading cached homographies from {json_file}")
-            return pd.read_json(json_file, orient="records", lines=True)
+            return Stream(pd.read_json(json_file, orient="records", lines=True))
 
         if all_detections is None:
             all_detections = self.detect_apriltags()
@@ -651,30 +655,28 @@ Recording duration: {self.info["duration"] / 1e9}s
         if all_detections.empty:
             raise ValueError("No AprilTag detections found.")
 
-        homographies = find_homographies(
+        homographies_df = find_homographies(
             self.video,
-            all_detections,
+            all_detections.data,
             marker_info.copy(deep=True),
             screen_size,
             coordinate_system=coordinate_system,
             settings=settings,
         )
 
-        # Save results to JSON
-        with open(json_file, "w") as f:
-            json.dump(homographies, f)
+        homographies_df.reset_index.to_json(json_file, orient="records", lines=True)
 
-        return
+        return Stream(homographies_df)
 
 
     def gaze_to_screen(
         self,
-        homographies: Optional[dict[int, np.ndarray]] = None,
+        homographies: Optional[Stream] = None,
         marker_info: Optional[pd.DataFrame] = None,
-        synced_gaze: Optional[pd.DataFrame] = None,
+        synced_gaze: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-    ) -> pd.DataFrame:
+    ) -> Stream:
         """
         Project gaze coordinates from eye space to screen space using homographies.
 
@@ -719,25 +721,25 @@ Recording duration: {self.info["duration"] / 1e9}s
         if homographies is None:
             if marker_info is None:
                 raise ValueError("Marker information is required for homography estimation.")
-            homographies = self.find_homographies(marker_info=marker_info)  
+            homographies = self.find_homographies(marker_info=marker_info)
 
         if synced_gaze is None:
             # Check if synced gaze already exists
             synced_gaze = self.sync_gaze_to_video()
 
-        gaze_on_screen = transform_gaze_to_screen(synced_gaze, homographies)
+        gaze_on_screen = transform_gaze_to_screen(synced_gaze.data, homographies.data)
 
         # Save gaze on screen data to CSV
         gaze_on_screen.to_csv(gaze_on_screen_path, index=False)
 
-        return gaze_on_screen
+        return Stream(gaze_on_screen)
 
     def fixations_to_screen(
         self,
-        gaze_on_screen: Optional[pd.DataFrame] = None,
+        gaze_on_screen: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-    ) -> pd.DataFrame:
+    ) -> Events:
         """
         Project fixation events into screen space by summarizing gaze samples.
 
@@ -793,7 +795,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         # Summarize gaze points first:
         gaze_means = (
-            gaze_on_screen.groupby("fixation id", as_index=False)[
+            gaze_on_screen.data.groupby("fixation id", as_index=False)[
                 ["x_trans", "y_trans"]
             ]
             .mean()
@@ -812,9 +814,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         fixation_on_screen = fixation_on_screen.set_index("start timestamp [ns]")
 
         # save fixations to csv
-        fixation_on_screen.to_csv(fixation_on_screen_path, index=False)
+        fixation_on_screen.to_csv(fixation_on_screen_path, index=True)
 
-        return fixation_on_screen
+        return Events(fixation_on_screen)
 
     def estimate_camera_pose(
         self,

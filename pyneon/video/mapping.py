@@ -144,4 +144,7 @@ def estimate_scanpath(
 
     # Reset video to the beginning
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    scanpath.index.name = "timestamp [ns]"
+
     return scanpath
