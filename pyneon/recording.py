@@ -467,9 +467,10 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def estimate_scanpath(
         self,
+        sync_gaze: Optional[pd.DataFrame] = None,
         lk_params: Optional[dict] = None,
-        overwrite_scanpath: bool = False,
-        overwrite_sync: bool = False,
+        output_path: Optional[str | Path] = None,
+        overwrite : bool = False,
     ) -> pd.DataFrame:
         """
         Map fixations to video frames.
@@ -481,6 +482,12 @@ Recording duration: {self.info["duration"] / 1e9}s
             a windowed average is applied to synchronize gaze data to video frames.
         lk_params : dict
             Parameters for the Lucas-Kanade optical flow algorithm.
+            See :meth:`pyneon.video.estimate_scanpath` for details.
+        output_path : str or Path, optional
+            Path to save the scanpath data. If None (default),
+            the data is saved to ``<der_dir>/scanpath.pkl``.
+        overwrite : bool, optional
+            If True, overwrite existing scanpath data. Defaults to False.
 
         Returns
         -------
@@ -488,20 +495,21 @@ Recording duration: {self.info["duration"] / 1e9}s
             DataFrame containing the scanpath with updated fixation points.
         """
 
-        if self.video is None:
-            raise ValueError("Estimating scanpath requires video data.")
+        if output_path is None:
+            scanpath_path = self.der_dir / "scanpath.pkl"
+        else:
+            scanpath_path = Path(output_path)
 
-        scanpath_path = self.der_dir / "scanpath.pkl"
+        # Check if scanpath already exists
+        if scanpath_path.is_file() and not overwrite:
+            print(f"Loading cached scanpath from {scanpath_path}")
+            scanpath = pd.read_csv(scanpath_path)
+            if scanpath.empty:
+                raise ValueError("Scanpath data is empty.")
+            return scanpath
 
-        # Try to load cached scanpath unless overwrite is True
-        if scanpath_path.is_file() and not overwrite_scanpath:
-            return pd.read_pickle(scanpath_path)
-
-        sync_gaze = load_or_compute(
-            self.der_dir / "gaze_synced.csv",
-            self.sync_gaze_to_video,
-            overwrite=overwrite_sync,
-        )
+        if sync_gaze is None:
+            sync_gaze = self.sync_gaze_to_video()
 
         scanpath = estimate_scanpath(
             self.video,
