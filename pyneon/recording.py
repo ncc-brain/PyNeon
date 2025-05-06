@@ -428,8 +428,12 @@ Recording duration: {self.info["duration"] / 1e9}s
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
-        inplace : bool, optional
-            Whether to replace the gaze data in the instance with the window averaged data.
+        overwrite : bool, optional
+            If ``True``, overwrite existing synchronized gaze data.
+            If ``False`` (default), load existing synchronized gaze data if available.
+        output_path : str or Path, optional
+            Path to save the synchronized gaze data. If ``None`` (default),
+            the data is saved to ``<der_dir>/gaze_synced.csv``.
 
         Returns
         -------
@@ -664,55 +668,32 @@ Recording duration: {self.info["duration"] / 1e9}s
         output_path: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
-        Project gaze coordinates from eye space to screen space using AprilTag markers and homographies.
+        Project gaze coordinates from eye space to screen space using homographies.
 
-        This function computes (or loads) frame-wise homographies based on AprilTag detections
-        and uses them to transform gaze coordinates into screen coordinates. Optionally, intermediate
-        steps such as detection, homography computation, and gaze transformation can be recomputed
-        by specifying overwrite options.
+        Computes or loads frame-wise homographies and applies them to the synchronized
+        gaze data to transform it into screen coordinates. If cached results exist and
+        `overwrite` is False, cached data is returned.
 
         Parameters
         ----------
-        marker_info : pd.DataFrame
-            DataFrame containing AprilTag marker information, with one row per tag and the following columns:
-                - 'tag_id' : int
-                    ID of the tag.
-                - 'x', 'y', 'z' : float
-                    3D coordinates of the tag's center in meters.
-                - 'normal_x', 'normal_y', 'normal_z' : float
-                    Normal vector of the tag's surface in world coordinates.
-                - 'size' : float
-                    Side length of the tag in meters.
-        screen_size : tuple of int, default=(1920, 1080)
-            Pixel dimensions (width, height) of the target screen.
-        coordinate_system : {"opencv", "psychopy"}, default="opencv"
-            Defines the screen coordinate convention to use:
-                - "opencv": origin is top-left, y increases downward.
-                - "psychopy": origin is center, y increases upward.
-        skip_frames : int, default=1
-            Frame sampling rate for tag detection and homography estimation.
-            E.g., skip_frames=2 will process every 3rd frame.
-        homography_settings : dict, optional
-            Dictionary of additional parameters passed to the homography estimation function.
-            Can include solver-specific options such as 'robust', 'max_iter', etc.
-        overwrite : list of str, optional
-            List of pipeline stages to force recompute, ignoring any cached output.
-            Valid entries include:
-                - "detection": rerun AprilTag detection
-                - "homographies": recompute homography matrices
-                - "gaze": resync gaze and recompute screen projection
-            If None or empty, all cached outputs will be used if available.
+        homographies : dict[int, np.ndarray], optional
+            Precomputed homography matrices per frame index. If None, will be computed from `marker_info`.
+        marker_info : pd.DataFrame, optional
+            AprilTag marker data required for homography estimation. Required if `homographies` is not provided.
+        synced_gaze : pd.DataFrame, optional
+            Gaze data synchronized to video frames. If None, will be computed via `sync_gaze_to_video()`.
+        overwrite : bool, optional
+            Whether to force recomputation and overwrite any existing screen-transformed gaze CSV.
+        output_path : str or Path, optional
+            Custom output path for the resulting CSV. Defaults to `<der_dir>/gaze_on_screen.csv`.
 
         Returns
         -------
         pd.DataFrame
-            Gaze coordinates in screen space, indexed by video frame and including:
-                - 'frame_idx' : int
-                    Index of the video frame.
-                - 'x_screen', 'y_screen' : float
-                    Gaze coordinates in screen space (pixel units).
-                - plus any other fields retained from the original gaze stream.
-
+            Gaze data with screen coordinates per frame, including:
+            - 'frame_idx': Video frame index
+            - 'x_screen', 'y_screen': Gaze coordinates in screen space (px)
+            - Any additional columns from the input gaze data
         """
         if output_path is None:
             gaze_on_screen_path = self.der_dir / "gaze_on_screen.csv"
@@ -749,11 +730,37 @@ Recording duration: {self.info["duration"] / 1e9}s
         output_path: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
-        Map fixations to screen coordinates using gaze data.
+        Project fixation events into screen space by summarizing gaze samples.
 
-        
+        This function maps each fixation to screen coordinates by averaging the
+        screen-transformed gaze points (`x_trans`, `y_trans`) associated with
+        that fixation. If cached data exists and `overwrite` is False, it is loaded
+        from disk instead of being recomputed.
 
+        Parameters
+        ----------
+        gaze_on_screen : pd.DataFrame, optional
+            DataFrame of gaze coordinates already transformed to screen space.
+            If None, will be computed via `self.gaze_to_screen()`.
+            Must include 'fixation id', 'x_trans', and 'y_trans' columns.
+        overwrite : bool, optional
+            If True, forces recomputation and overwrites any existing output file.
+            Default is False.
+        output_path : str or Path, optional
+            Custom path to save the resulting fixation data as a CSV.
+            If None, defaults to `self.der_dir / "fixations_on_screen.csv"`.
+
+        Returns
+        -------
+        pd.DataFrame
+            Fixation-level DataFrame indexed by 'start timestamp [ns]', containing:
+                - All columns from the raw fixations table
+                - 'gaze x [screen px]' : float
+                    Mean screen-space x-coordinate for the fixation.
+                - 'gaze y [screen px]' : float
+                    Mean screen-space y-coordinate for the fixation.
         """
+
         if output_path is None:
             fixation_on_screen_path = self.der_dir / "fixations_on_screen.csv"
         else:
