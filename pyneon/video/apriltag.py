@@ -541,19 +541,11 @@ def find_homographies(
         max_frame = max(frames)
         homography_for_frame = _upsample_homographies(homography_for_frame, max_frame)
 
-
     # Get timestamps for each frame_idx
-    frame_idx_to_ts = dict(zip(
-        range(len(video.ts)),
-        video.ts
-    ))
+    frame_idx_to_ts = dict(zip(range(len(video.ts)), video.ts))
 
     records = [
-        {
-            "timestamp [ns]": frame_idx_to_ts[frame],
-            "frame_idx": frame,
-            "homography": H
-        }
+        {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H}
         for frame, H in homography_for_frame.items()
         if frame in frame_idx_to_ts
     ]

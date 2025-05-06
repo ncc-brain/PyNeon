@@ -409,11 +409,11 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
     def sync_gaze_to_video(
-    self,
-    window_size: Optional[int] = None,
-    overwrite: bool = False,
-    output_path: Optional[str | Path] = None,
-) -> Stream:
+        self,
+        window_size: Optional[int] = None,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
+    ) -> Stream:
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around timestamps of each video frame.
@@ -457,7 +457,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         synced_gaze.index.name = "timestamp [ns]"
         synced_gaze.to_csv(gaze_file, index=True)
 
-
         ### TODO: unknown columns in the output, will raise warnings ("frame_idx")
         return Stream(synced_gaze)
 
@@ -466,7 +465,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         sync_gaze: Optional[Stream] = None,
         lk_params: Optional[dict] = None,
         output_path: Optional[str | Path] = None,
-        overwrite : bool = False,
+        overwrite: bool = False,
     ) -> Stream:
         """
         Estimate scanpaths by mapping fixations across video frames using optical flow.
@@ -590,14 +589,14 @@ Recording duration: {self.info["duration"] / 1e9}s
         return Stream(all_detections)
 
     def find_homographies(
-            self,
-            marker_info: pd.DataFrame,
-            all_detections: Optional[Stream] = None,
-            coordinate_system: str = "opencv",
-            screen_size: tuple[int, int] = (1920, 1080),
-            settings: Optional[dict] = None,
-            overwrite: bool = False,
-            output_path: Optional[str | Path] = None,
+        self,
+        marker_info: pd.DataFrame,
+        all_detections: Optional[Stream] = None,
+        coordinate_system: str = "opencv",
+        screen_size: tuple[int, int] = (1920, 1080),
+        settings: Optional[dict] = None,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
     ) -> Stream:
         """
         Compute and return homographies for each frame using AprilTag detections and reference marker layout.
@@ -661,7 +660,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         ### TODO: unknown columns in the output, will raise warnings (frame_idx, homography)
         return Stream(homographies_df)
 
-
     def gaze_to_screen(
         self,
         homographies: Optional[Stream] = None,
@@ -670,7 +668,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
     ) -> Stream:
-        
         """
         Project gaze coordinates from eye space to screen space using homographies.
 
@@ -714,7 +711,9 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         if homographies is None:
             if marker_info is None:
-                raise ValueError("Marker information is required for homography estimation.")
+                raise ValueError(
+                    "Marker information is required for homography estimation."
+                )
             homographies = self.find_homographies(marker_info=marker_info)
 
         if synced_gaze is None:
@@ -782,7 +781,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         if raw_fixations.empty:
             raise ValueError("No fixations data found.")
-        
+
         if gaze_on_screen is None:
             # Check if gaze on screen already exists
             gaze_on_screen = self.gaze_to_screen()
@@ -804,7 +803,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         raw_fixations = raw_fixations.reset_index(drop=False)
 
         # Merge back into fixations:
-        fixation_on_screen = raw_fixations.merge(gaze_means, on="fixation id", how="outer")
+        fixation_on_screen = raw_fixations.merge(
+            gaze_means, on="fixation id", how="outer"
+        )
         fixation_on_screen = fixation_on_screen.set_index("start timestamp [ns]")
 
         # save fixations to csv
@@ -816,7 +817,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         self,
         tag_locations_df: pd.DataFrame,
         all_detections: Optional[pd.DataFrame] = None,
-        output_path: Optional[str | Path] = None, 
+        output_path: Optional[str | Path] = None,
         overwrite: bool = False,
     ) -> pd.DataFrame:
         """
@@ -865,7 +866,6 @@ Recording duration: {self.info["duration"] / 1e9}s
             missing = required_columns - set(tag_locations_df.columns)
             raise ValueError(f"tag_locations_df is missing required columns: {missing}")
 
-
         if output_path is None:
             json_file = self.der_dir / "camera_pose.json"
         else:
@@ -877,7 +877,6 @@ Recording duration: {self.info["duration"] / 1e9}s
             all_detections = self.detect_apriltags()
             if all_detections.empty:
                 raise ValueError("No AprilTag detections found.")
-            
 
         # Check if result JSON already exists
         if json_file.is_file() and not overwrite:
