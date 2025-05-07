@@ -66,82 +66,84 @@ def interpolate(
     return new_data
 
 
-def window_average(
-    new_ts: np.ndarray,
-    data: pd.DataFrame,
-    window_size: Optional[int] = None,
-) -> pd.DataFrame:
+def window_average(new_ts: np.ndarray,
+                        data: pd.DataFrame,
+                        window_size: Optional[int] = None
+    ) -> pd.DataFrame:
     """
-    Take the average over a time window to obtain smoothed data at new timestamps.
+    Compute window‑averaged (down‑sampled) data at new timestamps **fast**  
+    using Pandas’ vectorised ``rolling(time_window).mean()`` instead of a
+    Python for‑loop.
 
     Parameters
     ----------
     new_ts : numpy.ndarray
-        An array of new timestamps (in nanoseconds)
-        at which to compute the windowed averages.
-        The median interval between these new timestamps must be larger than
-        the median interval between the original data timestamps, i.e.,
-        ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
-        In other words, only downsampling is supported.
+        Target timestamps (int64 nanoseconds) at which to evaluate the
+        averaged signal.  
+        Must be **monotonically increasing** and **coarser** than the source
+        sampling, i.e.::
+
+            median(diff(new_ts)) > median(diff(data.index))
+
     data : pandas.DataFrame
-        Data to apply window average to. Must have a monotonically increasing
-        index named ``timestamp [ns]``.
+        Source data with an **integer nanosecond index** named
+        ``"timestamp [ns]"`` and arbitrarily many columns.  
+        The index does not need to be perfectly regular, but it must be
+        strictly increasing.
+
     window_size : int, optional
-        The size of the time window (in nanoseconds)
-        over which to compute the average around each new timestamp.
-        If ``None`` (default), the window size is set to the median interval
-        between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
-        The window size must be larger than the median interval between the original data timestamps,
-        i.e., ``window_size > np.median(np.diff(data.index))``.
+        Size of the averaging window in nanoseconds centred on each ``new_ts``.
+        If *None* (default) the window is set to the median interval of
+        ``new_ts``.  
+        Must satisfy ``window_size > median(diff(data.index))``.
 
     Returns
     -------
     pandas.DataFrame
-        Data with window average applied.
+        A DataFrame indexed by ``new_ts`` and carrying the **same columns and
+        dtypes** as the input.  Non‑float columns are rounded back to their
+        original integer type after averaging.
     """
+
     _check_data(data)
-    new_ts = np.sort(new_ts).astype(np.int64)
-    new_ts_median_diff = np.median(np.diff(new_ts))
-    original_ts_median_diff = np.median(np.diff(data.index))
+    new_ts = np.sort(new_ts).astype("int64")
 
-    # Check for downsampling
-    if new_ts_median_diff < original_ts_median_diff:
-        raise ValueError(
-            "new_ts must have a lower sampling frequency than the old data"
-        )
-
+    # ------------------------------------------------------------------ checks
+    original_diff = np.median(np.diff(data.index))
+    new_diff      = np.median(np.diff(new_ts))
+    if new_diff < original_diff:
+        raise ValueError("new_ts must be down‑sampled relative to the data.")
     if window_size is None:
-        window_size = int(new_ts_median_diff)
+        window_size = int(new_diff)
+    if window_size < original_diff:
+        raise ValueError("window_size must exceed original sample spacing.")
 
-    if window_size < original_ts_median_diff:
-        raise ValueError(
-            "Window size must be larger than the median difference "
-            "between the old timestamps, otherwise data could be interleaved by NAs."
-        )
+    # Convert the int64‑ns index into a DatetimeIndex because pandas'
+    # rolling(time‑window) API works on Datetime/Timedelta indices.
+    df = data.copy()
+    df.index = pd.to_datetime(df.index, unit="ns")
 
-    new_data = pd.DataFrame(index=new_ts, columns=data.columns).astype(data.dtypes)
-    non_float_cols = data.select_dtypes(exclude="float").columns
+    # The rolling window must be a pandas offset string, e.g. "500ns"
+    win_str = f"{window_size}ns"
 
-    for ts in tqdm(new_ts, desc="Computing window averages"):
-        lower_bound = ts - window_size / 2
-        upper_bound = ts + window_size / 2
+    rolled = (
+        df                                        # original data
+        .rolling(win_str, center=True)            #  ⇨ rolling window
+        .mean()                                   #  ⇨ mean over window
+    )
 
-        # Select data within the window
-        window_data = data[
-            (data.index >= lower_bound) & (data.index <= upper_bound)
-        ].copy()
-        if not window_data.empty:
-            # Take the mean of the window data
-            mean_values = window_data.mean(axis=0)
-            # Round non-float columns so that they can be safely set to the original data type
-            for non_float_col in non_float_cols:
-                if not pd.isna(col_value := mean_values[non_float_col]):
-                    mean_values[non_float_col] = round(col_value)
-            new_data.loc[ts, :] = mean_values
-        else:
-            new_data.loc[ts, :] = pd.NA
+    # Reindex to *exactly* the requested timestamps (as DateTime)
+    target_idx = pd.to_datetime(new_ts, unit="ns")
+    out = rolled.reindex(target_idx)
 
-    return new_data
+    # round non‑floats
+    non_float = data.select_dtypes(exclude="float").columns
+    out[non_float] = out[non_float].round().astype(data[non_float].dtypes)
+
+    # Restore the original int64 index name/type
+    out.index = new_ts
+    out.index.name = data.index.name            # "timestamp [ns]"
+    return out
 
 
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
