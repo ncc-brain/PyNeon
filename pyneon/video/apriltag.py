@@ -565,7 +565,7 @@ def find_homographies(
 
 
 def transform_gaze_to_screen(
-    gaze_df: pd.DataFrame, homography_for_frame: dict
+    gaze_df: pd.DataFrame, homographies: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Apply per-frame homographies to gaze points to transform them into a new coordinate system.
@@ -588,6 +588,12 @@ def transform_gaze_to_screen(
     gaze_df = gaze_df.copy()
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
+
+    #convert homographies to dict
+    homography_for_frame = {
+        int(row["frame_idx"]): row["homography"]
+        for _, row in homographies.iterrows()
+    }
 
     for frame in tqdm(
         gaze_df["frame_idx"].unique(), desc="Applying homography to gaze points"

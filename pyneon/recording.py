@@ -570,7 +570,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         if json_file.is_file() and not overwrite:
             print(f"Loading cached detections from {json_file}")
             all_detections = pd.read_json(json_file, orient="records", lines=True)
-            all_detections = all_detections.set_index("timestamp [ns]")
+            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype("int64")
             if all_detections.empty:
                 raise ValueError("AprilTag detection data is empty.")
             return Stream(all_detections)
@@ -633,14 +633,16 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'homography': 3x3 NumPy array representing the homography matrix for that frame
         """
         if output_path is None:
-            json_file = self.der_dir / "homographies.json"
+            pkl_file = self.der_dir / "homographies.pkl"
         else:
-            json_file = Path(output_path)
+            pkl_file = Path(output_path)
 
         # If a cached file exists and overwrite is False, just read and return it
-        if json_file.is_file() and not overwrite:
-            print(f"Loading cached homographies from {json_file}")
-            return Stream(pd.read_json(json_file, orient="records", lines=True))
+        if pkl_file.is_file() and not overwrite:
+            print(f"Loading cached homographies from {pkl_file}")
+            df = pd.read_pickle(pkl_file)
+            homographies = Stream(df, sampling_freq_nominal=30)
+            return homographies
 
         if all_detections is None:
             all_detections = self.detect_apriltags()
@@ -657,7 +659,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             settings=settings,
         )
 
-        homographies_df.reset_index().to_json(json_file, orient="records", lines=True)
+        homographies_df.to_pickle(pkl_file)
         ### TODO: unknown columns in the output, will raise warnings (frame_idx, homography)
         return Stream(homographies_df)
 
@@ -710,7 +712,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             gaze_on_screen = pd.read_csv(gaze_on_screen_path)
             if gaze_on_screen.empty:
                 raise ValueError("Gaze data is empty.")
-            return gaze_on_screen
+            return Stream(gaze_on_screen)
 
         if homographies is None:
             if marker_info is None:
@@ -776,7 +778,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             fixation_on_screen = pd.read_csv(fixation_on_screen_path)
             if fixation_on_screen.empty:
                 raise ValueError("Fixations data is empty.")
-            return fixation_on_screen
+            return Events(fixation_on_screen, id_name="fixation id")
 
         raw_fixations = self.fixations.data
 
@@ -839,6 +841,12 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'corners': A (4x2) array of the tag corner pixel coordinates (np.ndarray)
                 - 'center': A (1x2) array of the tag center pixel coordinates (np.ndarray)
             If empty, the detections are computed using the `detect_apriltags` function with default settings.
+
+        output_path : str or Path, optional
+            Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
+        
+        overwrite : bool, optional 
+            If True, forces recomputation and overwrites any existing saved result. Default is False.
 
         Returns
         -------
