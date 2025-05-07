@@ -40,6 +40,12 @@ def interpolate(
     """
 
     _check_data(data)
+
+    if data.index.duplicated().any():
+        # aggregate duplicate timestamps before vectorised interpolation
+        data = data.groupby(data.index).mean(numeric_only=False)
+        # ^ numeric cols → mean; non‑numeric → first
+
     x_old = data.index.values.astype("float64")        # SciPy wants float
 
     # -- Prepare empty output -----------------------------------------
