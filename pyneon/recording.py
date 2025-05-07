@@ -457,7 +457,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         synced_gaze.index.name = "timestamp [ns]"
         synced_gaze.to_csv(gaze_file, index=True)
 
-        ### TODO: unknown columns in the output, will raise warnings ("frame_idx")
         return Stream(synced_gaze)
 
     def estimate_scanpath(
@@ -582,7 +581,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         # Save results to JSON
         all_detections.reset_index().to_json(json_file, orient="records", lines=True)
 
-        ### TODO: unknown columns in the output, will raise warnings ("processed_frame_idx", "frame_idx", "tag_id", "corners", "center")
         return Stream(all_detections)
 
     def find_homographies(
@@ -656,7 +654,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         )
 
         homographies_df.to_pickle(pkl_file)
-        ### TODO: unknown columns in the output, will raise warnings (frame_idx, homography)
+        
         return Stream(homographies_df)
 
     def gaze_to_screen(

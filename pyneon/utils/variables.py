@@ -56,4 +56,20 @@ data_types = {
     # Events
     "name": str,
     "type": str,
+    # Detections
+    "processed_frame_idx": "Int32",
+    "frame_idx": "Int32",
+    "tag_id": "Int32",
+    "corners": object,
+    "center": object,
+    # Homographies
+    "homography": object,
+    # Gaze on Screen
+    "x_trans": float,
+    "y_trans": float,
+    # Fixations on Screen
+    "gaze x [screen px]": float,
+    "gaze y [screen px]": float,
+    #scanpath
+    "fixations": object,
 }
