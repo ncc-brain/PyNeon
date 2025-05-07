@@ -424,7 +424,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             Size of the time window in nanoseconds used for averaging.
             If None, defaults to the median interval between video frame timestamps.
         overwrite : bool, optional
-            If True, force recomputation even if cached data exists. Default is False.
+            If True, force recomputation even if saved data exists. Default is False.
         output_path : str or Path, optional
             Path to save the resulting CSV file. Defaults to `<der_dir>/gaze_synced.csv`.
 
@@ -468,57 +468,52 @@ Recording duration: {self.info["duration"] / 1e9}s
         overwrite: bool = False,
     ) -> Stream:
         """
-        Estimate scanpaths by mapping fixations across video frames using optical flow.
+        Estimate scanpaths by propagating fixations across frames with Lucas‑Kanade.
 
-        Computes frame-by-frame gaze propagation using the Lucas-Kanade algorithm, based on
-        synchronized gaze data. If a cached result exists and `overwrite` is False, it is loaded
-        from disk. The result includes nested fixation information for each frame.
+        If a cached result exists and ``overwrite`` is False, it is loaded from disk.
 
         Parameters
         ----------
         sync_gaze : Stream, optional
-            Gaze data synchronized to video frames. If None, computed via `sync_gaze_to_video()`.
+            Gaze data synchronised to video frames. If ``None``, it is created with
+            :pymeth:`sync_gaze_to_video`.
         lk_params : dict, optional
-            Parameters passed to the Lucas-Kanade optical flow method. Defaults to recommended values.
+            Parameters forwarded to the LK optical‑flow call.
         output_path : str or Path, optional
-            Path to save the output file. Defaults to `<der_dir>/scanpath.pkl`.
+            Where to save the pickle. Defaults to ``<der_dir>/scanpath.pkl``.
         overwrite : bool, optional
-            If True, recompute and overwrite any existing cached result.
+            Force recomputation even if a pickle exists.
 
         Returns
         -------
         Stream
-            A Stream indexed by `"timestamp [ns]"`, containing:
-                - 'fixations': A nested DataFrame of fixations per frame
+            Indexed by ``"timestamp [ns]"`` with one column ``"fixations"``
+            containing a nested DataFrame for each video frame.
         """
+        scanpath_path = Path(output_path) if output_path else self.der_dir / "scanpath.pkl"
 
-        if output_path is None:
-            scanpath_path = self.der_dir / "scanpath.pkl"
-        else:
-            scanpath_path = Path(output_path)
-
-        # Check if scanpath already exists
         if scanpath_path.is_file() and not overwrite:
-            print(f"Loading cached scanpath from {scanpath_path}")
-            scanpath = pd.read_pickle(scanpath_path)
-            if scanpath.empty:
+            print(f"Loading saved scanpath from {scanpath_path}")
+            df = pd.read_pickle(scanpath_path)
+            if df.empty:
                 raise ValueError("Scanpath data is empty.")
-            return Stream(scanpath)
+            return Stream(df, sampling_freq_nominal=int(self.video.fps))
 
         if sync_gaze is None:
             sync_gaze = self.sync_gaze_to_video()
 
-        scanpath = estimate_scanpath(
+        scanpath_df = estimate_scanpath(
             self.video,
-            sync_gaze,
+            sync_gaze,          # <-- pass the raw DF
             lk_params=lk_params,
         )
+        scanpath_df.index.name = "timestamp [ns]"
 
-        # Save scanpath to pickle
-        scanpath.to_pickle(scanpath_path)
+        # ------------------------------------------------------------------ save
+        scanpath_df.to_pickle(scanpath_path)
 
-        ### TODO: scanpath contains nested dataframes, which will yield warnings
-        return Stream(scanpath)
+        return Stream(scanpath_df, sampling_freq_nominal=int(self.video.fps))
+
 
     def detect_apriltags(
         self,
@@ -533,7 +528,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         Detect AprilTags in a video and return their positions per frame.
 
         Runs AprilTag detection on video frames using the `pupil_apriltags` backend.
-        Uses cached results if available unless `overwrite=True`.
+        Uses saved results if available unless `overwrite=True`.
 
         Parameters
         ----------
@@ -546,7 +541,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         skip_frames : int, optional
             Process every N-th frame (1 = no skipping). Speeds up processing at the cost of temporal resolution.
         overwrite : bool, optional
-            If True, reruns detection even if cached results exist.
+            If True, reruns detection even if saved results exist.
         output_path : str or Path, optional
             Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
 
@@ -565,9 +560,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         else:
             json_file = Path(output_path)
 
-        # If a cached file exists and overwrite is False, just read and return it
+        # If a saved file exists and overwrite is False, just read and return it
         if json_file.is_file() and not overwrite:
-            print(f"Loading cached detections from {json_file}")
+            print(f"Loading saved detections from {json_file}")
             all_detections = pd.read_json(json_file, orient="records", lines=True)
             all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype("int64")
             if all_detections.empty:
@@ -620,7 +615,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         settings : dict, optional
             Optional parameters for homography computation (e.g., RANSAC thresholds).
         overwrite : bool, optional
-            Whether to force recomputation even if cached homographies exist.
+            Whether to force recomputation even if saved homographies exist.
         output_path : str or Path, optional
             Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
 
@@ -636,9 +631,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         else:
             pkl_file = Path(output_path)
 
-        # If a cached file exists and overwrite is False, just read and return it
+        # If a saved file exists and overwrite is False, just read and return it
         if pkl_file.is_file() and not overwrite:
-            print(f"Loading cached homographies from {pkl_file}")
+            print(f"Loading saved homographies from {pkl_file}")
             df = pd.read_pickle(pkl_file)
             homographies = Stream(df, sampling_freq_nominal=30)
             return homographies
@@ -674,7 +669,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         Project gaze coordinates from eye space to screen space using homographies.
 
         Computes or loads frame-wise homographies and applies them to the synchronized
-        gaze data to transform it into screen coordinates. If a cached version exists
+        gaze data to transform it into screen coordinates. If a saved version exists
         and `overwrite` is False, the data is loaded from disk.
 
         Parameters
@@ -705,7 +700,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             gaze_on_screen_path = Path(output_path)
 
         if gaze_on_screen_path.is_file() and not overwrite:
-            # Load cached gaze on screen data
+            # Load saved gaze on screen data
             gaze_on_screen = pd.read_csv(gaze_on_screen_path)
             if gaze_on_screen.empty:
                 raise ValueError("Gaze data is empty.")
@@ -740,7 +735,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         This function maps each fixation to screen coordinates by averaging the
         screen-transformed gaze points (`x_trans`, `y_trans`) associated with
-        that fixation. If cached data exists and `overwrite` is False, it is loaded
+        that fixation. If saved data exists and `overwrite` is False, it is loaded
         from disk instead of being recomputed.
 
         Parameters
@@ -758,8 +753,8 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        pd.DataFrame
-            Fixation-level DataFrame indexed by 'start timestamp [ns]', containing:
+        Events
+            An events object containing:
                 - All columns from the raw fixations table
                 - 'gaze x [screen px]' : float
                     Mean screen-space x-coordinate for the fixation.
@@ -816,95 +811,72 @@ Recording duration: {self.info["duration"] / 1e9}s
         return Events(fixation_on_screen)
 
     def estimate_camera_pose(
-        self,
-        tag_locations_df: pd.DataFrame,
-        all_detections: Optional[pd.DataFrame] = None,
-        output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-    ) -> pd.DataFrame:
+    self,
+    tag_locations_df: pd.DataFrame,
+    all_detections: Optional[Stream] = None,
+    output_path: Optional[str | Path] = None,
+    overwrite: bool = False,
+    ) -> Stream:
         """
-        Compute the camera positions from AprilTag detections in a video.
+        Compute the camera pose (R|t) for every frame.
 
         Parameters
         ----------
         tag_locations_df : pd.DataFrame
-            A DataFrame containing AprilTag 3D locations, orientations, and sizes.
-            Required columns:
-                - 'tag_id': int, ID of the tag
-                - 'x', 'y', 'z': float, coordinates of the tag's center
-                - 'normal_x', 'normal_y', 'normal_z': float, components of the tag's normal vector
-                - 'size': float, the side length of the tag in meters
-
-        all_detections : pd.DataFrame, optional
-            DataFrame containing AprilTag detections for each frame, with columns:
-                - 'frame_idx': The frame number (int)
-                - 'tag_id': The ID of the detected AprilTag (int)
-                - 'corners': A (4x2) array of the tag corner pixel coordinates (np.ndarray)
-                - 'center': A (1x2) array of the tag center pixel coordinates (np.ndarray)
-            If empty, the detections are computed using the `detect_apriltags` function with default settings.
-
+            3‑D positions, normals and size for every AprilTag (columns:
+            'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
+        all_detections : Stream, optional
+            Per‑frame AprilTag detections.  If ``None``, they are produced by
+            :pymeth:`detect_apriltags`.
         output_path : str or Path, optional
-            Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
-        
-        overwrite : bool, optional 
-            If True, forces recomputation and overwrites any existing saved result. Default is False.
+            Where to save the result (JSON). Defaults to ``<der_dir>/camera_pose.json``.
+        overwrite : bool, optional
+            Force recomputation even if a JSON exists.
 
         Returns
         -------
-        pd.DataFrame
-            DataFrame containing the camera positions for each frame, with columns:
-            - 'frame_idx': The frame number
-            - 'translation_vector': A (3,) array with the camera translation vector
-            - 'rotation_vector': A (3,) array with the camera rotation vector (Rodrigues form)
-            - 'camera_pos': A (3,) array with the camera position in world coordinates
+        Stream
+            Indexed by ``"timestamp [ns]"`` with columns
+            ``'frame_idx', 'translation_vector', 'rotation_vector', 'camera_pos'``.
         """
+        json_file = Path(output_path) if output_path else self.der_dir / "camera_pose.json"
 
-        required_columns = {
-            "tag_id",
-            "x",
-            "y",
-            "z",
-            "normal_x",
-            "normal_y",
-            "normal_z",
-            "size",
-        }
-
-        if not required_columns.issubset(tag_locations_df.columns):
-            missing = required_columns - set(tag_locations_df.columns)
-            raise ValueError(f"tag_locations_df is missing required columns: {missing}")
-
-        if output_path is None:
-            json_file = self.der_dir / "camera_pose.json"
-        else:
-            json_file = Path(output_path)
-
-        # check for detections dataframe
-        if all_detections == None:
-            # Check if detections already exist
-            all_detections = self.detect_apriltags()
-            if all_detections.empty:
-                raise ValueError("No AprilTag detections found.")
-
-        # Check if result JSON already exists
+        # ------------------------------------------------------------------ load
         if json_file.is_file() and not overwrite:
-            print(f"Loading cached camera pose from {json_file}")
-            camera_pose = pd.read_json(json_file, orient="records", lines=True)
-            if camera_pose.empty:
+            print(f"Loading saved camera pose from {json_file}")
+            df = pd.read_json(json_file, orient="records", lines=True)
+            df["timestamp [ns]"] = df["timestamp [ns]"].astype("int64")
+            df = df.set_index("timestamp [ns]")
+            if df.empty:
                 raise ValueError("Camera pose data is empty.")
-            return camera_pose
+            return Stream(df, sampling_freq_nominal=int(self.video.fps))
 
-        # Compute camera positions
-        camera_pose = estimate_camera_pose(
+        # ------------------------------------------------------------------ prerequisites
+        req = {
+            "tag_id", "x", "y", "z", "normal_x", "normal_y", "normal_z", "size"
+        }
+        missing = req - set(tag_locations_df.columns)
+        if missing:
+            raise ValueError(f"tag_locations_df is missing: {missing}")
+
+        if all_detections is None:
+            all_detections = self.detect_apriltags()
+
+        if all_detections.data.empty:
+            raise ValueError("No AprilTag detections found.")
+
+        # ------------------------------------------------------------------ compute
+        cam_pose_df = estimate_camera_pose(
             video=self.video,
             tag_locations_df=tag_locations_df,
-            all_detections=all_detections,
+            all_detections=all_detections.data,
         )
+        cam_pose_df.index.name = "timestamp [ns]"
 
-        # Save to JSON
-        camera_pose.to_json(json_file, orient="records")
+        # ------------------------------------------------------------------ save
+        cam_pose_df.reset_index().to_json(json_file, orient="records", lines=True)
 
-        return camera_pose
+        return Stream(cam_pose_df, sampling_freq_nominal=int(self.video.fps))
 
     def smooth_camera_pose(
         self,
