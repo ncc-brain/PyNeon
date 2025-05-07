@@ -19,52 +19,56 @@ def interpolate(
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
-    Interpolate a data stream to a new set of timestamps.
+    Vectorised interpolation of a tabular time‑series.
 
     Parameters
     ----------
-    new_ts : numpy.ndarray
-        An array of new timestamps (in nanoseconds)
-        at which to evaluate the interpolant.
+    new_ts : np.ndarray
+        Sorted int64 nanosecond timestamps to sample at (1‑D).
     data : pandas.DataFrame
-        Data to interpolate. Must have a monotonically increasing
-        index named ``timestamp [ns]``.
-    float_kind : str, optional
-        Kind of interpolation applied on columns of float type,
-        by default ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
-    other_kind : str, optional
-        Kind of interpolation applied on columns of other types,
-        by default ``"nearest"``. For details see :class:`scipy.interpolate.interp1d`.
+        Source data indexed by ``"timestamp [ns]"`` (int64, monotonic).
+    float_kind : {"linear", "cubic", ...}, default "cubic"
+        Interpolation scheme for floating‑point columns (see SciPy ``interp1d``).
+    other_kind : {"nearest", "linear", ...}, default "nearest"
+        Scheme for *non‑float* columns (int, bool, category).  ``"nearest"`` is
+        typically what you want for IDs or labels.
 
     Returns
     -------
     pandas.DataFrame
-        Interpolated data.
+        Same columns & dtypes as *data*, indexed by ``new_ts``.
     """
-    _check_data(data)
-    new_ts = np.sort(new_ts).astype(np.int64)
-    new_data = pd.DataFrame(index=new_ts, columns=data.columns)
-    for col in data.columns:
-        # Float columns are interpolated with float_kind
-        if pd.api.types.is_float_dtype(data[col]):
-            new_data[col] = interp1d(
-                data.index,
-                data[col],
-                kind=float_kind,
-                bounds_error=False,
-            )(new_ts)
-        # Other columns are interpolated with other_kind
-        else:
-            new_data[col] = interp1d(
-                data.index,
-                data[col],
-                kind=other_kind,
-                bounds_error=False,
-            )(new_ts)
-        # Ensure the new column has the same dtype as the original
-        new_data[col] = new_data[col].astype(data[col].dtype)
-    return new_data
 
+    _check_data(data)
+    x_old = data.index.values.astype("float64")        # SciPy wants float
+
+    # -- Prepare empty output -----------------------------------------
+    new_ts = np.sort(new_ts).astype("int64")
+    out = pd.DataFrame(index=new_ts, columns=data.columns)
+    out = out.astype(data.dtypes)                      # keep dtypes
+
+    # -- Split by dtype group ----------------------------------------
+    float_cols = data.select_dtypes(include="float").columns
+    other_cols = data.columns.difference(float_cols)
+
+    if len(float_cols):
+        y = data[float_cols].values         # shape (n_old, n_float)
+        f = interp1d(
+            x_old, y, kind=float_kind, axis=0, bounds_error=False, copy=False
+        )
+        out[float_cols] = f(new_ts.astype("float64"))
+
+    if len(other_cols):
+        y = data[other_cols].values         # mixed/object still OK as ndarray
+        g = interp1d(
+            x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False
+        )
+        out[other_cols] = g(new_ts.astype("float64")).astype(
+            data[other_cols].dtypes.to_list()
+        )
+
+    out.index.name = data.index.name        # "timestamp [ns]"
+    return out
 
 def window_average(new_ts: np.ndarray,
                         data: pd.DataFrame,

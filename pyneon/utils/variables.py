@@ -57,8 +57,8 @@ data_types = {
     "name": str,
     "type": str,
     # Detections
-    "processed_frame_idx": "Int32",
-    "frame_idx": "Int32",
+    "processed_frame_idx": "Int64",
+    "frame_idx": "Int64",
     "tag_id": "Int32",
     "corners": object,
     "center": object,

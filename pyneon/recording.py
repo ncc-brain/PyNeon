@@ -589,6 +589,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         all_detections: Optional[Stream] = None,
         coordinate_system: str = "opencv",
         screen_size: tuple[int, int] = (1920, 1080),
+        skip_frames: int = 1,
         settings: Optional[dict] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
@@ -612,6 +613,8 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - "psychopy": Origin center, y increases upward
         screen_size : tuple of int, default=(1920, 1080)
             Pixel dimensions of the target screen.
+        skip_frames : int, default=1
+            Number of frames to skip between detections. Default is 1 (no skipping).
         settings : dict, optional
             Optional parameters for homography computation (e.g., RANSAC thresholds).
         overwrite : bool, optional
@@ -649,12 +652,13 @@ Recording duration: {self.info["duration"] / 1e9}s
             all_detections.data,
             marker_info.copy(deep=True),
             screen_size,
+            skip_frames=skip_frames,
             coordinate_system=coordinate_system,
             settings=settings,
         )
 
         homographies_df.to_pickle(pkl_file)
-        
+
         return Stream(homographies_df)
 
     def gaze_to_screen(

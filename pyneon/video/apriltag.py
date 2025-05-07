@@ -649,7 +649,7 @@ def _upsample_homographies(
     # ------------------------------------------------------------------
     # 3) Interpolate between consecutive known frames
     # ------------------------------------------------------------------
-    for i in range(len(known_frames) - 1):
+    for i in tqdm(range(len(known_frames) - 1), desc="Interpolating homographies"):
         f1 = known_frames[i]
         f2 = known_frames[i + 1]
 
