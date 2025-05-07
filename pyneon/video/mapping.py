@@ -62,20 +62,20 @@ def estimate_scanpath(
         idx = gaze_df.index[gaze_df["fixation id"] == fid]
         if len(idx) == 0:
             continue
-        gaze_df.loc[idx[0],  "fixation status"] = "start"
+        gaze_df.loc[idx[0], "fixation status"] = "start"
         gaze_df.loc[idx[-1], "fixation status"] = "end"
         if len(idx) > 2:
             gaze_df.loc[idx[1:-1], "fixation status"] = "during"
 
     # ------------------------------------------------------------------ containers
-    active: dict[int, tuple[float, float]] = {}        # currently trackable (x, y)
+    active: dict[int, tuple[float, float]] = {}  # currently trackable (x, y)
     frames: list[dict[int, tuple[float, float, str]]] = []
 
     # first frame: fill from gaze_df row 0
     first_row = gaze_df.iloc[0]
     if not pd.isna(first_row["fixation id"]):
         fid = int(first_row["fixation id"])
-        xy  = (float(first_row["gaze x [px]"]), float(first_row["gaze y [px]"]))
+        xy = (float(first_row["gaze x [px]"]), float(first_row["gaze y [px]"]))
         status = first_row["fixation status"]
         frames.append({fid: (*xy, status)})
         if status in {"start", "during"}:
@@ -100,16 +100,18 @@ def estimate_scanpath(
 
         # ---------- propagate existing points ---------------------------------
         if active:
-            prev_pts = np.array(list(active.values()), dtype=np.float32).reshape(-1, 1, 2)
+            prev_pts = np.array(list(active.values()), dtype=np.float32).reshape(
+                -1, 1, 2
+            )
             prev_ids = np.array(list(active.keys()), dtype=np.int32)
 
             curr_pts, status_mask, _ = cv2.calcOpticalFlowPyrLK(
                 prev_gray, curr_gray, prev_pts, None, **lk_params
             )
 
-            for (x, y), ok, fid in zip(curr_pts.reshape(-1, 2),
-                                    status_mask.ravel(),
-                                    prev_ids):
+            for (x, y), ok, fid in zip(
+                curr_pts.reshape(-1, 2), status_mask.ravel(), prev_ids
+            ):
                 if ok:
                     frame_state[fid] = (float(x), float(y), "tracked")
                     active[fid] = (float(x), float(y))
@@ -121,7 +123,7 @@ def estimate_scanpath(
         row = gaze_df.iloc[i]
         if not pd.isna(row["fixation id"]):
             fid_new = int(row["fixation id"])
-            if fid_new not in frame_state:           # not already propagated
+            if fid_new not in frame_state:  # not already propagated
                 xy_new = (row["gaze x [px]"], row["gaze y [px]"])
                 status_new = row["fixation status"]
                 frame_state[fid_new] = (*xy_new, status_new)
@@ -135,22 +137,24 @@ def estimate_scanpath(
     records = []
     for ts, state in zip(sync_gaze.ts, frames):
         if state:
-            fix_df = (pd.DataFrame.from_dict(
-                        state, orient="index",
-                        columns=["gaze x [px]", "gaze y [px]", "fixation status"]
-                    )
-                    .assign(**{"fixation id": lambda d: d.index})
-                    .reset_index(drop=True)
-                    )
+            fix_df = (
+                pd.DataFrame.from_dict(
+                    state,
+                    orient="index",
+                    columns=["gaze x [px]", "gaze y [px]", "fixation status"],
+                )
+                .assign(**{"fixation id": lambda d: d.index})
+                .reset_index(drop=True)
+            )
         else:
             fix_df = pd.DataFrame(
                 columns=["fixation id", "gaze x [px]", "gaze y [px]", "fixation status"]
             )
         records.append((ts, fix_df))
 
-    scanpath = (pd.DataFrame.from_records(records,
-                columns=["timestamp [ns]", "fixations"])
-                .set_index("timestamp [ns]"))
+    scanpath = pd.DataFrame.from_records(
+        records, columns=["timestamp [ns]", "fixations"]
+    ).set_index("timestamp [ns]")
     scanpath.index.name = "timestamp [ns]"
 
     # reset video so other routines can reuse it

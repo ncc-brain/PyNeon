@@ -46,42 +46,38 @@ def interpolate(
         data = data.groupby(data.index).mean(numeric_only=False)
         # ^ numeric cols → mean; non‑numeric → first
 
-    x_old = data.index.values.astype("float64")        # SciPy wants float
+    x_old = data.index.values.astype("float64")  # SciPy wants float
 
     # -- Prepare empty output -----------------------------------------
     new_ts = np.sort(new_ts).astype("int64")
     out = pd.DataFrame(index=new_ts, columns=data.columns)
-    out = out.astype(data.dtypes)                      # keep dtypes
+    out = out.astype(data.dtypes)  # keep dtypes
 
     # -- Split by dtype group ----------------------------------------
     float_cols = data.select_dtypes(include="float").columns
     other_cols = data.columns.difference(float_cols)
 
     if len(float_cols):
-        y = data[float_cols].values         # shape (n_old, n_float)
-        f = interp1d(
-            x_old, y, kind=float_kind, axis=0, bounds_error=False, copy=False
-        )
+        y = data[float_cols].values  # shape (n_old, n_float)
+        f = interp1d(x_old, y, kind=float_kind, axis=0, bounds_error=False, copy=False)
         out[float_cols] = f(new_ts.astype("float64"))
 
     if len(other_cols):
-        y = data[other_cols].values         # mixed/object still OK as ndarray
-        g = interp1d(
-            x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False
-        )
+        y = data[other_cols].values  # mixed/object still OK as ndarray
+        g = interp1d(x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False)
         out[other_cols] = g(new_ts.astype("float64")).astype(
             data[other_cols].dtypes.to_list()
         )
 
-    out.index.name = data.index.name        # "timestamp [ns]"
+    out.index.name = data.index.name  # "timestamp [ns]"
     return out
 
-def window_average(new_ts: np.ndarray,
-                        data: pd.DataFrame,
-                        window_size: Optional[int] = None
-    ) -> pd.DataFrame:
+
+def window_average(
+    new_ts: np.ndarray, data: pd.DataFrame, window_size: Optional[int] = None
+) -> pd.DataFrame:
     """
-    Compute window‑averaged (down‑sampled) data at new timestamps **fast**  
+    Compute window‑averaged (down‑sampled) data at new timestamps **fast**
     using Pandas’ vectorised ``rolling(time_window).mean()`` instead of a
     Python for‑loop.
 
@@ -89,7 +85,7 @@ def window_average(new_ts: np.ndarray,
     ----------
     new_ts : numpy.ndarray
         Target timestamps (int64 nanoseconds) at which to evaluate the
-        averaged signal.  
+        averaged signal.
         Must be **monotonically increasing** and **coarser** than the source
         sampling, i.e.::
 
@@ -97,14 +93,14 @@ def window_average(new_ts: np.ndarray,
 
     data : pandas.DataFrame
         Source data with an **integer nanosecond index** named
-        ``"timestamp [ns]"`` and arbitrarily many columns.  
+        ``"timestamp [ns]"`` and arbitrarily many columns.
         The index does not need to be perfectly regular, but it must be
         strictly increasing.
 
     window_size : int, optional
         Size of the averaging window in nanoseconds centred on each ``new_ts``.
         If *None* (default) the window is set to the median interval of
-        ``new_ts``.  
+        ``new_ts``.
         Must satisfy ``window_size > median(diff(data.index))``.
 
     Returns
@@ -120,7 +116,7 @@ def window_average(new_ts: np.ndarray,
 
     # ------------------------------------------------------------------ checks
     original_diff = np.median(np.diff(data.index))
-    new_diff      = np.median(np.diff(new_ts))
+    new_diff = np.median(np.diff(new_ts))
     if new_diff < original_diff:
         raise ValueError("new_ts must be down‑sampled relative to the data.")
     if window_size is None:
@@ -137,9 +133,9 @@ def window_average(new_ts: np.ndarray,
     win_str = f"{window_size}ns"
 
     rolled = (
-        df                                        # original data
-        .rolling(win_str, center=True)            #  ⇨ rolling window
-        .mean()                                   #  ⇨ mean over window
+        df.rolling(  # original data
+            win_str, center=True
+        ).mean()  #  ⇨ rolling window  #  ⇨ mean over window
     )
 
     # Reindex to *exactly* the requested timestamps (as DateTime)
@@ -152,7 +148,7 @@ def window_average(new_ts: np.ndarray,
 
     # Restore the original int64 index name/type
     out.index = new_ts
-    out.index.name = data.index.name            # "timestamp [ns]"
+    out.index.name = data.index.name  # "timestamp [ns]"
     return out
 
 

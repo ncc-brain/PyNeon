@@ -489,7 +489,9 @@ Recording duration: {self.info["duration"] / 1e9}s
             Indexed by ``"timestamp [ns]"`` with one column ``"fixations"``
             containing a nested DataFrame for each video frame.
         """
-        scanpath_path = Path(output_path) if output_path else self.der_dir / "scanpath.pkl"
+        scanpath_path = (
+            Path(output_path) if output_path else self.der_dir / "scanpath.pkl"
+        )
 
         if scanpath_path.is_file() and not overwrite:
             print(f"Loading saved scanpath from {scanpath_path}")
@@ -503,7 +505,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         scanpath_df = estimate_scanpath(
             self.video,
-            sync_gaze,          # <-- pass the raw DF
+            sync_gaze,  # <-- pass the raw DF
             lk_params=lk_params,
         )
         scanpath_df.index.name = "timestamp [ns]"
@@ -512,7 +514,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         scanpath_df.to_pickle(scanpath_path)
 
         return Stream(scanpath_df, sampling_freq_nominal=int(self.video.fps))
-
 
     def detect_apriltags(
         self,
@@ -815,11 +816,11 @@ Recording duration: {self.info["duration"] / 1e9}s
         return Events(fixation_on_screen)
 
     def estimate_camera_pose(
-    self,
-    tag_locations_df: pd.DataFrame,
-    all_detections: Optional[Stream] = None,
-    output_path: Optional[str | Path] = None,
-    overwrite: bool = False,
+        self,
+        tag_locations_df: pd.DataFrame,
+        all_detections: Optional[Stream] = None,
+        output_path: Optional[str | Path] = None,
+        overwrite: bool = False,
     ) -> Stream:
         """
         Compute the camera pose (R|t) for every frame.
@@ -844,7 +845,9 @@ Recording duration: {self.info["duration"] / 1e9}s
             Indexed by ``"timestamp [ns]"`` with columns
             ``'frame_idx', 'translation_vector', 'rotation_vector', 'camera_pos'``.
         """
-        json_file = Path(output_path) if output_path else self.der_dir / "camera_pose.json"
+        json_file = (
+            Path(output_path) if output_path else self.der_dir / "camera_pose.json"
+        )
 
         # ------------------------------------------------------------------ load
         if json_file.is_file() and not overwrite:
@@ -857,9 +860,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             return Stream(df, sampling_freq_nominal=int(self.video.fps))
 
         # ------------------------------------------------------------------ prerequisites
-        req = {
-            "tag_id", "x", "y", "z", "normal_x", "normal_y", "normal_z", "size"
-        }
+        req = {"tag_id", "x", "y", "z", "normal_x", "normal_y", "normal_z", "size"}
         missing = req - set(tag_locations_df.columns)
         if missing:
             raise ValueError(f"tag_locations_df is missing: {missing}")

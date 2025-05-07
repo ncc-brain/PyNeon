@@ -70,6 +70,6 @@ data_types = {
     # Fixations on Screen
     "gaze x [screen px]": float,
     "gaze y [screen px]": float,
-    #scanpath
+    # scanpath
     "fixations": object,
 }
