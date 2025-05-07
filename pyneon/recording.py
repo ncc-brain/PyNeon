@@ -569,7 +569,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         if json_file.is_file() and not overwrite:
             print(f"Loading cached detections from {json_file}")
             all_detections = pd.read_json(json_file, orient="records", lines=True)
-            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype("int64")
+            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype(
+                "int64"
+            )
             if all_detections.empty:
                 raise ValueError("AprilTag detection data is empty.")
             return Stream(all_detections)
@@ -845,8 +847,8 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         output_path : str or Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
-        
-        overwrite : bool, optional 
+
+        overwrite : bool, optional
             If True, forces recomputation and overwrites any existing saved result. Default is False.
 
         Returns
