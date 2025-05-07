@@ -32,7 +32,10 @@ class Events(BaseTabular):
     """
 
     def __init__(
-        self, data: pd.DataFrame | Path, event_name: str = "custom", id_name: Optional[str] = None
+        self,
+        data: pd.DataFrame | Path,
+        event_name: str = "custom",
+        id_name: Optional[str] = None,
     ):
         if isinstance(data, Path):
             self.file = data

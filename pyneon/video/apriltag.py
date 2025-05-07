@@ -581,10 +581,9 @@ def transform_gaze_to_screen(
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
 
-    #convert homographies to dict
+    # convert homographies to dict
     homography_for_frame = {
-        int(row["frame_idx"]): row["homography"]
-        for _, row in homographies.iterrows()
+        int(row["frame_idx"]): row["homography"] for _, row in homographies.iterrows()
     }
 
     for frame in tqdm(

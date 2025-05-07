@@ -564,7 +564,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         if json_file.is_file() and not overwrite:
             print(f"Loading saved detections from {json_file}")
             all_detections = pd.read_json(json_file, orient="records", lines=True)
-            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype("int64")
+            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype(
+                "int64"
+            )
             if all_detections.empty:
                 raise ValueError("AprilTag detection data is empty.")
             return Stream(all_detections)
@@ -829,9 +831,10 @@ Recording duration: {self.info["duration"] / 1e9}s
             Per‑frame AprilTag detections.  If ``None``, they are produced by
             :pymeth:`detect_apriltags`.
         output_path : str or Path, optional
-            Where to save the result (JSON). Defaults to ``<der_dir>/camera_pose.json``.
+            Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
+
         overwrite : bool, optional
-            Force recomputation even if a JSON exists.
+            If True, forces recomputation and overwrites any existing saved result. Default is False.
 
         Returns
         -------
