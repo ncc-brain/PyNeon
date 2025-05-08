@@ -116,7 +116,9 @@ def window_average(
 
     # ------------------------------------------------------------------ checks
     original_diff = np.median(np.diff(data.index))
+    print(f"Original sample spacing: {original_diff} ns")
     new_diff = np.median(np.diff(new_ts))
+    print(f"New sample spacing: {new_diff} ns")
     if new_diff < original_diff:
         raise ValueError("new_ts must be down‑sampled relative to the data.")
     if window_size is None:
@@ -128,27 +130,20 @@ def window_average(
     # rolling(time‑window) API works on Datetime/Timedelta indices.
     df = data.copy()
     df.index = pd.to_datetime(df.index, unit="ns")
-
-    # The rolling window must be a pandas offset string, e.g. "500ns"
-    win_str = f"{window_size}ns"
-
-    rolled = (
-        df.rolling(  # original data
-            win_str, center=True
-        ).mean()  #  ⇨ rolling window  #  ⇨ mean over window
-    )
-
-    # Reindex to *exactly* the requested timestamps (as DateTime)
     target_idx = pd.to_datetime(new_ts, unit="ns")
-    out = rolled.reindex(target_idx)
 
-    # round non‑floats
+    df = df.reindex(df.index.union(target_idx)).sort_index()
+
+    win_str = f"{window_size}ns"
+    rolled = df.rolling(win_str, center=True, min_periods=1).mean()
+
+    out = rolled.loc[target_idx]
+
     non_float = data.select_dtypes(exclude="float").columns
     out[non_float] = out[non_float].round().astype(data[non_float].dtypes)
 
-    # Restore the original int64 index name/type
     out.index = new_ts
-    out.index.name = data.index.name  # "timestamp [ns]"
+    out.index.name = data.index.name 
     return out
 
 

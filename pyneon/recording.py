@@ -450,7 +450,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         if self.gaze is None or self.video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
-        ### TODO: optimize window perfomance
         synced_gaze = self.gaze.window_average(self.video.ts, window_size).data
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
 
@@ -467,7 +466,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         overwrite: bool = False,
     ) -> Stream:
         """
-        Estimate scanpaths by propagating fixations across frames with Lucas‑Kanade.
+        Estimate scanpaths by propagating fixations across frames with Lucas-Kanade.
 
         If a cached result exists and ``overwrite`` is False, it is loaded from disk.
 
@@ -477,7 +476,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             Gaze data synchronised to video frames. If ``None``, it is created with
             :pymeth:`sync_gaze_to_video`.
         lk_params : dict, optional
-            Parameters forwarded to the LK optical‑flow call.
+            Parameters forwarded to the LK optical-flow call.
         output_path : str or Path, optional
             Where to save the pickle. Defaults to ``<der_dir>/scanpath.pkl``.
         overwrite : bool, optional
@@ -552,8 +551,8 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'frame_idx': Index in the downsampled video sequence
                 - 'orig_frame_idx': Original frame index in the full video
                 - 'tag_id': ID of the detected AprilTag
-                - 'corners': A 4×2 array of tag corner coordinates
-                - 'center': A 1×2 array of the tag center
+                - 'corners': A 4x2 array of tag corner coordinates
+                - 'center': A 1x2 array of the tag center
         """
         if output_path is None:
             json_file = self.der_dir / "apriltags.json"
@@ -886,49 +885,69 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def smooth_camera_pose(
         self,
-        camera_pose_raw: pd.DataFrame = pd.DataFrame(),
+        camera_pose_raw: Optional[pd.DataFrame] = None,
         initial_state_noise: float = 0.1,
         process_noise: float = 0.1,
         measurement_noise: float = 0.01,
         gating_threshold: float = 2.0,
         bidirectional: bool = False,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
-        Apply a Kalman filter to smooth camera positions and gate outliers based on Mahalanobis distance.
-        Expects a DataFrame containing 'frame_idx' and 'camera_pos' columns, where 'camera_pos' is a
-        length-3 array-like object representing [x, y, z] coordinates.
+        Kalman-smooth camera positions and gate outliers.
 
         Parameters
         ----------
-        camera_pose_raw : pd.DataFrame
-            DataFrame containing 'frame_idx' and 'camera_pos' columns.
-        process_noise : float, optional
-            Process noise covariance scaling factor. Default is 0.005.
-        measurement_noise : float, optional
-            Measurement noise covariance scaling factor. Default is 0.005.
-        gating_threshold : float, optional
-            Mahalanobis distance threshold for gating outliers. Default is 3.0.
+        camera_pose_raw : pd.DataFrame, optional
+            Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
+            If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
+            computes it via :pymeth:`estimate_camera_pose`.
+        initial_state_noise, process_noise, measurement_noise : float
+            Kalman filter noise parameters.
+        gating_threshold : float
+            Mahalanobis distance threshold for outlier rejection.
+        bidirectional : bool, default False
+            If True, apply a forward-and-backward (RTS) smoother.
+        overwrite : bool, default False
+            Recompute even if a smoothed file already exists.
+        output_path : str or Path, optional
+            Where to save the JSON (“smoothed_camera_pose.json” by default).
 
         Returns
         -------
         pd.DataFrame
-            A DataFrame with the same 'frame_idx' as input and an additional column 'smoothed_camera_pos'
-            containing the smoothed positions.
+            Same rows as *camera_pose_raw* with the extra column
+            ``'smoothed_camera_pos'`` (3-vector).
         """
+        # ------------------------------------------------ target path
+        json_file = Path(output_path) if output_path \
+                else self.der_dir / "smoothed_camera_pose.json"
 
-        if camera_pose_raw.empty:
-            # Check if JSON already exists
-            if (json_file := self.der_dir / "camera_pose.json").is_file():
-                camera_pose_raw = pd.read_json(json_file, orient="records", lines=True)
-                # Ensure 'camera_pos' is parsed as NumPy arrays
+        # ------------------------------------------------ fast‑path load
+        if json_file.is_file() and not overwrite:
+            print(f"Loading smoothed camera pose from {json_file}")
+            df = pd.read_json(json_file, orient="records", lines=True)
+            df["camera_pos"]   = df["camera_pos"].apply(np.array)
+            df["smoothed_camera_pos"] = df["smoothed_camera_pos"].apply(np.array)
+            return df
+
+        # ------------------------------------------------ obtain raw pose
+        if camera_pose_raw is None:
+            raw_path = self.der_dir / "camera_pose.json"
+            if raw_path.is_file():
+                camera_pose_raw = pd.read_json(raw_path, orient="records", lines=True)
                 camera_pose_raw["camera_pos"] = camera_pose_raw["camera_pos"].apply(
-                    lambda pos: np.array(pos, dtype=float)
+                    lambda p: np.array(p, dtype=float)
                 )
             else:
-                # Run the function to get the data
-                camera_pose_raw = self.estimate_camera_pose()
+                camera_pose_raw = self.estimate_camera_pose()   # returns DataFrame
 
-        smoothed_pose = smooth_camera_pose(
+        if camera_pose_raw.empty:
+            raise ValueError("Camera‑pose table is empty; cannot smooth.")
+
+        # ------------------------------------------------ compute
+        smoothed = smooth_camera_pose(
             camera_pose_raw,
             initial_state_noise,
             process_noise,
@@ -937,56 +956,72 @@ Recording duration: {self.info["duration"] / 1e9}s
             bidirectional,
         )
 
-        # Save to JSON
-        smoothed_pose.to_json(
-            self.der_dir / "smoothed_camera_pose.json", orient="records"
-        )
+        # ------------------------------------------------ save & return
+        smoothed.to_json(json_file, orient="records", lines=True)
+        return smoothed
 
-        return smoothed_pose
 
     def overlay_scanpath(
         self,
-        scanpath: Optional[pd.DataFrame] = None,
+        scanpath: Optional[Stream] = None,
         circle_radius: int = 10,
         line_thickness: int = 2,
+        text_size: Optional[int] = 1,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = "scanpath.mp4",
+        video_output_path: Optional[str | Path] = None,
+        overwrite: bool = False,
     ) -> None:
         """
-        Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
+        Render a video with the scan-path overlaid.
 
         Parameters
         ----------
-        scanpath : pandas.DataFrame
-            DataFrame containing the fixations and gaze data.
+        scanpath : Stream, optional
+            Nested scan-path table (as from :pymeth:`estimate_scanpath`).
+            If *None*, it is loaded or computed automatically.
         circle_radius : int
-            Radius of the fixation circles in pixels. Defaults to 10.
+            Radius of fixation markers (px).
         line_thickness : int or None
-            Thickness of the lines connecting fixations. If None, no lines are drawn.
-            Defaults to 2.
+            Thickness of connecting lines; None disables the lines.
         max_fixations : int
-            Maximum number of fixations to plot per frame. Defaults to 10.
+            Maximum number of fixations drawn per frame.
         show_video : bool
-            Whether to display the video with fixations overlaid. Defaults to False.
-        video_output_path : pathlib.Path or str or None
-            Path to save the video with fixations overlaid. If None, the video is not saved.
-            Defaults to 'scanpath.mp4'.
+            Display the video live while rendering.
+        video_output_path : str or Path, optional
+            Target MP4 path. Defaults to `<der_dir>/scanpath.mp4`.
+            If *None*, no file is written.
+        overwrite : bool, default False
+            Regenerate the overlay even if the MP4 already exists.
         """
+        if video_output_path is None:
+            video_output_path = self.der_dir / "scanpath.mp4"
+        else:
+            video_output_path = Path(video_output_path)
+
         if scanpath is None:
             scanpath = self.estimate_scanpath()
+
+        if video_output_path.is_file() and not overwrite:
+            print(f"Overlay video already exists at {video_output_path}; skipping render.")
+            if show_video:
+                print("`show_video=True` has no effect because rendering was skipped.")
+            return
+
         if self.video is None:
-            raise ValueError("Plotting scanpath on video requires video data.")
+            raise ValueError("A loaded video is required to draw the overlay.")
 
         overlay_scanpath(
-            self,
-            scanpath,
+            self.video,
+            scanpath.data,
             circle_radius,
             line_thickness,
+            text_size,
             max_fixations,
             show_video,
             video_output_path,
         )
+
 
     def overlay_detections_and_pose(
         self,

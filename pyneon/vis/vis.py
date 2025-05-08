@@ -182,6 +182,7 @@ def overlay_scanpath(
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
     line_thickness: int = 2,
+    text_size: Optional[int] = None,
     max_fixations: int = 10,
     show_video: bool = False,
     video_output_path: Optional[Path | str] = "scanpath.mp4",
@@ -280,15 +281,16 @@ def overlay_scanpath(
                     )
 
                     # Optionally add text showing fixation status and ID
-                    cv2.putText(
-                        frame,
-                        f"ID: {id} Status: {status}",
-                        (int(x) + 10, int(y)),
-                        cv2.FONT_HERSHEY_PLAIN,
-                        1,
-                        color,
-                        1,
-                    )
+                    if text_size is not None:
+                        cv2.putText(
+                            frame,
+                            f"ID: {id} Status: {status}",
+                            (int(x) + 10, int(y)),
+                            cv2.FONT_HERSHEY_PLAIN,
+                            text_size,
+                            color,
+                            text_size,
+                        )
 
                     # Draw line connecting the previous fixation to the current one
                     if (
