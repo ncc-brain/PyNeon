@@ -143,7 +143,7 @@ def window_average(
     out[non_float] = out[non_float].round().astype(data[non_float].dtypes)
 
     out.index = new_ts
-    out.index.name = data.index.name 
+    out.index.name = data.index.name
     return out
 
 
