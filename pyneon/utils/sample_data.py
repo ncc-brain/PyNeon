@@ -32,4 +32,4 @@ def get_sample_data(data_name: str, replace=False) -> Path:
 
 
 if __name__ == "__main__":
-    get_sample_data("OfficeWalk")
+    get_sample_data("CircleFlash")

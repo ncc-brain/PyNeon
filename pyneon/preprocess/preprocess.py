@@ -6,10 +6,10 @@ from numbers import Number
 from typing import TYPE_CHECKING, Optional
 from scipy.interpolate import interp1d
 
-from ..utils import _check_stream_data
+from ..utils import _check_data
 
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
+    from ..recording import Recording
 
 
 def interpolate(
@@ -19,136 +19,139 @@ def interpolate(
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
-    Interpolate a data stream to a new set of timestamps.
+    Vectorised interpolation of a tabular time‑series.
 
     Parameters
     ----------
-    new_ts : numpy.ndarray
-        An array of new timestamps (in nanoseconds)
-        at which to evaluate the interpolant.
+    new_ts : np.ndarray
+        Sorted int64 nanosecond timestamps to sample at (1‑D).
     data : pandas.DataFrame
-        Data to interpolate. Must have a monotonically increasing
-        index named ``timestamp [ns]``.
-    float_kind : str, optional
-        Kind of interpolation applied on columns of float type,
-        by default ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
-    other_kind : str, optional
-        Kind of interpolation applied on columns of other types,
-        by default ``"nearest"``. For details see :class:`scipy.interpolate.interp1d`.
+        Source data indexed by ``"timestamp [ns]"`` (int64, monotonic).
+    float_kind : {"linear", "cubic", ...}, default "cubic"
+        Interpolation scheme for floating‑point columns (see SciPy ``interp1d``).
+    other_kind : {"nearest", "linear", ...}, default "nearest"
+        Scheme for *non‑float* columns (int, bool, category).  ``"nearest"`` is
+        typically what you want for IDs or labels.
 
     Returns
     -------
     pandas.DataFrame
-        Interpolated data.
+        Same columns & dtypes as *data*, indexed by ``new_ts``.
     """
-    _check_stream_data(data)
-    new_ts = np.sort(new_ts).astype(np.int64)
-    new_data = pd.DataFrame(index=new_ts, columns=data.columns)
-    for col in data.columns:
-        # Float columns are interpolated with float_kind
-        if pd.api.types.is_float_dtype(data[col]):
-            new_data[col] = interp1d(
-                data.index,
-                data[col],
-                kind=float_kind,
-                bounds_error=False,
-            )(new_ts)
-        # Other columns are interpolated with other_kind
-        else:
-            new_data[col] = interp1d(
-                data.index,
-                data[col],
-                kind=other_kind,
-                bounds_error=False,
-            )(new_ts)
-        # Ensure the new column has the same dtype as the original
-        new_data[col] = new_data[col].astype(data[col].dtype)
-    return new_data
+
+    _check_data(data)
+
+    if data.index.duplicated().any():
+        # aggregate duplicate timestamps before vectorised interpolation
+        data = data.groupby(data.index).mean(numeric_only=False)
+        # ^ numeric cols → mean; non‑numeric → first
+
+    x_old = data.index.values.astype("float64")  # SciPy wants float
+
+    # -- Prepare empty output -----------------------------------------
+    new_ts = np.sort(new_ts).astype("int64")
+    out = pd.DataFrame(index=new_ts, columns=data.columns)
+    out = out.astype(data.dtypes)  # keep dtypes
+
+    # -- Split by dtype group ----------------------------------------
+    float_cols = data.select_dtypes(include="float").columns
+    other_cols = data.columns.difference(float_cols)
+
+    if len(float_cols):
+        y = data[float_cols].values  # shape (n_old, n_float)
+        f = interp1d(x_old, y, kind=float_kind, axis=0, bounds_error=False, copy=False)
+        out[float_cols] = f(new_ts.astype("float64"))
+
+    if len(other_cols):
+        y = data[other_cols].values  # mixed/object still OK as ndarray
+        g = interp1d(x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False)
+        out[other_cols] = g(new_ts.astype("float64")).astype(
+            data[other_cols].dtypes.to_list()
+        )
+
+    out.index.name = data.index.name  # "timestamp [ns]"
+    return out
 
 
 def window_average(
-    new_ts: np.ndarray,
-    data: pd.DataFrame,
-    window_size: Optional[int] = None,
+    new_ts: np.ndarray, data: pd.DataFrame, window_size: Optional[int] = None
 ) -> pd.DataFrame:
     """
-    Take the average over a time window to obtain smoothed data at new timestamps.
+    Compute window‑averaged (down‑sampled) data at new timestamps **fast**
+    using Pandas’ vectorised ``rolling(time_window).mean()`` instead of a
+    Python for‑loop.
 
     Parameters
     ----------
     new_ts : numpy.ndarray
-        An array of new timestamps (in nanoseconds)
-        at which to compute the windowed averages.
-        The median interval between these new timestamps must be larger than
-        the median interval between the original data timestamps, i.e.,
-        ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
-        In other words, only downsampling is supported.
+        Target timestamps (int64 nanoseconds) at which to evaluate the
+        averaged signal.
+        Must be **monotonically increasing** and **coarser** than the source
+        sampling, i.e.::
+
+            median(diff(new_ts)) > median(diff(data.index))
+
     data : pandas.DataFrame
-        Data to apply window average to. Must have a monotonically increasing
-        index named ``timestamp [ns]``.
+        Source data with an **integer nanosecond index** named
+        ``"timestamp [ns]"`` and arbitrarily many columns.
+        The index does not need to be perfectly regular, but it must be
+        strictly increasing.
+
     window_size : int, optional
-        The size of the time window (in nanoseconds)
-        over which to compute the average around each new timestamp.
-        If ``None`` (default), the window size is set to the median interval
-        between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
-        The window size must be larger than the median interval between the original data timestamps,
-        i.e., ``window_size > np.median(np.diff(data.index))``.
+        Size of the averaging window in nanoseconds centred on each ``new_ts``.
+        If *None* (default) the window is set to the median interval of
+        ``new_ts``.
+        Must satisfy ``window_size > median(diff(data.index))``.
 
     Returns
     -------
     pandas.DataFrame
-        Data with window average applied.
+        A DataFrame indexed by ``new_ts`` and carrying the **same columns and
+        dtypes** as the input.  Non‑float columns are rounded back to their
+        original integer type after averaging.
     """
-    _check_stream_data(data)
-    new_ts = np.sort(new_ts).astype(np.int64)
-    new_ts_median_diff = np.median(np.diff(new_ts))
-    original_ts_median_diff = np.median(np.diff(data.index))
 
-    # Check for downsampling
-    if new_ts_median_diff < original_ts_median_diff:
-        raise ValueError(
-            "new_ts must have a lower sampling frequency than the old data"
-        )
+    _check_data(data)
+    new_ts = np.sort(new_ts).astype("int64")
 
+    # ------------------------------------------------------------------ checks
+    original_diff = np.median(np.diff(data.index))
+    print(f"Original sample spacing: {original_diff} ns")
+    new_diff = np.median(np.diff(new_ts))
+    print(f"New sample spacing: {new_diff} ns")
+    if new_diff < original_diff:
+        raise ValueError("new_ts must be down‑sampled relative to the data.")
     if window_size is None:
-        window_size = int(new_ts_median_diff)
+        window_size = int(new_diff)
+    if window_size < original_diff:
+        raise ValueError("window_size must exceed original sample spacing.")
 
-    if window_size < original_ts_median_diff:
-        raise ValueError(
-            "Window size must be larger than the median difference "
-            "between the old timestamps, otherwise data could be interleaved by NAs."
-        )
+    # Convert the int64‑ns index into a DatetimeIndex because pandas'
+    # rolling(time‑window) API works on Datetime/Timedelta indices.
+    df = data.copy()
+    df.index = pd.to_datetime(df.index, unit="ns")
+    target_idx = pd.to_datetime(new_ts, unit="ns")
 
-    new_data = pd.DataFrame(index=new_ts, columns=data.columns).astype(data.dtypes)
-    non_float_cols = data.select_dtypes(exclude="float").columns
+    df = df.reindex(df.index.union(target_idx)).sort_index()
 
-    for ts in tqdm(new_ts, desc="Computing window averages"):
-        lower_bound = ts - window_size / 2
-        upper_bound = ts + window_size / 2
+    win_str = f"{window_size}ns"
+    rolled = df.rolling(win_str, center=True, min_periods=1).mean()
 
-        # Select data within the window
-        window_data = data[
-            (data.index >= lower_bound) & (data.index <= upper_bound)
-        ].copy()
-        if not window_data.empty:
-            # Take the mean of the window data
-            mean_values = window_data.mean(axis=0)
-            # Round non-float columns so that they can be safely set to the original data type
-            for non_float_col in non_float_cols:
-                if not pd.isna(col_value := mean_values[non_float_col]):
-                    mean_values[non_float_col] = round(col_value)
-            new_data.loc[ts, :] = mean_values
-        else:
-            new_data.loc[ts, :] = pd.NA
+    out = rolled.loc[target_idx]
 
-    return new_data
+    non_float = data.select_dtypes(exclude="float").columns
+    out[non_float] = out[non_float].round().astype(data[non_float].dtypes)
+
+    out.index = new_ts
+    out.index.name = data.index.name
+    return out
 
 
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
 def concat_streams(
-    rec: "NeonRecording",
+    rec: "Recording",
     stream_names: str | list[str] = "all",
     sampling_freq: Number | str = "min",
     interp_float_kind: str = "cubic",
@@ -164,8 +167,8 @@ def concat_streams(
 
     Parameters
     ----------
-    rec : NeonRecording
-        NeonRecording object containing the streams to concatenate.
+    rec : Recording
+        Recording object containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all", then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
@@ -332,7 +335,7 @@ VALID_EVENTS = {
 
 
 def concat_events(
-    rec: "NeonRecording",
+    rec: "Recording",
     event_names: str | list[str],
 ) -> pd.DataFrame:
     """
@@ -345,8 +348,8 @@ def concat_events(
 
     Parameters
     ----------
-    rec : NeonRecording
-        NeonRecording object containing the events to concatenate.
+    rec : Recording
+        Recording object containing the events to concatenate.
     event_names : list of str
         List of event names to concatenate. Event names must be in
         ``{"blinks", "fixations", "saccades", "events"}``
@@ -432,7 +435,7 @@ def concat_events(
 
 
 def interpolate_blinks(
-    rec: "NeonRecording",
+    rec: "Recording",
     blink_data: pd.DataFrame,
     blink_duration: int = 100,
 ) -> pd.DataFrame:
@@ -441,8 +444,8 @@ def interpolate_blinks(
 
     Parameters
     ----------
-    rec : NeonRecording
-        NeonRecording object containing the gaze data.
+    rec : Recording
+        Recording object containing the gaze data.
     blink_data : pandas.DataFrame
         DataFrame containing the blink events.
         Must have a column named ``"start timestamp [ns]"``.

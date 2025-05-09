@@ -1,7 +1,7 @@
 from pathlib import Path
-from pyneon import NeonDataset
+from pyneon import Dataset
 
 dataset_dir = Path(__file__).parent / "data" / "Timeseries Data + Scene Video"
-dataset = NeonDataset(dataset_dir)
+dataset = Dataset(dataset_dir)
 
 print(dataset)

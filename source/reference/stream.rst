@@ -1,6 +1,6 @@
 Data stream classes (gaze, eye states, IMU)
 ===========================================
 
-.. automodule:: pyneon.stream
+.. autoclass:: pyneon.Stream
     :members:
     :show-inheritance:
