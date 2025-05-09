@@ -859,7 +859,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             return Stream(df, sampling_freq_nominal=int(self.video.fps))
 
         # ------------------------------------------------------------------ prerequisites
-        req = {"tag_id", "x", "y", "z", "normal_x", "normal_y", "normal_z", "size"}
+        req = {"tag_id", "pos_vec", "norm_vec", "size"}
         missing = req - set(tag_locations_df.columns)
         if missing:
             raise ValueError(f"tag_locations_df is missing: {missing}")
