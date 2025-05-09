@@ -921,14 +921,17 @@ Recording duration: {self.info["duration"] / 1e9}s
             ``'smoothed_camera_pos'`` (3-vector).
         """
         # ------------------------------------------------ target path
-        json_file = Path(output_path) if output_path \
-                else self.der_dir / "smoothed_camera_pose.json"
+        json_file = (
+            Path(output_path)
+            if output_path
+            else self.der_dir / "smoothed_camera_pose.json"
+        )
 
         # ------------------------------------------------ fast‑path load
         if json_file.is_file() and not overwrite:
             print(f"Loading smoothed camera pose from {json_file}")
             df = pd.read_json(json_file, orient="records", lines=True)
-            df["camera_pos"]   = df["camera_pos"].apply(np.array)
+            df["camera_pos"] = df["camera_pos"].apply(np.array)
             df["smoothed_camera_pos"] = df["smoothed_camera_pos"].apply(np.array)
             return df
 
@@ -941,7 +944,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                     lambda p: np.array(p, dtype=float)
                 )
             else:
-                camera_pose_raw = self.estimate_camera_pose()   # returns DataFrame
+                camera_pose_raw = self.estimate_camera_pose()  # returns DataFrame
 
         if camera_pose_raw.empty:
             raise ValueError("Camera‑pose table is empty; cannot smooth.")
@@ -959,7 +962,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         # ------------------------------------------------ save & return
         smoothed.to_json(json_file, orient="records", lines=True)
         return smoothed
-
 
     def overlay_scanpath(
         self,
@@ -1003,7 +1005,9 @@ Recording duration: {self.info["duration"] / 1e9}s
             scanpath = self.estimate_scanpath()
 
         if video_output_path.is_file() and not overwrite:
-            print(f"Overlay video already exists at {video_output_path}; skipping render.")
+            print(
+                f"Overlay video already exists at {video_output_path}; skipping render."
+            )
             if show_video:
                 print("`show_video=True` has no effect because rendering was skipped.")
             return
@@ -1021,7 +1025,6 @@ Recording duration: {self.info["duration"] / 1e9}s
             show_video,
             video_output_path,
         )
-
 
     def overlay_detections_and_pose(
         self,
