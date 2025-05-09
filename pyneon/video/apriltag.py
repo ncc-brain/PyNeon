@@ -172,7 +172,6 @@ def detect_apriltags(
     return df
 
 
-
 def estimate_camera_pose(
     video: "SceneVideo",
     tag_locations_df: pd.DataFrame,
@@ -188,7 +187,7 @@ def estimate_camera_pose(
         ``SceneVideo`` instance providing the frames' timestamps and the
         intrinsic matrices ``camera_matrix`` and ``dist_coeffs``.
     tag_locations_df :
-        DataFrame describing the world-coordinates of each AprilTag.  
+        DataFrame describing the world-coordinates of each AprilTag.
         Required columns::
 
             "tag_id"   : int
@@ -217,6 +216,7 @@ def estimate_camera_pose(
     # ------------------------------------------------------------------ prepare detections
     if all_detections is None or all_detections.empty:
         from .apriltag import detect_apriltags  # local import to avoid cycle
+
         all_detections = detect_apriltags(video)
         if all_detections.empty:
             return pd.DataFrame(
@@ -259,7 +259,6 @@ def estimate_camera_pose(
         object_pts, image_pts = [], []
 
         for _, det in det_frame.iterrows():
-
             corners_2d = np.asarray(det["corners"], dtype=np.float32)
 
             tid = int(det["tag_id"])
@@ -320,10 +319,10 @@ def estimate_camera_pose(
             }
         )
 
-    return pd.DataFrame(results, columns=[
-        "frame_idx", "translation_vector", "rotation_vector", "camera_pos"
-    ])
-
+    return pd.DataFrame(
+        results,
+        columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"],
+    )
 
 
 def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
