@@ -196,11 +196,13 @@ class Stream(BaseTabular):
             are generated according to the nominal sampling frequency of the stream as
             specified by Pupil Labs: https://pupil-labs.com/products/neon/specs.
         float_kind : str, optional
-            Kind of interpolation applied on columns of float type,
-            by default ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
+            Kind of interpolation applied on columns of ``float`` type,
+            For details see :class:`scipy.interpolate.interp1d`.
+            Defaults to ``"cubic"``. 
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
-            by default ``"nearest"``. For details see :class:`scipy.interpolate.interp1d`.
+            For details see :class:`scipy.interpolate.interp1d`.
+            Defaults to ``"nearest"``.
         inplace : bool, optional
             Whether to replace the data in the object with the interpolated data.
             Defaults to False.
