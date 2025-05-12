@@ -98,11 +98,11 @@ class Epochs:
         )
 
         if isinstance(source, Stream):
-            self.source_type = "stream"
+            self.source_class = Stream
             self.is_uniformly_sampled = source.is_uniformly_sampled
             self.sf = source.sampling_freq_effective
         elif isinstance(source, Events):
-            self.source_type = "event"
+            self.source_class = Events
             self.is_uniformly_sampled = None
             self.sf = None
 
@@ -160,7 +160,7 @@ class Epochs:
         """
         Converts epochs into a 3D array with dimensions (n_epochs, n_channels, n_times).
         Acts similarly as :meth:`mne.Epochs.get_data`.
-        Requires the epoch to be created from a uniformly-sampled :class:`pyneon.stream.Stream`.
+        Requires the epoch to be created from a uniformly-sampled :class:`pyneon.Stream`.
 
         Parameters
         ----------
@@ -178,14 +178,14 @@ class Epochs:
 
                 ``"column_ids"``: List of provided column names.\n
                 ``"t_rel"``: The common time grid, in nanoseconds.\n
-                ``"nan_flag"``: String indicating whether NaN values were found in the data.
+                ``"nan_flag"``: Boolean indicating whether NaN values were found in the data.
 
         Notes
         -----
-        - The time grid (`t_rel`) is in nanoseconds.
-        - If `NaN` values are present after interpolation, they are noted in `nan_flag`.
+        - The time grid (``t_rel``) is in nanoseconds.
+        - If `NaN` values are present after interpolation, they are noted in ``nan_flag``.
         """
-        if self.source_type != "stream" or self.is_uniformly_sampled is False:
+        if self.source_class != Stream or not self.is_uniformly_sampled:
             raise ValueError(
                 "The source must be a uniformly-sampled Stream to convert to NumPy array."
             )
@@ -241,19 +241,19 @@ class Epochs:
 
     def baseline_correction(
         self,
-        baseline: tuple[float | None, float | None] = (None, 0.0),
+        baseline: tuple[Number | None, Number | None] = (None, 0),
         method: str = "mean",
         inplace: bool = True,
     ) -> pd.DataFrame:
         """
-        Baseline-correct every epoch (MNE-style).
+        Perform baseline correction on epochs.
 
         Parameters
         ----------
         baseline : (t_min, t_max), iterable of float | None
             Start and end of the baseline window **in seconds**, relative to
-            the event trigger (t_ref = 0).  ``None`` means “from the first /
-            up to the last sample”.  Default: (None, 0.0) -> the pre-trigger
+            the event trigger (t_ref = 0).  ``None`` means "from the first /
+            up to the last sample".  Default: (None, 0.0) -> the pre-trigger
             part of each epoch.
         method : {"mean", "linear"}, default "mean"
             * "mean" - subtract the scalar mean of the baseline window.
@@ -504,7 +504,7 @@ def construct_times_df(
         Global reference time (in nanoseconds) to be added to `t_ref`.
         Unit is nanosecond. Defaults to 0. This is useful when the reference times
         are relative to a global start time
-        (for instance :attr:`pyneon.stream.Stream.first_ts`).
+        (for instance :attr:`pyneon.Stream.first_ts`).
     t_ref_unit : str, optional
         Unit of time for ``t_ref``.
         Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"ns"``.

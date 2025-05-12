@@ -912,7 +912,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         overwrite : bool, default False
             Recompute even if a smoothed file already exists.
         output_path : str or Path, optional
-            Where to save the JSON (“smoothed_camera_pose.json” by default).
+            Where to save the JSON (``smoothed_camera_pose.json`` by default).
 
         Returns
         -------
