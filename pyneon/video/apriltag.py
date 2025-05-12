@@ -278,7 +278,7 @@ def estimate_camera_pose(
             X = X / np.linalg.norm(X)
             Y = np.cross(Z, X)
 
-            # 3‑D corners: BL, BR, TR, TL
+            # 3-D corners: BL, BR, TR, TL
             obj_corners = np.vstack(
                 [
                     center3d + (-half) * X + (-half) * Y,

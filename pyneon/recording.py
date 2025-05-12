@@ -927,7 +927,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             else self.der_dir / "smoothed_camera_pose.json"
         )
 
-        # ------------------------------------------------ fast‑path load
+        # ------------------------------------------------ fast-path load
         if json_file.is_file() and not overwrite:
             print(f"Loading smoothed camera pose from {json_file}")
             df = pd.read_json(json_file, orient="records", lines=True)
@@ -947,7 +947,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 camera_pose_raw = self.estimate_camera_pose()  # returns DataFrame
 
         if camera_pose_raw.empty:
-            raise ValueError("Camera‑pose table is empty; cannot smooth.")
+            raise ValueError("Camera-pose table is empty; cannot smooth.")
 
         # ------------------------------------------------ compute
         smoothed = smooth_camera_pose(
