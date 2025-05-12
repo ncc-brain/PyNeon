@@ -28,11 +28,8 @@ def detect_apriltags(
 
     Parameters
     ----------
-    video : SceneVideo-like
-        A video-like object with:
-        - .read() -> returns (ret, frame)
-        - .ts -> array/list of timestamps (in nanoseconds), same length as total frames
-        - (Optional) .set(cv2.CAP_PROP_POS_FRAMES, frame_idx) for random access
+    video : SceneVideo
+        Scene video to detect AprilTags from.
     tag_family : str, optional
         The AprilTag family to detect (default 'tag36h11').
     nthreads : int, optional
