@@ -198,7 +198,7 @@ class Stream(BaseTabular):
         float_kind : str, optional
             Kind of interpolation applied on columns of ``float`` type,
             For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to ``"cubic"``. 
+            Defaults to ``"cubic"``.
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
             For details see :class:`scipy.interpolate.interp1d`.
