@@ -79,16 +79,14 @@ def window_average(
     ----------
     new_ts : numpy.ndarray
         An array of new timestamps (in nanoseconds) at which to evaluate the
-        averaged signal.
-        Must be **monotonically increasing** and **coarser** than the source
-        sampling, i.e.::
-        ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
-        In other words, only downsampling is supported.
+        averaged signal. Must be coarser than the source
+        sampling, i.e.:
+
+        >>> np.median(np.diff(new_ts)) > np.median(np.diff(data.index))
 
     data : pandas.DataFrame
-        Data to apply window average to. Must have a monotonically increasing
-        index named ``timestamp [ns]``
-
+        Source data to apply window average to. Must have a monotonically increasing
+        index named ``timestamp [ns]``.
     window_size : int, optional
         The size of the time window (in nanoseconds)
         over which to compute the average around each new timestamp.
@@ -100,8 +98,8 @@ def window_average(
     Returns
     -------
     pandas.DataFrame
-        Data with window average applied, carrying the **same columns and
-        dtypes** as the input.  Non-float columns are rounded back to their
+        Data with window average applied, carrying the same columns and
+        dtypes as ``data`` and indexed by ``new_ts``. Non-float columns are rounded back to their
         original integer type after averaging.
     """
 
@@ -110,9 +108,7 @@ def window_average(
 
     # ------------------------------------------------------------------ checks
     original_diff = np.median(np.diff(data.index))
-    print(f"Original sample spacing: {original_diff} ns")
     new_diff = np.median(np.diff(new_ts))
-    print(f"New sample spacing: {new_diff} ns")
     if new_diff < original_diff:
         raise ValueError("new_ts must be down-sampled relative to the data.")
     if window_size is None:
@@ -131,14 +127,14 @@ def window_average(
     win_str = f"{window_size}ns"
     rolled = df.rolling(win_str, center=True, min_periods=1).mean()
 
-    out = rolled.loc[target_idx]
+    new_data = rolled.loc[target_idx]
 
     non_float = data.select_dtypes(exclude="float").columns
-    out[non_float] = out[non_float].round().astype(data[non_float].dtypes)
+    new_data[non_float] = new_data[non_float].round().astype(data[non_float].dtypes)
 
-    out.index = new_ts
-    out.index.name = data.index.name
-    return out
+    new_data.index = new_ts
+    new_data.index.name = data.index.name
+    return new_data
 
 
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
