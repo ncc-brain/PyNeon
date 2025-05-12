@@ -310,7 +310,11 @@ class Epochs:
                     y = epoch_df.loc[mask, col].to_numpy()
 
                     # Check for NaNs, length, and constant input
-                    if len(t_base) < 2 or np.any(np.isnan(t_base)) or np.any(np.isnan(y)):
+                    if (
+                        len(t_base) < 2
+                        or np.any(np.isnan(t_base))
+                        or np.any(np.isnan(y))
+                    ):
                         warnings.warn(
                             f"Skipping linear baseline correction for '{col}' due to insufficient or invalid data.",
                             RuntimeWarning,
