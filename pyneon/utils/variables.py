@@ -25,6 +25,12 @@ data_types = {
     "optical axis right x": float,
     "optical axis right y": float,
     "optical axis right z": float,
+    "eyelid angle top left [rad]": float,
+    "eyelid angle bottom left [rad]": float,
+    "eyelid angle top right [rad]": float,
+    "eyelid angle bottom right [rad]": float,
+    "eyelid aperture left [mm]": float,
+    "eyelid aperture right [mm]": float,
     # IMU
     "gyro x [deg/s]": float,
     "gyro y [deg/s]": float,
