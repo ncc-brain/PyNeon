@@ -308,6 +308,22 @@ class Epochs:
                 t_base = t_rel_sec[mask]
                 for col in chan_cols:
                     y = epoch_df.loc[mask, col].to_numpy()
+
+                    # Check for NaNs, length, and constant input
+                    if len(t_base) < 2 or np.any(np.isnan(t_base)) or np.any(np.isnan(y)):
+                        warnings.warn(
+                            f"Skipping linear baseline correction for '{col}' due to insufficient or invalid data.",
+                            RuntimeWarning,
+                        )
+                        continue
+                    if np.all(t_base == t_base[0]):
+                        warnings.warn(
+                            f"Skipping linear baseline correction for '{col}' due to constant timestamps.",
+                            RuntimeWarning,
+                        )
+                        continue
+
+                    # Now it's safe to fit
                     a, b = np.polyfit(t_base, y, 1)
                     epoch_df.loc[:, col] = epoch_df[col] - (a * t_rel_sec + b)
             else:
@@ -438,27 +454,28 @@ def events_to_times_df(
     pandas.DataFrame
         DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
     """
-    if events.event_name in ["blinks", "fixations", "saccades", "events"]:
+    if events.event_name in ["blinks", "fixations", "saccades"]:
         description = events.event_name[:-1]  # Remove the 's' at the end
         t_ref = events.start_ts
     else:
-        if "name" not in events.columns:
+        if "name" not in events.data.columns:
             raise ValueError(
                 "Event data must have a 'name' column to filter by event name."
             )
 
-        names = events.data["name"]
+        names = events.data["name"].astype(str)
         if event_name == "all":
             t_ref = events.data.index.to_numpy()
             description = names.to_numpy()
         else:
             if isinstance(event_name, str):
                 event_name = [event_name]
-            mask = names.isin(set(event_name))
+            mask = names.isin(event_name)
             if not mask.any():
                 raise ValueError(f"No events found matching names: {event_name}")
-            t_ref = events.data.index.to_numpy()[mask]
-            description = names.to_numpy()[mask]
+            filtered_data = events.data[mask]
+            t_ref = filtered_data.index.to_numpy()
+            description = filtered_data["name"].to_numpy()
 
     times_df = construct_times_df(
         t_ref,
