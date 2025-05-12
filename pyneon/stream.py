@@ -244,12 +244,12 @@ class Stream(BaseTabular):
         Parameters
         ----------
         new_ts : numpy.ndarray
-            An array of new timestamps (in nanoseconds)
-            at which to compute the windowed averages.
-            The median interval between these new timestamps must be larger than
-            the median interval between the original data timestamps, i.e.,
-            ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
-            In other words, only downsampling is supported.
+            An array of new timestamps (in nanoseconds) at which to evaluate the
+            averaged signal. Must be coarser than the source
+            sampling, i.e.:
+
+            >>> np.median(np.diff(new_ts)) > np.median(np.diff(data.index))
+
         window_size : int, optional
             The size of the time window (in nanoseconds)
             over which to compute the average around each new timestamp.
