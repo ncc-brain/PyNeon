@@ -19,63 +19,54 @@ def interpolate(
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
-    Vectorised interpolation of a tabular time‑series.
+    Interpolate a data stream to a new set of timestamps.
 
     Parameters
     ----------
-    new_ts : np.ndarray
-        Sorted int64 nanosecond timestamps to sample at (1‑D).
+    new_ts : numpy.ndarray
+        An array of new timestamps (in nanoseconds)
+        at which to evaluate the interpolant.
     data : pandas.DataFrame
-        Source data indexed by ``"timestamp [ns]"`` (int64, monotonic).
-    float_kind : {"linear", "cubic", ...}, default "cubic"
-        Interpolation scheme for floating‑point columns (see SciPy ``interp1d``).
-    other_kind : {"nearest", "linear", ...}, default "nearest"
-        Scheme for *non‑float* columns (int, bool, category).  ``"nearest"`` is
-        typically what you want for IDs or labels.
+        Source data to interpolate. Must have a monotonically increasing
+        index named ``timestamp [ns]``.
+    float_kind : str, optional
+        Kind of interpolation applied on columns of ``float`` type,
+        For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to ``"cubic"``.
+    other_kind : str, optional
+        Kind of interpolation applied on columns of other types,
+        For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to ``"nearest"``.
 
     Returns
     -------
     pandas.DataFrame
-        Same columns & dtypes as *data*, indexed by ``new_ts``.
+        Interpolated data with the same columns and dtypes as ``data``
+        and indexed by ``new_ts``.
     """
-
     _check_data(data)
-
-    data = data.sort_index()
-
-    if data.index.duplicated().any():
-        # aggregate duplicate timestamps before vectorised interpolation
-        data = data.groupby(data.index).mean(numeric_only=False)
-        # ^ numeric cols → mean; non‑numeric → first
-
-    x_old = data.index.values.astype("float64")  # SciPy wants float
-
-    # -- Prepare empty output -----------------------------------------
-    new_ts = np.sort(new_ts).astype("int64")
-    out = pd.DataFrame(index=new_ts, columns=data.columns)
-    out = out.astype(data.dtypes)  # keep dtypes
-
-    # -- Split by dtype group ----------------------------------------
-    float_cols = data.select_dtypes(include="float").columns
-    other_cols = data.columns.difference(float_cols)
-
-    if len(float_cols):
-        y = data[float_cols].values  # shape (n_old, n_float)
-        f = interp1d(x_old, y, kind=float_kind, axis=0, bounds_error=False, copy=False)
-        out[float_cols] = f(new_ts.astype("float64"))
-
-    if len(other_cols):
-        safe_cols = [
-            col for col in other_cols
-            if not data[col].isna().any()
-        ]
-        for col in safe_cols:
-            y = data[col].values
-            g = interp1d(x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False)
-            out[col] = g(new_ts.astype("float64")).astype(data[col].dtype)
-
-    out.index.name = data.index.name  # "timestamp [ns]"
-    return out
+    new_ts = np.sort(new_ts).astype(np.int64)
+    new_data = pd.DataFrame(index=new_ts, columns=data.columns)
+    for col in data.columns:
+        # Float columns are interpolated with float_kind
+        if pd.api.types.is_float_dtype(data[col]):
+            new_data[col] = interp1d(
+                data.index,
+                data[col],
+                kind=float_kind,
+                bounds_error=False,
+            )(new_ts)
+        # Other columns are interpolated with other_kind
+        else:
+            new_data[col] = interp1d(
+                data.index,
+                data[col],
+                kind=other_kind,
+                bounds_error=False,
+            )(new_ts)
+        # Ensure the new column has the same dtype as the original
+        new_data[col] = new_data[col].astype(data[col].dtype)
+    return new_data
 
 
 def window_average(
