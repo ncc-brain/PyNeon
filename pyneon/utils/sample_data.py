@@ -7,7 +7,7 @@ data_dir = Path(__file__).parent.parent.parent / "data"
 data_url_dict = {
     "boardView": "https://osf.io/download/t52b4/",
     "ArtLab": "https://osf.io/download/nb53p/",
-    "CircleFlash": "https://osf.io/download/6793b3540717d27236b52d7f/",
+    "screenFlash": "https://osf.io/download/6822099f54ec2a41d57a1afa/",
 }
 
 
@@ -32,4 +32,4 @@ def get_sample_data(data_name: str, replace=False) -> Path:
 
 
 if __name__ == "__main__":
-    get_sample_data("CircleFlash")
+    get_sample_data("screenFlash")
