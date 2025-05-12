@@ -14,11 +14,11 @@ def _check_data(data: pd.DataFrame) -> None:
         raise ValueError(
             "Index name must be 'timestamp [ns]' or 'start timestamp [ns]'"
         )
-        
+
     # Check if index has duplicates
     if data.index.duplicated().any():
         raise ValueError("Index must not have duplicates")
-    
+
     # Try to convert the index to int64
     try:
         data.index = data.index.astype("int64")
@@ -26,7 +26,7 @@ def _check_data(data: pd.DataFrame) -> None:
         raise ValueError(
             "Event index must be in UTC time in ns and thus convertible to int64"
         )
-    
+
     # Sort by index
     data = data.sort_index(ascending=True)
     assert data.index.is_monotonic_increasing
