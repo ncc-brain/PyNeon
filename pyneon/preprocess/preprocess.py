@@ -41,6 +41,8 @@ def interpolate(
 
     _check_data(data)
 
+    data = data.sort_index()
+
     if data.index.duplicated().any():
         # aggregate duplicate timestamps before vectorised interpolation
         data = data.groupby(data.index).mean(numeric_only=False)
@@ -63,11 +65,14 @@ def interpolate(
         out[float_cols] = f(new_ts.astype("float64"))
 
     if len(other_cols):
-        y = data[other_cols].values  # mixed/object still OK as ndarray
-        g = interp1d(x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False)
-        out[other_cols] = g(new_ts.astype("float64")).astype(
-            data[other_cols].dtypes.to_list()
-        )
+        safe_cols = [
+            col for col in other_cols
+            if not data[col].isna().any()
+        ]
+        for col in safe_cols:
+            y = data[col].values
+            g = interp1d(x_old, y, kind=other_kind, axis=0, bounds_error=False, copy=False)
+            out[col] = g(new_ts.astype("float64")).astype(data[col].dtype)
 
     out.index.name = data.index.name  # "timestamp [ns]"
     return out
@@ -77,37 +82,35 @@ def window_average(
     new_ts: np.ndarray, data: pd.DataFrame, window_size: Optional[int] = None
 ) -> pd.DataFrame:
     """
-    Compute window‑averaged (down‑sampled) data at new timestamps **fast**
-    using Pandas’ vectorised ``rolling(time_window).mean()`` instead of a
-    Python for‑loop.
+    Take the average over a time window to obtain smoothed data at new timestamps.
 
     Parameters
     ----------
     new_ts : numpy.ndarray
-        Target timestamps (int64 nanoseconds) at which to evaluate the
+        An array of new timestamps (in nanoseconds) at which to evaluate the
         averaged signal.
         Must be **monotonically increasing** and **coarser** than the source
         sampling, i.e.::
-
-            median(diff(new_ts)) > median(diff(data.index))
+        ``np.median(np.diff(new_ts)) > np.median(np.diff(data.index))``.
+        In other words, only downsampling is supported.
 
     data : pandas.DataFrame
-        Source data with an **integer nanosecond index** named
-        ``"timestamp [ns]"`` and arbitrarily many columns.
-        The index does not need to be perfectly regular, but it must be
-        strictly increasing.
+        Data to apply window average to. Must have a monotonically increasing
+        index named ``timestamp [ns]``
 
     window_size : int, optional
-        Size of the averaging window in nanoseconds centred on each ``new_ts``.
-        If *None* (default) the window is set to the median interval of
-        ``new_ts``.
-        Must satisfy ``window_size > median(diff(data.index))``.
+        The size of the time window (in nanoseconds)
+        over which to compute the average around each new timestamp.
+        If ``None`` (default), the window size is set to the median interval
+        between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
+        The window size must be larger than the median interval between the original data timestamps,
+        i.e., ``window_size > np.median(np.diff(data.index))``.
 
     Returns
     -------
     pandas.DataFrame
-        A DataFrame indexed by ``new_ts`` and carrying the **same columns and
-        dtypes** as the input.  Non‑float columns are rounded back to their
+        Data with window average applied, carrying the **same columns and
+        dtypes** as the input.  Non-float columns are rounded back to their
         original integer type after averaging.
     """
 
@@ -120,7 +123,7 @@ def window_average(
     new_diff = np.median(np.diff(new_ts))
     print(f"New sample spacing: {new_diff} ns")
     if new_diff < original_diff:
-        raise ValueError("new_ts must be down‑sampled relative to the data.")
+        raise ValueError("new_ts must be down-sampled relative to the data.")
     if window_size is None:
         window_size = int(new_diff)
     if window_size < original_diff:
