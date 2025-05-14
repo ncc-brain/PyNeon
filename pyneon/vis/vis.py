@@ -7,9 +7,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from tqdm import tqdm
 
+from ..stream import Stream
+
 if TYPE_CHECKING:
     from ..recording import Recording
+    from ..stream import Stream
     from ..video import SceneVideo
+    from ..epochs import Epochs
 
 
 def plot_frame(
@@ -328,6 +332,58 @@ def overlay_scanpath(
     out.release()
     cv2.destroyAllWindows()
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+
+def plot_epochs(
+    epochs: "Epochs",
+    column_name: str,
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot data from a specified column from epochs on a matplotlib axis.
+
+    Parameters
+    ----------
+    epochs : Epochs
+        Epochs object containing the data to plot. Must be created from
+        a :class:`pyneon.Stream`.
+    column_name : str
+        Name of the column to plot.
+    ax : matplotlib.axes.Axes or None
+        Axis to plot the data on. If ``None``, a new figure is created.
+        Defaults to ``None``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Figure object containing the plot.
+    ax : matplotlib.axes.Axes
+        Axis object containing the plot.
+    """
+    if epochs.source_class != Stream:
+        raise ValueError("Epochs must be created from a `Stream` to be plotted.")
+    if column_name not in epochs.columns:
+        raise ValueError(f"Column '{column_name}' not found in epochs.")
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    # Plot the data
+    for i, row in epochs.epochs.iterrows():
+        times = row.data["epoch time"] / 1e9
+        data = row.data[column_name]
+        ax.plot(times, data)
+
+    ax.set_xlabel("Epoch time (s)")
+    ax.set_ylabel(column_name)
+    if show:
+        plt.show()
+    return fig, ax
 
 
 def overlay_detections_and_pose(

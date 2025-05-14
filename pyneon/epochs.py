@@ -2,11 +2,13 @@ import pandas as pd
 import numpy as np
 
 from numbers import Number
-from typing import Literal
+from typing import Literal, Optional
 import warnings
+import matplotlib.pyplot as plt
 
 from .stream import Stream
 from .events import Events
+from .vis import plot_epochs
 
 
 def _check_overlap(times_df: pd.DataFrame) -> bool:
@@ -152,6 +154,40 @@ class Epochs:
     def has_overlap(self) -> bool:
         """Whether any adjacent epochs overlap."""
         return _check_overlap(self.epochs)
+
+    def plot(
+        self,
+        column_names: str,
+        ax: Optional[plt.Axes] = None,
+        show: bool = True,
+    ) -> tuple[plt.Figure, plt.Axes]:
+        """
+        Plot data from a specified column from epochs on a matplotlib axis.
+
+        Parameters
+        ----------
+        column_name : str
+            Name of the column to plot.
+        ax : matplotlib.axes.Axes or None
+            Axis to plot the data on. If ``None``, a new figure is created.
+            Defaults to ``None``.
+        show : bool
+            Show the figure if ``True``. Defaults to True.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            Figure object containing the plot.
+        ax : matplotlib.axes.Axes
+            Axis object containing the plot.
+        """
+        fig_ax = plot_epochs(
+            self,
+            column_names,
+            ax=ax,
+            show=show,
+        )
+        return fig_ax
 
     def to_numpy(
         self,
@@ -556,5 +592,12 @@ def construct_times_df(
             "description": description,
         }
     )
-
+    times_df = times_df.astype(
+        {
+            "t_ref": "int64",
+            "t_before": "int64",
+            "t_after": "int64",
+            "description": "str",
+        }
+    )
     return times_df
