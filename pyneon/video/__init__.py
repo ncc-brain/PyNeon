@@ -6,7 +6,6 @@ from .apriltag import (
     find_homographies,
     transform_gaze_to_screen,
 )
-from .batch import detect_apriltags_parallel, gaze_to_screen_parallel
 
 __all__ = [
     "SceneVideo",
@@ -15,5 +14,4 @@ __all__ = [
     "estimate_camera_pose",
     "transform_gaze_to_screen",
     "find_homographies",
-    "detect_apriltags_parallel",
 ]
