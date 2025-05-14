@@ -10,12 +10,13 @@ from ..utils import _check_data
 
 if TYPE_CHECKING:
     from ..recording import Recording
+    from ..events import Events
 
 
 def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
-    float_kind: str = "cubic",
+    float_kind: str = "linear",
     other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
@@ -32,7 +33,7 @@ def interpolate(
     float_kind : str, optional
         Kind of interpolation applied on columns of ``float`` type,
         For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to ``"cubic"``.
+        Defaults to ``"linear"``.
     other_kind : str, optional
         Kind of interpolation applied on columns of other types,
         For details see :class:`scipy.interpolate.interp1d`.
@@ -66,6 +67,79 @@ def interpolate(
             )(new_ts)
         # Ensure the new column has the same dtype as the original
         new_data[col] = new_data[col].astype(data[col].dtype)
+    return new_data
+
+
+def interpolate_events(
+    data: pd.DataFrame,
+    events: "Events",
+    buffer: Number | tuple[Number, Number] = 0.05,
+    float_kind: str = "linear",
+    other_kind: str = "nearest",
+) -> pd.DataFrame:
+    """
+    Interpolate data in the duration of events in the stream data.
+    Similar to :func:`mne.preprocessing.eyetracking.interpolate_blinks`.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Data to interpolate. Must have a monotonically increasing
+        index named ``timestamp [ns]``.
+    events : Events
+        Events object containing the events to interpolate.
+        The events must have ``start timestamp [ns]`` and
+        ``end timestamp [ns]`` columns.
+    buffer : numbers.Number or , optional
+        The time before and after an event (in seconds) to consider invalid.
+        If a single number is provided, the same buffer is applied
+        to both before and after the event.
+        Defaults to 0.05.
+    float_kind : str, optional
+        Kind of interpolation applied on columns of ``float`` type,
+        For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to ``"linear"``.
+    other_kind : str, optional
+        Kind of interpolation applied on columns of other types,
+        For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to ``"nearest"``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Interpolated data with the same columns and dtypes as ``data``
+        and indexed by ``data.index``.
+    """
+    _check_data(data)
+
+    # Make a (2, n_blink) matrix of blink start and end timestamps
+    event_times = np.array(
+        [
+            events.start_ts,
+            events.end_ts,
+        ]
+    )
+    # Add buffer to the blink times (start_ts - buffer, end_ts + buffer)
+    if isinstance(buffer, Number):
+        buffer = (buffer, buffer)
+    event_times[0] -= int(buffer[0] * 1e9)
+    event_times[1] += int(buffer[1] * 1e9)
+
+    data_ts = data.index.values
+
+    # Find data in the blink times
+    mask = np.zeros(data_ts.shape, dtype=bool)
+    for blink in event_times.T:
+        mask |= (data_ts >= blink[0]) & (data_ts <= blink[1])
+    new_data = data[~mask]
+
+    # Interpolate to original timestamps
+    new_data = interpolate(
+        data_ts,
+        new_data,
+        float_kind=float_kind,
+        other_kind=other_kind,
+    )
     return new_data
 
 
@@ -144,7 +218,7 @@ def concat_streams(
     rec: "Recording",
     stream_names: str | list[str] = "all",
     sampling_freq: Number | str = "min",
-    interp_float_kind: str = "cubic",
+    interp_float_kind: str = "linear",
     interp_other_kind: str = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
@@ -163,15 +237,15 @@ def concat_streams(
         Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
         (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
-    sampling_freq : float or int or str, optional
+    sampling_freq : numbers.Number or str, optional
         Sampling frequency of the concatenated streams.
         If numeric, the streams will be interpolated to this frequency.
         If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
     interp_float_kind : str, optional
-        Kind of interpolation applied on columns of float type,
-        Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
+        Kind of interpolation applied on columns of ``float`` type,
+        Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
     interp_other_kind : str, optional
         Kind of interpolation applied on columns of other types.
         Defaults to ``"nearest"``.
@@ -422,30 +496,3 @@ def concat_events(
         print("\tEvents")
     concat_data = concat_data.sort_index()
     return concat_data
-
-
-def interpolate_blinks(
-    rec: "Recording",
-    blink_data: pd.DataFrame,
-    blink_duration: int = 100,
-) -> pd.DataFrame:
-    """
-    Interpolate blinks in the gaze data.
-
-    Parameters
-    ----------
-    rec : Recording
-        Recording object containing the gaze data.
-    blink_data : pandas.DataFrame
-        DataFrame containing the blink events.
-        Must have a column named ``"start timestamp [ns]"``.
-    blink_duration : int, optional
-        Duration of the blink in milliseconds, by default 100.
-
-    Returns
-    -------
-    pandas.DataFrame
-        DataFrame with interpolated gaze data.
-    """
-    if rec.gaze is None:
-        raise NotImplementedError("Mean epoch computation is not implemented yet.")

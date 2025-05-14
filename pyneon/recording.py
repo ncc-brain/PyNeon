@@ -275,7 +275,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         self,
         stream_names: str | list[str],
         sampling_freq: Number | str = "min",
-        interp_float_kind: str = "cubic",
+        interp_float_kind: str = "linear",
         interp_other_kind: str = "nearest",
         inplace: bool = False,
     ) -> Stream:
@@ -300,7 +300,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             If ``"max"``, the highest nominal sampling frequency will be used.
         interp_float_kind : str, optional
             Kind of interpolation applied on columns of float type,
-            Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.
+            Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
         interp_other_kind : str, optional
             Kind of interpolation applied on columns of other types.
             Defaults to ``"nearest"``.

@@ -2,11 +2,14 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from numbers import Number
-from typing import Literal, Optional
+from typing import Literal, Optional, TYPE_CHECKING
 import copy
 
 from .tabular import BaseTabular
-from .preprocess import interpolate, window_average
+from .preprocess import interpolate, interpolate_events, window_average
+
+if TYPE_CHECKING:
+    from .events import Events
 
 
 class Stream(BaseTabular):
@@ -181,7 +184,7 @@ class Stream(BaseTabular):
     def interpolate(
         self,
         new_ts: Optional[np.ndarray] = None,
-        float_kind: str = "cubic",
+        float_kind: str = "linear",
         other_kind: str = "nearest",
         inplace: bool = False,
     ) -> Optional["Stream"]:
@@ -198,7 +201,7 @@ class Stream(BaseTabular):
         float_kind : str, optional
             Kind of interpolation applied on columns of ``float`` type,
             For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to ``"cubic"``.
+            Defaults to ``"linear"``.
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
             For details see :class:`scipy.interpolate.interp1d`.
@@ -225,6 +228,60 @@ class Stream(BaseTabular):
             assert np.allclose(np.diff(new_ts), step_size)
 
         new_data = interpolate(new_ts, self.data, float_kind, other_kind)
+        if inplace:
+            self.data = new_data
+        else:
+            new_instance = copy.copy(self)
+            new_instance.data = new_data
+            return new_instance
+
+    def interpolate_events(
+        self,
+        events: "Events",
+        buffer: Number | tuple[Number, Number] = 0.05,
+        float_kind: str = "linear",
+        other_kind: str = "nearest",
+        inplace: bool = False,
+    ) -> Optional["Stream"]:
+        """
+        Interpolate data in the duration of events in the stream data.
+        Similar to :func:`mne.preprocessing.eyetracking.interpolate_blinks`.
+
+        Parameters
+        ----------
+        events : Events
+            Events object containing the events to interpolate.
+            The events must have ``start timestamp [ns]`` and
+            ``end timestamp [ns]`` columns.
+        buffer : numbers.Number or , optional
+            The time before and after an event (in seconds) to consider invalid.
+            If a single number is provided, the same buffer is applied
+            to both before and after the event.
+            Defaults to 0.05.
+        float_kind : str, optional
+            Kind of interpolation applied on columns of ``float`` type,
+            For details see :class:`scipy.interpolate.interp1d`.
+            Defaults to ``"linear"``.
+        other_kind : str, optional
+            Kind of interpolation applied on columns of other types,
+            For details see :class:`scipy.interpolate.interp1d`.
+            Defaults to ``"nearest"``.
+        inplace : bool, optional
+            Whether to replace the data in the object with the interpolated data.
+            Defaults to False.
+
+        Returns
+        -------
+        Stream or None
+            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        """
+        new_data = interpolate_events(
+            self.data,
+            events,
+            buffer,
+            float_kind=float_kind,
+            other_kind=other_kind,
+        )
         if inplace:
             self.data = new_data
         else:
