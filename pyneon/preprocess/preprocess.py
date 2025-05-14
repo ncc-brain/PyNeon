@@ -67,6 +67,7 @@ def interpolate(
             )(new_ts)
         # Ensure the new column has the same dtype as the original
         new_data[col] = new_data[col].astype(data[col].dtype)
+    new_data.index.name = data.index.name
     return new_data
 
 
