@@ -971,13 +971,10 @@ Recording duration: {self.info["duration"] / 1e9}s
     def overlay_scanpath(
         self,
         scanpath: Optional[Stream] = None,
-        circle_radius: int = 10,
-        line_thickness: int = 2,
-        text_size: Optional[int] = 1,
-        max_fixations: int = 10,
         show_video: bool = False,
         video_output_path: Optional[str | Path] = None,
         overwrite: bool = False,
+        **kwargs,
     ) -> None:
         """
         Render a video with the scan-path overlaid.
@@ -987,12 +984,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         scanpath : Stream, optional
             Nested scan-path table (as from :pymeth:`estimate_scanpath`).
             If *None*, it is loaded or computed automatically.
-        circle_radius : int
-            Radius of fixation markers (px).
-        line_thickness : int or None
-            Thickness of connecting lines; None disables the lines.
-        max_fixations : int
-            Maximum number of fixations drawn per frame.
         show_video : bool
             Display the video live while rendering.
         video_output_path : str or Path, optional
@@ -1000,7 +991,24 @@ Recording duration: {self.info["duration"] / 1e9}s
             If *None*, no file is written.
         overwrite : bool, default False
             Regenerate the overlay even if the MP4 already exists.
+        kwargs : dict, optional
+            Optional arguments:
+                - circle_radius: int, default 10
+                    Radius of the fixation circles.
+                - line_thickness: int, default 2
+                    Thickness of the fixation lines.
+                - text_size: int, default 1
+                    Size of the fixation text.
+                - max_fixations: int, default 10
+                    Maximum number of fixations to display.
         """
+
+        # Defaults for kwargs
+        circle_radius = kwargs.get("circle_radius", 10)
+        line_thickness = kwargs.get("line_thickness", 2)
+        text_size = kwargs.get("text_size", 1)
+        max_fixations = kwargs.get("max_fixations", 10)
+
         if video_output_path is None:
             video_output_path = self.der_dir / "scanpath.mp4"
         else:
