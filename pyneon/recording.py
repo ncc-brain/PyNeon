@@ -587,7 +587,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         all_detections: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-        **kwargs
+        **kwargs,
     ) -> Stream:
         """
         Compute and return homographies for each frame using AprilTag detections and reference marker layout.
@@ -626,7 +626,6 @@ Recording duration: {self.info["duration"] / 1e9}s
         screen_size = kwargs.get("screen_size", (1920, 1080))
         skip_frames = kwargs.get("skip_frames", 1)
         settings = kwargs.get("settings", None)
-
 
         if output_path is None:
             pkl_file = self.der_dir / "homographies.pkl"

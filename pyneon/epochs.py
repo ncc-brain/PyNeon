@@ -276,7 +276,6 @@ class Epochs:
             :pyattr:`self.data`).
         """
 
-        
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:
             """In-place mean or linear detrend on *one* epoch DF."""
             # mask rows within the baseline window (epoch time is int64 ns)
