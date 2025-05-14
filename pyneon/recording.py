@@ -886,13 +886,9 @@ Recording duration: {self.info["duration"] / 1e9}s
     def smooth_camera_pose(
         self,
         camera_pose_raw: Optional[pd.DataFrame] = None,
-        initial_state_noise: float = 0.1,
-        process_noise: float = 0.1,
-        measurement_noise: float = 0.01,
-        gating_threshold: float = 2.0,
-        bidirectional: bool = False,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        **kwargs,
     ) -> pd.DataFrame:
         """
         Kalman-smooth camera positions and gate outliers.
@@ -903,16 +899,17 @@ Recording duration: {self.info["duration"] / 1e9}s
             Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
             If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
             computes it via :pymeth:`estimate_camera_pose`.
-        initial_state_noise, process_noise, measurement_noise : float
-            Kalman filter noise parameters.
-        gating_threshold : float
-            Mahalanobis distance threshold for outlier rejection.
-        bidirectional : bool, default False
-            If True, apply a forward-and-backward (RTS) smoother.
         overwrite : bool, default False
             Recompute even if a smoothed file already exists.
         output_path : str or Path, optional
             Where to save the JSON (``smoothed_camera_pose.json`` by default).
+        kwargs : dict, optional
+            Optional arguments:
+                - initial_state_noise: float (default=0.1)
+                - process_noise: float (default=0.1)
+                - measurement_noise: float (default=0.01)
+                - gating_threshold: float (default=2.0)
+                - bidirectional: bool (default=False)
 
         Returns
         -------
@@ -920,6 +917,14 @@ Recording duration: {self.info["duration"] / 1e9}s
             Same rows as *camera_pose_raw* with the extra column
             ``'smoothed_camera_pos'`` (3-vector).
         """
+
+        # Defaults
+        initial_state_noise = kwargs.get("initial_state_noise", 0.1)
+        process_noise = kwargs.get("process_noise", 0.1)
+        measurement_noise = kwargs.get("measurement_noise", 0.01)
+        gating_threshold = kwargs.get("gating_threshold", 2.0)
+        bidirectional = kwargs.get("bidirectional", False)
+
         # ------------------------------------------------ target path
         json_file = (
             Path(output_path)
