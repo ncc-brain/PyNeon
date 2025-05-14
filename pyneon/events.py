@@ -20,6 +20,11 @@ class Events(BaseTabular):
     data : pandas.DataFrame or pathlib.Path
         DataFrame or path to the CSV file containing the stream data.
         The data must be indexed by ``timestamp [ns]``.
+    event_name : str, optional
+        Name of the event type. Defaults to "custom".
+    id_name : str, optional
+        Name of the column containing the event ID. Defaults to None.
+        If None, the event ID is not included in the data.
 
     Attributes
     ----------
@@ -27,6 +32,8 @@ class Events(BaseTabular):
         Path to the CSV file containing the event data.
     data : pandas.DataFrame
         DataFrame containing the event data.
+    event_name : str
+        Name of the event type.
     id_name : str
         Name of the column containing the event ID.
     """

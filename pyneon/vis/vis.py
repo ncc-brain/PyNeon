@@ -35,6 +35,8 @@ def plot_frame(
         Whether to automatically set the title of the axis.
         The automatic title includes the video file name and the frame index.
         Defaults to ``True``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
 
     Returns
     -------
@@ -201,6 +203,9 @@ def overlay_scanpath(
     line_thickness : int or None
         Thickness of the lines connecting fixations. If None, no lines are drawn.
         Defaults to 2.
+    text_size : int or None
+        Size of the text displaying fixation status and ID. If None, no text is displayed.
+        Defaults to None.
     max_fixations : int
         Maximum number of fixations to plot per frame. Defaults to 10.
     show_video : bool

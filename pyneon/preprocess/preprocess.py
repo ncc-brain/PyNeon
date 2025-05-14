@@ -160,15 +160,15 @@ def concat_streams(
     rec : Recording
         Recording object containing the streams to concatenate.
     stream_names : str or list of str
-        Stream names to concatenate. If "all", then all streams will be used.
+        Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
         (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
     sampling_freq : float or int or str, optional
         Sampling frequency of the concatenated streams.
         If numeric, the streams will be interpolated to this frequency.
-        If ``"min"`` (default), the lowest nominal sampling frequency
+        If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
-        If ``"max"``, the highest nominal sampling frequency will be used.
+        If "max", the highest nominal sampling frequency will be used.
     interp_float_kind : str, optional
         Kind of interpolation applied on columns of float type,
         Defaults to ``"cubic"``. For details see :class:`scipy.interpolate.interp1d`.

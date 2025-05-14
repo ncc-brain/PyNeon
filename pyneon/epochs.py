@@ -164,9 +164,10 @@ class Epochs:
 
         Parameters
         ----------
-        columns : str or list of str, optional
+        column_names : str or list of str, optional
             Column names to include in the NumPy array. If 'all', all columns are included.
             Only columns that can be converted to int or float can be included.
+            Default is 'all'.
 
         Returns
         -------
@@ -255,34 +256,27 @@ class Epochs:
             the event trigger (t_ref = 0).  ``None`` means "from the first /
             up to the last sample".  Default: (None, 0.0) -> the pre-trigger
             part of each epoch.
-        method : {"mean", "linear"}, default "mean"
+        method "mean" or "linear", optional
             * "mean" - subtract the scalar mean of the baseline window.
             * "linear" - fit a first-order (y = a·t + b) model *within* the
             baseline window and remove the fitted trend from the entire
             epoch (a very small, fast version of MNE's regression
             detrending).
-        inplace : bool, default True
+            Defaults to "mean".
+        inplace : bool
             If True, overwrite :pyattr:`self.data` / :pyattr:`self.epochs`.
             Otherwise return a **new, corrected** :class:`pandas.DataFrame`
             and leave the object unchanged.
+            Defaults to True.
 
         Returns
         -------
         pandas.DataFrame
             The baseline-corrected data (same shape & dtypes as
             :pyattr:`self.data`).
-
-        Notes
-        -----
-        * Works for both uniformly and irregularly sampled streams because we
-        operate on the original timestamps.
-        * The three annotation columns
-        ``["epoch index", "epoch time", "epoch description"]`` are preserved.
         """
 
-        # ------------------------------------------------------------------
-        # 0. Helpers
-        # ------------------------------------------------------------------
+        
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:
             """In-place mean or linear detrend on *one* epoch DF."""
             # mask rows within the baseline window (epoch time is int64 ns)
@@ -342,9 +336,6 @@ class Epochs:
 
         chan_cols = self.columns.to_list()
 
-        # ------------------------------------------------------------------
-        # 2. Operate epoch-by-epoch
-        # ------------------------------------------------------------------
         # Work on a copy unless the caller wants in-place modification
         if inplace:
             epochs_copy = self.epochs
@@ -363,9 +354,6 @@ class Epochs:
                 mask = data_copy["epoch index"] == idx
                 data_copy.loc[mask, chan_cols] = epoch_df[chan_cols].to_numpy()
 
-        # ------------------------------------------------------------------
-        # 3. Return or leave in-place
-        # ------------------------------------------------------------------
         if inplace:
             return self.data  # type: ignore[return-value]
         else:
@@ -521,17 +509,17 @@ def construct_times_df(
     description : numpy.ndarray or str, optional
         Description or label associated with the epochs. Could be an array of
         equal length as ``t_ref`` or a single string (to be repeated for all epochs).
-    global_t_ref : int, optional
-        Global reference time (in nanoseconds) to be added to `t_ref`.
-        Unit is nanosecond. Defaults to 0. This is useful when the reference times
-        are relative to a global start time
-        (for instance :attr:`pyneon.Stream.first_ts`).
     t_ref_unit : str, optional
         Unit of time for ``t_ref``.
         Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"ns"``.
     t_other_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``.
         Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"s"``.
+    global_t_ref : int, optional
+        Global reference time (in nanoseconds) to be added to `t_ref`.
+        Unit is nanosecond. Defaults to 0. This is useful when the reference times
+        are relative to a global start time
+        (for instance :attr:`pyneon.Stream.first_ts`).
 
     Returns
     -------

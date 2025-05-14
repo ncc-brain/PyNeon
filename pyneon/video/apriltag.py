@@ -20,7 +20,6 @@ def detect_apriltags(
     nthreads: int = 4,
     quad_decimate: float = 1.0,
     skip_frames: int = 1,
-    random_access: bool = True,
 ) -> pd.DataFrame:
     """
     Detect AprilTags in a video and report their data for every processed frame,
@@ -40,10 +39,6 @@ def detect_apriltags(
     skip_frames : int, optional
         If > 1, detect tags only in every Nth frame.
         E.g., skip_frames=5 will process frames 0, 5, 10, 15, etc.
-    random_access : bool, optional
-        If True, jump directly to the frames you need (faster for large skip_frames).
-        If False, read frames sequentially and skip in a loop (may be faster for
-        small skip_frames or if random access is expensive).
 
     Returns
     -------
@@ -71,6 +66,7 @@ def detect_apriltags(
         quad_decimate=quad_decimate,
     )
 
+    random_access = True
     if skip_frames < 1:
         raise ValueError("skip_frames must be >= 1")
     if skip_frames < 5:
@@ -184,7 +180,7 @@ def estimate_camera_pose(
         ``SceneVideo`` instance providing the frames' timestamps and the
         intrinsic matrices ``camera_matrix`` and ``dist_coeffs``.
     tag_locations_df :
-        DataFrame describing the world-coordinates of each AprilTag.
+        pandas.DataFrame describing the world-coordinates of each AprilTag.
         Required columns::
 
             "tag_id"   : int
@@ -192,7 +188,7 @@ def estimate_camera_pose(
             "norm_vec" : list[float] length 3, [nx, ny, nz] front-face normal
             "size"     : float, edge length in meters
     all_detections :
-        DataFrame with per-frame tag detections.  If *None* the function
+        pandas.DataFrame with per-frame tag detections.  If *None* the function
         calls ``detect_apriltags(video)``.  Expected columns::
 
             "frame_idx" : int
@@ -322,20 +318,20 @@ def estimate_camera_pose(
     )
 
 
-def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
+def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     """
     Transform 2D points by a 3x3 homography.
 
     Parameters
     ----------
-    points : np.ndarray of shape (N, 2)
+    points : numpy.ndarray of shape (N, 2)
         2D points to be transformed.
-    H : np.ndarray of shape (3, 3)
+    H : numpy.ndarray of shape (3, 3)
         Homography matrix.
 
     Returns
     -------
-    np.ndarray of shape (N, 2)
+    numpy.ndarray of shape (N, 2)
         Transformed 2D points.
     """
     points_h = np.column_stack([points, np.ones(len(points))])
@@ -346,7 +342,7 @@ def apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 
 
 def find_homographies(
-    video,
+    video: "SceneVideo",
     detection_df: pd.DataFrame,
     marker_info: pd.DataFrame,
     frame_size: tuple[int, int],
@@ -374,15 +370,15 @@ def find_homographies(
 
     Parameters
     ----------
-    video : SceneVideo-like
+    video : SceneVideo
         An object containing camera intrinsics (camera_matrix, dist_coeffs) and possibly timestamps.
         If `undistort=True`, these intrinsics are used to undistort marker corners.
-    detection_df : pd.DataFrame
+    detection_df : pandas.DataFrame
         Must contain:
         - 'frame_idx': int
         - 'tag_id': int
         - 'corners': np.ndarray of shape (4, 2) in video or PsychoPy coordinates
-    marker_info : pd.DataFrame
+    marker_info : pandas.DataFrame
         Must contain:
         - 'marker_id' (or 'tag_id'): int
         - 'marker_corners': np.ndarray of shape (4, 2) giving the reference positions
@@ -393,6 +389,11 @@ def find_homographies(
     coordinate_system : str, optional
         One of {"opencv", "psychopy"}. If "psychopy", corners in `detection_df` and
         `marker_info` are converted to OpenCV pixel coords before the homography is computed.
+        Default is "opencv".
+    skip_frames : int, optional
+        If > 1, the function will compute homographies only for every Nth frame.
+        E.g., skip_frames=5 will compute homographies for frames 0, 5, 10, 15, etc.
+        Must match with the `skip_frames` used in `detect_apriltags`.
     undistort : bool, optional
         Whether to undistort marker corners using the camera intrinsics in `video`.
         Default is True.
@@ -556,7 +557,7 @@ def transform_gaze_to_screen(
 
     Parameters
     ----------
-    gaze_df : pd.DataFrame
+    gaze_df : pandas.DataFrame
         DataFrame containing gaze points with columns:
         - 'frame_idx': int, the frame index
         - 'x', 'y': float, the gaze coordinates in the original coordinate system.
@@ -565,7 +566,7 @@ def transform_gaze_to_screen(
 
     Returns
     -------
-    pd.DataFrame
+    pandas.DataFrame
         A copy of `gaze_df` with additional columns:
         - 'x_trans', 'y_trans': the transformed gaze coordinates.
     """
@@ -588,7 +589,7 @@ def transform_gaze_to_screen(
             continue
         # transform the gaze coords
         gaze_points = gaze_df.loc[idx_sel, ["gaze x [px]", "gaze y [px]"]].values
-        gaze_trans = apply_homography(gaze_points, H)
+        gaze_trans = _apply_homography(gaze_points, H)
         gaze_df.loc[idx_sel, "x_trans"] = gaze_trans[:, 0]
         gaze_df.loc[idx_sel, "y_trans"] = gaze_trans[:, 1]
 
@@ -615,7 +616,7 @@ def _upsample_homographies(
 
     Returns
     -------
-    dict[int, np.ndarray]
+    dict[int, numpy.ndarray]
         A dictionary with a 3x3 homography for every frame from 0..max_frame.
         Keys will be standard Python int.
         If a frame is not within the known range, it will be extrapolated
