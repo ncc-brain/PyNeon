@@ -350,12 +350,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         self,
         heatmap_source: Literal["gaze", "fixations", None] = "gaze",
         scatter_source: Literal["gaze", "fixations", None] = "fixations",
-        step_size: int = 10,
-        sigma: int | float = 2,
-        width_height: tuple[int, int] = (1600, 1200),
-        cmap: str = "inferno",
-        ax: Optional[plt.Axes] = None,
         show: bool = True,
+        **kwargs,
     ) -> tuple[plt.Figure, plt.Axes]:
         """
         Plot a heatmap of gaze or fixation data on a matplotlib axis.
@@ -373,21 +369,15 @@ Recording duration: {self.info["duration"] / 1e9}s
             Source of the data to plot as a scatter plot. If None, no scatter plot is plotted.
             Defaults to 'fixations'. Gaze data is typically more dense and thus less suitable
             for scatter plots.
-        step_size : int
-            Size of the grid cells in pixels. Defaults to 10.
-        sigma : int or float
-            Standard deviation of the Gaussian kernel used to smooth the heatmap.
-            If None or 0, no smoothing is applied. Defaults to 2.
-        width_height : tuple[int, int]
-            If video is not available, the width and height of the scene camera frames to
-            specify the heatmap dimensions. Defaults to (1600, 1200).
-        cmap : str
-            Colormap to use for the heatmap. Defaults to 'inferno'.
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the frame on. If ``None``, a new figure is created.
-            Defaults to ``None``.
         show : bool
             Show the figure if ``True``. Defaults to True.
+        **kwargs : keyword arguments
+            Additional parameters for the plot, including:
+                - 'step_size': Step size for the heatmap grid. Default is 10.
+                - 'sigma': Sigma value for Gaussian smoothing. Default is 2.
+                - 'width_height': Width and height of the figure in pixels. Default is (1600, 1200).
+                - 'cmap': Colormap for the heatmap. Default is 'inferno'.
+                - 'ax': Matplotlib axis to plot on. If None, a new figure and axis are created.
 
         Returns
         -------
@@ -396,6 +386,12 @@ Recording duration: {self.info["duration"] / 1e9}s
         ax : matplotlib.axes.Axes
             Axis object containing the plot.
         """
+        step_size = kwargs.get("step_size", 10)
+        sigma = kwargs.get("sigma", 2)
+        width_height = kwargs.get("width_height", (1600, 1200))
+        cmap = kwargs.get("cmap", "inferno")
+        ax = kwargs.get("ax", None)
+
         return plot_distribution(
             self,
             heatmap_source,
@@ -425,7 +421,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             If None, defaults to the median interval between video frame timestamps.
         overwrite : bool, optional
             If True, force recomputation even if saved data exists. Default is False.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Path to save the resulting CSV file. Defaults to `<der_dir>/gaze_synced.csv`.
 
         Returns
@@ -477,7 +473,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             :pymeth:`sync_gaze_to_video`.
         lk_params : dict, optional
             Parameters forwarded to the LK optical-flow call.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Where to save the pickle. Defaults to ``<der_dir>/scanpath.pkl``.
         overwrite : bool, optional
             Force recomputation even if a pickle exists.
@@ -504,7 +500,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         scanpath_df = estimate_scanpath(
             self.video,
-            sync_gaze,  # <-- pass the raw DF
+            sync_gaze,
             lk_params=lk_params,
         )
         scanpath_df.index.name = "timestamp [ns]"
@@ -517,11 +513,9 @@ Recording duration: {self.info["duration"] / 1e9}s
     def detect_apriltags(
         self,
         tag_family: str = "tag36h11",
-        nthreads: int = 4,
-        quad_decimate: float = 1.0,
-        skip_frames: int = 1,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        **kwargs,
     ) -> Stream:
         """
         Detect AprilTags in a video and return their positions per frame.
@@ -533,16 +527,15 @@ Recording duration: {self.info["duration"] / 1e9}s
         ----------
         tag_family : str, optional
             The AprilTag family to detect (e.g., "tag36h11"). Default is "tag36h11".
-        nthreads : int, optional
-            Number of threads to use for detection. Default is 4.
-        quad_decimate : float, optional
-            Downsampling factor applied before detection. Higher values increase speed and reduce accuracy. Default is 1.0.
-        skip_frames : int, optional
-            Process every N-th frame (1 = no skipping). Speeds up processing at the cost of temporal resolution.
         overwrite : bool, optional
             If True, reruns detection even if saved results exist.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
+        **kwargs : keyword arguments
+            Additional parameters for AprilTag detection, including:
+                - 'nthreads': Number of threads to use for detection. Default is 4.
+                - 'quad_decimate': Decimation factor for the quad detection. Default is 1.0, thus no decimation.
+                - 'skip_frames': Number of frames to skip between detections. Default is 1, thus no skipping.
 
         Returns
         -------
@@ -554,6 +547,11 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'corners': A 4x2 array of tag corner coordinates
                 - 'center': A 1x2 array of the tag center
         """
+
+        nthreads = kwargs.get("nthreads", 4)
+        quad_decimate = kwargs.get("quad_decimate", 1.0)
+        skip_frames = kwargs.get("skip_frames", 1)
+
         if output_path is None:
             json_file = self.der_dir / "apriltags.json"
         else:
@@ -587,19 +585,16 @@ Recording duration: {self.info["duration"] / 1e9}s
         self,
         marker_info: pd.DataFrame,
         all_detections: Optional[Stream] = None,
-        coordinate_system: str = "opencv",
-        screen_size: tuple[int, int] = (1920, 1080),
-        skip_frames: int = 1,
-        settings: Optional[dict] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        **kwargs
     ) -> Stream:
         """
         Compute and return homographies for each frame using AprilTag detections and reference marker layout.
 
         Parameters
         ----------
-        marker_info : pd.DataFrame
+        marker_info : pandas.DataFrame
             DataFrame containing AprilTag reference positions and orientations, with columns:
                 - 'tag_id': ID of the tag
                 - 'x', 'y', 'z': 3D coordinates of the tag's center
@@ -607,20 +602,16 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'size': Side length of the tag in meters
         all_detections : Stream, optional
             Stream containing AprilTag detection results per frame. If None, detections are recomputed.
-        coordinate_system : {"opencv", "psychopy"}, default="opencv"
-            Defines the coordinate convention used for screen and marker layout:
-                - "opencv": Origin top-left, y increases downward
-                - "psychopy": Origin center, y increases upward
-        screen_size : tuple of int, default=(1920, 1080)
-            Pixel dimensions of the target screen.
-        skip_frames : int, default=1
-            Number of frames to skip between detections. Default is 1 (no skipping).
-        settings : dict, optional
-            Optional parameters for homography computation (e.g., RANSAC thresholds).
         overwrite : bool, optional
             Whether to force recomputation even if saved homographies exist.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
+        **kwargs : keyword arguments
+            Additional parameters for homography computation, including:
+                - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
+                - 'screen_size': Size of the screen in pixels (width, height). Default is (1920, 1080).
+                - 'skip_frames': Number of frames to skip between detections. Default is 1.
+                - 'settings': Additional settings for the homography computation.
 
         Returns
         -------
@@ -629,6 +620,14 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'frame_idx': Video frame index
                 - 'homography': 3x3 NumPy array representing the homography matrix for that frame
         """
+
+        # Defaults for kwargs
+        coordinate_system = kwargs.get("coordinate_system", "opencv")
+        screen_size = kwargs.get("screen_size", (1920, 1080))
+        skip_frames = kwargs.get("skip_frames", 1)
+        settings = kwargs.get("settings", None)
+
+
         if output_path is None:
             pkl_file = self.der_dir / "homographies.pkl"
         else:
@@ -680,13 +679,13 @@ Recording duration: {self.info["duration"] / 1e9}s
         ----------
         homographies : Stream, optional
             Stream containing precomputed homographies. If None, they are computed from `marker_info`.
-        marker_info : pd.DataFrame, optional
+        marker_info : pandas.DataFrame, optional
             AprilTag marker info used to compute homographies. Required if `homographies` is None.
         synced_gaze : Stream, optional
             Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
         overwrite : bool, optional
             If True, recompute and overwrite any existing screen-transformed gaze data. Default is False.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_screen.csv`.
 
         Returns
@@ -744,14 +743,14 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        gaze_on_screen : pd.DataFrame, optional
+        gaze_on_screen : pandas.DataFrame, optional
             DataFrame of gaze coordinates already transformed to screen space.
             If None, will be computed via `self.gaze_to_screen()`.
             Must include 'fixation id', 'x_trans', and 'y_trans' columns.
         overwrite : bool, optional
             If True, forces recomputation and overwrites any existing output file.
             Default is False.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Custom path to save the resulting fixation data as a CSV.
             If None, defaults to `self.der_dir / "fixations_on_screen.csv"`.
 
@@ -826,15 +825,14 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        tag_locations_df : pd.DataFrame
+        tag_locations_df : pandas.DataFrame
             3-D positions, normals and size for every AprilTag (columns:
             'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
         all_detections : Stream, optional
             Per-frame AprilTag detections.  If ``None``, they are produced by
             :pymeth:`detect_apriltags`.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
-
         overwrite : bool, optional
             If True, forces recomputation and overwrites any existing saved result. Default is False.
 
@@ -844,6 +842,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             Indexed by ``"timestamp [ns]"`` with columns
             ``'frame_idx', 'translation_vector', 'rotation_vector', 'camera_pos'``.
         """
+
         json_file = (
             Path(output_path) if output_path else self.der_dir / "camera_pose.json"
         )
@@ -895,13 +894,13 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        camera_pose_raw : pd.DataFrame, optional
+        camera_pose_raw : pandas.DataFrame, optional
             Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
             If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
             computes it via :pymeth:`estimate_camera_pose`.
         overwrite : bool, default False
             Recompute even if a smoothed file already exists.
-        output_path : str or Path, optional
+        output_path : str or pathlib.Path, optional
             Where to save the JSON (``smoothed_camera_pose.json`` by default).
         kwargs : dict, optional
             Optional arguments:
@@ -986,7 +985,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             If *None*, it is loaded or computed automatically.
         show_video : bool
             Display the video live while rendering.
-        video_output_path : str or Path, optional
+        video_output_path : str or pathlib.Path, optional
             Target MP4 path. Defaults to `<der_dir>/scanpath.mp4`.
             If *None*, no file is written.
         overwrite : bool, default False
@@ -1053,15 +1052,15 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        april_detections : :class:`pandas.DataFrame`
+        april_detections : pandas.DataFrame
             DataFrame containing the AprilTag detections.
-        camera_positions : :class:`pandas.DataFrame`
+        camera_positions : pandas.DataFrame
             DataFrame containing the camera positions.
-        room_corners : :class:`numpy.ndarray`
+        room_corners : numpy.ndarray
             Array containing the room corners coordinates. Defaults to a unit square.
-        video_output_path : :class:`pathlib.Path` or str
+        video_output_path pathlib.Path or str
             Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
-        graph_size : :class:`numpy.ndarray`
+        graph_size : numpy.ndarray
             Size of the graph to overlay on the video. Defaults to [300, 300].
         show_video : bool
             Whether to display the video with detections and poses overlaid. Defaults to True.
