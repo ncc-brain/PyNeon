@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Optional
 
 
 if TYPE_CHECKING:
-    from ..stream import NeonGaze
-    from .video import NeonVideo
+    from ..stream import Gaze
+    from .video import SceneVideo
 
 
 def estimate_scanpath(
-    video: "NeonVideo",
-    sync_gaze: "NeonGaze",
+    video: "SceneVideo",
+    sync_gaze: "Gaze",
     lk_params: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
@@ -20,7 +20,7 @@ def estimate_scanpath(
 
     Parameters
     ----------
-    video : NeonVideo
+    video : SceneVideo
         Video object containing the frames.
     sync_gaze : NeonGaze
         Gaze data synchronized with the video frames.
@@ -144,4 +144,7 @@ def estimate_scanpath(
 
     # Reset video to the beginning
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    scanpath.index.name = "timestamp [ns]"
+
     return scanpath

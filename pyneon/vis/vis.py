@@ -7,13 +7,17 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from tqdm import tqdm
 
+from ..stream import Stream
+
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
-    from ..video import NeonVideo
+    from ..recording import Recording
+    from ..stream import Stream
+    from ..video import SceneVideo
+    from ..epochs import Epochs
 
 
 def plot_frame(
-    video: "NeonVideo",
+    video: "SceneVideo",
     index: int = 0,
     ax: Optional[plt.Axes] = None,
     auto_title: bool = True,
@@ -24,7 +28,7 @@ def plot_frame(
 
     Parameters
     ----------
-    video : NeonVideo
+    video : SceneVideo
         Video object to plot the frame from.
     index : int
         Index of the frame to plot.
@@ -35,6 +39,8 @@ def plot_frame(
         Whether to automatically set the title of the axis.
         The automatic title includes the video file name and the frame index.
         Defaults to ``True``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
 
     Returns
     -------
@@ -64,7 +70,7 @@ def plot_frame(
 
 
 def plot_distribution(
-    rec: "NeonRecording",
+    rec: "Recording",
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
     scatter_source: Literal["gaze", "fixations", None] = "fixations",
     step_size: int = 10,
@@ -81,7 +87,7 @@ def plot_distribution(
 
     Parameters
     ----------
-    rec : NeonRecording
+    rec : Recording
         Recording object containing the gaze and video data.
     heatmap_source : {'gaze', 'fixations', None}
         Source of the data to plot as a heatmap. If None, no heatmap is plotted.
@@ -178,10 +184,11 @@ def plot_distribution(
 
 
 def overlay_scanpath(
-    video: "NeonVideo",
+    video: "SceneVideo",
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
     line_thickness: int = 2,
+    text_size: Optional[int] = None,
     max_fixations: int = 10,
     show_video: bool = False,
     video_output_path: Optional[Path | str] = "scanpath.mp4",
@@ -191,7 +198,7 @@ def overlay_scanpath(
 
     Parameters
     ----------
-    video : NeonVideo
+    video : SceneVideo
         Video object to overlay the fixations on.
     scanpath : pandas.DataFrame
         DataFrame containing the fixations and gaze data.
@@ -200,6 +207,9 @@ def overlay_scanpath(
     line_thickness : int or None
         Thickness of the lines connecting fixations. If None, no lines are drawn.
         Defaults to 2.
+    text_size : int or None
+        Size of the text displaying fixation status and ID. If None, no text is displayed.
+        Defaults to None.
     max_fixations : int
         Maximum number of fixations to plot per frame. Defaults to 10.
     show_video : bool
@@ -280,15 +290,16 @@ def overlay_scanpath(
                     )
 
                     # Optionally add text showing fixation status and ID
-                    cv2.putText(
-                        frame,
-                        f"ID: {id} Status: {status}",
-                        (int(x) + 10, int(y)),
-                        cv2.FONT_HERSHEY_PLAIN,
-                        1,
-                        color,
-                        1,
-                    )
+                    if text_size is not None:
+                        cv2.putText(
+                            frame,
+                            f"ID: {id} Status: {status}",
+                            (int(x) + 10, int(y)),
+                            cv2.FONT_HERSHEY_PLAIN,
+                            text_size,
+                            color,
+                            text_size,
+                        )
 
                     # Draw line connecting the previous fixation to the current one
                     if (
@@ -323,8 +334,60 @@ def overlay_scanpath(
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 
+def plot_epochs(
+    epochs: "Epochs",
+    column_name: str,
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot data from a specified column from epochs on a matplotlib axis.
+
+    Parameters
+    ----------
+    epochs : Epochs
+        Epochs object containing the data to plot. Must be created from
+        a :class:`pyneon.Stream`.
+    column_name : str
+        Name of the column to plot.
+    ax : matplotlib.axes.Axes or None
+        Axis to plot the data on. If ``None``, a new figure is created.
+        Defaults to ``None``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Figure object containing the plot.
+    ax : matplotlib.axes.Axes
+        Axis object containing the plot.
+    """
+    if epochs.source_class != Stream:
+        raise ValueError("Epochs must be created from a `Stream` to be plotted.")
+    if column_name not in epochs.columns:
+        raise ValueError(f"Column '{column_name}' not found in epochs.")
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    # Plot the data
+    for i, row in epochs.epochs.iterrows():
+        times = row.data["epoch time"] / 1e9
+        data = row.data[column_name]
+        ax.plot(times, data)
+
+    ax.set_xlabel("Epoch time (s)")
+    ax.set_ylabel(column_name)
+    if show:
+        plt.show()
+    return fig, ax
+
+
 def overlay_detections_and_pose(
-    recording: "NeonRecording",
+    recording: "Recording",
     april_detections: pd.DataFrame,
     camera_positions: pd.DataFrame,
     room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
@@ -348,7 +411,7 @@ def overlay_detections_and_pose(
 
     Parameters
     ----------
-    recording : :class:`NeonRecording`
+    recording : :class:`Recording`
         Recording object containing the video and related metadata.
     april_detections : :class:`pandas.DataFrame`
         DataFrame containing AprilTag detections for each frame, with columns:

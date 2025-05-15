@@ -1,23 +1,57 @@
-from .tabular import NeonTabular
+from .tabular import BaseTabular
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from numbers import Number
 from typing import TYPE_CHECKING, Literal, Optional
 import copy
 
 if TYPE_CHECKING:
-    from .stream import NeonStream
-
-from .utils import _check_event_data
+    from .stream import Stream
 
 
-class NeonEV(NeonTabular):
+class Events(BaseTabular):
     """
-    Base for Neon event data (blinks, fixations, saccades, "events" messages).
+    Base for event data (blinks, fixations, saccades, "events" messages).
+    Timestamped by ``start timestamp [ns]`` or ``timestamp [ns]``.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or pathlib.Path
+        DataFrame or path to the CSV file containing the stream data.
+        The data must be indexed by ``timestamp [ns]``.
+    event_name : str, optional
+        Name of the event type. Defaults to "custom".
+    id_name : str, optional
+        Name of the column containing the event ID. Defaults to None.
+        If None, the event ID is not included in the data.
+
+    Attributes
+    ----------
+    file : pathlib.Path
+        Path to the CSV file containing the event data.
+    data : pandas.DataFrame
+        DataFrame containing the event data.
+    event_name : str
+        Name of the event type.
+    id_name : str
+        Name of the column containing the event ID.
     """
 
-    def __init__(self, file):
-        super().__init__(file)
+    def __init__(
+        self,
+        data: pd.DataFrame | Path,
+        event_name: str = "custom",
+        id_name: Optional[str] = None,
+    ):
+        if isinstance(data, Path):
+            self.file = data
+            data = pd.read_csv(data)
+        else:
+            self.file = None
+        super().__init__(data)
+        self.event_name = event_name
+        self.id_name = id_name
 
     @property
     def start_ts(self) -> np.ndarray:
@@ -54,7 +88,7 @@ class NeonEV(NeonTabular):
         tmax: Optional[Number] = None,
         by: Literal["timestamp", "row"] = "timestamp",
         inplace: bool = False,
-    ) -> Optional["NeonEV"]:
+    ) -> Optional["Events"]:
         """
         Crop data to a specific time range based on timestamps or row numbers.
 
@@ -76,7 +110,7 @@ class NeonEV(NeonTabular):
 
         Returns
         -------
-        NeonEV or None
+        Events or None
             Cropped stream if ``inplace=False``, otherwise ``None``.
         """
         if tmin is None and tmax is None:
@@ -94,130 +128,31 @@ class NeonEV(NeonTabular):
         if inplace:
             self.data = new_data
         else:
-            new_EV = copy.copy(self)
-            new_EV.data = new_data
-            return new_EV
+            new_events = copy.copy(self)
+            new_events.data = new_data
+            return new_events
 
-    def restrict(
-        self, other: "NeonStream", inplace: bool = False
-    ) -> Optional["NeonEV"]:
+    def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
         Restrict events to a time range defined by another stream.
 
         Parameters
         ----------
-        other : NeonStream
+        other : Stream
             Stream to restrict to.
 
         Returns
         -------
-        NeonEV
+        Events
             Restricted event data.
         """
-        new_EV = self.crop(
+        new_events = self.crop(
             other.first_ts, other.last_ts, by="timestamp", inplace=inplace
         )
-        if new_EV.data.empty:
+        if new_events.data.empty:
             raise ValueError("No data found in the range of the other stream")
-        return new_EV
+        return new_events
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event series by index."""
         return self.data.iloc[index]
-
-
-class NeonBlinks(NeonEV):
-    """Blink data."""
-
-    def __init__(self, file):
-        super().__init__(file)
-        if self.data.index.name != "start timestamp [ns]":
-            raise ValueError("Blink data should be indexed by `start timestamp [ns]`.")
-        self.data = self.data.astype(
-            {
-                "blink id": "Int32",
-                "end timestamp [ns]": "Int64",
-                "duration [ms]": "Int64",
-            }
-        )
-        self.id_name = "blink id"
-
-
-class NeonFixations(NeonEV):
-    """Fixation data."""
-
-    def __init__(self, file):
-        super().__init__(file)
-        if self.data.index.name != "start timestamp [ns]":
-            raise ValueError(
-                "Fixation data should be indexed by `start timestamp [ns]`."
-            )
-        self.data = self.data.astype(
-            {
-                "fixation id": "Int32",
-                "end timestamp [ns]": "Int64",
-                "duration [ms]": "Int64",
-                "fixation x [px]": float,
-                "fixation y [px]": float,
-                "azimuth [deg]": float,
-                "elevation [deg]": float,
-            }
-        )
-        self.id_name = "fixation id"
-
-
-class NeonSaccades(NeonEV):
-    """Saccade data."""
-
-    def __init__(self, file):
-        super().__init__(file)
-        if self.data.index.name != "start timestamp [ns]":
-            raise ValueError(
-                "Saccade data should be indexed by `start timestamp [ns]`."
-            )
-        self.data = self.data.astype(
-            {
-                "saccade id": "Int32",
-                "end timestamp [ns]": "Int64",
-                "duration [ms]": "Int64",
-                "amplitude [px]": float,
-                "amplitude [deg]": float,
-                "mean velocity [px/s]": float,
-                "peak velocity [px/s]": float,
-            }
-        )
-        self.id_name = "saccade id"
-
-
-class NeonEvents(NeonEV):
-    """Event data."""
-
-    def __init__(self, file):
-        super().__init__(file)
-        if self.data.index.name != "timestamp [ns]":
-            raise ValueError("Event data should be indexed by `timestamp [ns]`.")
-        self.data = self.data.astype(
-            {
-                "name": str,
-                "type": str,
-            }
-        )
-        self.id_name = None
-
-
-class CustomEvents(NeonEV):
-    """
-    Custom NeonEV class for user-defined event data.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        Event data. Must be indexed by 'timestamp [ns]' or 'start timestamp [ns]'.
-    """
-
-    file = None
-
-    def __init__(self, data: pd.DataFrame):
-        _check_event_data(data)
-        self.data = data
-        self.id_name = None

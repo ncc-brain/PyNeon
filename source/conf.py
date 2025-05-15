@@ -38,6 +38,9 @@ intersphinx_mapping = {
 
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
+    "navigation_depth": 4,
+    "show_nav_level": 2,
+    "show_toc_level": 2,
     "icon_links": [
         {
             "name": "GitHub",

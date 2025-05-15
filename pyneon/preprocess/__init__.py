@@ -1,8 +1,15 @@
-from .preprocess import interpolate, window_average, concat_streams, concat_events
+from .preprocess import (
+    interpolate,
+    interpolate_events,
+    window_average,
+    concat_streams,
+    concat_events,
+)
 from .filter import smooth_camera_pose
 
 __all__ = [
     "interpolate",
+    "interpolate_events",
     "window_average",
     "concat_streams",
     "concat_events",

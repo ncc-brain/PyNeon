@@ -18,20 +18,16 @@ def smooth_camera_pose(
 
     Parameters
     ----------
-    camera_position_raw : pd.DataFrame
+    camera_position_raw : pandas.DataFrame
         DataFrame containing 'frame_idx' and 'camera_pos' columns.
-    state_dim : int, optional
-        Dimensionality of the state vector. Default is 3 (x, y, z).
-    meas_dim : int, optional
-        Dimensionality of the measurement vector. Default is 3 (x, y, z).
     initial_state_noise : float, optional
         Initial state covariance scaling factor. Default is 0.1.
     process_noise : float, optional
-        Process noise covariance scaling factor. Default is 0.005.
+        Process noise covariance scaling factor. Default is 0.1.
     measurement_noise : float, optional
-        Measurement noise covariance scaling factor. Default is 0.005.
+        Measurement noise covariance scaling factor. Default is 0.01.
     gating_threshold : float, optional
-        Mahalanobis distance threshold for gating outliers. Default is 3.0.
+        Mahalanobis distance threshold for gating outliers. Default is 2.0.
     bidirectional : bool, optional
         If True, applies forward-backward RTS smoothing. Default is False.
 

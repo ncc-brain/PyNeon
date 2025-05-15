@@ -11,7 +11,7 @@ from ..vis import plot_frame, overlay_scanpath
 from .apriltag import detect_apriltags
 
 
-class NeonVideo(cv2.VideoCapture):
+class SceneVideo(cv2.VideoCapture):
     """
     Loaded video file with timestamps.
 
