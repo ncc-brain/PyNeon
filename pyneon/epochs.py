@@ -158,6 +158,7 @@ class Epochs:
     def plot(
         self,
         column_names: str,
+        cmap_name: str = "cool",
         ax: Optional[plt.Axes] = None,
         show: bool = True,
     ) -> tuple[plt.Figure, plt.Axes]:
@@ -168,6 +169,8 @@ class Epochs:
         ----------
         column_name : str
             Name of the column to plot.
+        cmap_name : str
+            Colormap to use for different epochs. Defaults to 'cool'.
         ax : matplotlib.axes.Axes or None
             Axis to plot the data on. If ``None``, a new figure is created.
             Defaults to ``None``.
@@ -184,8 +187,9 @@ class Epochs:
         fig_ax = plot_epochs(
             self,
             column_names,
-            ax=ax,
-            show=show,
+            cmap_name,
+            ax,
+            show,
         )
         return fig_ax
 
@@ -241,8 +245,9 @@ class Epochs:
             columns = self.columns.to_list()
         else:
             columns = [column_names] if isinstance(column_names, str) else column_names
-            if not all(col in self.columns for col in columns):
-                raise ValueError(f"Column '{col}'' doesn't exist in the epoch data.")
+            for col in columns:
+                if col not in self.columns:
+                    raise ValueError(f"Column '{col}' doesn't exist in the data.")
 
         n_columns = len(columns)
 

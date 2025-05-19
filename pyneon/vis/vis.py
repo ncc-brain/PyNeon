@@ -3,6 +3,8 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from tqdm import tqdm
@@ -337,6 +339,7 @@ def overlay_scanpath(
 def plot_epochs(
     epochs: "Epochs",
     column_name: str,
+    cmap_name: str = "cool",
     ax: Optional[plt.Axes] = None,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -350,6 +353,8 @@ def plot_epochs(
         a :class:`pyneon.Stream`.
     column_name : str
         Name of the column to plot.
+    cmap_name : str
+        Colormap to use for different epochs. Defaults to 'cool'.
     ax : matplotlib.axes.Axes or None
         Axis to plot the data on. If ``None``, a new figure is created.
         Defaults to ``None``.
@@ -373,14 +378,30 @@ def plot_epochs(
     else:
         fig = ax.get_figure()
 
+    # Get the colormap
+    cmap = cm.get_cmap(cmap_name)
+    num_epochs = len(epochs.epochs)
+
+    # Create a normalization for the colorbar
+    norm = Normalize(vmin=0, vmax=num_epochs)
+
     # Plot the data
     for i, row in epochs.epochs.iterrows():
         times = row.data["epoch time"] / 1e9
         data = row.data[column_name]
-        ax.plot(times, data)
+        color = cmap(norm(i))  # Get color from colormap
+        ax.plot(times, data, color=color, label=f"Epoch {i}")
 
     ax.set_xlabel("Epoch time (s)")
     ax.set_ylabel(column_name)
+    ax.axvline(0, color="k", linestyle="--", linewidth=0.5)
+
+    # Add a colorbar
+    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax)
+    cbar.set_label('Epoch Index')
+
     if show:
         plt.show()
     return fig, ax
