@@ -400,7 +400,7 @@ def plot_epochs(
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cbar = fig.colorbar(sm, ax=ax)
-    cbar.set_label('Epoch Index')
+    cbar.set_label("Epoch Index")
 
     if show:
         plt.show()
