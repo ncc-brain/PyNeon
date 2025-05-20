@@ -384,6 +384,7 @@ def plot_epochs(
 
     # Create a normalization for the colorbar
     norm = Normalize(vmin=0, vmax=num_epochs)
+    ax.axvline(0, color="k", linestyle="--", linewidth=0.5)
 
     # Plot the data
     for i, row in epochs.epochs.iterrows():
@@ -394,7 +395,6 @@ def plot_epochs(
 
     ax.set_xlabel("Epoch time (s)")
     ax.set_ylabel(column_name)
-    ax.axvline(0, color="k", linestyle="--", linewidth=0.5)
 
     # Add a colorbar
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
