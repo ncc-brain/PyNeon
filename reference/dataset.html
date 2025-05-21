@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>NeonDataset class &#8212; PyNeon dev documentation</title>
+    <title>Dataset class &#8212; PyNeon dev documentation</title>
   
   
   
@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/dataset';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="NeonRecording class" href="recording.html" />
+    <link rel="next" title="Recording class" href="recording.html" />
     <link rel="prev" title="PyNeon API" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -284,10 +284,10 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">NeonDataset class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Dataset class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events classes (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
@@ -336,7 +336,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">NeonDataset class</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Dataset class</span></li>
   </ul>
 </nav>
 </div>
@@ -353,15 +353,15 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="neondataset-class">
-<h1>NeonDataset class<a class="headerlink" href="#neondataset-class" title="Link to this heading">#</a></h1>
+  <section id="dataset-class">
+<h1>Dataset class<a class="headerlink" href="#dataset-class" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="pyneon.NeonDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">NeonDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonDataset" title="Link to this definition">#</a></dt>
-<dd><p>Holder for multiple recordings. It reads from a directory containing a <strong>project</strong>
-downloaded from Pupil Cloud with the <strong>Timeseries CSV</strong> or <strong>Timeseries CSV and
-Scene Video</strong> option. For example, a dataset with 2 recordings would have the
-following folder structure:</p>
+<dt class="sig sig-object py" id="pyneon.Dataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset" title="Link to this definition">#</a></dt>
+<dd><p>Holder for multiple recordings. It reads from a directory containing a multiple
+recordings downloaded from Pupil Cloud with the <strong>Timeseries CSV</strong> or
+<strong>Timeseries CSV and Scene Video</strong> option. For example, a dataset with 2 recordings
+would have the following folder structure:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
 ├── recording_dir_1/
 │   ├── info.json
@@ -376,7 +376,7 @@ following folder structure:</p>
 └── sections.csv
 </pre></div>
 </div>
-<p>Individual recordings will be read into NeonRecording objects based on
+<p>Individual recordings will be read into <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Recording</span></code></a> objects based on
 <code class="docutils literal notranslate"><span class="pre">sections.csv</span></code>. They are accessible through the <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -384,8 +384,8 @@ following folder structure:</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.NeonDataset.dataset_dir">
-<span class="sig-name descname"><span class="pre">dataset_dir</span></span><a class="headerlink" href="#pyneon.NeonDataset.dataset_dir" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="pyneon.Dataset.dataset_dir">
+<span class="sig-name descname"><span class="pre">dataset_dir</span></span><a class="headerlink" href="#pyneon.Dataset.dataset_dir" title="Link to this definition">#</a></dt>
 <dd><p>Path to the directory containing the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -395,19 +395,19 @@ following folder structure:</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.NeonDataset.recordings">
-<span class="sig-name descname"><span class="pre">recordings</span></span><a class="headerlink" href="#pyneon.NeonDataset.recordings" title="Link to this definition">#</a></dt>
-<dd><p>List of NeonRecording objects for each recording in the dataset.</p>
+<dt class="sig sig-object py" id="pyneon.Dataset.recordings">
+<span class="sig-name descname"><span class="pre">recordings</span></span><a class="headerlink" href="#pyneon.Dataset.recordings" title="Link to this definition">#</a></dt>
+<dd><p>List of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Recording</span></code></a> objects for each recording in the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference internal" href="recording.html#pyneon.NeonRecording" title="pyneon.NeonRecording">NeonRecording</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording">Recording</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.NeonDataset.sections">
-<span class="sig-name descname"><span class="pre">sections</span></span><a class="headerlink" href="#pyneon.NeonDataset.sections" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="pyneon.Dataset.sections">
+<span class="sig-name descname"><span class="pre">sections</span></span><a class="headerlink" href="#pyneon.Dataset.sections" title="Link to this definition">#</a></dt>
 <dd><p>DataFrame containing the sections of the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -417,11 +417,11 @@ following folder structure:</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pyneon.NeonDataset.load_enrichment">
-<span class="sig-name descname"><span class="pre">load_enrichment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enrichment_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.NeonDataset.load_enrichment" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="pyneon.Dataset.load_enrichment">
+<span class="sig-name descname"><span class="pre">load_enrichment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enrichment_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset.load_enrichment" title="Link to this definition">#</a></dt>
 <dd><p>Load enrichment information from an enrichment directory. The directory must
 contain an enrichment_info.txt file. Enrichment data will be parsed for each
-recording ID and added to NeonRecording object in the dataset.</p>
+recording ID and added to Recording object in the dataset.</p>
 <p>The method is currently being developed and is not yet implemented.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -458,7 +458,7 @@ recording ID and added to NeonRecording object in the dataset.</p>
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">NeonRecording class</p>
+        <p class="prev-next-title">Recording class</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -481,11 +481,11 @@ recording ID and added to NeonRecording object in the dataset.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset"><code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.dataset_dir"><code class="docutils literal notranslate"><span class="pre">NeonDataset.dataset_dir</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.recordings"><code class="docutils literal notranslate"><span class="pre">NeonDataset.recordings</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.sections"><code class="docutils literal notranslate"><span class="pre">NeonDataset.sections</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.NeonDataset.load_enrichment"><code class="docutils literal notranslate"><span class="pre">NeonDataset.load_enrichment()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.dataset_dir"><code class="docutils literal notranslate"><span class="pre">Dataset.dataset_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.recordings"><code class="docutils literal notranslate"><span class="pre">Dataset.recordings</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.sections"><code class="docutils literal notranslate"><span class="pre">Dataset.sections</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.load_enrichment"><code class="docutils literal notranslate"><span class="pre">Dataset.load_enrichment()</span></code></a></li>
 </ul>
 </li>
 </ul>

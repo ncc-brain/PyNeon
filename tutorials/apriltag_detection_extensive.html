@@ -340,13 +340,13 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeonRecording</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span>
 
 <span class="c1"># Download sample data (if not existing) and return the path</span>
 <span class="n">sample_dir</span> <span class="o">=</span> <span class="s2">&quot;C:/Users/jan-gabriel.hartel/Documents/GitHub/PyNeon/data/April&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sample_dir</span><span class="p">)</span>
 
-<span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">sample_dir</span><span class="p">)</span>
+<span class="n">recording</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">sample_dir</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="p">)</span>
 </pre></div>
@@ -752,7 +752,7 @@ Undistorted video saved to C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\d
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeonDataset</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
 
 <span class="n">file</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">der_dir</span> <span class="o">/</span> <span class="s2">&quot;smoothed_camera_pose.json&quot;</span>
 <span class="n">camera_position</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)</span>

@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/index';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="NeonDataset class" href="dataset.html" />
+    <link rel="next" title="Dataset class" href="dataset.html" />
     <link rel="prev" title="Export Neon data recording to BIDS formats" href="../tutorials/export_to_bids.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -284,10 +284,10 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events classes (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
@@ -354,48 +354,35 @@
 <span id="id1"></span><h1>PyNeon API<a class="headerlink" href="#pyneon-api" title="Link to this heading">#</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="dataset.html">NeonDataset class</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dataset.html#pyneon.NeonDataset"><code class="docutils literal notranslate"><span class="pre">NeonDataset</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#pyneon.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="recording.html">NeonRecording class</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="recording.html#pyneon.NeonRecording"><code class="docutils literal notranslate"><span class="pre">NeonRecording</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="recording.html#pyneon.Recording"><code class="docutils literal notranslate"><span class="pre">Recording</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonStream"><code class="docutils literal notranslate"><span class="pre">NeonStream</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonGaze"><code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonEyeStates"><code class="docutils literal notranslate"><span class="pre">NeonEyeStates</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.NeonIMU"><code class="docutils literal notranslate"><span class="pre">NeonIMU</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.stream.CustomStream"><code class="docutils literal notranslate"><span class="pre">CustomStream</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#pyneon.Stream"><code class="docutils literal notranslate"><span class="pre">Stream</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Event classes (blinks, fixations, saccades, events)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonEV"><code class="docutils literal notranslate"><span class="pre">NeonEV</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonBlinks"><code class="docutils literal notranslate"><span class="pre">NeonBlinks</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonFixations"><code class="docutils literal notranslate"><span class="pre">NeonFixations</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonSaccades"><code class="docutils literal notranslate"><span class="pre">NeonSaccades</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.NeonEvents"><code class="docutils literal notranslate"><span class="pre">NeonEvents</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.events.CustomEvents"><code class="docutils literal notranslate"><span class="pre">CustomEvents</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events classes (blinks, fixations, saccades, events)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="events.html#pyneon.Events"><code class="docutils literal notranslate"><span class="pre">Events</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="epochs.html#pyneon.Epochs"><code class="docutils literal notranslate"><span class="pre">Epochs</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="epochs.html#pyneon.events_to_times_df"><code class="docutils literal notranslate"><span class="pre">events_to_times_df()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="epochs.html#pyneon.construct_times_df"><code class="docutils literal notranslate"><span class="pre">construct_times_df()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.NeonVideo"><code class="docutils literal notranslate"><span class="pre">NeonVideo</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.estimate_scanpath"><code class="docutils literal notranslate"><span class="pre">estimate_scanpath()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.detect_apriltags"><code class="docutils literal notranslate"><span class="pre">detect_apriltags()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.estimate_camera_pose"><code class="docutils literal notranslate"><span class="pre">estimate_camera_pose()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.transform_gaze_to_screen"><code class="docutils literal notranslate"><span class="pre">transform_gaze_to_screen()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.find_homographies"><code class="docutils literal notranslate"><span class="pre">find_homographies()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.video.detect_apriltags_parallel"><code class="docutils literal notranslate"><span class="pre">detect_apriltags_parallel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="video.html#pyneon.SceneVideo"><code class="docutils literal notranslate"><span class="pre">SceneVideo</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="preprocess.html#pyneon.preprocess.interpolate"><code class="docutils literal notranslate"><span class="pre">interpolate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="preprocess.html#pyneon.preprocess.interpolate_events"><code class="docutils literal notranslate"><span class="pre">interpolate_events()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="preprocess.html#pyneon.preprocess.window_average"><code class="docutils literal notranslate"><span class="pre">window_average()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="preprocess.html#pyneon.preprocess.concat_streams"><code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="preprocess.html#pyneon.preprocess.concat_events"><code class="docutils literal notranslate"><span class="pre">concat_events()</span></code></a></li>
@@ -405,6 +392,7 @@
 <li class="toctree-l1"><a class="reference internal" href="vis.html">Visualization module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vis.html#pyneon.vis.plot_frame"><code class="docutils literal notranslate"><span class="pre">plot_frame()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vis.html#pyneon.vis.plot_distribution"><code class="docutils literal notranslate"><span class="pre">plot_distribution()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vis.html#pyneon.vis.plot_epochs"><code class="docutils literal notranslate"><span class="pre">plot_epochs()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vis.html#pyneon.vis.overlay_scanpath"><code class="docutils literal notranslate"><span class="pre">overlay_scanpath()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vis.html#pyneon.vis.overlay_detections_and_pose"><code class="docutils literal notranslate"><span class="pre">overlay_detections_and_pose()</span></code></a></li>
 </ul>
@@ -442,7 +430,7 @@
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">NeonDataset class</p>
+        <p class="prev-next-title">Dataset class</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

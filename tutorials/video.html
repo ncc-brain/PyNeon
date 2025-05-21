@@ -49,7 +49,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Export Neon data recording to BIDS formats" href="export_to_bids.html" />
-    <link rel="prev" title="Interpolate data and concatenate streams" href="interpolate_and_concat.html" />
+    <link rel="prev" title="Epoching Data" href="epoching.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -289,6 +289,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="epoching.html">Epoching Data</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Scene video and scanpath mapping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Export Neon data recording to BIDS formats</a></li>
 </ul>
@@ -365,14 +366,14 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import necessary libraries</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeonDataset</span><span class="p">,</span> <span class="n">NeonRecording</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Recording</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="c1"># Define path to the recording directory</span>
 <span class="n">recording_dir</span> <span class="o">=</span> <span class="s2">&quot;../../data/OpticalFlow/data&quot;</span>
 
 <span class="c1"># Load the recording</span>
-<span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
+<span class="n">recording</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
 
 <span class="c1"># Print recording details</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="p">)</span>
@@ -438,7 +439,7 @@ Cell <span class="ansi-green-intense-fg ansi-bold">In[2], line 2</span>
 <span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># Inspect the mapped gaze data</span>
 <span class="ansi-green-fg">      5</span> <span style="color: rgb(0,135,0)">print</span>(recording<span style="color: rgb(98,98,98)">.</span>mapped_gaze<span style="color: rgb(98,98,98)">.</span>tail())
 
-File <span class="ansi-green-intense-fg ansi-bold">~\Documents\GitHub\PyNeon\pyneon\recording.py:457</span>, in <span class="ansi-cyan-fg">NeonRecording.map_gaze_to_video</span><span class="ansi-blue-intense-fg ansi-bold">(self, resamp_float_kind, resamp_other_kind)</span>
+File <span class="ansi-green-intense-fg ansi-bold">~\Documents\GitHub\PyNeon\pyneon\recording.py:457</span>, in <span class="ansi-cyan-fg">Recording.map_gaze_to_video</span><span class="ansi-blue-intense-fg ansi-bold">(self, resamp_float_kind, resamp_other_kind)</span>
 <span class="ansi-green-fg">    440</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">map_gaze_to_video</span>(
 <span class="ansi-green-fg">    441</span>     <span style="color: rgb(0,135,0)">self</span>,
 <span class="ansi-green-fg">    442</span>     resamp_float_kind: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">linear</span><span style="color: rgb(175,0,0)">&#34;</span>,
@@ -591,12 +592,12 @@ intuitive pandas indexing, allowing us, for example, to get a list of fixations 
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="interpolate_and_concat.html"
+       href="epoching.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Interpolate data and concatenate streams</p>
+        <p class="prev-next-title">Epoching Data</p>
       </div>
     </a>
     <a class="right-next"

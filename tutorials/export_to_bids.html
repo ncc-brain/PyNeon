@@ -289,6 +289,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="epoching.html">Epoching Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Export Neon data recording to BIDS formats</a></li>
 </ul>
@@ -357,11 +358,11 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">NeonRecording</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">Recording</span>
 
 <span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span>
 <span class="n">recording_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data&quot;</span> <span class="o">/</span> <span class="s2">&quot;walk1-e116e606&quot;</span>
-<span class="n">recording</span> <span class="o">=</span> <span class="n">NeonRecording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
+<span class="n">recording</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
 <span class="n">motion_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;BIDS&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-1&quot;</span> <span class="o">/</span> <span class="s2">&quot;motion&quot;</span>
 <span class="n">motion_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
