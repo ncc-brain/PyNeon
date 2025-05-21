@@ -2,15 +2,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from .recording import NeonRecording
+from .recording import Recording
 
 
-class NeonDataset:
+class Dataset:
     """
-    Holder for multiple recordings. It reads from a directory containing a **project**
-    downloaded from Pupil Cloud with the **Timeseries CSV** or **Timeseries CSV and
-    Scene Video** option. For example, a dataset with 2 recordings would have the
-    following folder structure:
+    Holder for multiple recordings. It reads from a directory containing a multiple
+    recordings downloaded from Pupil Cloud with the **Timeseries CSV** or
+    **Timeseries CSV and Scene Video** option. For example, a dataset with 2 recordings
+    would have the following folder structure:
 
     .. code-block:: text
 
@@ -27,7 +27,7 @@ class NeonDataset:
         ├── enrichment_info.txt
         └── sections.csv
 
-    Individual recordings will be read into NeonRecording objects based on
+    Individual recordings will be read into :class:`pyneon.Recording` objects based on
     ``sections.csv``. They are accessible through the ``recordings`` attribute.
 
     Parameters
@@ -39,8 +39,8 @@ class NeonDataset:
     ----------
     dataset_dir : pathlib.Path
         Path to the directory containing the dataset.
-    recordings : list of NeonRecording
-        List of NeonRecording objects for each recording in the dataset.
+    recordings : list of Recording
+        List of :class:`pyneon.Recording` objects for each recording in the dataset.
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
     """
@@ -65,7 +65,7 @@ class NeonDataset:
             if len(rec_dir) == 1:
                 rec_dir = rec_dir[0]
                 try:
-                    self.recordings.append(NeonRecording(rec_dir))
+                    self.recordings.append(Recording(rec_dir))
                 except Exception as e:
                     raise RuntimeWarning(
                         f"Skipping reading recording {rec_id} due to error:\n{e}"
@@ -81,20 +81,20 @@ class NeonDataset:
                 )
 
     def __repr__(self):
-        return f"NeonDataset | {len(self.recordings)} recordings"
+        return f"Dataset | {len(self.recordings)} recordings"
 
     def __len__(self):
         return len(self.recordings)
 
-    def __getitem__(self, index):
-        """Get a NeonRecording by index."""
+    def __getitem__(self, index: int) -> Recording:
+        """Get a Recording by index."""
         return self.recordings[index]
 
     def load_enrichment(self, enrichment_dir: str | Path):
         """
         Load enrichment information from an enrichment directory. The directory must
         contain an enrichment_info.txt file. Enrichment data will be parsed for each
-        recording ID and added to NeonRecording object in the dataset.
+        recording ID and added to Recording object in the dataset.
 
         The method is currently being developed and is not yet implemented.
 
@@ -103,4 +103,4 @@ class NeonDataset:
         enrichment_dir : str or pathlib.Path
             Path to the directory containing the enrichment information.
         """
-        pass
+        raise NotImplementedError("Enrichment loading is not yet implemented.")
