@@ -360,23 +360,25 @@
 <h2>1. Setup: Loading a Neon Recording<a class="headerlink" href="#1.-Setup:-Loading-a-Neon-Recording" title="Link to this heading">#</a></h2>
 <p>First, we load the Neon recording, which contains video and gaze data. Ensure that you have installed the required libraries such as <code class="docutils literal notranslate"><span class="pre">pyneon</span></code> and have the recording dataset available.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import necessary libraries</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Recording</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Recording</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
-<span class="c1"># Define path to the recording directory</span>
-<span class="n">recording_dir</span> <span class="o">=</span> <span class="s2">&quot;../../data/OpticalFlow/data&quot;</span>
 
-<span class="c1"># Load the recording</span>
-<span class="n">recording</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
+<span class="c1"># Download sample data (if not existing) and return the path</span>
+<span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;boardView&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sample_dir</span><span class="p">)</span>
 
-<span class="c1"># Print recording details</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="p">)</span>
+<span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+<span class="n">recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -385,25 +387,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-
-Recording ID: 9265f7c1-e3ce-4108-9dd1-639305591f79
-Wearer ID: 990a3de0-5a1a-4f07-bf9b-d82369213dbf
-Wearer name: Qian
-Recording start time: 2024-07-24 16:31:22.223000
-Recording duration: 96.226 s
-                 exist              filename                                              path
-3d_eye_states     True     3d_eye_states.csv     ..\..\data\OpticalFlow\data\3d_eye_states.csv
-blinks            True            blinks.csv            ..\..\data\OpticalFlow\data\blinks.csv
-events            True            events.csv            ..\..\data\OpticalFlow\data\events.csv
-fixations         True         fixations.csv         ..\..\data\OpticalFlow\data\fixations.csv
-gaze              True              gaze.csv              ..\..\data\OpticalFlow\data\gaze.csv
-imu               True               imu.csv               ..\..\data\OpticalFlow\data\imu.csv
-labels            True            labels.csv            ..\..\data\OpticalFlow\data\labels.csv
-saccades          True          saccades.csv          ..\..\data\OpticalFlow\data\saccades.csv
-world_timestamps  True  world_timestamps.csv  ..\..\data\OpticalFlow\data\world_timestamps.csv
-scene_video_info  True     scene_camera.json     ..\..\data\OpticalFlow\data\scene_camera.json
-scene_video       True             video.mp4             ..\..\data\OpticalFlow\data\video.mp4
-
+C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\boardView
+Dataset | 2 recordings
 </pre></div></div>
 </div>
 </section>
@@ -415,14 +400,44 @@ scene_video       True             video.mp4             ..\..\data\OpticalFlow\
 <p>Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilised. As such, taking an average gaze coordinate over the enntire duration will not correspond to the location of the sign, or the fixation, ar any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.</p>
 <p>Therefore, we use partial averages of gaze locations around the respective frame’s timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimisation, by averaging over microsaccades around the actual fixation target as well as random errors.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Map gaze data to the video timestamps</span>
-<span class="n">recording</span><span class="o">.</span><span class="n">map_gaze_to_video</span><span class="p">()</span>
+<span class="n">synced_gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">sync_gaze_to_video</span><span class="p">(</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># Inspect the mapped gaze data</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">mapped_gaze</span><span class="o">.</span><span class="n">tail</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">synced_gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">tail</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+                     gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
+timestamp [ns]
+1732621642940900000   953.513857   416.911286     1           51      &lt;NA&gt;
+1732621642974244444   946.757667   432.689333     1           51      &lt;NA&gt;
+1732621643007588888   947.623000   429.558571     1           51      &lt;NA&gt;
+1732621643040933333   948.243167   426.238667     1           51      &lt;NA&gt;
+1732621643090933333   933.202250   428.496750     1         &lt;NA&gt;      &lt;NA&gt;
+
+                     azimuth [deg]  elevation [deg]  frame_idx
+timestamp [ns]
+1732621642940900000       9.166245        12.391290        476
+1732621642974244444       8.702540        11.386827        477
+1732621643007588888       8.762843        11.586733        478
+1732621643040933333       8.807615        11.798852        479
+1732621643090933333       7.822717        11.664492        480
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span><span class="o">.</span><span class="n">clear_der_dir</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -432,28 +447,11 @@ scene_video       True             video.mp4             ..\..\data\OpticalFlow\
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
-<span class="ansi-red-intense-fg ansi-bold">TypeError</span>                                 Traceback (most recent call last)
-Cell <span class="ansi-green-intense-fg ansi-bold">In[2], line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Map gaze data to the video timestamps</span>
-<span class="ansi-green-intense-fg ansi-bold">----&gt; 2</span> <span class="ansi-yellow-bg">recording</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">map_gaze_to_video</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># Inspect the mapped gaze data</span>
-<span class="ansi-green-fg">      5</span> <span style="color: rgb(0,135,0)">print</span>(recording<span style="color: rgb(98,98,98)">.</span>mapped_gaze<span style="color: rgb(98,98,98)">.</span>tail())
+<span class="ansi-red-intense-fg ansi-bold">AttributeError</span>                            Traceback (most recent call last)
+Cell <span class="ansi-green-intense-fg ansi-bold">In[5], line 1</span>
+<span class="ansi-green-intense-fg ansi-bold">----&gt; 1</span> <span class="ansi-yellow-bg">recording</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">clear_der_dir</span>()
 
-File <span class="ansi-green-intense-fg ansi-bold">~\Documents\GitHub\PyNeon\pyneon\recording.py:457</span>, in <span class="ansi-cyan-fg">Recording.map_gaze_to_video</span><span class="ansi-blue-intense-fg ansi-bold">(self, resamp_float_kind, resamp_other_kind)</span>
-<span class="ansi-green-fg">    440</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">map_gaze_to_video</span>(
-<span class="ansi-green-fg">    441</span>     <span style="color: rgb(0,135,0)">self</span>,
-<span class="ansi-green-fg">    442</span>     resamp_float_kind: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">linear</span><span style="color: rgb(175,0,0)">&#34;</span>,
-<span class="ansi-green-fg">    443</span>     resamp_other_kind: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">nearest</span><span style="color: rgb(175,0,0)">&#34;</span>,
-<span class="ansi-green-fg">    444</span> ) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> pd<span style="color: rgb(98,98,98)">.</span>DataFrame:
-<span class="ansi-green-fg">    445</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">    446</span> <span style="color: rgb(175,0,0)">    Map gaze data to video frames.</span>
-<span class="ansi-green-fg">    447</span>
-<span class="ansi-green-intense-fg ansi-bold">   (...)</span>
-<span class="ansi-green-fg">    455</span> <span style="color: rgb(175,0,0)">        Interpolation method for non-float columns.</span>
-<span class="ansi-green-fg">    456</span> <span style="color: rgb(175,0,0)">    &#34;&#34;&#34;</span>
-<span class="ansi-green-intense-fg ansi-bold">--&gt; 457</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">map_gaze_to_video</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">resamp_float_kind</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">resamp_other_kind</span><span class="ansi-yellow-bg">)</span>
-
-<span class="ansi-red-intense-fg ansi-bold">TypeError</span>: map_gaze_to_video() takes 1 positional argument but 3 were given
+<span class="ansi-red-intense-fg ansi-bold">AttributeError</span>: &#39;Recording&#39; object has no attribute &#39;clear_der_dir&#39;
 </pre></div></div>
 </div>
 <p>Above, we can see that each frame gets a current gaze position as well as a fixation status. Currently, three types of fixation status are used:</p>
@@ -472,7 +470,7 @@ File <span class="ansi-green-intense-fg ansi-bold">~\Documents\GitHub\PyNeon\pyn
 flow estimation for each point. Only when they can no longer be tracked, will they be flagged as <code class="docutils literal notranslate"><span class="pre">lost</span></code> and subsequently dropped for the next frame.</p>
 <p>It should be noted that this algorithm is not optimised for performance and that it will take a considerable amount of time to run on limited hardware. For our computers, the algorithm takes roughly half the time of the video, though this benchmark heavily depends on the density of past fixation points and computational ressources</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Estimate the scanpath based on the mapped gaze data</span>
@@ -509,7 +507,7 @@ flow estimation for each point. Only when they can no longer be tracked, will th
 intuitive pandas indexing, allowing us, for example, to get a list of fixations at frame 1334. This frame corresponds to a turn with a lot of lost fixations.</p>
 <p>As a quirk of Neon taking some time to start up, the first frames will usually not yield any usable results. Still, we carry them for consistency.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">estimated_scanpath</span><span class="p">[</span><span class="s2">&quot;fixations&quot;</span><span class="p">][</span><span class="mi">1334</span><span class="p">])</span>
@@ -560,7 +558,7 @@ intuitive pandas indexing, allowing us, for example, to get a list of fixations 
 </ul>
 <p>Further, we draw connecting lines between past fixations to show the scanpath for the current video. The show_video option creates a live-output of the video rendering, but also increases the runtime.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Overlay the scanpath on the video and show the output</span>
