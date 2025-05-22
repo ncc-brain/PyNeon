@@ -583,7 +583,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def find_homographies(
         self,
-        marker_info: pd.DataFrame,
+        tag_info: pd.DataFrame,
         all_detections: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
@@ -594,7 +594,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        marker_info : pandas.DataFrame
+        tag_info : pandas.DataFrame
             DataFrame containing AprilTag reference positions and orientations, with columns:
                 - 'tag_id': ID of the tag
                 - 'x', 'y', 'z': 3D coordinates of the tag's center
@@ -648,7 +648,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         homographies_df = find_homographies(
             self.video,
             all_detections.data,
-            marker_info.copy(deep=True),
+            tag_info.copy(deep=True),
             screen_size,
             skip_frames=skip_frames,
             coordinate_system=coordinate_system,
@@ -662,7 +662,7 @@ Recording duration: {self.info["duration"] / 1e9}s
     def gaze_to_screen(
         self,
         homographies: Optional[Stream] = None,
-        marker_info: Optional[pd.DataFrame] = None,
+        tag_info: Optional[pd.DataFrame] = None,
         synced_gaze: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
@@ -677,8 +677,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         Parameters
         ----------
         homographies : Stream, optional
-            Stream containing precomputed homographies. If None, they are computed from `marker_info`.
-        marker_info : pandas.DataFrame, optional
+            Stream containing precomputed homographies. If None, they are computed from `tag_info`.
+        tag_info : pandas.DataFrame, optional
             AprilTag marker info used to compute homographies. Required if `homographies` is None.
         synced_gaze : Stream, optional
             Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
@@ -709,11 +709,11 @@ Recording duration: {self.info["duration"] / 1e9}s
             return Stream(gaze_on_screen)
 
         if homographies is None:
-            if marker_info is None:
+            if tag_info is None:
                 raise ValueError(
                     "Marker information is required for homography estimation."
                 )
-            homographies = self.find_homographies(marker_info=marker_info)
+            homographies = self.find_homographies(tag_info=tag_info)
 
         if synced_gaze is None:
             # Check if synced gaze already exists

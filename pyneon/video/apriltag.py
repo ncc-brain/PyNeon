@@ -344,7 +344,7 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 def find_homographies(
     video: "SceneVideo",
     detection_df: pd.DataFrame,
-    marker_info: pd.DataFrame,
+    tag_info: pd.DataFrame,
     frame_size: tuple[int, int],
     coordinate_system: str = "opencv",
     skip_frames: int = 1,
@@ -355,11 +355,11 @@ def find_homographies(
     Compute a homography for each frame using available AprilTag detections.
 
     This function identifies all markers detected in a given frame, looks up their
-    "ideal" (reference) positions from `marker_info`, and calls OpenCV's
+    "ideal" (reference) positions from `tag_info`, and calls OpenCV's
     `cv2.findHomography` to compute a 3x3 transformation matrix mapping from
     detected corners in the video image to the reference plane (e.g., screen coordinates).
 
-    If the coordinate system is "psychopy", corners in both `marker_info` and
+    If the coordinate system is "psychopy", corners in both `tag_info` and
     `detection_df` are first converted to an OpenCV-like pixel coordinate system.
     If `undistort=True` and camera intrinsics are available in the `video` object,
     the marker corners are also undistorted.
@@ -378,7 +378,7 @@ def find_homographies(
         - 'frame_idx': int
         - 'tag_id': int
         - 'corners': np.ndarray of shape (4, 2) in video or PsychoPy coordinates
-    marker_info : pandas.DataFrame
+    tag_info : pandas.DataFrame
         Must contain:
         - 'marker_id' (or 'tag_id'): int
         - 'marker_corners': np.ndarray of shape (4, 2) giving the reference positions
@@ -388,7 +388,7 @@ def find_homographies(
         to convert from PsychoPy to OpenCV-style coordinates.
     coordinate_system : str, optional
         One of {"opencv", "psychopy"}. If "psychopy", corners in `detection_df` and
-        `marker_info` are converted to OpenCV pixel coords before the homography is computed.
+        `tag_info` are converted to OpenCV pixel coords before the homography is computed.
         Default is "opencv".
     skip_frames : int, optional
         If > 1, the function will compute homographies only for every Nth frame.
@@ -429,11 +429,11 @@ def find_homographies(
                 (x_opencv, y_opencv)
             ).tolist()  # Convert back to list
 
-        # Convert the reference corners in marker_info
+        # Convert the reference corners in tag_info
         def convert_marker_corners(c):
             return psychopy_coords_to_opencv(c, frame_size)
 
-        marker_info["marker_corners"] = marker_info["marker_corners"].apply(
+        tag_info["marker_corners"] = tag_info["marker_corners"].apply(
             convert_marker_corners
         )
 
@@ -483,7 +483,7 @@ def find_homographies(
     homography_for_frame = {}
 
     marker_dict = {}
-    for _, row in marker_info.iterrows():
+    for _, row in tag_info.iterrows():
         marker_dict[row["marker_id"]] = np.array(
             row["marker_corners"], dtype=np.float32
         )
