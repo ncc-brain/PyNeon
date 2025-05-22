@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 import pandas as pd
 import numpy as np
 import json
@@ -8,6 +8,7 @@ import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
 from functools import cached_property
+import shutil
 
 from .stream import Stream
 from .events import Events
@@ -1081,6 +1082,51 @@ Recording duration: {self.info["duration"] / 1e9}s
             graph_size,
             show_video,
         )
+
+    def clear_der_dir(
+        self,
+        include: str | list[str] = ["all"],
+        exclude: str | list[str] = [],
+    ):
+        """
+        Clear the derived data directory by removing files and folders.
+
+        Parameters
+        ----------
+        include : str or list of str, optional
+            Files or folders to delete. If ["all"], delete everything in the directory.
+            Supports full names or base names without extensions (e.g. "scanpath" matches "scanpath.pkl").
+        exclude : str or list of str, optional
+            Files or folders to exclude. Applies only if include is ["all"].
+            Also supports base names.
+        """
+
+        der_dir = Path(self.der_dir)
+        if not der_dir.is_dir():
+            raise ValueError(f"Derived data directory {der_dir} does not exist.")
+
+        include_set = {include} if isinstance(include, str) else set(include)
+        exclude_set = {exclude} if isinstance(exclude, str) else set(exclude)
+
+        def matches_name(p: Path, names: set[str]) -> bool:
+            return p.name in names or p.stem in names
+
+        if "all" in include:
+            # Delete everything not matching excluded names
+            targets = [p for p in der_dir.iterdir() if not matches_name(p, exclude_set)]
+        else:
+            # Delete only explicitly included files/folders
+            targets = [p for p in der_dir.iterdir() if matches_name(p, include_set)]
+
+        deleted_paths = []
+        for p in targets:
+            if p.is_file():
+                p.unlink()
+            elif p.is_dir():
+                shutil.rmtree(p)
+            deleted_paths.append(p.name)
+
+        print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
 
     def export_motion_bids(
         self,
