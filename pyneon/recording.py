@@ -803,9 +803,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         raw_fixations = raw_fixations.reset_index(drop=False)
 
         # Merge back into fixations:
-        data = raw_fixations.merge(
-            gaze_means, on="fixation id", how="outer"
-        )
+        data = raw_fixations.merge(gaze_means, on="fixation id", how="outer")
         data = data.set_index("start timestamp [ns]")
 
         # save fixations to csv
