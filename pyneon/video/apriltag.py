@@ -357,7 +357,7 @@ def find_homographies(
     This function identifies all markers detected in a given frame, looks up their
     "ideal" (reference) positions from `tag_info`, and calls OpenCV's
     `cv2.findHomography` to compute a 3x3 transformation matrix mapping from
-    detected corners in the video image to the reference plane (e.g., screen coordinates).
+    detected corners in the video image to the reference plane (e.g., surface coordinates).
 
     If the coordinate system is "psychopy", corners in both `tag_info` and
     `detection_df` are first converted to an OpenCV-like pixel coordinate system.
@@ -382,7 +382,7 @@ def find_homographies(
         Must contain:
         - 'marker_id' (or 'tag_id'): int
         - 'marker_corners': np.ndarray of shape (4, 2) giving the reference positions
-            for each corner (e.g., on a screen plane)
+            for each corner (e.g., on a surface plane)
     frame_size : (width, height)
         The pixel resolution of the video frames. Used if `coordinate_system="psychopy"`
         to convert from PsychoPy to OpenCV-style coordinates.
@@ -498,7 +498,7 @@ def find_homographies(
             continue
 
         world_points = []  # from the camera's perspective (detected corners)
-        screen_points = []  # from the reference plane or "ideal" positions
+        surface_points = []  # from the reference plane or "ideal" positions
 
         for _, detection in frame_detections.iterrows():
             tag_id = detection["tag_id"]
@@ -516,17 +516,17 @@ def find_homographies(
 
             # Extend our list of corner correspondences
             world_points.extend(corners_detected)  # add 4 corner coords
-            screen_points.extend(ref_corners)  # add 4 reference coords
+            surface_points.extend(ref_corners)  # add 4 reference coords
 
         world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
-        screen_points = np.array(screen_points, dtype=np.float32).reshape(-1, 2)
+        surface_points = np.array(surface_points, dtype=np.float32).reshape(-1, 2)
 
         if len(world_points) < 4:
             # Not enough corners to compute a homography
             homography_for_frame[frame] = None
             continue
 
-        H, mask = cv2.findHomography(world_points, screen_points, **default_settings)
+        H, mask = cv2.findHomography(world_points, surface_points, **default_settings)
         homography_for_frame[frame] = H
 
     if skip_frames != 1:
@@ -549,9 +549,7 @@ def find_homographies(
     return df
 
 
-def transform_gaze_to_screen(
-    gaze_df: pd.DataFrame, homographies: pd.DataFrame
-) -> pd.DataFrame:
+def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.DataFrame:
     """
     Apply per-frame homographies to gaze points to transform them into a new coordinate system.
 

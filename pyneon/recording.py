@@ -19,7 +19,7 @@ from .video import (
     detect_apriltags,
     estimate_camera_pose,
     find_homographies,
-    transform_gaze_to_screen,
+    gaze_on_surface,
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
@@ -610,7 +610,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
                 - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
-                - 'screen_size': Size of the screen in pixels (width, height). Default is (1920, 1080).
+                - 'surface_size': Size of the surface in pixels (width, height). Default is (1920, 1080).
                 - 'skip_frames': Number of frames to skip between detections. Default is 1.
                 - 'settings': Additional settings for the homography computation.
 
@@ -624,7 +624,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         # Defaults for kwargs
         coordinate_system = kwargs.get("coordinate_system", "opencv")
-        screen_size = kwargs.get("screen_size", (1920, 1080))
+        surface_size = kwargs.get("surface_size", (1920, 1080))
         skip_frames = kwargs.get("skip_frames", 1)
         settings = kwargs.get("settings", None)
 
@@ -650,7 +650,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             self.video,
             all_detections.data,
             tag_info.copy(deep=True),
-            screen_size,
+            surface_size,
             skip_frames=skip_frames,
             coordinate_system=coordinate_system,
             settings=settings,
@@ -660,7 +660,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         return Stream(homographies_df)
 
-    def gaze_to_screen(
+    def gaze_on_surface(
         self,
         homographies: Optional[Stream] = None,
         tag_info: Optional[pd.DataFrame] = None,
@@ -669,10 +669,10 @@ Recording duration: {self.info["duration"] / 1e9}s
         output_path: Optional[str | Path] = None,
     ) -> Stream:
         """
-        Project gaze coordinates from eye space to screen space using homographies.
+        Project gaze coordinates from eye space to surface space using homographies.
 
         Computes or loads frame-wise homographies and applies them to the synchronized
-        gaze data to transform it into screen coordinates. If a saved version exists
+        gaze data to transform it into surface coordinates. If a saved version exists
         and `overwrite` is False, the data is loaded from disk.
 
         Parameters
@@ -684,30 +684,30 @@ Recording duration: {self.info["duration"] / 1e9}s
         synced_gaze : Stream, optional
             Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
         overwrite : bool, optional
-            If True, recompute and overwrite any existing screen-transformed gaze data. Default is False.
+            If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.
         output_path : str or pathlib.Path, optional
-            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_screen.csv`.
+            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_surface.csv`.
 
         Returns
         -------
         Stream
-            A Stream containing gaze data with screen coordinates, including:
+            A Stream containing gaze data with surface coordinates, including:
                 - 'frame_idx': Frame index
-                - 'x_trans', 'y_trans': Gaze coordinates in screen pixel space
+                - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
                 - Any additional columns from the synchronized gaze input
         """
 
         if output_path is None:
-            gaze_on_screen_path = self.der_dir / "gaze_on_screen.csv"
+            gaze_on_surface_path = self.der_dir / "gaze_on_surface.csv"
         else:
-            gaze_on_screen_path = Path(output_path)
+            gaze_on_surface_path = Path(output_path)
 
-        if gaze_on_screen_path.is_file() and not overwrite:
-            # Load saved gaze on screen data
-            gaze_on_screen = pd.read_csv(gaze_on_screen_path)
-            if gaze_on_screen.empty:
+        if gaze_on_surface_path.is_file() and not overwrite:
+            # Load saved gaze on surface data
+            data = pd.read_csv(gaze_on_surface_path)
+            if data.empty:
                 raise ValueError("Gaze data is empty.")
-            return Stream(gaze_on_screen)
+            return Stream(data)
 
         if homographies is None:
             if tag_info is None:
@@ -720,82 +720,82 @@ Recording duration: {self.info["duration"] / 1e9}s
             # Check if synced gaze already exists
             synced_gaze = self.sync_gaze_to_video()
 
-        gaze_on_screen = transform_gaze_to_screen(synced_gaze.data, homographies.data)
+        data = gaze_on_surface(synced_gaze.data, homographies.data)
 
-        # Save gaze on screen data to CSV
-        gaze_on_screen.to_csv(gaze_on_screen_path, index=True)
+        # Save gaze on surface data to CSV
+        data.to_csv(gaze_on_surface_path, index=True)
 
-        return Stream(gaze_on_screen)
+        return Stream(data)
 
-    def fixations_to_screen(
+    def fixations_on_surface(
         self,
-        gaze_on_screen: Optional[Stream] = None,
+        gaze_on_surface: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
     ) -> Events:
         """
-        Project fixation events into screen space by summarizing gaze samples.
+        Project fixation events into surface space by summarizing gaze samples.
 
-        This function maps each fixation to screen coordinates by averaging the
-        screen-transformed gaze points (`x_trans`, `y_trans`) associated with
+        This function maps each fixation to surface coordinates by averaging the
+        surface-transformed gaze points (`x_trans`, `y_trans`) associated with
         that fixation. If saved data exists and `overwrite` is False, it is loaded
         from disk instead of being recomputed.
 
         Parameters
         ----------
-        gaze_on_screen : pandas.DataFrame, optional
-            DataFrame of gaze coordinates already transformed to screen space.
-            If None, will be computed via `self.gaze_to_screen()`.
+        gaze_on_surface : pandas.DataFrame, optional
+            DataFrame of gaze coordinates already transformed to surface space.
+            If None, will be computed via `self.gaze_on_surface()`.
             Must include 'fixation id', 'x_trans', and 'y_trans' columns.
         overwrite : bool, optional
             If True, forces recomputation and overwrites any existing output file.
             Default is False.
         output_path : str or pathlib.Path, optional
             Custom path to save the resulting fixation data as a CSV.
-            If None, defaults to `self.der_dir / "fixations_on_screen.csv"`.
+            If None, defaults to `self.der_dir / "fixations_on_surface.csv"`.
 
         Returns
         -------
         Events
             An events object containing:
                 - All columns from the raw fixations table
-                - 'gaze x [screen px]' : float
-                    Mean screen-space x-coordinate for the fixation.
-                - 'gaze y [screen px]' : float
-                    Mean screen-space y-coordinate for the fixation.
+                - 'gaze x [surface coord]' : float
+                    Mean surface-space x-coordinate for the fixation.
+                - 'gaze y [surface coord]' : float
+                    Mean surface-space y-coordinate for the fixation.
         """
 
         if output_path is None:
-            fixation_on_screen_path = self.der_dir / "fixations_on_screen.csv"
+            fixation_on_surface_path = self.der_dir / "fixations_on_surface.csv"
         else:
-            fixation_on_screen_path = Path(output_path)
+            fixation_on_surface_path = Path(output_path)
 
         # Check if fixations already exist
-        if fixation_on_screen_path.is_file() and not overwrite:
-            fixation_on_screen = pd.read_csv(fixation_on_screen_path)
-            if fixation_on_screen.empty:
+        if fixation_on_surface_path.is_file() and not overwrite:
+            data = pd.read_csv(fixation_on_surface_path)
+            if data.empty:
                 raise ValueError("Fixations data is empty.")
-            return Events(fixation_on_screen, id_name="fixation id")
+            return Events(data, id_name="fixation id")
 
         raw_fixations = self.fixations.data
 
         if raw_fixations.empty:
             raise ValueError("No fixations data found.")
 
-        if gaze_on_screen is None:
-            # Check if gaze on screen already exists
-            gaze_on_screen = self.gaze_to_screen()
+        if gaze_on_surface is None:
+            # Check if gaze on surface already exists
+            gaze_on_surface = self.gaze_on_surface()
 
         # Summarize gaze points first:
         gaze_means = (
-            gaze_on_screen.data.groupby("fixation id", as_index=False)[
+            gaze_on_surface.data.groupby("fixation id", as_index=False)[
                 ["x_trans", "y_trans"]
             ]
             .mean()
             .rename(
                 columns={
-                    "x_trans": "gaze x [screen px]",
-                    "y_trans": "gaze y [screen px]",
+                    "x_trans": "gaze x [surface coord]",
+                    "y_trans": "gaze y [surface coord]",
                 }
             )
         )
@@ -803,15 +803,15 @@ Recording duration: {self.info["duration"] / 1e9}s
         raw_fixations = raw_fixations.reset_index(drop=False)
 
         # Merge back into fixations:
-        fixation_on_screen = raw_fixations.merge(
+        data = raw_fixations.merge(
             gaze_means, on="fixation id", how="outer"
         )
-        fixation_on_screen = fixation_on_screen.set_index("start timestamp [ns]")
+        data = data.set_index("start timestamp [ns]")
 
         # save fixations to csv
-        fixation_on_screen.to_csv(fixation_on_screen_path, index=True)
+        data.to_csv(fixation_on_surface_path, index=True)
 
-        return Events(fixation_on_screen)
+        return Events(data)
 
     def estimate_camera_pose(
         self,

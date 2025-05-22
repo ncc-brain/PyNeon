@@ -4,7 +4,7 @@ from .apriltag import (
     detect_apriltags,
     estimate_camera_pose,
     find_homographies,
-    transform_gaze_to_screen,
+    gaze_on_surface,
 )
 
 __all__ = [
@@ -12,6 +12,6 @@ __all__ = [
     "estimate_scanpath",
     "detect_apriltags",
     "estimate_camera_pose",
-    "transform_gaze_to_screen",
+    "gaze_on_surface",
     "find_homographies",
 ]

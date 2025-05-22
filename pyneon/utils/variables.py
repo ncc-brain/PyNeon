@@ -70,12 +70,12 @@ data_types = {
     "center": object,
     # Homographies
     "homography": object,
-    # Gaze on Screen
+    # Gaze on surface
     "x_trans": float,
     "y_trans": float,
-    # Fixations on Screen
-    "gaze x [screen px]": float,
-    "gaze y [screen px]": float,
+    # Fixations on surface
+    "gaze x [surface coord]": float,
+    "gaze y [surface coord]": float,
     # scanpath
     "fixations": object,
 }
