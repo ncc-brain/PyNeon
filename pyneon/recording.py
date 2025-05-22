@@ -1113,16 +1113,10 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         if "all" in include:
             # Delete everything not matching excluded names
-            targets = [
-                p for p in der_dir.iterdir()
-                if not matches_name(p, exclude_set)
-            ]
+            targets = [p for p in der_dir.iterdir() if not matches_name(p, exclude_set)]
         else:
             # Delete only explicitly included files/folders
-            targets = [
-                p for p in der_dir.iterdir()
-                if matches_name(p, include_set)
-            ]
+            targets = [p for p in der_dir.iterdir() if matches_name(p, include_set)]
 
         deleted_paths = []
         for p in targets:
@@ -1133,7 +1127,6 @@ Recording duration: {self.info["duration"] / 1e9}s
             deleted_paths.append(p.name)
 
         print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
-
 
     def export_motion_bids(
         self,
