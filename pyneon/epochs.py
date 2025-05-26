@@ -303,11 +303,10 @@ class Epochs:
             baseline window and remove the fitted trend from the entire
             epoch (a very small, fast version of MNE's regression
             detrending).
-            
             Defaults to "mean".
         inplace : bool
-            If True, overwrite self.data and self.epochs.
-            Otherwise return a **new, corrected** pandas DataFrame
+            If True, overwrite :pyattr:`self.data` / :pyattr:`self.epochs`.
+            Otherwise return a **new, corrected** :class:`pandas.DataFrame`
             and leave the object unchanged.
             Defaults to True.
 
@@ -315,7 +314,7 @@ class Epochs:
         -------
         pandas.DataFrame
             The baseline-corrected data (same shape & dtypes as
-            self.data).
+            :pyattr:`self.data`).
         """
 
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:

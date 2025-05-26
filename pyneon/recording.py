@@ -19,7 +19,7 @@ from .video import (
     detect_apriltags,
     estimate_camera_pose,
     find_homographies,
-    transform_gaze_to_screen,
+    gaze_on_surface,
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
@@ -471,7 +471,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         ----------
         sync_gaze : Stream, optional
             Gaze data synchronised to video frames. If ``None``, it is created with
-            recording.sync_gaze_to_video().
+            :pymeth:`sync_gaze_to_video`.
         lk_params : dict, optional
             Parameters forwarded to the LK optical-flow call.
         output_path : str or pathlib.Path, optional
@@ -584,7 +584,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     def find_homographies(
         self,
-        marker_info: pd.DataFrame,
+        tag_info: pd.DataFrame,
         all_detections: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
@@ -595,7 +595,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Parameters
         ----------
-        marker_info : pandas.DataFrame
+        tag_info : pandas.DataFrame
             DataFrame containing AprilTag reference positions and orientations, with columns:
                 - 'tag_id': ID of the tag
                 - 'x', 'y', 'z': 3D coordinates of the tag's center
@@ -610,7 +610,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
                 - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
-                - 'screen_size': Size of the screen in pixels (width, height). Default is (1920, 1080).
+                - 'surface_size': Size of the surface in pixels (width, height). Default is (1920, 1080).
                 - 'skip_frames': Number of frames to skip between detections. Default is 1.
                 - 'settings': Additional settings for the homography computation.
 
@@ -624,7 +624,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         # Defaults for kwargs
         coordinate_system = kwargs.get("coordinate_system", "opencv")
-        screen_size = kwargs.get("screen_size", (1920, 1080))
+        surface_size = kwargs.get("surface_size", (1920, 1080))
         skip_frames = kwargs.get("skip_frames", 1)
         settings = kwargs.get("settings", None)
 
@@ -649,8 +649,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         homographies_df = find_homographies(
             self.video,
             all_detections.data,
-            marker_info.copy(deep=True),
-            screen_size,
+            tag_info.copy(deep=True),
+            surface_size,
             skip_frames=skip_frames,
             coordinate_system=coordinate_system,
             settings=settings,
@@ -660,142 +660,142 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         return Stream(homographies_df)
 
-    def gaze_to_screen(
+    def gaze_on_surface(
         self,
         homographies: Optional[Stream] = None,
-        marker_info: Optional[pd.DataFrame] = None,
+        tag_info: Optional[pd.DataFrame] = None,
         synced_gaze: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
     ) -> Stream:
         """
-        Project gaze coordinates from eye space to screen space using homographies.
+        Project gaze coordinates from eye space to surface space using homographies.
 
         Computes or loads frame-wise homographies and applies them to the synchronized
-        gaze data to transform it into screen coordinates. If a saved version exists
+        gaze data to transform it into surface coordinates. If a saved version exists
         and `overwrite` is False, the data is loaded from disk.
 
         Parameters
         ----------
         homographies : Stream, optional
-            Stream containing precomputed homographies. If None, they are computed from `marker_info`.
-        marker_info : pandas.DataFrame, optional
+            Stream containing precomputed homographies. If None, they are computed from `tag_info`.
+        tag_info : pandas.DataFrame, optional
             AprilTag marker info used to compute homographies. Required if `homographies` is None.
         synced_gaze : Stream, optional
             Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
         overwrite : bool, optional
-            If True, recompute and overwrite any existing screen-transformed gaze data. Default is False.
+            If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.
         output_path : str or pathlib.Path, optional
-            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_screen.csv`.
+            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_surface.csv`.
 
         Returns
         -------
         Stream
-            A Stream containing gaze data with screen coordinates, including:
+            A Stream containing gaze data with surface coordinates, including:
                 - 'frame_idx': Frame index
-                - 'x_trans', 'y_trans': Gaze coordinates in screen pixel space
+                - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
                 - Any additional columns from the synchronized gaze input
         """
 
         if output_path is None:
-            gaze_on_screen_path = self.der_dir / "gaze_on_screen.csv"
+            gaze_on_surface_path = self.der_dir / "gaze_on_surface.csv"
         else:
-            gaze_on_screen_path = Path(output_path)
+            gaze_on_surface_path = Path(output_path)
 
-        if gaze_on_screen_path.is_file() and not overwrite:
-            # Load saved gaze on screen data
-            gaze_on_screen = pd.read_csv(gaze_on_screen_path)
-            if gaze_on_screen.empty:
+        if gaze_on_surface_path.is_file() and not overwrite:
+            # Load saved gaze on surface data
+            data = pd.read_csv(gaze_on_surface_path)
+            if data.empty:
                 raise ValueError("Gaze data is empty.")
-            return Stream(gaze_on_screen)
+            return Stream(data)
 
         if homographies is None:
-            if marker_info is None:
+            if tag_info is None:
                 raise ValueError(
                     "Marker information is required for homography estimation."
                 )
-            homographies = self.find_homographies(marker_info=marker_info)
+            homographies = self.find_homographies(tag_info=tag_info)
 
         if synced_gaze is None:
             # Check if synced gaze already exists
             synced_gaze = self.sync_gaze_to_video()
 
-        gaze_on_screen = transform_gaze_to_screen(synced_gaze.data, homographies.data)
+        data = gaze_on_surface(synced_gaze.data, homographies.data)
 
-        # Save gaze on screen data to CSV
-        gaze_on_screen.to_csv(gaze_on_screen_path, index=True)
+        # Save gaze on surface data to CSV
+        data.to_csv(gaze_on_surface_path, index=True)
 
-        return Stream(gaze_on_screen)
+        return Stream(data)
 
-    def fixations_to_screen(
+    def fixations_on_surface(
         self,
-        gaze_on_screen: Optional[Stream] = None,
+        gaze_on_surface: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
     ) -> Events:
         """
-        Project fixation events into screen space by summarizing gaze samples.
+        Project fixation events into surface space by summarizing gaze samples.
 
-        This function maps each fixation to screen coordinates by averaging the
-        screen-transformed gaze points (`x_trans`, `y_trans`) associated with
+        This function maps each fixation to surface coordinates by averaging the
+        surface-transformed gaze points (`x_trans`, `y_trans`) associated with
         that fixation. If saved data exists and `overwrite` is False, it is loaded
         from disk instead of being recomputed.
 
         Parameters
         ----------
-        gaze_on_screen : pandas.DataFrame, optional
-            DataFrame of gaze coordinates already transformed to screen space.
-            If None, will be computed via `self.gaze_to_screen()`.
+        gaze_on_surface : pandas.DataFrame, optional
+            DataFrame of gaze coordinates already transformed to surface space.
+            If None, will be computed via `self.gaze_on_surface()`.
             Must include 'fixation id', 'x_trans', and 'y_trans' columns.
         overwrite : bool, optional
             If True, forces recomputation and overwrites any existing output file.
             Default is False.
         output_path : str or pathlib.Path, optional
             Custom path to save the resulting fixation data as a CSV.
-            If None, defaults to `self.der_dir / "fixations_on_screen.csv"`.
+            If None, defaults to `self.der_dir / "fixations_on_surface.csv"`.
 
         Returns
         -------
         Events
             An events object containing:
                 - All columns from the raw fixations table
-                - 'gaze x [screen px]' : float
-                    Mean screen-space x-coordinate for the fixation.
-                - 'gaze y [screen px]' : float
-                    Mean screen-space y-coordinate for the fixation.
+                - 'gaze x [surface coord]' : float
+                    Mean surface-space x-coordinate for the fixation.
+                - 'gaze y [surface coord]' : float
+                    Mean surface-space y-coordinate for the fixation.
         """
 
         if output_path is None:
-            fixation_on_screen_path = self.der_dir / "fixations_on_screen.csv"
+            fixation_on_surface_path = self.der_dir / "fixations_on_surface.csv"
         else:
-            fixation_on_screen_path = Path(output_path)
+            fixation_on_surface_path = Path(output_path)
 
         # Check if fixations already exist
-        if fixation_on_screen_path.is_file() and not overwrite:
-            fixation_on_screen = pd.read_csv(fixation_on_screen_path)
-            if fixation_on_screen.empty:
+        if fixation_on_surface_path.is_file() and not overwrite:
+            data = pd.read_csv(fixation_on_surface_path)
+            if data.empty:
                 raise ValueError("Fixations data is empty.")
-            return Events(fixation_on_screen, id_name="fixation id")
+            return Events(data, id_name="fixation id")
 
         raw_fixations = self.fixations.data
 
         if raw_fixations.empty:
             raise ValueError("No fixations data found.")
 
-        if gaze_on_screen is None:
-            # Check if gaze on screen already exists
-            gaze_on_screen = self.gaze_to_screen()
+        if gaze_on_surface is None:
+            # Check if gaze on surface already exists
+            gaze_on_surface = self.gaze_on_surface()
 
         # Summarize gaze points first:
         gaze_means = (
-            gaze_on_screen.data.groupby("fixation id", as_index=False)[
+            gaze_on_surface.data.groupby("fixation id", as_index=False)[
                 ["x_trans", "y_trans"]
             ]
             .mean()
             .rename(
                 columns={
-                    "x_trans": "gaze x [screen px]",
-                    "y_trans": "gaze y [screen px]",
+                    "x_trans": "gaze x [surface coord]",
+                    "y_trans": "gaze y [surface coord]",
                 }
             )
         )
@@ -803,15 +803,13 @@ Recording duration: {self.info["duration"] / 1e9}s
         raw_fixations = raw_fixations.reset_index(drop=False)
 
         # Merge back into fixations:
-        fixation_on_screen = raw_fixations.merge(
-            gaze_means, on="fixation id", how="outer"
-        )
-        fixation_on_screen = fixation_on_screen.set_index("start timestamp [ns]")
+        data = raw_fixations.merge(gaze_means, on="fixation id", how="outer")
+        data = data.set_index("start timestamp [ns]")
 
         # save fixations to csv
-        fixation_on_screen.to_csv(fixation_on_screen_path, index=True)
+        data.to_csv(fixation_on_surface_path, index=True)
 
-        return Events(fixation_on_screen)
+        return Events(data)
 
     def estimate_camera_pose(
         self,
@@ -830,7 +828,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
         all_detections : Stream, optional
             Per-frame AprilTag detections.  If ``None``, they are produced by
-            recording.detect_aptiltags().
+            :pymeth:`detect_apriltags`.
         output_path : str or pathlib.Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
         overwrite : bool, optional
@@ -897,7 +895,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         camera_pose_raw : pandas.DataFrame, optional
             Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
             If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
-            computes it via recording.estimate_camera_pose.
+            computes it via :pymeth:`estimate_camera_pose`.
         overwrite : bool, default False
             Recompute even if a smoothed file already exists.
         output_path : str or pathlib.Path, optional
@@ -981,7 +979,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         Parameters
         ----------
         scanpath : Stream, optional
-            Nested scan-path table (as from recording.estimate_scanpath).
+            Nested scan-path table (as from :pymeth:`estimate_scanpath`).
             If *None*, it is loaded or computed automatically.
         show_video : bool
             Display the video live while rendering.
@@ -1095,33 +1093,38 @@ Recording duration: {self.info["duration"] / 1e9}s
         ----------
         include : str or list of str, optional
             Files or folders to delete. If ["all"], delete everything in the directory.
-            Both full names and base names (without extension) are accepted.
+            Supports full names or base names without extensions (e.g. "scanpath" matches "scanpath.pkl").
         exclude : str or list of str, optional
-            Files or folders to exclude from deletion. Only applies if include == ["all"].
+            Files or folders to exclude. Applies only if include is ["all"].
+            Also supports base names.
         """
+
         der_dir = Path(self.der_dir)
         if not der_dir.is_dir():
             raise ValueError(f"Derived data directory {der_dir} does not exist.")
 
-        # Normalize inputs to sets of strings
-        to_set = lambda x: {x} if isinstance(x, str) else set(x)
-        include, exclude = to_set(include), to_set(exclude)
+        include_set = {include} if isinstance(include, str) else set(include)
+        exclude_set = {exclude} if isinstance(exclude, str) else set(exclude)
 
-        def name_matches(p: Path, names: set[str]) -> bool:
+        def matches_name(p: Path, names: set[str]) -> bool:
             return p.name in names or p.stem in names
 
-        items = list(der_dir.iterdir())
-        targets = [
-            p for p in items
-            if ("all" in include and not name_matches(p, exclude)) or
-            ("all" not in include and name_matches(p, include))
-        ]
+        if "all" in include:
+            # Delete everything not matching excluded names
+            targets = [p for p in der_dir.iterdir() if not matches_name(p, exclude_set)]
+        else:
+            # Delete only explicitly included files/folders
+            targets = [p for p in der_dir.iterdir() if matches_name(p, include_set)]
 
+        deleted_paths = []
         for p in targets:
-            (shutil.rmtree if p.is_dir() else p.unlink)()
+            if p.is_file():
+                p.unlink()
+            elif p.is_dir():
+                shutil.rmtree(p)
+            deleted_paths.append(p.name)
 
-        print(f"Deleted {len(targets)} items from {der_dir}: {[p.name for p in targets]}")
-
+        print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
 
     def export_motion_bids(
         self,

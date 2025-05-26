@@ -423,7 +423,8 @@ def overlay_detections_and_pose(
 
     This function reads frames from the provided recording video and overlays:
     - AprilTag detections (if present in the current frame)
-    - The camera position, using a mini-map inset showing all previously visited positions, as well as the current/last known position of the camera.
+    - The camera position, using a mini-map inset showing all previously visited positions,
+        as well as the current/last known position of the camera.
 
     The mini-map inset uses predetermined room boundaries derived from the provided
     `room_corners` array to map positions onto a fixed coordinate system, allowing consistent
@@ -457,6 +458,12 @@ def overlay_detections_and_pose(
     show_video : bool, optional
         Whether to display the video with overlays as it is processed. Press 'ESC' to stop early.
         Defaults to True.
+
+    Returns
+    -------
+    None
+        The function saves the processed video to the specified output path and optionally displays
+        it during processing. No value is returned.
 
     Notes
     -----
