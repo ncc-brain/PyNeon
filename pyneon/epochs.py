@@ -303,7 +303,7 @@ class Epochs:
             baseline window and remove the fitted trend from the entire
             epoch (a very small, fast version of MNE's regression
             detrending).
-            
+
             Defaults to "mean".
         inplace : bool
             If True, overwrite self.data and self.epochs.

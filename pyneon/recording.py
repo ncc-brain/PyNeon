@@ -1112,16 +1112,18 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         items = list(der_dir.iterdir())
         targets = [
-            p for p in items
-            if ("all" in include and not name_matches(p, exclude)) or
-            ("all" not in include and name_matches(p, include))
+            p
+            for p in items
+            if ("all" in include and not name_matches(p, exclude))
+            or ("all" not in include and name_matches(p, include))
         ]
 
         for p in targets:
             (shutil.rmtree if p.is_dir() else p.unlink)()
 
-        print(f"Deleted {len(targets)} items from {der_dir}: {[p.name for p in targets]}")
-
+        print(
+            f"Deleted {len(targets)} items from {der_dir}: {[p.name for p in targets]}"
+        )
 
     def export_motion_bids(
         self,
