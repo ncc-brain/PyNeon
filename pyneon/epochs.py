@@ -305,7 +305,7 @@ class Epochs:
             detrending).
             Defaults to "mean".
         inplace : bool
-            If True, overwrite :pyattr:`self.data` / :pyattr:`self.epochs`.
+            If True, overwrite epochs data.
             Otherwise return a **new, corrected** :class:`pandas.DataFrame`
             and leave the object unchanged.
             Defaults to True.
@@ -313,8 +313,7 @@ class Epochs:
         Returns
         -------
         pandas.DataFrame
-            The baseline-corrected data (same shape & dtypes as
-            :pyattr:`self.data`).
+            The baseline-corrected data (same shape & dtypes as original data).
         """
 
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:

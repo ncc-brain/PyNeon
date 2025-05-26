@@ -471,7 +471,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         ----------
         sync_gaze : Stream, optional
             Gaze data synchronised to video frames. If ``None``, it is created with
-            :pymeth:`sync_gaze_to_video`.
+            Recording.sync_gaze_to_video().
         lk_params : dict, optional
             Parameters forwarded to the LK optical-flow call.
         output_path : str or pathlib.Path, optional
@@ -827,8 +827,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             3-D positions, normals and size for every AprilTag (columns:
             'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
         all_detections : Stream, optional
-            Per-frame AprilTag detections.  If ``None``, they are produced by
-            :pymeth:`detect_apriltags`.
+            Per-frame AprilTag detections.  If ``None``, they are produced by Recording.detect_apriltags().
         output_path : str or pathlib.Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
         overwrite : bool, optional
@@ -895,7 +894,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         camera_pose_raw : pandas.DataFrame, optional
             Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
             If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
-            computes it via :pymeth:`estimate_camera_pose`.
+            computes it via Recording.estimate_camera_pose().
         overwrite : bool, default False
             Recompute even if a smoothed file already exists.
         output_path : str or pathlib.Path, optional
@@ -979,7 +978,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         Parameters
         ----------
         scanpath : Stream, optional
-            Nested scan-path table (as from :pymeth:`estimate_scanpath`).
+            Nested scan-path table (as from Recording.estimate_scanpath()).
             If *None*, it is loaded or computed automatically.
         show_video : bool
             Display the video live while rendering.

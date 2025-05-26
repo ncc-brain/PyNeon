@@ -173,6 +173,7 @@ class SceneVideo(cv2.VideoCapture):
         Undistort a video using the known camera matrix and distortion coefficients.
 
         Parameters
+        ----------
         output_video_path : str
             Path to save the undistorted output video.
         """

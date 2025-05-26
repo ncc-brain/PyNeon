@@ -350,7 +350,7 @@ def plot_epochs(
     ----------
     epochs : Epochs
         Epochs object containing the data to plot. Must be created from
-        a :class:`pyneon.Stream`.
+        a Stream.
     column_name : str
         Name of the column to plot.
     cmap_name : str
@@ -432,9 +432,9 @@ def overlay_detections_and_pose(
 
     Parameters
     ----------
-    recording : :class:`Recording`
+    recording :
         Recording object containing the video and related metadata.
-    april_detections : :class:`pandas.DataFrame`
+    april_detections : pandas.DataFrame
         DataFrame containing AprilTag detections for each frame, with columns:
             - 'frame_idx': int
                 The frame number.
@@ -442,28 +442,22 @@ def overlay_detections_and_pose(
                 The ID of the detected AprilTag.
             - 'corners': np.ndarray of shape (4,2)
                 Pixel coordinates of the tag's corners.
-    camera_positions : :class:`pandas.DataFrame`
+    camera_positions : :pandas.DataFrame
         DataFrame containing the camera positions for each frame, with at least:
             - 'frame_idx': int
                 The frame number.
-            - 'smoothed_camera_pos': np.ndarray of shape (3,)
+            - 'smoothed_camera_pos': numpy.ndarray of shape (3,)
                 The camera position [x, y, z] in world coordinates.
-    room_corners : np.ndarray of shape (N, 2), optional
+    room_corners : numpy.ndarray of shape (N, 2), optional
         Array defining the polygon corners of the room in world coordinates.
         Defaults to a simple unit square: [[0,0],[0,1],[1,1],[1,0]].
-    video_output_path : str or :class:`pathlib.Path`, optional
+    video_output_path : str or pathlib.Path, optional
         Path to save the output video with overlays. Defaults to 'output_with_overlays.mp4'.
-    graph_size : np.ndarray of shape (2,), optional
+    graph_size : numpy.ndarray of shape (2,), optional
         The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].
     show_video : bool, optional
         Whether to display the video with overlays as it is processed. Press 'ESC' to stop early.
         Defaults to True.
-
-    Returns
-    -------
-    None
-        The function saves the processed video to the specified output path and optionally displays
-        it during processing. No value is returned.
 
     Notes
     -----
