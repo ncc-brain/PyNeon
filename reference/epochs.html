@@ -355,6 +355,282 @@
                   
   <section id="epochs-class">
 <h1>Epochs class<a class="headerlink" href="#epochs-class" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyneon.Epochs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Epochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">times_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Epochs" title="Link to this definition">#</a></dt>
+<dd><p>Class to create and manage epochs in the data streams.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><em>Stream</em></a><em> or </em><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><em>Events</em></a>) – Data to create epochs from.</p></li>
+<li><p><strong>times_df</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a><em>, </em><em>shape</em><em> (</em><em>n_epochs</em><em>, </em><em>4</em><em>)</em><em>, </em><em>optional</em>) – <p>DataFrame containing epoch information with the following columns:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">t_ref</span></code>: Reference time of the epoch, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">t_before</span></code>: Time before the reference time to start the epoch, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">t_after</span></code>: Time after the reference time to end the epoch, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">description</span></code>: Description or label associated with the epoch.</p>
+</div></blockquote>
+<p>Must not have empty values.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>An epoch spans the temporal range of <code class="docutils literal notranslate"><span class="pre">t_ref</span> <span class="pre">-</span> <span class="pre">t_before</span></code> to <code class="docutils literal notranslate"><span class="pre">t_ref</span> <span class="pre">+</span> <span class="pre">t_after</span></code> as shown below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                t_ref[0]                            t_ref[1]
+    &lt;--t_before[0]--|--t_after[0]--&gt;      &lt;-t_before[1]-|-t_after[1]-&gt;
+├--------------------------------------------------------------------------------┤
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Epochs.epochs">
+<span class="sig-name descname"><span class="pre">epochs</span></span><a class="headerlink" href="#pyneon.Epochs.epochs" title="Link to this definition">#</a></dt>
+<dd><p>DataFrame containing epoch information with the following columns:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">t_ref</span></code> (int64): Reference time of the epoch, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">t_before</span></code> (int64): Time before the reference time to start the epoch, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">t_after</span></code> (int64): Time after the reference time to end the epoch, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">description</span></code> (str): Description or label associated with the epoch.</p>
+<p><code class="docutils literal notranslate"><span class="pre">data</span></code> (object): DataFrame containing the data for each epoch.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Epochs.data">
+<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.Epochs.data" title="Link to this definition">#</a></dt>
+<dd><p>Annotated data with epoch information. In addition to the original data columns,
+the following columns are added:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">index</span></code> (Int32): ID of the epoch the data belongs to.</p>
+<p><code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">time</span></code> (Int64): Time relative to the epoch reference time, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">description</span></code> (str): Description or label associated with the epoch.</p>
+</div></blockquote>
+<p>If epochs overlap, data annotations are always overwritten by the latest epoch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.t_ref">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_ref</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_ref" title="Link to this definition">#</a></dt>
+<dd><p>The reference time for each epoch in UTC nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.t_before">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_before</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_before" title="Link to this definition">#</a></dt>
+<dd><p>The time before the reference time for each epoch in nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.t_after">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_after" title="Link to this definition">#</a></dt>
+<dd><p>The time after the reference time for each epoch in nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.description">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.description" title="Link to this definition">#</a></dt>
+<dd><p>The description or label for each epoch.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.dtypes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.3)"><span class="pre">Series</span></a></em><a class="headerlink" href="#pyneon.Epochs.dtypes" title="Link to this definition">#</a></dt>
+<dd><p>The data types of the epoched data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.is_equal_length">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_equal_length</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#pyneon.Epochs.is_equal_length" title="Link to this definition">#</a></dt>
+<dd><p>Whether all epochs have the same length.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.has_overlap">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_overlap</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#pyneon.Epochs.has_overlap" title="Link to this definition">#</a></dt>
+<dd><p>Whether any adjacent epochs overlap.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Epochs.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cool'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.3)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.10.3)"><span class="pre">Figure</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.3)"><span class="pre">Axes</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.Epochs.plot" title="Link to this definition">#</a></dt>
+<dd><p>Plot data from a specified column from epochs on a matplotlib axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>column_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Name of the column to plot.</p></li>
+<li><p><strong>cmap_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Colormap to use for different epochs. Defaults to ‘cool’.</p></li>
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.3)"><em>matplotlib.axes.Axes</em></a><em> or </em><em>None</em>) – Axis to plot the data on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Show the figure if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em>) – Figure object containing the plot.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – Axis object containing the plot.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Epochs.to_numpy">
+<span class="sig-name descname"><span class="pre">to_numpy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.Epochs.to_numpy" title="Link to this definition">#</a></dt>
+<dd><p>Converts epochs into a 3D array with dimensions (n_epochs, n_channels, n_times).
+Acts similarly as <a class="reference external" href="https://mne.tools/stable/generated/mne.Epochs.html#mne.Epochs.get_data" title="(in MNE v1.9)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.Epochs.get_data()</span></code></a>.
+Requires the epoch to be created from a uniformly-sampled <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>column_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column names to include in the NumPy array. If ‘all’, all columns are included.
+Only columns that can be converted to int or float can be included.
+Default is ‘all’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul>
+<li><p><strong>numpy_epochs</strong> (<em>numpy.ndarray</em>) – NumPy array of shape (n_epochs, n_channels, n_times).</p></li>
+<li><p><strong>info</strong> (<em>dict</em>) –</p>
+<p>A dictionary containing:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">&quot;column_ids&quot;</span></code>: List of provided column names.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;t_rel&quot;</span></code>: The common time grid, in nanoseconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;nan_flag&quot;</span></code>: Boolean indicating whether NaN values were found in the data.</p>
+</div></blockquote>
+</li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The time grid (<code class="docutils literal notranslate"><span class="pre">t_rel</span></code>) is in nanoseconds.</p></li>
+<li><p>If <cite>NaN</cite> values are present after interpolation, they are noted in <code class="docutils literal notranslate"><span class="pre">nan_flag</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Epochs.baseline_correction">
+<span class="sig-name descname"><span class="pre">baseline_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(None,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.Epochs.baseline_correction" title="Link to this definition">#</a></dt>
+<dd><p>Perform baseline correction on epochs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>baseline</strong> (<em>(</em><em>t_min</em><em>, </em><em>t_max</em><em>)</em><em>, </em><em>iterable</em><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em>) – Start and end of the baseline window <strong>in seconds</strong>, relative to
+the event trigger (t_ref = 0).  <code class="docutils literal notranslate"><span class="pre">None</span></code> means “from the first /
+up to the last sample”.  Default: (None, 0.0) -&gt; the pre-trigger
+part of each epoch.</p></li>
+<li><p><strong>&quot;linear&quot;</strong> (<em>method &quot;mean&quot; or</em>) – <ul>
+<li><p>“mean” - subtract the scalar mean of the baseline window.</p></li>
+<li><p>”linear” - fit a first-order (y = a·t + b) model <em>within</em> the</p></li>
+</ul>
+<p>baseline window and remove the fitted trend from the entire
+epoch (a very small, fast version of MNE’s regression
+detrending).
+Defaults to “mean”.</p>
+</p></li>
+<li><p><strong>optional</strong> – <ul>
+<li><p>“mean” - subtract the scalar mean of the baseline window.</p></li>
+<li><p>”linear” - fit a first-order (y = a·t + b) model <em>within</em> the</p></li>
+</ul>
+<p>baseline window and remove the fitted trend from the entire
+epoch (a very small, fast version of MNE’s regression
+detrending).
+Defaults to “mean”.</p>
+</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – If True, overwrite <a href="#id1"><span class="problematic" id="id2">:pyattr:`self.data`</span></a> / <a href="#id3"><span class="problematic" id="id4">:pyattr:`self.epochs`</span></a>.
+Otherwise return a <strong>new, corrected</strong> <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>
+and leave the object unchanged.
+Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The baseline-corrected data (same shape &amp; dtypes as
+<a href="#id5"><span class="problematic" id="id6">:pyattr:`self.data`</span></a>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.events_to_times_df">
+<span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">events_to_times_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_before</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_after</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'s'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ms'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'us'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ns'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'s'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.events_to_times_df" title="Link to this definition">#</a></dt>
+<dd><p>Construct a <code class="docutils literal notranslate"><span class="pre">times_df</span></code> DataFrame suitable for creating epochs from event data.
+For “simple” <code class="docutils literal notranslate"><span class="pre">events</span></code> (blinks, fixations, saccades), all events are used.
+For more complex <code class="docutils literal notranslate"><span class="pre">events</span></code> (e.g., from “events.csv”, or concatenated events),
+the user can specify which events to include by a <code class="docutils literal notranslate"><span class="pre">name</span></code> column.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>event</strong> (<a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><em>Events</em></a>) – Events instance containing the event times.</p></li>
+<li><p><strong>t_before</strong> (<a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><em>numbers.Number</em></a>) – Time before the event start time to start the epoch. Units specified by <code class="docutils literal notranslate"><span class="pre">t_unit</span></code>.</p></li>
+<li><p><strong>t_after</strong> (<a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><em>numbers.Number</em></a>) – Time after the event start time to end the epoch. Units specified by <code class="docutils literal notranslate"><span class="pre">t_unit</span></code>.</p></li>
+<li><p><strong>t_unit</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Unit of time for <code class="docutils literal notranslate"><span class="pre">t_before</span></code> and <code class="docutils literal notranslate"><span class="pre">t_after</span></code>.
+Can be <code class="docutils literal notranslate"><span class="pre">&quot;s&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ms&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;us&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;ns&quot;</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">&quot;s&quot;</span></code>.</p></li>
+<li><p><strong>event_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Only used if <code class="docutils literal notranslate"><span class="pre">events</span></code> includes more than one event type.
+If <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code>, all events are used. Otherwise, the <code class="docutils literal notranslate"><span class="pre">name</span></code> column is used to filter events
+whose names are in the list. Default to <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with columns: <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>, <code class="docutils literal notranslate"><span class="pre">t_after</span></code>, <code class="docutils literal notranslate"><span class="pre">description</span></code> (all in ns).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.construct_times_df">
+<span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">construct_times_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_before</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_after</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.13)"><span class="pre">Number</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ref_unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'s'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ms'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'us'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ns'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ns'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_other_unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'s'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ms'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'us'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ns'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'s'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_t_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.construct_times_df" title="Link to this definition">#</a></dt>
+<dd><p>Handles the construction of the <code class="docutils literal notranslate"><span class="pre">times_df</span></code> DataFrame for creating epochs. It populates
+single values for <cite>t_before</cite>, <cite>t_after</cite>, and <cite>description</cite> to match the length of <cite>t_ref</cite>.
+and converts all times to UTC timestamps in nanoseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t_ref</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a><em>, </em><em>optional</em>) – Array of reference times for the epochs. Units specified by <code class="docutils literal notranslate"><span class="pre">t_ref_unit</span></code>.</p></li>
+<li><p><strong>t_before</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a><em> or </em><em>Number</em><em>, </em><em>optional</em>) – Time before the reference time to start the epoch. Could be an array of
+equal length as <code class="docutils literal notranslate"><span class="pre">t_ref</span></code> or a single number (to be repeated for all epochs).
+Units specified by <code class="docutils literal notranslate"><span class="pre">t_other_unit</span></code>.</p></li>
+<li><p><strong>t_after</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a><em> or </em><em>Number</em><em>, </em><em>optional</em>) – Time after the reference time to end the epoch. Could be an array of
+equal length as <code class="docutils literal notranslate"><span class="pre">t_ref</span></code> or a single number (to be repeated for all epochs).
+Units specified by <code class="docutils literal notranslate"><span class="pre">t_other_unit</span></code>.</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Description or label associated with the epochs. Could be an array of
+equal length as <code class="docutils literal notranslate"><span class="pre">t_ref</span></code> or a single string (to be repeated for all epochs).</p></li>
+<li><p><strong>t_ref_unit</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Unit of time for <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>.
+Can be <code class="docutils literal notranslate"><span class="pre">&quot;s&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ms&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;us&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;ns&quot;</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">&quot;ns&quot;</span></code>.</p></li>
+<li><p><strong>t_other_unit</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Unit of time for <code class="docutils literal notranslate"><span class="pre">t_before</span></code> and <code class="docutils literal notranslate"><span class="pre">t_after</span></code>.
+Can be <code class="docutils literal notranslate"><span class="pre">&quot;s&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ms&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;us&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;ns&quot;</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">&quot;s&quot;</span></code>.</p></li>
+<li><p><strong>global_t_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – Global reference time (in nanoseconds) to be added to <cite>t_ref</cite>.
+Unit is nanosecond. Defaults to 0. This is useful when the reference times
+are relative to a global start time
+(for instance <a class="reference internal" href="stream.html#pyneon.Stream.first_ts" title="pyneon.Stream.first_ts"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pyneon.Stream.first_ts</span></code></a>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with columns: <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>, <code class="docutils literal notranslate"><span class="pre">t_after</span></code>, <code class="docutils literal notranslate"><span class="pre">description</span></code> (all in ns).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -395,6 +671,34 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs"><code class="docutils literal notranslate"><span class="pre">Epochs</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.epochs"><code class="docutils literal notranslate"><span class="pre">Epochs.epochs</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.data"><code class="docutils literal notranslate"><span class="pre">Epochs.data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_ref"><code class="docutils literal notranslate"><span class="pre">Epochs.t_ref</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_before"><code class="docutils literal notranslate"><span class="pre">Epochs.t_before</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_after"><code class="docutils literal notranslate"><span class="pre">Epochs.t_after</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.description"><code class="docutils literal notranslate"><span class="pre">Epochs.description</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.dtypes"><code class="docutils literal notranslate"><span class="pre">Epochs.dtypes</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.is_equal_length"><code class="docutils literal notranslate"><span class="pre">Epochs.is_equal_length</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.has_overlap"><code class="docutils literal notranslate"><span class="pre">Epochs.has_overlap</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.plot"><code class="docutils literal notranslate"><span class="pre">Epochs.plot()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.to_numpy"><code class="docutils literal notranslate"><span class="pre">Epochs.to_numpy()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.baseline_correction"><code class="docutils literal notranslate"><span class="pre">Epochs.baseline_correction()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events_to_times_df"><code class="docutils literal notranslate"><span class="pre">events_to_times_df()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.construct_times_df"><code class="docutils literal notranslate"><span class="pre">construct_times_df()</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">
