@@ -292,12 +292,13 @@ class Epochs:
 
         Parameters
         ----------
+
         baseline : (t_min, t_max), iterable of float | None
             Start and end of the baseline window **in seconds**, relative to
             the event trigger (t_ref = 0).  ``None`` means "from the first /
             up to the last sample".  Default: (None, 0.0) -> the pre-trigger
             part of each epoch.
-        method "mean" or "linear", optional
+        method : "mean" or "linear", optional
             * "mean" - subtract the scalar mean of the baseline window.
             * "linear" - fit a first-order (y = a·t + b) model *within* the
             baseline window and remove the fitted trend from the entire
@@ -306,14 +307,16 @@ class Epochs:
             Defaults to "mean".
         inplace : bool
             If True, overwrite epochs data.
-            Otherwise return a **new, corrected** :class:`pandas.DataFrame`
+            Otherwise return a **new, corrected** pandas.DataFrame
             and leave the object unchanged.
             Defaults to True.
 
         Returns
         -------
+
         pandas.DataFrame
             The baseline-corrected data (same shape & dtypes as original data).
+
         """
 
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:

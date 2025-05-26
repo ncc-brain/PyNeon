@@ -424,7 +424,7 @@ def overlay_detections_and_pose(
     This function reads frames from the provided recording video and overlays:
     - AprilTag detections (if present in the current frame)
     - The camera position, using a mini-map inset showing all previously visited positions,
-        as well as the current/last known position of the camera.
+    as well as the current/last known position of the camera.
 
     The mini-map inset uses predetermined room boundaries derived from the provided
     `room_corners` array to map positions onto a fixed coordinate system, allowing consistent
@@ -432,6 +432,7 @@ def overlay_detections_and_pose(
 
     Parameters
     ----------
+
     recording :
         Recording object containing the video and related metadata.
     april_detections : pandas.DataFrame
@@ -461,8 +462,10 @@ def overlay_detections_and_pose(
 
     Notes
     -----
+
     - If the video cannot be read, a RuntimeError is raised.
     - Press 'ESC' to stop playback if show_video is True.
+
     """
 
     # Compute the room boundaries from the provided corners
