@@ -547,15 +547,14 @@ epoch (a very small, fast version of MNE’s regression
 detrending).
 Defaults to “mean”.</p>
 </p></li>
-<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – If True, overwrite <a href="#id1"><span class="problematic" id="id2">:pyattr:`self.data`</span></a> / <a href="#id3"><span class="problematic" id="id4">:pyattr:`self.epochs`</span></a>.
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – If True, overwrite epochs data.
 Otherwise return a <strong>new, corrected</strong> <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>
 and leave the object unchanged.
 Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The baseline-corrected data (same shape &amp; dtypes as
-<a href="#id5"><span class="problematic" id="id6">:pyattr:`self.data`</span></a>).</p>
+<dd class="field-even"><p>The baseline-corrected data (same shape &amp; dtypes as original data).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)">pandas.DataFrame</a></p>

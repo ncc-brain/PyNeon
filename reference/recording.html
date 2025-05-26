@@ -652,7 +652,7 @@ If None, defaults to the median interval between video frame timestamps.</p></li
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sync_gaze</strong> (<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><em>Stream</em></a><em>, </em><em>optional</em>) – Gaze data synchronised to video frames. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, it is created with
-<a href="#id1"><span class="problematic" id="id2">:pymeth:`sync_gaze_to_video`</span></a>.</p></li>
+Recording.sync_gaze_to_video().</p></li>
 <li><p><strong>lk_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>, </em><em>optional</em>) – Parameters forwarded to the LK optical-flow call.</p></li>
 <li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em>, </em><em>optional</em>) – Where to save the pickle. Defaults to <code class="docutils literal notranslate"><span class="pre">&lt;der_dir&gt;/scanpath.pkl</span></code>.</p></li>
 <li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Force recomputation even if a pickle exists.</p></li>
@@ -846,8 +846,7 @@ If None, defaults to <cite>self.der_dir / “fixations_on_surface.csv”</cite>.
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tag_locations_df</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a>) – 3-D positions, normals and size for every AprilTag (columns:
 ‘tag_id’,’x’,’y’,’z’,’normal_x’,’normal_y’,’normal_z’,’size’).</p></li>
-<li><p><strong>all_detections</strong> (<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><em>Stream</em></a><em>, </em><em>optional</em>) – Per-frame AprilTag detections.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, they are produced by
-<a href="#id3"><span class="problematic" id="id4">:pymeth:`detect_apriltags`</span></a>.</p></li>
+<li><p><strong>all_detections</strong> (<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><em>Stream</em></a><em>, </em><em>optional</em>) – Per-frame AprilTag detections.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, they are produced by Recording.detect_apriltags().</p></li>
 <li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em>, </em><em>optional</em>) – Path to save the resulting camera pose data as a JSON file. Defaults to <cite>&lt;der_dir&gt;/camera_pose.json</cite>.</p></li>
 <li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, forces recomputation and overwrites any existing saved result. Default is False.</p></li>
 </ul>
@@ -871,7 +870,7 @@ If None, defaults to <cite>self.der_dir / “fixations_on_surface.csv”</cite>.
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>camera_pose_raw</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a><em>, </em><em>optional</em>) – Raw camera-pose table with columns <code class="docutils literal notranslate"><span class="pre">'frame_idx'</span></code> and <code class="docutils literal notranslate"><span class="pre">'camera_pos'</span></code>.
 If <em>None</em>, tries to load <em>camera_pose.json</em> from <code class="docutils literal notranslate"><span class="pre">self.der_dir</span></code> or
-computes it via <a href="#id5"><span class="problematic" id="id6">:pymeth:`estimate_camera_pose`</span></a>.</p></li>
+computes it via Recording.estimate_camera_pose().</p></li>
 <li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>default False</em>) – Recompute even if a smoothed file already exists.</p></li>
 <li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em>, </em><em>optional</em>) – Where to save the JSON (<code class="docutils literal notranslate"><span class="pre">smoothed_camera_pose.json</span></code> by default).</p></li>
 <li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>, </em><em>optional</em>) – <dl class="simple">
@@ -904,7 +903,7 @@ computes it via <a href="#id5"><span class="problematic" id="id6">:pymeth:`estim
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>scanpath</strong> (<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><em>Stream</em></a><em>, </em><em>optional</em>) – Nested scan-path table (as from <a href="#id7"><span class="problematic" id="id8">:pymeth:`estimate_scanpath`</span></a>).
+<li><p><strong>scanpath</strong> (<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><em>Stream</em></a><em>, </em><em>optional</em>) – Nested scan-path table (as from Recording.estimate_scanpath()).
 If <em>None</em>, it is loaded or computed automatically.</p></li>
 <li><p><strong>show_video</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Display the video live while rendering.</p></li>
 <li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em>, </em><em>optional</em>) – Target MP4 path. Defaults to <cite>&lt;der_dir&gt;/scanpath.mp4</cite>.
@@ -996,13 +995,13 @@ The format should be <cite>sub-&lt;label&gt;[_ses-&lt;label&gt;]_task-&lt;label&
 </dl>
 <p class="rubric">Notes</p>
 <p>Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-standardize the organization of motion data for reproducible research <a class="footnote-reference brackets" href="#id10" id="id9" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
+standardize the organization of motion data for reproducible research <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
 For more information, see
 <a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html</a>.</p>
 <p class="rubric">References</p>
 <aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id10" role="doc-footnote">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id9">1</a><span class="fn-bracket">]</span></span>
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
 <p>Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., … &amp; Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. <em>Scientific Data</em>, 11(1), 716.</p>
 </aside>
 </aside>

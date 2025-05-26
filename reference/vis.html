@@ -426,7 +426,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>epochs</strong> (<a class="reference internal" href="epochs.html#pyneon.Epochs" title="pyneon.Epochs"><em>Epochs</em></a>) – Epochs object containing the data to plot. Must be created from
-a <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a>.</p></li>
+a Stream.</p></li>
 <li><p><strong>column_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Name of the column to plot.</p></li>
 <li><p><strong>cmap_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Colormap to use for different epochs. Defaults to ‘cool’.</p></li>
 <li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.3)"><em>matplotlib.axes.Axes</em></a><em> or </em><em>None</em>) – Axis to plot the data on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
@@ -485,8 +485,8 @@ visualization of the camera’s movement over time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>recording</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Recording</span></code>) – Recording object containing the video and related metadata.</p></li>
-<li><p><strong>april_detections</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – <dl class="simple">
+<li><p><strong>recording</strong> – Recording object containing the video and related metadata.</p></li>
+<li><p><strong>april_detections</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><em>pandas.DataFrame</em></a>) – <dl class="simple">
 <dt>DataFrame containing AprilTag detections for each frame, with columns:</dt><dd><ul>
 <li><dl class="simple">
 <dt>’frame_idx’: int</dt><dd><p>The frame number.</p>
@@ -507,7 +507,7 @@ visualization of the camera’s movement over time.</p>
 </dd>
 </dl>
 </p></li>
-<li><p><strong>camera_positions</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – <dl class="simple">
+<li><p><strong>camera_positions</strong> (<em>:pandas.DataFrame</em>) – <dl class="simple">
 <dt>DataFrame containing the camera positions for each frame, with at least:</dt><dd><ul>
 <li><dl class="simple">
 <dt>’frame_idx’: int</dt><dd><p>The frame number.</p>
@@ -515,7 +515,7 @@ visualization of the camera’s movement over time.</p>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>’smoothed_camera_pos’: np.ndarray of shape (3,)</dt><dd><p>The camera position [x, y, z] in world coordinates.</p>
+<dt>’smoothed_camera_pos’: numpy.ndarray of shape (3,)</dt><dd><p>The camera position [x, y, z] in world coordinates.</p>
 </dd>
 </dl>
 </li>
@@ -523,20 +523,13 @@ visualization of the camera’s movement over time.</p>
 </dd>
 </dl>
 </p></li>
-<li><p><strong>room_corners</strong> (<em>np.ndarray</em><em> of </em><em>shape</em><em> (</em><em>N</em><em>, </em><em>2</em><em>)</em><em>, </em><em>optional</em>) – Array defining the polygon corners of the room in world coordinates.
+<li><p><strong>room_corners</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a><em> of </em><em>shape</em><em> (</em><em>N</em><em>, </em><em>2</em><em>)</em><em>, </em><em>optional</em>) – Array defining the polygon corners of the room in world coordinates.
 Defaults to a simple unit square: [[0,0],[0,1],[1,1],[1,0]].</p></li>
-<li><p><strong>video_output_path</strong> (str or <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>, optional) – Path to save the output video with overlays. Defaults to ‘output_with_overlays.mp4’.</p></li>
-<li><p><strong>graph_size</strong> (<em>np.ndarray</em><em> of </em><em>shape</em><em> (</em><em>2</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].</p></li>
+<li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>pathlib.Path</em></a><em>, </em><em>optional</em>) – Path to save the output video with overlays. Defaults to ‘output_with_overlays.mp4’.</p></li>
+<li><p><strong>graph_size</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><em>numpy.ndarray</em></a><em> of </em><em>shape</em><em> (</em><em>2</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].</p></li>
 <li><p><strong>show_video</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to display the video with overlays as it is processed. Press ‘ESC’ to stop early.
 Defaults to True.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The function saves the processed video to the specified output path and optionally displays
-it during processing. No value is returned.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
