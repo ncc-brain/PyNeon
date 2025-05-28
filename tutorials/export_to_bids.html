@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Export Neon data recording to BIDS formats &#8212; PyNeon dev documentation</title>
+    <title>Exporting to BIDS formats &#8212; PyNeon dev documentation</title>
   
   
   
@@ -289,9 +289,9 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="epoching.html">Epoching Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Export Neon data recording to BIDS formats</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Exporting to BIDS formats</a></li>
 </ul>
 </div>
 </nav></div>
@@ -335,7 +335,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Export Neon data recording to BIDS formats</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Exporting to BIDS formats</span></li>
   </ul>
 </nav>
 </div>
@@ -352,31 +352,242 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Export-Neon-data-recording-to-BIDS-formats">
-<h1>Export Neon data recording to BIDS formats<a class="headerlink" href="#Export-Neon-data-recording-to-BIDS-formats" title="Link to this heading">#</a></h1>
+  <section id="Exporting-to-BIDS-formats">
+<h1>Exporting to BIDS formats<a class="headerlink" href="#Exporting-to-BIDS-formats" title="Link to this heading">#</a></h1>
+<p>The <a class="reference external" href="https://bids.neuroimaging.io/index.html">Brain Imaging Data Structure (BIDS)</a> is a comprehensive framework designed to systematically organize and share diverse types of data, including behavioral, physiological, and neuroimaging information. Converting datasets into BIDS format is a widely adopted methodology, particularly in the process of curating datasets that adhere to the principles of FAIR (Findable, Accessible, Interoperable, Reusable).</p>
+<p>For datasets encompassing mobile eye-tracking data, it is essential to apply specific BIDS specifications tailored for such data. In this context, Motion-BIDS and Eye-Tracking-BIDS specifications are noteworthy. Motion-BIDS (<a class="reference external" href="https://github.com/bids-standard/bids-specification/pull/981">BEP029</a>) has been successfully integrated into the official BIDS specification, demonstrating its readiness for use in organizing motion-related data. On the other hand, Eye-Tracking-BIDS
+(<a class="reference external" href="https://github.com/bids-standard/bids-specification/pull/1128">BEP020</a>) is still undergoing development, reflecting ongoing efforts to provide a standardized format for eye-tracking data. You can find more information about these specifications in the following references:</p>
+<blockquote>
+<div><p>Gorgolewski, K., Auer, T., Calhoun, V. et al. The brain imaging data structure, a format for organizing and describing outputs of neuroimaging experiments. Sci Data 3, 160044 (2016). <a class="reference external" href="https://doi.org/10.1038/sdata.2016.44">https://doi.org/10.1038/sdata.2016.44</a></p>
+</div></blockquote>
+<blockquote>
+<div><p>Jeung, S., Cockx, H., Appelhoff, S. et al. Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. Sci Data 11, 716 (2024). <a class="reference external" href="https://doi.org/10.1038/s41597-024-03559-8">https://doi.org/10.1038/s41597-024-03559-8</a></p>
+</div></blockquote>
+<p>In the ensuing section, we will delve into the procedure for exporting data to Motion-BIDS. This will be accomplished using the <code class="docutils literal notranslate"><span class="pre">export_motion_bids</span></code> method available within PyNeon’s <code class="docutils literal notranslate"><span class="pre">Recording</span></code> objects, offering a practical guide for researchers aiming to standardize their motion data in alignment with the BIDS framework.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">Recording</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
-<span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;OfficeWalk&quot;</span><span class="p">)</span>
-<span class="n">recording_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data&quot;</span> <span class="o">/</span> <span class="s2">&quot;walk1-e116e606&quot;</span>
-<span class="n">recording</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
-<span class="n">motion_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;BIDS&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-1&quot;</span> <span class="o">/</span> <span class="s2">&quot;motion&quot;</span>
-<span class="n">motion_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">rec_dir</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;screenFlash&quot;</span><span class="p">)</span>
+    <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
+    <span class="o">/</span> <span class="s2">&quot;screenflash-54b2f924&quot;</span>
+<span class="p">)</span>
+<span class="n">rec</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">rec_dir</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
+<p>To use <code class="docutils literal notranslate"><span class="pre">export_motion_bids</span></code> method, we need to specify the output directory where the BIDS dataset will be saved, and a string prefix to denote this session of data. The prefix follows the following format (Fields in [] are optional):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sub-&lt;label&gt;[_ses-&lt;label&gt;]_task-&lt;label&gt;_tracksys-&lt;label&gt;[_acq-&lt;label&gt;][_run-&lt;index&gt;]
+</pre></div>
+</div>
+<p>If you have any additional metadata that you would like to include, you can pass it as a dictionary to the <code class="docutils literal notranslate"><span class="pre">extra_metadata</span></code> argument. This metadata will be saved in the <code class="docutils literal notranslate"><span class="pre">dataset_description.json</span></code> file.</p>
+<p>Let’s see what files will be exported to the BIDS dataset directory:</p>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recording</span><span class="o">.</span><span class="n">to_motion_bids</span><span class="p">(</span>
-    <span class="n">motion_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;sub-1_task-officeWalk_tracksys-NeonIMU_run-1&quot;</span>
-<span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a BIDS directory</span>
+<span class="n">motion_dir</span> <span class="o">=</span> <span class="n">rec_dir</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;BIDS&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-1&quot;</span> <span class="o">/</span> <span class="s2">&quot;motion&quot;</span>
+<span class="n">motion_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Export the motion data to BIDS format</span>
+<span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;sub-1_task-screenFlash_tracksys-NeonIMU_run-1&quot;</span>
+<span class="n">extra_metadata</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;TaskName&quot;</span><span class="p">:</span> <span class="s2">&quot;screenFlash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InstitutionName&quot;</span><span class="p">:</span> <span class="s2">&quot;Streeling University&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InstitutionAddress&quot;</span><span class="p">:</span> <span class="s2">&quot;Trantor, Galactic Empire&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InstitutionalDepartmentName&quot;</span><span class="p">:</span> <span class="s2">&quot;Department of Psychohistory&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">rec</span><span class="o">.</span><span class="n">export_motion_bids</span><span class="p">(</span><span class="n">motion_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">extra_metadata</span><span class="o">=</span><span class="n">extra_metadata</span><span class="p">)</span>
+
+<span class="c1"># Print all the conents of motion_dir</span>
+<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">motion_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+sub-1_task-screenFlash_tracksys-NeonIMU_run-1_channels.json
+sub-1_task-screenFlash_tracksys-NeonIMU_run-1_channels.tsv
+sub-1_task-screenFlash_tracksys-NeonIMU_run-1_motion.json
+sub-1_task-screenFlash_tracksys-NeonIMU_run-1_motion.tsv
+</pre></div></div>
+</div>
+<p>The contents of these files follow the Motion-BIDS specification at: <a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html</a>.</p>
+<p>For example, the <code class="docutils literal notranslate"><span class="pre">_motion.tsv</span></code> is a tab-separated values file that contains the (n_samples, n_channels) motion data without a header:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">motion_tsv_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_motion.tsv&quot;</span>
+<span class="n">motion_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">motion_tsv_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Motion data shape: </span><span class="si">{</span><span class="n">motion_df</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">motion_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Motion data shape: (4944, 13)
+   -0.032425  1.249313  -1.062393  -0.027344  -0.378906  0.949707  \
+0   0.022678  1.190656  -1.119273  -0.019153  -0.377996  0.940606
+1   0.291978  1.451646  -1.228879  -0.024460  -0.373712  0.939519
+2   0.139505  1.396314  -1.294069  -0.030831  -0.371104  0.944893
+3   0.399156  1.061873  -1.306534  -0.030095  -0.371316  0.943091
+4   0.307300  1.362720  -1.348332  -0.027290  -0.373589  0.944235
+
+   1.1495382546655957  -22.014470833356658  131.97212848840843  \
+0            1.154530           -22.012730          131.961423
+1            1.161212           -22.009442          131.950870
+2            1.171125           -22.004620          131.941577
+3            1.178265           -21.998308          131.931277
+4            1.183449           -21.993049          131.918883
+
+   0.4012015163898468  -0.0866925716400146  -0.1703909933567047  \
+0            0.401294            -0.086741            -0.170352
+1            0.401388            -0.086798            -0.170295
+2            0.401478            -0.086873            -0.170215
+3            0.401573            -0.086922            -0.170133
+4            0.401681            -0.086962            -0.170064
+
+   0.895817220211029
+0           0.895779
+1           0.895742
+2           0.895709
+3           0.895678
+4           0.895638
+</pre></div></div>
+</div>
+<p>Its metadata is stored in the <code class="docutils literal notranslate"><span class="pre">_motion.json</span></code> file, which contains (note the extra metadata we added):</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">motion_json</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_motion.json&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">motion_json</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">motion_json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">motion_json_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{
+  &#34;TaskName&#34;: &#34;screenFlash&#34;,
+  &#34;TaskDescription&#34;: &#34;&#34;,
+  &#34;Instructions&#34;: &#34;&#34;,
+  &#34;DeviceSerialNumber&#34;: &#34;321970&#34;,
+  &#34;Manufacturer&#34;: &#34;TDK InvenSense &amp; Pupil Labs&#34;,
+  &#34;ManufacturersModelName&#34;: &#34;ICM-20948&#34;,
+  &#34;SoftwareVersions&#34;: &#34;App version: 2.9.3-prod; Pipeline version: 2.8.0&#34;,
+  &#34;InstitutionName&#34;: &#34;Streeling University&#34;,
+  &#34;InstitutionAddress&#34;: &#34;Trantor, Galactic Empire&#34;,
+  &#34;InstitutionalDepartmentName&#34;: &#34;Department of Psychohistory&#34;,
+  &#34;SamplingFrequency&#34;: 110,
+  &#34;ACCELChannelCount&#34;: 3,
+  &#34;GYROChannelCount&#34;: 3,
+  &#34;MissingValues&#34;: &#34;n/a&#34;,
+  &#34;MotionChannelCount&#34;: 13,
+  &#34;ORNTChannelCount&#34;: 7,
+  &#34;SubjectArtefactDescription&#34;: &#34;&#34;,
+  &#34;TrackedPointsCount&#34;: 0,
+  &#34;TrackingSystemName&#34;: &#34;IMU included in Neon&#34;
+}
+</pre></div></div>
+</div>
+<p>The metadata for each channel (each column in the <code class="docutils literal notranslate"><span class="pre">_motion.tsv</span></code> file) is stored in <code class="docutils literal notranslate"><span class="pre">_channels.tsv</span></code> file:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">channels_tsv_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_channels.tsv&quot;</span>
+<span class="n">channels_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">channels_tsv_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">channels_df</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+              name component   type tracked_point      units  \
+0           gyro x         x   GYRO          Head      deg/s
+1           gyro y         y   GYRO          Head      deg/s
+2           gyro z         z   GYRO          Head      deg/s
+3   acceleration x         x  ACCEL          Head          g
+4   acceleration y         y  ACCEL          Head          g
+5   acceleration z         z  ACCEL          Head          g
+6             roll         x   ORNT          Head        deg
+7            pitch         y   ORNT          Head        deg
+8              yaw         z   ORNT          Head        deg
+9     quaternion w         w   ORNT          Head  arbitrary
+10    quaternion x         x   ORNT          Head  arbitrary
+11    quaternion y         y   ORNT          Head  arbitrary
+12    quaternion z         z   ORNT          Head  arbitrary
+
+    sampling_frequency
+0                  110
+1                  110
+2                  110
+3                  110
+4                  110
+5                  110
+6                  110
+7                  110
+8                  110
+9                  110
+10                 110
+11                 110
+12                 110
+</pre></div></div>
+</div>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">_channels.json</span></code> file contains the coordinate system:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">channels_json_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_channels.json&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">channels_json_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">channels_json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">channels_json_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{
+  &#34;reference_frame&#34;: {
+    &#34;Levels&#34;: {
+      &#34;global&#34;: {
+        &#34;SpatialAxes&#34;: &#34;RAS&#34;,
+        &#34;RotationOrder&#34;: &#34;ZXY&#34;,
+        &#34;RotationRule&#34;: &#34;right-hand&#34;,
+        &#34;Description&#34;: &#34;This global reference frame is defined by the IMU axes: X right, Y anterior, Z superior. The scene camera frame differs from this frame by a 102-degree rotation around the X-axis. All motion data are expressed relative to the IMU frame for consistency.&#34;
+      }
+    }
+  }
+}
+</pre></div></div>
 </div>
 </section>
 

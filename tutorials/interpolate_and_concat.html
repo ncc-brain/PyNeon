@@ -48,7 +48,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/interpolate_and_concat';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Epoching Data" href="epoching.html" />
+    <link rel="next" title="Processing pupil size data and epoching" href="pupil_size_and_epoching.html" />
     <link rel="prev" title="Reading a Neon dataset/recording" href="read_recording.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -289,9 +289,9 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="epoching.html">Epoching Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Export Neon data recording to BIDS formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS formats</a></li>
 </ul>
 </div>
 </nav></div>
@@ -609,7 +609,7 @@ Gaze data length after interpolating to IMU timestamps: 3459
 </section>
 <section id="Concatenating-different-streams">
 <h2>Concatenating different streams<a class="headerlink" href="#Concatenating-different-streams" title="Link to this heading">#</a></h2>
-<p>There might be cases where you want to concatenate different streams into a single one to facilitate further analysis (e.g., <a class="reference internal" href="epoching.html"><span class="doc">epoching</span></a>). This is possible by interpolating the streams’ data to common timestamps and concatenating them into a single DataFrame.</p>
+<p>There might be cases where you want to concatenate different streams into a single one to facilitate further analysis (e.g., <a class="reference external" href="epoching.ipynb">epoching</a>). This is possible by interpolating the streams’ data to common timestamps and concatenating them into a single DataFrame.</p>
 <p>The method <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> of <code class="docutils literal notranslate"><span class="pre">Recording</span></code> provides such functionality. It takes a list of stream names and interpolate them to common timestamps, defined by the latest start and earliest end timestamps of the streams. The new sampling frequency can either be directly specified or taken from the lowest/highest sampling frequency of the streams.</p>
 <p>In the following example, we concatenate the gaze, eye states, and IMU streams into a single DataFrame using the default parameters.</p>
 <div class="nbinput docutils container">
@@ -779,11 +779,11 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
       </div>
     </a>
     <a class="right-next"
-       href="epoching.html"
+       href="pupil_size_and_epoching.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Epoching Data</p>
+        <p class="prev-next-title">Processing pupil size data and epoching</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
