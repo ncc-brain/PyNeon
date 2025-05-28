@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import datetime
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ._bids_parameters import MOTION_META_DEFAULT
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 def export_motion_bids(
     rec: "Recording",
     motion_dir: str | Path,
-    prefix: str = "",
+    prefix: Optional[str] = None,
     extra_metadata: dict = {},
 ):
     """
@@ -30,10 +30,10 @@ def export_motion_bids(
     motion_dir : str or pathlib.Path
         Output directory to save the Motion-BIDS formatted data.
     prefix : str, optional
-        Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
-        The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
+        Prefix for the BIDS filenames, by default "sub-``wearer_name``_task-XXX_tracksys-NeonIMU".
+        The format should be "sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]"
         (Fields in [] are optional). Files will be saved as
-        ``{prefix}_motion.<tsv|json>`` and ``{prefix}_channels.tsv``.
+        ``{prefix}_motion.<tsv|json>``.
     extra_metadata : dict, optional
         Additional metadata to include in the JSON file. Defaults to an empty dict.
 
@@ -56,6 +56,9 @@ def export_motion_bids(
         raise RuntimeWarning(
             f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS"
         )
+    if prefix is None:
+        prefix = f"sub-{rec.info['wearer_name']}_task-XXX_tracksys-NeonIMU"
+
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
     motion_json_path = motion_dir / f"{prefix}_motion.json"
     channels_tsv_path = motion_dir / f"{prefix}_channels.tsv"

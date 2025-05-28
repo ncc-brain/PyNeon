@@ -11,6 +11,6 @@ started with PyNeon.
 
     read_recording
     interpolate_and_concat
-    epoching
+    pupil_size_and_epoching
     video
     export_to_bids

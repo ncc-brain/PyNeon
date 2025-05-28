@@ -1128,7 +1128,7 @@ Recording duration: {self.info["duration"] / 1e9}s
     def export_motion_bids(
         self,
         motion_dir: str | Path,
-        prefix: str = "",
+        prefix: Optional[str] = None,
         extra_metadata: dict = {},
     ):
         """
@@ -1142,8 +1142,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         motion_dir : str or pathlib.Path
             Output directory to save the Motion-BIDS formatted data.
         prefix : str, optional
-            Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
-            The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
+            Prefix for the BIDS filenames, by default "sub-``wearer_name``_task-XXX_tracksys-NeonIMU".
+            The format should be "sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]"
             (Fields in [] are optional). Files will be saved as
             ``{prefix}_motion.<tsv|json>``.
         extra_metadata : dict, optional
