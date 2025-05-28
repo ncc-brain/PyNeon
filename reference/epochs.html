@@ -531,12 +531,11 @@ up to the last sample”.  Default: (None, 0.0) -&gt; the pre-trigger
 part of each epoch.</p></li>
 <li><p><strong>method</strong> (<em>&quot;mean&quot;</em><em> or </em><em>&quot;linear&quot;</em><em>, </em><em>optional</em>) – <ul>
 <li><p>“mean” - subtract the scalar mean of the baseline window.</p></li>
-<li><p>”linear” - fit a first-order (y = a·t + b) model <em>within</em> the</p></li>
+<li><p>”linear” - fit a first-order (y = a·t + b) model <em>within</em> the
+baseline window and remove the fitted trend from the entire
+epoch (a very small, fast version of MNE’s regression detrending).</p></li>
 </ul>
-<p>baseline window and remove the fitted trend from the entire
-epoch (a very small, fast version of MNE’s regression
-detrending).
-Defaults to “mean”.</p>
+<p>Defaults to “mean”.</p>
 </p></li>
 <li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – If True, overwrite epochs data.
 Otherwise return a <strong>new, corrected</strong> pandas.DataFrame
