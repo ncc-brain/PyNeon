@@ -59,33 +59,46 @@ def export_motion_bids(
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
     motion_json_path = motion_dir / f"{prefix}_motion.json"
     channels_tsv_path = motion_dir / f"{prefix}_channels.tsv"
+    channels_json_path = motion_dir / f"{prefix}_channels.json"
 
     imu = rec.imu
     if imu is None:
         raise ValueError("No IMU data found in the recording.")
-    interp_data = imu.interpolate()
-    motion_first_ts = interp_data.loc[0, "timestamp [ns]"]
-    motion_acq_time = datetime.datetime.fromtimestamp(motion_first_ts / 1e9).strftime(
+    imu = imu.interpolate()
+    motion_acq_time = datetime.datetime.fromtimestamp(imu.first_ts / 1e9).strftime(
         "%Y-%m-%dT%H:%M:%S.%f"
     )
-    interp_data = interp_data.drop(columns=["timestamp [ns]", "time [s]"])
 
-    interp_data.to_csv(
-        motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a"
-    )
+    imu.data.to_csv(motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a")
 
-    ch_names = interp_data.columns
+    ch_names = imu.columns
     ch_names = [re.sub(r"\s\[[^\]]*\]", "", ch) for ch in ch_names]
     channels = pd.DataFrame(
         {
             "name": ch_names,
             "component": ["x", "y", "z"] * 3 + ["w", "x", "y", "z"],
             "type": ["GYRO"] * 3 + ["ACCEL"] * 3 + ["ORNT"] * 7,
-            "placement": ["head-mounted frame"] * 13,
+            "tracked_point": ["Head"] * 13,
             "units": ["deg/s"] * 3 + ["g"] * 3 + ["deg"] * 3 + ["arbitrary"] * 4,
+            "sampling_frequency": [int(imu.sampling_freq_effective)] * 13,
         }
     )
     channels.to_csv(channels_tsv_path, sep="\t", index=False)
+
+    ch_meta = {
+        "reference_frame": {
+            "Levels": {
+                "global": {
+                    "SpatialAxes": "RAS",
+                    "RotationOrder": "ZXY",
+                    "RotationRule": "right-hand",
+                    "Description": "This global reference frame is defined by the IMU axes: X right, Y anterior, Z superior. The scene camera frame differs from this frame by a 102-degree rotation around the X-axis. All motion data are expressed relative to the IMU frame for consistency.",
+                },
+            }
+        }
+    }
+    with open(channels_json_path, "w") as f:
+        json.dump(ch_meta, f, indent=4)
 
     info = rec.info
     metadata = MOTION_META_DEFAULT
@@ -106,16 +119,20 @@ def export_motion_bids(
 
     scans_dir = motion_dir.parent
     scans_path_potential = list(scans_dir.glob("*_scans.tsv"))
+    filename = [motion_dir.name + "/" + motion_tsv_path.name]
     new_scan = pd.DataFrame.from_dict(
         {
-            "filename": [motion_dir.name + "/" + motion_tsv_path.name],
+            "filename": filename,
             "acq_time": [motion_acq_time],
         }
     )
     if len(scans_path_potential) >= 1:
         scans_path = scans_path_potential[0]
         scans = pd.read_csv(scans_path, sep="\t")
-        scans = pd.concat([scans, new_scan], ignore_index=True)
+        if filename in scans.filename.values:
+            return
+        else:
+            scans = pd.concat([scans, new_scan], ignore_index=True)
     else:
         match = re.search(r"(sub-\d+)(_ses-\d+)?", prefix)
         if match:

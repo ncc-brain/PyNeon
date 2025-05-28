@@ -301,9 +301,9 @@ class Epochs:
         method : "mean" or "linear", optional
             * "mean" - subtract the scalar mean of the baseline window.
             * "linear" - fit a first-order (y = a·t + b) model *within* the
-            baseline window and remove the fitted trend from the entire
-            epoch (a very small, fast version of MNE's regression
-            detrending).
+              baseline window and remove the fitted trend from the entire
+              epoch (a very small, fast version of MNE's regression detrending).
+
             Defaults to "mean".
         inplace : bool
             If True, overwrite epochs data.
