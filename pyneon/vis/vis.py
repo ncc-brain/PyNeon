@@ -379,8 +379,8 @@ def plot_epochs(
         fig = ax.get_figure()
 
     # Get the colormap
-    cmap = cm.get_cmap(cmap_name)
     num_epochs = len(epochs.epochs)
+    cmap = cm.get_cmap(cmap_name, num_epochs)
 
     # Create a normalization for the colorbar
     norm = Normalize(vmin=0, vmax=num_epochs)
