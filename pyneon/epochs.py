@@ -469,7 +469,7 @@ def events_to_times_df(
 
     Parameters
     ----------
-    event : Events
+    events : Events
         Events instance containing the event times.
     t_before : numbers.Number
         Time before the event start time to start the epoch. Units specified by ``t_unit``.
