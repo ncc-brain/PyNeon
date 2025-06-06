@@ -3,18 +3,18 @@ import pandas as pd
 import json
 import datetime
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ._bids_parameters import MOTION_META_DEFAULT
 
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
+    from ..recording import Recording
 
 
 def export_motion_bids(
-    rec: "NeonRecording",
+    rec: "Recording",
     motion_dir: str | Path,
-    prefix: str = "",
+    prefix: Optional[str] = None,
     extra_metadata: dict = {},
 ):
     """
@@ -25,15 +25,15 @@ def export_motion_bids(
 
     Parameters
     ----------
-    rec : NeonRecording
+    rec : Recording
         Recording object containing the IMU data.
     motion_dir : str or pathlib.Path
         Output directory to save the Motion-BIDS formatted data.
     prefix : str, optional
-        Prefix for the BIDS filenames, by default "sub-XX_task-YY_tracksys-NeonIMU".
-        The format should be `sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]`
+        Prefix for the BIDS filenames, by default "sub-``wearer_name``_task-XXX_tracksys-NeonIMU".
+        The format should be "sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]"
         (Fields in [] are optional). Files will be saved as
-        ``{prefix}_motion.<tsv|json>`` and ``{prefix}_channels.tsv``.
+        ``{prefix}_motion.<tsv|json>``.
     extra_metadata : dict, optional
         Additional metadata to include in the JSON file. Defaults to an empty dict.
 
@@ -56,36 +56,52 @@ def export_motion_bids(
         raise RuntimeWarning(
             f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS"
         )
+    if prefix is None:
+        prefix = f"sub-{rec.info['wearer_name']}_task-XXX_tracksys-NeonIMU"
+
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
     motion_json_path = motion_dir / f"{prefix}_motion.json"
     channels_tsv_path = motion_dir / f"{prefix}_channels.tsv"
+    channels_json_path = motion_dir / f"{prefix}_channels.json"
 
     imu = rec.imu
     if imu is None:
         raise ValueError("No IMU data found in the recording.")
-    interp_data = imu.interpolate()
-    motion_first_ts = interp_data.loc[0, "timestamp [ns]"]
-    motion_acq_time = datetime.datetime.fromtimestamp(motion_first_ts / 1e9).strftime(
+    imu = imu.interpolate()
+    motion_acq_time = datetime.datetime.fromtimestamp(imu.first_ts / 1e9).strftime(
         "%Y-%m-%dT%H:%M:%S.%f"
     )
-    interp_data = interp_data.drop(columns=["timestamp [ns]", "time [s]"])
 
-    interp_data.to_csv(
-        motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a"
-    )
+    imu.data.to_csv(motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a")
 
-    ch_names = interp_data.columns
+    ch_names = imu.columns
     ch_names = [re.sub(r"\s\[[^\]]*\]", "", ch) for ch in ch_names]
     channels = pd.DataFrame(
         {
             "name": ch_names,
             "component": ["x", "y", "z"] * 3 + ["w", "x", "y", "z"],
             "type": ["GYRO"] * 3 + ["ACCEL"] * 3 + ["ORNT"] * 7,
-            "placement": ["head-mounted frame"] * 13,
+            "tracked_point": ["Head"] * 13,
             "units": ["deg/s"] * 3 + ["g"] * 3 + ["deg"] * 3 + ["arbitrary"] * 4,
+            "sampling_frequency": [int(imu.sampling_freq_effective)] * 13,
         }
     )
     channels.to_csv(channels_tsv_path, sep="\t", index=False)
+
+    ch_meta = {
+        "reference_frame": {
+            "Levels": {
+                "global": {
+                    "SpatialAxes": "RAS",
+                    "RotationOrder": "ZXY",
+                    "RotationRule": "right-hand",
+                    "Description": "This global reference frame is defined by the IMU axes: X right, Y anterior, Z superior. The scene camera frame differs from this frame by a 102-degree rotation around the X-axis. All motion data are expressed relative to the IMU frame for consistency.",
+                },
+            }
+        }
+    }
+    with open(channels_json_path, "w") as f:
+        json.dump(ch_meta, f, indent=4)
 
     info = rec.info
     metadata = MOTION_META_DEFAULT
@@ -106,16 +122,20 @@ def export_motion_bids(
 
     scans_dir = motion_dir.parent
     scans_path_potential = list(scans_dir.glob("*_scans.tsv"))
+    filename = [motion_dir.name + "/" + motion_tsv_path.name]
     new_scan = pd.DataFrame.from_dict(
         {
-            "filename": [motion_dir.name + "/" + motion_tsv_path.name],
+            "filename": filename,
             "acq_time": [motion_acq_time],
         }
     )
     if len(scans_path_potential) >= 1:
         scans_path = scans_path_potential[0]
         scans = pd.read_csv(scans_path, sep="\t")
-        scans = pd.concat([scans, new_scan], ignore_index=True)
+        if filename in scans.filename.values:
+            return
+        else:
+            scans = pd.concat([scans, new_scan], ignore_index=True)
     else:
         match = re.search(r"(sub-\d+)(_ses-\d+)?", prefix)
         if match:
@@ -127,7 +147,7 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def export_eye_bids(rec: "NeonRecording", output_dir: str | Path):
+def export_eye_bids(rec: "Recording", output_dir: str | Path):
     """
     Under development. Export eye tracking data to Eye-BIDS format.
     """

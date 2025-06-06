@@ -11,7 +11,7 @@ from ..vis import plot_frame, overlay_scanpath
 from .apriltag import detect_apriltags
 
 
-class NeonVideo(cv2.VideoCapture):
+class SceneVideo(cv2.VideoCapture):
     """
     Loaded video file with timestamps.
 
@@ -55,11 +55,9 @@ class NeonVideo(cv2.VideoCapture):
             f"Number of timestamps ({len(self.timestamps)}) does not match "
             f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
         )
-
         self.fps = self.get(cv2.CAP_PROP_FPS)
         self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
         self.camera_matrix = np.array(self.info["camera_matrix"])
         self.dist_coeffs = np.array(self.info["distortion_coefficients"])
 
@@ -175,6 +173,7 @@ class NeonVideo(cv2.VideoCapture):
         Undistort a video using the known camera matrix and distortion coefficients.
 
         Parameters
+        ----------
         output_video_path : str
             Path to save the undistorted output video.
         """

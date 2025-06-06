@@ -3,17 +3,23 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from tqdm import tqdm
 
+from ..stream import Stream
+
 if TYPE_CHECKING:
-    from ..recording import NeonRecording
-    from ..video import NeonVideo
+    from ..recording import Recording
+    from ..stream import Stream
+    from ..video import SceneVideo
+    from ..epochs import Epochs
 
 
 def plot_frame(
-    video: "NeonVideo",
+    video: "SceneVideo",
     index: int = 0,
     ax: Optional[plt.Axes] = None,
     auto_title: bool = True,
@@ -24,7 +30,7 @@ def plot_frame(
 
     Parameters
     ----------
-    video : NeonVideo
+    video : SceneVideo
         Video object to plot the frame from.
     index : int
         Index of the frame to plot.
@@ -35,6 +41,8 @@ def plot_frame(
         Whether to automatically set the title of the axis.
         The automatic title includes the video file name and the frame index.
         Defaults to ``True``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
 
     Returns
     -------
@@ -64,7 +72,7 @@ def plot_frame(
 
 
 def plot_distribution(
-    rec: "NeonRecording",
+    rec: "Recording",
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
     scatter_source: Literal["gaze", "fixations", None] = "fixations",
     step_size: int = 10,
@@ -81,7 +89,7 @@ def plot_distribution(
 
     Parameters
     ----------
-    rec : NeonRecording
+    rec : Recording
         Recording object containing the gaze and video data.
     heatmap_source : {'gaze', 'fixations', None}
         Source of the data to plot as a heatmap. If None, no heatmap is plotted.
@@ -178,10 +186,11 @@ def plot_distribution(
 
 
 def overlay_scanpath(
-    video: "NeonVideo",
+    video: "SceneVideo",
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
     line_thickness: int = 2,
+    text_size: Optional[int] = None,
     max_fixations: int = 10,
     show_video: bool = False,
     video_output_path: Optional[Path | str] = "scanpath.mp4",
@@ -191,7 +200,7 @@ def overlay_scanpath(
 
     Parameters
     ----------
-    video : NeonVideo
+    video : SceneVideo
         Video object to overlay the fixations on.
     scanpath : pandas.DataFrame
         DataFrame containing the fixations and gaze data.
@@ -200,6 +209,9 @@ def overlay_scanpath(
     line_thickness : int or None
         Thickness of the lines connecting fixations. If None, no lines are drawn.
         Defaults to 2.
+    text_size : int or None
+        Size of the text displaying fixation status and ID. If None, no text is displayed.
+        Defaults to None.
     max_fixations : int
         Maximum number of fixations to plot per frame. Defaults to 10.
     show_video : bool
@@ -280,15 +292,16 @@ def overlay_scanpath(
                     )
 
                     # Optionally add text showing fixation status and ID
-                    cv2.putText(
-                        frame,
-                        f"ID: {id} Status: {status}",
-                        (int(x) + 10, int(y)),
-                        cv2.FONT_HERSHEY_PLAIN,
-                        1,
-                        color,
-                        1,
-                    )
+                    if text_size is not None:
+                        cv2.putText(
+                            frame,
+                            f"ID: {id} Status: {status}",
+                            (int(x) + 10, int(y)),
+                            cv2.FONT_HERSHEY_PLAIN,
+                            text_size,
+                            color,
+                            text_size,
+                        )
 
                     # Draw line connecting the previous fixation to the current one
                     if (
@@ -323,8 +336,79 @@ def overlay_scanpath(
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 
+def plot_epochs(
+    epochs: "Epochs",
+    column_name: str,
+    cmap_name: str = "cool",
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot data from a specified column from epochs on a matplotlib axis.
+
+    Parameters
+    ----------
+    epochs : Epochs
+        Epochs object containing the data to plot. Must be created from
+        a Stream.
+    column_name : str
+        Name of the column to plot.
+    cmap_name : str
+        Colormap to use for different epochs. Defaults to 'cool'.
+    ax : matplotlib.axes.Axes or None
+        Axis to plot the data on. If ``None``, a new figure is created.
+        Defaults to ``None``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Figure object containing the plot.
+    ax : matplotlib.axes.Axes
+        Axis object containing the plot.
+    """
+    if epochs.source_class != Stream:
+        raise ValueError("Epochs must be created from a `Stream` to be plotted.")
+    if column_name not in epochs.columns:
+        raise ValueError(f"Column '{column_name}' not found in epochs.")
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    # Get the colormap
+    num_epochs = len(epochs.epochs)
+    cmap = cm.get_cmap(cmap_name, num_epochs)
+
+    # Create a normalization for the colorbar
+    norm = Normalize(vmin=0, vmax=num_epochs)
+    ax.axvline(0, color="k", linestyle="--", linewidth=0.5)
+
+    # Plot the data
+    for i, row in epochs.epochs.iterrows():
+        times = row.data["epoch time"] / 1e9
+        data = row.data[column_name]
+        color = cmap(norm(i))  # Get color from colormap
+        ax.plot(times, data, color=color, label=f"Epoch {i}")
+
+    ax.set_xlabel("Epoch time (s)")
+    ax.set_ylabel(column_name)
+
+    # Add a colorbar
+    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax)
+    cbar.set_label("Epoch Index")
+
+    if show:
+        plt.show()
+    return fig, ax
+
+
 def overlay_detections_and_pose(
-    recording: "NeonRecording",
+    recording: "Recording",
     april_detections: pd.DataFrame,
     camera_positions: pd.DataFrame,
     room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
@@ -340,7 +424,7 @@ def overlay_detections_and_pose(
     This function reads frames from the provided recording video and overlays:
     - AprilTag detections (if present in the current frame)
     - The camera position, using a mini-map inset showing all previously visited positions,
-        as well as the current/last known position of the camera.
+    as well as the current/last known position of the camera.
 
     The mini-map inset uses predetermined room boundaries derived from the provided
     `room_corners` array to map positions onto a fixed coordinate system, allowing consistent
@@ -348,9 +432,10 @@ def overlay_detections_and_pose(
 
     Parameters
     ----------
-    recording : :class:`NeonRecording`
+
+    recording :
         Recording object containing the video and related metadata.
-    april_detections : :class:`pandas.DataFrame`
+    april_detections : pandas.DataFrame
         DataFrame containing AprilTag detections for each frame, with columns:
             - 'frame_idx': int
                 The frame number.
@@ -358,33 +443,29 @@ def overlay_detections_and_pose(
                 The ID of the detected AprilTag.
             - 'corners': np.ndarray of shape (4,2)
                 Pixel coordinates of the tag's corners.
-    camera_positions : :class:`pandas.DataFrame`
+    camera_positions : :pandas.DataFrame
         DataFrame containing the camera positions for each frame, with at least:
             - 'frame_idx': int
                 The frame number.
-            - 'smoothed_camera_pos': np.ndarray of shape (3,)
+            - 'smoothed_camera_pos': numpy.ndarray of shape (3,)
                 The camera position [x, y, z] in world coordinates.
-    room_corners : np.ndarray of shape (N, 2), optional
+    room_corners : numpy.ndarray of shape (N, 2), optional
         Array defining the polygon corners of the room in world coordinates.
         Defaults to a simple unit square: [[0,0],[0,1],[1,1],[1,0]].
-    video_output_path : str or :class:`pathlib.Path`, optional
+    video_output_path : str or pathlib.Path, optional
         Path to save the output video with overlays. Defaults to 'output_with_overlays.mp4'.
-    graph_size : np.ndarray of shape (2,), optional
+    graph_size : numpy.ndarray of shape (2,), optional
         The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].
     show_video : bool, optional
         Whether to display the video with overlays as it is processed. Press 'ESC' to stop early.
         Defaults to True.
 
-    Returns
-    -------
-    None
-        The function saves the processed video to the specified output path and optionally displays
-        it during processing. No value is returned.
-
     Notes
     -----
+
     - If the video cannot be read, a RuntimeError is raised.
     - Press 'ESC' to stop playback if show_video is True.
+
     """
 
     # Compute the room boundaries from the provided corners

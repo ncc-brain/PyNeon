@@ -42,12 +42,12 @@ apriltags = [
 ]
 dev = [
     "pytest",
-    "ruff",
     "numpydoc",
     "codespell",
     "pre-commit",
 ]
 doc = [
+    "ruff",
     "jupyter",
     "seaborn",
     "sphinx",
