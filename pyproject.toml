@@ -13,7 +13,8 @@ readme = "README.md"
 authors = [
     { name = "Qian Chu", email = "qianchu99@gmail.com" },
     { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" },
-    { name = "Alex Lepauvre", email = "alex.lepauvre@gmail.com" }
+    { name = "Alex Lepauvre", email = "alex.lepauvre@gmail.com" },
+    { name = "Lucia Melloni"}
 ]
 requires-python = ">=3.10"
 classifiers = [
