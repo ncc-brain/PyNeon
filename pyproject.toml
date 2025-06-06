@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["pyneon"]
+
+[project]
+name = "pyneon"
+version = "0.1.0"
+description = "A Python library for reading, preprocessing and exporting Pupil Labs Neon data"
+readme = "README.md"
+authors = [
+    { name = "Qian Chu", email = "qianchu99@gmail.com" },
+    { name = "Jan-Gabriel Hartel", email = "jangabrielhartel@gmail.com" },
+    { name = "Alex Lepauvre", email = "alex.lepauvre@gmail.com" }
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "opencv-python",
+    "typeguard",
+    "requests",
+    "tqdm",
+]
+license =  { text = "MIT" }
+
+[project.optional-dependencies]
+apriltags = [
+    "pupil-apriltags"
+]
+dev = [
+    "pytest",
+    "numpydoc",
+    "codespell",
+    "pre-commit",
+]
+doc = [
+    "ruff",
+    "jupyter",
+    "seaborn",
+    "sphinx",
+    "pydata-sphinx-theme",
+    "nbsphinx",
+]
+full = ["pyneon[apriltags,dev,doc]"]
+
+[project.urls]
+Homepage = "https://ncc-brain.github.io/PyNeon/"
+Issues = "https://github.com/ncc-brain/PyNeon/issues"
