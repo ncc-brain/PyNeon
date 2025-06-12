@@ -68,6 +68,8 @@ def plot_frame(
         raise RuntimeError(f"Could not read frame {index}")
     if show:
         plt.show()
+
+    video.reset()
     return fig, ax
 
 
@@ -346,20 +348,20 @@ def plot_epochs(
     """
     Plot data from a specified column from epochs on a matplotlib axis.
 
+    Works for Epochs created from Stream (time series) or Events (point-based).
+
     Parameters
     ----------
     epochs : Epochs
-        Epochs object containing the data to plot. Must be created from
-        a Stream.
+        Epochs object containing the data to plot.
     column_name : str
         Name of the column to plot.
     cmap_name : str
         Colormap to use for different epochs. Defaults to 'cool'.
     ax : matplotlib.axes.Axes or None
         Axis to plot the data on. If ``None``, a new figure is created.
-        Defaults to ``None``.
     show : bool
-        Show the figure if ``True``. Defaults to True.
+        Show the figure if ``True``.
 
     Returns
     -------
@@ -368,8 +370,8 @@ def plot_epochs(
     ax : matplotlib.axes.Axes
         Axis object containing the plot.
     """
-    if epochs.source_class != Stream:
-        raise ValueError("Epochs must be created from a `Stream` to be plotted.")
+    from pyneon import Stream, Events  # for source class check
+
     if column_name not in epochs.columns:
         raise ValueError(f"Column '{column_name}' not found in epochs.")
 
@@ -378,33 +380,69 @@ def plot_epochs(
     else:
         fig = ax.get_figure()
 
-    # Get the colormap
     num_epochs = len(epochs.epochs)
     cmap = cm.get_cmap(cmap_name, num_epochs)
+    norm = Normalize(vmin=0, vmax=num_epochs - 1)
 
-    # Create a normalization for the colorbar
-    norm = Normalize(vmin=0, vmax=num_epochs)
     ax.axvline(0, color="k", linestyle="--", linewidth=0.5)
 
-    # Plot the data
+    if epochs.source_class == Stream:
+        _plot_stream_epochs(fig, epochs, column_name, cmap, norm, ax)
+        ax.set_ylabel(column_name)
+    elif epochs.source_class == Events:
+        _plot_event_epochs(epochs, norm, ax)
+        ax.set_ylabel("Epoch index")
+    else:
+        raise ValueError(
+            "Epochs must be created from a `Stream` or `Events` to be plotted."
+        )
+
+    ax.set_xlabel("Epoch time (s)")
+    ax.set_xlim(epochs.t_before[0] / 1e9, epochs.t_after[0] / 1e9)
+
+    if show:
+        plt.show()
+    return fig, ax
+
+
+def _plot_stream_epochs(fig, epochs, column_name, cmap, norm, ax):
+    """
+    Internal helper to plot Stream-based Epochs.
+    """
     for i, row in epochs.epochs.iterrows():
         times = row.data["epoch time"] / 1e9
         data = row.data[column_name]
-        color = cmap(norm(i))  # Get color from colormap
+        color = cmap(norm(i))
         ax.plot(times, data, color=color, label=f"Epoch {i}")
 
-    ax.set_xlabel("Epoch time (s)")
-    ax.set_ylabel(column_name)
-
-    # Add a colorbar
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cbar = fig.colorbar(sm, ax=ax)
     cbar.set_label("Epoch Index")
 
-    if show:
-        plt.show()
-    return fig, ax
+
+def _plot_event_epochs(epochs, norm, ax):
+    """
+    Internal helper to plot Events-based Epochs.
+    """
+    num_epochs = len(epochs.epochs)
+    for i, row in epochs.epochs.iterrows():
+        df = row.data
+        if not isinstance(df, pd.DataFrame) or df.empty:
+            continue  # Skip bad/missing data
+        times = df["epoch time"] / 1e9
+
+        # check if duration ms is in df
+        if "duration [ms]" in df.columns:
+            durations = df["duration [ms]"] / 1000.0  # Convert to seconds
+            ax.hlines(
+                [i] * len(times), times, times + durations, linewidth=2, color="black"
+            )
+        else:
+            ax.scatter(times, [i] * len(times), s=8, label=f"Epoch {i}")
+
+    ax.set_yticks(range(num_epochs))
+    ax.set_yticklabels(range(num_epochs))
 
 
 def overlay_detections_and_pose(
