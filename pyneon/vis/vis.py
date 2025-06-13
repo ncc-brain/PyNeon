@@ -340,7 +340,7 @@ def overlay_scanpath(
 
 def plot_epochs(
     epochs: "Epochs",
-    column_name: str,
+    column_name: Optional[str] = None,
     cmap_name: str = "cool",
     ax: Optional[plt.Axes] = None,
     show: bool = True,
@@ -355,7 +355,7 @@ def plot_epochs(
     epochs : Epochs
         Epochs object containing the data to plot.
     column_name : str
-        Name of the column to plot.
+        Name of the column to plot. Has to be provided for stream data, defaults to None.
     cmap_name : str
         Colormap to use for different epochs. Defaults to 'cool'.
     ax : matplotlib.axes.Axes or None
@@ -372,8 +372,11 @@ def plot_epochs(
     """
     from pyneon import Stream, Events  # for source class check
 
-    if column_name not in epochs.columns:
-        raise ValueError(f"Column '{column_name}' not found in epochs.")
+    if epochs.source_class == Stream:
+        if column_name is None:
+            raise ValueError("Column name must be provided for Stream-based Epochs.")
+        if column_name not in epochs.columns:
+            raise ValueError(f"Column '{column_name}' not found in epochs.")
 
     if ax is None:
         fig, ax = plt.subplots()

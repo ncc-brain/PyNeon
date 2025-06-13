@@ -157,7 +157,7 @@ class Epochs:
 
     def plot(
         self,
-        column_names: str,
+        column_names: Optional[str] = None,
         cmap_name: str = "cool",
         ax: Optional[plt.Axes] = None,
         show: bool = True,
@@ -168,7 +168,7 @@ class Epochs:
         Parameters
         ----------
         column_name : str
-            Name of the column to plot.
+            Name of the column to plot. Has to be provided for stream data, defaults to None.
         cmap_name : str
             Colormap to use for different epochs. Defaults to 'cool'.
         ax : matplotlib.axes.Axes or None
