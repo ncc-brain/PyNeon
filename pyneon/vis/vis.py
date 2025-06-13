@@ -355,7 +355,9 @@ def plot_epochs(
     epochs : Epochs
         Epochs object containing the data to plot.
     column_name : str
-        Name of the column to plot. Has to be provided for stream data, defaults to None.
+        Name of the column to plot for :class:`pyneon.Epochs` constructed
+        from a :class:`pyneon.Stream`. If :class:`pyneon.Epochs` was constructed
+        from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
     cmap_name : str
         Colormap to use for different epochs. Defaults to 'cool'.
     ax : matplotlib.axes.Axes or None

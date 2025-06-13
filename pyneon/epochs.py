@@ -157,7 +157,7 @@ class Epochs:
 
     def plot(
         self,
-        column_names: Optional[str] = None,
+        column_name: Optional[str] = None,
         cmap_name: str = "cool",
         ax: Optional[plt.Axes] = None,
         show: bool = True,
@@ -168,7 +168,9 @@ class Epochs:
         Parameters
         ----------
         column_name : str
-            Name of the column to plot. Has to be provided for stream data, defaults to None.
+            Name of the column to plot for :class:`pyneon.Epochs` constructed
+            from a :class:`pyneon.Stream`. If :class:`pyneon.Epochs` was constructed
+            from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
         cmap_name : str
             Colormap to use for different epochs. Defaults to 'cool'.
         ax : matplotlib.axes.Axes or None
@@ -186,7 +188,7 @@ class Epochs:
         """
         fig_ax = plot_epochs(
             self,
-            column_names,
+            column_name,
             cmap_name,
             ax,
             show,
@@ -292,17 +294,16 @@ class Epochs:
 
         Parameters
         ----------
-
         baseline : (t_min, t_max), iterable of float | None
             Start and end of the baseline window **in seconds**, relative to
             the event trigger (t_ref = 0).  ``None`` means "from the first /
             up to the last sample".  Default: (None, 0.0) -> the pre-trigger
             part of each epoch.
         method : "mean" or "linear", optional
-            * "mean" - subtract the scalar mean of the baseline window.
-            * "linear" - fit a first-order (y = a·t + b) model *within* the
-            baseline window and remove the fitted trend from the entire
-            epoch (a very small, fast version of MNE's regression detrending).
+            * ``"mean"`` - Subtract the scalar mean of the baseline window.
+            * ``"linear"`` - Fit a first-order (:math:`y = at + b`) model *within* the
+              baseline window and remove the fitted trend from the entire
+              epoch (a very small, fast version of MNE's regression detrending).
 
             Defaults to "mean".
         inplace : bool
