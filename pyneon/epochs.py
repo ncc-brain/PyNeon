@@ -319,6 +319,10 @@ class Epochs:
             The baseline-corrected data (same shape & dtypes as original data).
 
         """
+        if self.source_class != Stream:
+            raise ValueError(
+                "Baseline correction is only supported for epochs created from a Stream."
+            )
 
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:
             """In-place mean or linear detrend on *one* epoch DF."""
