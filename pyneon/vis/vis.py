@@ -401,7 +401,7 @@ def plot_epochs(
         )
 
     ax.set_xlabel("Epoch time (s)")
-    ax.set_xlim(-epochs.t_before[0] / 1e9, epochs.t_after[0] / 1e9)
+    ax.set_xlim(-epochs.t_before.max() / 1e9, epochs.t_after.max() / 1e9)
 
     if show:
         plt.show()
