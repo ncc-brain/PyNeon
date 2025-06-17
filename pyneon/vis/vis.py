@@ -389,7 +389,7 @@ def plot_epochs(
     cmap = cm.get_cmap(cmap_name, num_epochs)
     norm = Normalize(vmin=0, vmax=num_epochs - 1)
 
-    ax.axvline(0, color="k", linestyle="--", linewidth=0.5)
+    ax.axvline(0, color="k", linestyle="--")
 
     if epochs.source_class == Stream:
         _plot_stream_epochs(fig, epochs, column_name, cmap, norm, ax)
@@ -430,7 +430,6 @@ def _plot_event_epochs(epochs, norm, ax):
     """
     Internal helper to plot Events-based Epochs.
     """
-    num_epochs = len(epochs.epochs)
     for i, row in epochs.epochs.iterrows():
         df = row.data
         if not isinstance(df, pd.DataFrame) or df.empty:
@@ -439,15 +438,10 @@ def _plot_event_epochs(epochs, norm, ax):
 
         # check if duration ms is in df
         if "duration [ms]" in df.columns:
-            durations = df["duration [ms]"] / 1000.0  # Convert to seconds
-            ax.hlines(
-                [i] * len(times), times, times + durations, linewidth=2, color="black"
-            )
+            durations = df["duration [ms]"] / 1e3
+            ax.hlines([i] * len(times), times, times + durations, color="gray")
         else:
-            ax.scatter(times, [i] * len(times), s=8, label=f"Epoch {i}")
-
-    ax.set_yticks(range(num_epochs))
-    ax.set_yticklabels(range(num_epochs))
+            ax.scatter(times, [i] * len(times), label=f"Epoch {i}")
 
 
 def overlay_detections_and_pose(
