@@ -48,8 +48,6 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/surface_mapping';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="PyNeon API" href="../reference/index.html" />
-    <link rel="prev" title="Exporting to BIDS formats" href="export_to_bids.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -128,7 +126,7 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
   </a>
@@ -214,8 +212,10 @@
       
       
       
+        
+      
       <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
         
 
   
@@ -230,7 +230,7 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
   </a>
@@ -281,23 +281,6 @@
     
   </div>
   
-    <div class="sidebar-primary-items__start sidebar-primary__section">
-        <div class="sidebar-primary-item">
-<nav class="bd-docs-nav bd-links"
-     aria-label="Section Navigation">
-  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="read_recording.html">Reading a Neon dataset/recording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS formats</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Surface Mapping using Apriltags</a></li>
-</ul>
-</div>
-</nav></div>
-    </div>
-  
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
       <div class="sidebar-primary-item">
@@ -333,9 +316,6 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
-    
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Surface Mapping using Apriltags</span></li>
   </ul>
 </nav>
@@ -548,35 +528,50 @@ Resetting video...
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Detecting AprilTags (random access): 100%|██████████| 357/357 [00:19&lt;00:00, 18.65it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Loading saved detections from C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\derivatives\apriltags.json
                      processed_frame_idx  frame_idx  tag_id  \
 timestamp [ns]
-1750070970452166666                   53         53       0
-1750070970452166666                   53         53       1
-1750070970452166666                   53         53       2
-1750070970452166666                   53         53       3
-1750070970452166666                   53         53       4
+1750070971664700000                    3         90       0
+1750070971664700000                    3         90       1
+1750070971664700000                    3         90       2
+1750070971664700000                    3         90       3
+1750070971664700000                    3         90       4
 
                                                                corners  \
 timestamp [ns]
-1750070970452166666  [[222.9882965088, 428.6274414062], [269.409729...
-1750070970452166666  [[261.8280029297, 664.2290039062], [307.024993...
-1750070970452166666  [[312.9656677246, 863.9111328125], [356.102294...
-1750070970452166666  [[1081.0452880859, 382.8061218262], [1132.5268...
-1750070970452166666  [[1067.2818603516, 628.9318847656], [1116.7659...
+1750070971664700000  [[275.7712707519531, 479.94992065429693], [327...
+1750070971664700000  [[322.27392578125006, 724.976806640625], [372....
+1750070971664700000  [[380.61767578125006, 928.1921386718751], [427...
+1750070971664700000  [[1137.983520507812, 410.68994140624994], [118...
+1750070971664700000  [[1130.1645507812498, 646.8099975585936], [117...
 
-                                                center
+                                                      center
 timestamp [ns]
-1750070970452166666   [243.3452033997, 397.5716400146]
-1750070970452166666   [279.2766151428, 637.9049835205]
-1750070970452166666    [328.6246948242, 843.923828125]
-1750070970452166666  [1107.3084716797, 354.7194366455]
-1750070970452166666  [1094.2521972656, 601.6597137451]
+1750070971664700000  [297.9236297607422, 446.27796936035156]
+1750070971664700000   [341.2054595947265, 696.6286163330078]
+1750070971664700000   [397.3332290649414, 906.3801879882812]
+1750070971664700000   [1161.822448730469, 382.8709182739258]
+1750070971664700000   [1154.548095703125, 618.6701049804688]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
 </pre></div></div>
 </div>
 <p>Having detected the apriltags, we now need to provide information on the real-world coordinates of our apriltags. This is solved via a tag_info dataframe, which we generate below.</p>
@@ -654,13 +649,14 @@ timestamp [ns]
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Loading saved homographies from C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\derivatives\homographies.pkl
+Computing homographies for frames: 100%|██████████| 353/353 [00:00&lt;00:00, 514.69it/s]
+Interpolating homographies: 100%|██████████| 352/352 [00:00&lt;00:00, 16585.91it/s]
 </pre></div></div>
 </div>
 <p>with this, we can finally transform both gaze and fixation coordinates into the screen’s reference frame:</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
@@ -669,6 +665,14 @@ Loading saved homographies from C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
 <span class="n">fixations_on_screen</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">fixations_on_surface</span><span class="p">(</span><span class="n">gaze_on_surface</span><span class="o">=</span><span class="n">gaze_on_screen</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Applying homography to gaze points: 100%|██████████| 10695/10695 [00:08&lt;00:00, 1276.31it/s]
+</pre></div></div>
 </div>
 <p>Besides the step-by-step process we have shown here, calling <code class="docutils literal notranslate"><span class="pre">gaze_on_screen</span></code> or <code class="docutils literal notranslate"><span class="pre">fixations_on_screen</span></code>, computes derivatives with default values.</p>
 <div class="nbinput docutils container">
@@ -688,7 +692,7 @@ Deleted 5 items from C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Ar
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_on_screen</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">gaze_on_surface</span><span class="p">(</span><span class="n">tag_info</span><span class="o">=</span><span class="n">tag_info</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -709,7 +713,7 @@ Warning: skip_frames &lt; 5 may be inefficient with random access. Switching to 
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Detecting AprilTags (sequential):  23%|██▎       | 2445/10695 [01:20&lt;04:30, 30.55it/s]
+Detecting AprilTags (sequential):   0%|          | 0/10695 [00:00&lt;?, ?it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -718,8 +722,8 @@ Detecting AprilTags (sequential):  23%|██▎       | 2445/10695 [01:20&lt;04
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[10]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[12]</span><span class="ansi-green-fg">, line 1</span>
 <span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> gaze_on_screen = <span class="ansi-yellow-bg">rec</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">gaze_on_surface</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">tag_info</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">tag_info</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">overwrite</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">      2</span> fixations_on_screen = rec.fixations_on_surface(gaze_on_surface=gaze_on_screen)
 
@@ -737,7 +741,7 @@ Detecting AprilTags (sequential):  23%|██▎       | 2445/10695 [01:20&lt;04
 <span class="ansi-green-fg">    644</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> homographies
 <span class="ansi-green-fg">    646</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> all_detections <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">647</span>     all_detections = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">detect_apriltags</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">    649</span> <span style="color: rgb(95,135,135)">#if all_detections.data.empty:</span>
+<span class="ansi-green-fg">    649</span> <span style="color: rgb(95,135,135)"># if all_detections.data.empty:</span>
 <span class="ansi-green-fg">    650</span> <span style="color: rgb(95,135,135)">#   raise ValueError(&#34;No AprilTag detections found.&#34;)</span>
 <span class="ansi-green-fg">    652</span> homographies_df = find_homographies(
 <span class="ansi-green-fg">    653</span>     <span style="color: rgb(0,135,0)">self</span>.video,
@@ -745,36 +749,18 @@ Detecting AprilTags (sequential):  23%|██▎       | 2445/10695 [01:20&lt;04
 <span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">    659</span>     settings=settings,
 <span class="ansi-green-fg">    660</span> )
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~\Documents\GitHub\PyNeon\pyneon\recording.py:572</span>, in <span class="ansi-cyan-fg">Recording.detect_apriltags</span><span class="ansi-blue-fg">(self, tag_family, overwrite, output_path, **kwargs)</span>
-<span class="ansi-green-fg">    569</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">AprilTag detection data is empty.</span><span class="ansi-yellow-fg">&#34;</span>)
-<span class="ansi-green-fg">    570</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> Stream(all_detections)
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">572</span> all_detections = <span class="ansi-yellow-bg">detect_apriltags</span><span class="ansi-yellow-bg">(</span>
-<span class="ansi-green-fg">    573</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">video</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">video</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    574</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">tag_family</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">tag_family</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    575</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">nthreads</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">nthreads</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    576</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">quad_decimate</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">quad_decimate</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    577</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">skip_frames</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">skip_frames</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    578</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~\Documents\GitHub\PyNeon\pyneon\recording.py:581</span>, in <span class="ansi-cyan-fg">Recording.detect_apriltags</span><span class="ansi-blue-fg">(self, tag_family, overwrite, output_path, **kwargs)</span>
+<span class="ansi-green-fg">    572</span> all_detections = detect_apriltags(
+<span class="ansi-green-fg">    573</span>     video=<span style="color: rgb(0,135,0)">self</span>.video,
+<span class="ansi-green-fg">    574</span>     tag_family=tag_family,
+<span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">    577</span>     skip_frames=skip_frames,
+<span class="ansi-green-fg">    578</span> )
 <span class="ansi-green-fg">    580</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> all_detections.empty:
-<span class="ansi-green-fg">    581</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">No AprilTag detections found.</span><span class="ansi-yellow-fg">&#34;</span>)
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">581</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">No AprilTag detections found.</span><span class="ansi-yellow-fg">&#34;</span>)
+<span class="ansi-green-fg">    583</span> <span style="color: rgb(95,135,135)"># Save results to JSON</span>
+<span class="ansi-green-fg">    584</span> all_detections.reset_index().to_json(json_file, orient=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">records</span><span class="ansi-yellow-fg">&#34;</span>, lines=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~\Documents\GitHub\PyNeon\pyneon\video\apriltag.py:138</span>, in <span class="ansi-cyan-fg">detect_apriltags</span><span class="ansi-blue-fg">(video, tag_family, nthreads, quad_decimate, skip_frames)</span>
-<span class="ansi-green-fg">    135</span> gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-<span class="ansi-green-fg">    137</span> <span style="color: rgb(95,135,135)"># Detect</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">138</span> detections = <span class="ansi-yellow-bg">detector</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">detect</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">gray_frame</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">    140</span> <span style="color: rgb(95,135,135)"># Save</span>
-<span class="ansi-green-fg">    141</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> detection <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> detections:
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">c:\Users\jan-gabriel.hartel\AppData\Local\miniforge3\envs\pyneon\Lib\site-packages\pupil_apriltags\bindings.py:477</span>, in <span class="ansi-cyan-fg">Detector.detect</span><span class="ansi-blue-fg">(self, img, estimate_tag_pose, camera_params, tag_size)</span>
-<span class="ansi-green-fg">    475</span> <span style="color: rgb(95,135,135)"># detect apriltags in the image</span>
-<span class="ansi-green-fg">    476</span> <span style="color: rgb(0,135,0)">self</span>.libc.apriltag_detector_detect.restype = ctypes.POINTER(_ZArray)
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">477</span> detections = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">libc</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">apriltag_detector_detect</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">tag_detector_ptr</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">c_img</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">    479</span> apriltag = ctypes.POINTER(_ApriltagDetection)()
-<span class="ansi-green-fg">    481</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> i <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">range</span>(<span class="ansi-green-fg">0</span>, detections.contents.size):
-<span class="ansi-green-fg">    482</span>
-<span class="ansi-green-fg">    483</span>     <span style="color: rgb(95,135,135)"># extract the data for each apriltag that was identified</span>
-
-<span class="ansi-red-fg">KeyboardInterrupt</span>:
+<span class="ansi-red-fg">ValueError</span>: No AprilTag detections found.
 </pre></div></div>
 </div>
 <p>Conveniently, on screen fixation data can be epoched just as well as any other type of data.</p>
@@ -946,24 +932,6 @@ Index([&#39;fixation id&#39;, &#39;end timestamp [ns]&#39;, &#39;duration [ms]&#
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
-    <a class="left-prev"
-       href="export_to_bids.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Exporting to BIDS formats</p>
-      </div>
-    </a>
-    <a class="right-next"
-       href="../reference/index.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">PyNeon API</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
 </div>
                 </footer>
               

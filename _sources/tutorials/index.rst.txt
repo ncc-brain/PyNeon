@@ -14,4 +14,3 @@ started with PyNeon.
     pupil_size_and_epoching
     video
     export_to_bids
-    surface_mapping

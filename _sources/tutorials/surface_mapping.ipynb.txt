@@ -224,33 +224,46 @@
    "metadata": {},
    "outputs": [
     {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "Detecting AprilTags (random access): 100%|██████████| 357/357 [00:19<00:00, 18.65it/s]"
+     ]
+    },
+    {
      "name": "stdout",
      "output_type": "stream",
      "text": [
-      "Loading saved detections from C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\derivatives\\apriltags.json\n",
       "                     processed_frame_idx  frame_idx  tag_id  \\\n",
       "timestamp [ns]                                                \n",
-      "1750070970452166666                   53         53       0   \n",
-      "1750070970452166666                   53         53       1   \n",
-      "1750070970452166666                   53         53       2   \n",
-      "1750070970452166666                   53         53       3   \n",
-      "1750070970452166666                   53         53       4   \n",
+      "1750070971664700000                    3         90       0   \n",
+      "1750070971664700000                    3         90       1   \n",
+      "1750070971664700000                    3         90       2   \n",
+      "1750070971664700000                    3         90       3   \n",
+      "1750070971664700000                    3         90       4   \n",
       "\n",
       "                                                               corners  \\\n",
       "timestamp [ns]                                                           \n",
-      "1750070970452166666  [[222.9882965088, 428.6274414062], [269.409729...   \n",
-      "1750070970452166666  [[261.8280029297, 664.2290039062], [307.024993...   \n",
-      "1750070970452166666  [[312.9656677246, 863.9111328125], [356.102294...   \n",
-      "1750070970452166666  [[1081.0452880859, 382.8061218262], [1132.5268...   \n",
-      "1750070970452166666  [[1067.2818603516, 628.9318847656], [1116.7659...   \n",
+      "1750070971664700000  [[275.7712707519531, 479.94992065429693], [327...   \n",
+      "1750070971664700000  [[322.27392578125006, 724.976806640625], [372....   \n",
+      "1750070971664700000  [[380.61767578125006, 928.1921386718751], [427...   \n",
+      "1750070971664700000  [[1137.983520507812, 410.68994140624994], [118...   \n",
+      "1750070971664700000  [[1130.1645507812498, 646.8099975585936], [117...   \n",
       "\n",
-      "                                                center  \n",
-      "timestamp [ns]                                          \n",
-      "1750070970452166666   [243.3452033997, 397.5716400146]  \n",
-      "1750070970452166666   [279.2766151428, 637.9049835205]  \n",
-      "1750070970452166666    [328.6246948242, 843.923828125]  \n",
-      "1750070970452166666  [1107.3084716797, 354.7194366455]  \n",
-      "1750070970452166666  [1094.2521972656, 601.6597137451]  \n"
+      "                                                      center  \n",
+      "timestamp [ns]                                                \n",
+      "1750070971664700000  [297.9236297607422, 446.27796936035156]  \n",
+      "1750070971664700000   [341.2054595947265, 696.6286163330078]  \n",
+      "1750070971664700000   [397.3332290649414, 906.3801879882812]  \n",
+      "1750070971664700000   [1161.822448730469, 382.8709182739258]  \n",
+      "1750070971664700000   [1154.548095703125, 618.6701049804688]  \n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n"
      ]
     }
    ],
@@ -340,10 +353,11 @@
    "metadata": {},
    "outputs": [
     {
-     "name": "stdout",
+     "name": "stderr",
      "output_type": "stream",
      "text": [
-      "Loading saved homographies from C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\derivatives\\homographies.pkl\n"
+      "Computing homographies for frames: 100%|██████████| 353/353 [00:00<00:00, 514.69it/s]\n",
+      "Interpolating homographies: 100%|██████████| 352/352 [00:00<00:00, 16585.91it/s]\n"
      ]
     }
    ],
@@ -364,7 +378,15 @@
    "cell_type": "code",
    "execution_count": 8,
    "metadata": {},
-   "outputs": [],
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "Applying homography to gaze points: 100%|██████████| 10695/10695 [00:08<00:00, 1276.31it/s]\n"
+     ]
+    }
+   ],
    "source": [
     "synced_gaze = rec.sync_gaze_to_video()\n",
     "gaze_on_screen = rec.gaze_on_surface(homographies=homographies, synced_gaze=synced_gaze)\n",
@@ -397,7 +419,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 10,
+   "execution_count": 12,
    "metadata": {},
    "outputs": [
     {
@@ -411,23 +433,21 @@
      "name": "stderr",
      "output_type": "stream",
      "text": [
-      "Detecting AprilTags (sequential):  23%|██▎       | 2445/10695 [01:20<04:30, 30.55it/s]\n"
+      "Detecting AprilTags (sequential):   0%|          | 0/10695 [00:00<?, ?it/s]\n"
      ]
     },
     {
-     "ename": "KeyboardInterrupt",
-     "evalue": "",
+     "ename": "ValueError",
+     "evalue": "No AprilTag detections found.",
      "output_type": "error",
      "traceback": [
       "\u001b[31m---------------------------------------------------------------------------\u001b[39m",
-      "\u001b[31mKeyboardInterrupt\u001b[39m                         Traceback (most recent call last)",
-      "\u001b[36mCell\u001b[39m\u001b[36m \u001b[39m\u001b[32mIn[10]\u001b[39m\u001b[32m, line 1\u001b[39m\n\u001b[32m----> \u001b[39m\u001b[32m1\u001b[39m gaze_on_screen = \u001b[43mrec\u001b[49m\u001b[43m.\u001b[49m\u001b[43mgaze_on_surface\u001b[49m\u001b[43m(\u001b[49m\u001b[43mtag_info\u001b[49m\u001b[43m=\u001b[49m\u001b[43mtag_info\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43moverwrite\u001b[49m\u001b[43m=\u001b[49m\u001b[38;5;28;43;01mFalse\u001b[39;49;00m\u001b[43m)\u001b[49m\n\u001b[32m      2\u001b[39m fixations_on_screen = rec.fixations_on_surface(gaze_on_surface=gaze_on_screen)\n",
+      "\u001b[31mValueError\u001b[39m                                Traceback (most recent call last)",
+      "\u001b[36mCell\u001b[39m\u001b[36m \u001b[39m\u001b[32mIn[12]\u001b[39m\u001b[32m, line 1\u001b[39m\n\u001b[32m----> \u001b[39m\u001b[32m1\u001b[39m gaze_on_screen = \u001b[43mrec\u001b[49m\u001b[43m.\u001b[49m\u001b[43mgaze_on_surface\u001b[49m\u001b[43m(\u001b[49m\u001b[43mtag_info\u001b[49m\u001b[43m=\u001b[49m\u001b[43mtag_info\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43moverwrite\u001b[49m\u001b[43m=\u001b[49m\u001b[38;5;28;43;01mFalse\u001b[39;49;00m\u001b[43m)\u001b[49m\n\u001b[32m      2\u001b[39m fixations_on_screen = rec.fixations_on_surface(gaze_on_surface=gaze_on_screen)\n",
       "\u001b[36mFile \u001b[39m\u001b[32m~\\Documents\\GitHub\\PyNeon\\pyneon\\recording.py:720\u001b[39m, in \u001b[36mRecording.gaze_on_surface\u001b[39m\u001b[34m(self, homographies, tag_info, synced_gaze, overwrite, output_path)\u001b[39m\n\u001b[32m    716\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m tag_info \u001b[38;5;129;01mis\u001b[39;00m \u001b[38;5;28;01mNone\u001b[39;00m:\n\u001b[32m    717\u001b[39m         \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\n\u001b[32m    718\u001b[39m             \u001b[33m\"\u001b[39m\u001b[33mMarker information is required for homography estimation.\u001b[39m\u001b[33m\"\u001b[39m\n\u001b[32m    719\u001b[39m         )\n\u001b[32m--> \u001b[39m\u001b[32m720\u001b[39m     homographies = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mfind_homographies\u001b[49m\u001b[43m(\u001b[49m\u001b[43mtag_info\u001b[49m\u001b[43m=\u001b[49m\u001b[43mtag_info\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    722\u001b[39m \u001b[38;5;28;01mif\u001b[39;00m synced_gaze \u001b[38;5;129;01mis\u001b[39;00m \u001b[38;5;28;01mNone\u001b[39;00m:\n\u001b[32m    723\u001b[39m     \u001b[38;5;66;03m# Check if synced gaze already exists\u001b[39;00m\n\u001b[32m    724\u001b[39m     synced_gaze = \u001b[38;5;28mself\u001b[39m.sync_gaze_to_video()\n",
-      "\u001b[36mFile \u001b[39m\u001b[32m~\\Documents\\GitHub\\PyNeon\\pyneon\\recording.py:647\u001b[39m, in \u001b[36mRecording.find_homographies\u001b[39m\u001b[34m(self, tag_info, all_detections, overwrite, output_path, **kwargs)\u001b[39m\n\u001b[32m    644\u001b[39m     \u001b[38;5;28;01mreturn\u001b[39;00m homographies\n\u001b[32m    646\u001b[39m \u001b[38;5;28;01mif\u001b[39;00m all_detections \u001b[38;5;129;01mis\u001b[39;00m \u001b[38;5;28;01mNone\u001b[39;00m:\n\u001b[32m--> \u001b[39m\u001b[32m647\u001b[39m     all_detections = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mdetect_apriltags\u001b[49m\u001b[43m(\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    649\u001b[39m \u001b[38;5;66;03m#if all_detections.data.empty:\u001b[39;00m\n\u001b[32m    650\u001b[39m \u001b[38;5;66;03m#   raise ValueError(\"No AprilTag detections found.\")\u001b[39;00m\n\u001b[32m    652\u001b[39m homographies_df = find_homographies(\n\u001b[32m    653\u001b[39m     \u001b[38;5;28mself\u001b[39m.video,\n\u001b[32m    654\u001b[39m     all_detections.data,\n\u001b[32m   (...)\u001b[39m\u001b[32m    659\u001b[39m     settings=settings,\n\u001b[32m    660\u001b[39m )\n",
-      "\u001b[36mFile \u001b[39m\u001b[32m~\\Documents\\GitHub\\PyNeon\\pyneon\\recording.py:572\u001b[39m, in \u001b[36mRecording.detect_apriltags\u001b[39m\u001b[34m(self, tag_family, overwrite, output_path, **kwargs)\u001b[39m\n\u001b[32m    569\u001b[39m         \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33m\"\u001b[39m\u001b[33mAprilTag detection data is empty.\u001b[39m\u001b[33m\"\u001b[39m)\n\u001b[32m    570\u001b[39m     \u001b[38;5;28;01mreturn\u001b[39;00m Stream(all_detections)\n\u001b[32m--> \u001b[39m\u001b[32m572\u001b[39m all_detections = \u001b[43mdetect_apriltags\u001b[49m\u001b[43m(\u001b[49m\n\u001b[32m    573\u001b[39m \u001b[43m    \u001b[49m\u001b[43mvideo\u001b[49m\u001b[43m=\u001b[49m\u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mvideo\u001b[49m\u001b[43m,\u001b[49m\n\u001b[32m    574\u001b[39m \u001b[43m    \u001b[49m\u001b[43mtag_family\u001b[49m\u001b[43m=\u001b[49m\u001b[43mtag_family\u001b[49m\u001b[43m,\u001b[49m\n\u001b[32m    575\u001b[39m \u001b[43m    \u001b[49m\u001b[43mnthreads\u001b[49m\u001b[43m=\u001b[49m\u001b[43mnthreads\u001b[49m\u001b[43m,\u001b[49m\n\u001b[32m    576\u001b[39m \u001b[43m    \u001b[49m\u001b[43mquad_decimate\u001b[49m\u001b[43m=\u001b[49m\u001b[43mquad_decimate\u001b[49m\u001b[43m,\u001b[49m\n\u001b[32m    577\u001b[39m \u001b[43m    \u001b[49m\u001b[43mskip_frames\u001b[49m\u001b[43m=\u001b[49m\u001b[43mskip_frames\u001b[49m\u001b[43m,\u001b[49m\n\u001b[32m    578\u001b[39m \u001b[43m\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    580\u001b[39m \u001b[38;5;28;01mif\u001b[39;00m all_detections.empty:\n\u001b[32m    581\u001b[39m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33m\"\u001b[39m\u001b[33mNo AprilTag detections found.\u001b[39m\u001b[33m\"\u001b[39m)\n",
-      "\u001b[36mFile \u001b[39m\u001b[32m~\\Documents\\GitHub\\PyNeon\\pyneon\\video\\apriltag.py:138\u001b[39m, in \u001b[36mdetect_apriltags\u001b[39m\u001b[34m(video, tag_family, nthreads, quad_decimate, skip_frames)\u001b[39m\n\u001b[32m    135\u001b[39m gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)\n\u001b[32m    137\u001b[39m \u001b[38;5;66;03m# Detect\u001b[39;00m\n\u001b[32m--> \u001b[39m\u001b[32m138\u001b[39m detections = \u001b[43mdetector\u001b[49m\u001b[43m.\u001b[49m\u001b[43mdetect\u001b[49m\u001b[43m(\u001b[49m\u001b[43mgray_frame\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    140\u001b[39m \u001b[38;5;66;03m# Save\u001b[39;00m\n\u001b[32m    141\u001b[39m \u001b[38;5;28;01mfor\u001b[39;00m detection \u001b[38;5;129;01min\u001b[39;00m detections:\n",
-      "\u001b[36mFile \u001b[39m\u001b[32mc:\\Users\\jan-gabriel.hartel\\AppData\\Local\\miniforge3\\envs\\pyneon\\Lib\\site-packages\\pupil_apriltags\\bindings.py:477\u001b[39m, in \u001b[36mDetector.detect\u001b[39m\u001b[34m(self, img, estimate_tag_pose, camera_params, tag_size)\u001b[39m\n\u001b[32m    475\u001b[39m \u001b[38;5;66;03m# detect apriltags in the image\u001b[39;00m\n\u001b[32m    476\u001b[39m \u001b[38;5;28mself\u001b[39m.libc.apriltag_detector_detect.restype = ctypes.POINTER(_ZArray)\n\u001b[32m--> \u001b[39m\u001b[32m477\u001b[39m detections = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mlibc\u001b[49m\u001b[43m.\u001b[49m\u001b[43mapriltag_detector_detect\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mtag_detector_ptr\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43mc_img\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    479\u001b[39m apriltag = ctypes.POINTER(_ApriltagDetection)()\n\u001b[32m    481\u001b[39m \u001b[38;5;28;01mfor\u001b[39;00m i \u001b[38;5;129;01min\u001b[39;00m \u001b[38;5;28mrange\u001b[39m(\u001b[32m0\u001b[39m, detections.contents.size):\n\u001b[32m    482\u001b[39m \n\u001b[32m    483\u001b[39m     \u001b[38;5;66;03m# extract the data for each apriltag that was identified\u001b[39;00m\n",
-      "\u001b[31mKeyboardInterrupt\u001b[39m: "
+      "\u001b[36mFile \u001b[39m\u001b[32m~\\Documents\\GitHub\\PyNeon\\pyneon\\recording.py:647\u001b[39m, in \u001b[36mRecording.find_homographies\u001b[39m\u001b[34m(self, tag_info, all_detections, overwrite, output_path, **kwargs)\u001b[39m\n\u001b[32m    644\u001b[39m     \u001b[38;5;28;01mreturn\u001b[39;00m homographies\n\u001b[32m    646\u001b[39m \u001b[38;5;28;01mif\u001b[39;00m all_detections \u001b[38;5;129;01mis\u001b[39;00m \u001b[38;5;28;01mNone\u001b[39;00m:\n\u001b[32m--> \u001b[39m\u001b[32m647\u001b[39m     all_detections = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mdetect_apriltags\u001b[49m\u001b[43m(\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    649\u001b[39m \u001b[38;5;66;03m# if all_detections.data.empty:\u001b[39;00m\n\u001b[32m    650\u001b[39m \u001b[38;5;66;03m#   raise ValueError(\"No AprilTag detections found.\")\u001b[39;00m\n\u001b[32m    652\u001b[39m homographies_df = find_homographies(\n\u001b[32m    653\u001b[39m     \u001b[38;5;28mself\u001b[39m.video,\n\u001b[32m    654\u001b[39m     all_detections.data,\n\u001b[32m   (...)\u001b[39m\u001b[32m    659\u001b[39m     settings=settings,\n\u001b[32m    660\u001b[39m )\n",
+      "\u001b[36mFile \u001b[39m\u001b[32m~\\Documents\\GitHub\\PyNeon\\pyneon\\recording.py:581\u001b[39m, in \u001b[36mRecording.detect_apriltags\u001b[39m\u001b[34m(self, tag_family, overwrite, output_path, **kwargs)\u001b[39m\n\u001b[32m    572\u001b[39m all_detections = detect_apriltags(\n\u001b[32m    573\u001b[39m     video=\u001b[38;5;28mself\u001b[39m.video,\n\u001b[32m    574\u001b[39m     tag_family=tag_family,\n\u001b[32m   (...)\u001b[39m\u001b[32m    577\u001b[39m     skip_frames=skip_frames,\n\u001b[32m    578\u001b[39m )\n\u001b[32m    580\u001b[39m \u001b[38;5;28;01mif\u001b[39;00m all_detections.empty:\n\u001b[32m--> \u001b[39m\u001b[32m581\u001b[39m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33m\"\u001b[39m\u001b[33mNo AprilTag detections found.\u001b[39m\u001b[33m\"\u001b[39m)\n\u001b[32m    583\u001b[39m \u001b[38;5;66;03m# Save results to JSON\u001b[39;00m\n\u001b[32m    584\u001b[39m all_detections.reset_index().to_json(json_file, orient=\u001b[33m\"\u001b[39m\u001b[33mrecords\u001b[39m\u001b[33m\"\u001b[39m, lines=\u001b[38;5;28;01mTrue\u001b[39;00m)\n",
+      "\u001b[31mValueError\u001b[39m: No AprilTag detections found."
      ]
     }
    ],
