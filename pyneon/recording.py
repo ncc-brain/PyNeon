@@ -646,7 +646,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         if all_detections is None:
             all_detections = self.detect_apriltags()
 
-        #if all_detections.data.empty:
+        # if all_detections.data.empty:
         #   raise ValueError("No AprilTag detections found.")
 
         homographies_df = find_homographies(

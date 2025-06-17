@@ -63,7 +63,7 @@ class SceneVideo(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
-    
+
     def get_frame(self, timestamp: Union[int, np.int64]) -> int:
         """
         Get the frame index corresponding to a given timestamp.
@@ -80,9 +80,9 @@ class SceneVideo(cv2.VideoCapture):
         """
         if timestamp < self.ts[0] or timestamp > self.ts[-1]:
             raise ValueError("Timestamp is out of bounds of the video timestamps.")
-        
+
         return int(np.searchsorted(self.ts, timestamp))
-    
+
     def reset(self):
         print("Resetting video...")
         if self.isOpened():
