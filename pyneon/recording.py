@@ -577,6 +577,9 @@ Recording duration: {self.info["duration"] / 1e9}s
             skip_frames=skip_frames,
         )
 
+        if all_detections.empty:
+            raise ValueError("No AprilTag detections found.")
+
         # Save results to JSON
         all_detections.reset_index().to_json(json_file, orient="records", lines=True)
 
@@ -643,8 +646,8 @@ Recording duration: {self.info["duration"] / 1e9}s
         if all_detections is None:
             all_detections = self.detect_apriltags()
 
-        if all_detections.data.empty:
-            raise ValueError("No AprilTag detections found.")
+        #if all_detections.data.empty:
+        #   raise ValueError("No AprilTag detections found.")
 
         homographies_df = find_homographies(
             self.video,
