@@ -1,9 +1,23 @@
-# tests/test_import.py
+import pytest
+import pyneon
+from pyneon import (
+    Dataset,
+    Recording,
+    Stream,
+    Events,
+    SceneVideo,
+    Epochs,
+    get_sample_data,
+)
 
 
 def test_basic_import():
-    import pyneon
-
     assert hasattr(pyneon, "__version__")
-    from pyneon import Dataset, Recording, Stream, Events, SceneVideo, Epochs
-    from pyneon import get_sample_data
+
+
+@pytest.mark.parametrize("dataset_name", ["boardView", "ArtLab", "screenFlash"])
+def test_get_sample_data(dataset_name):
+    sample_dir = get_sample_data(dataset_name)
+    dataset = Dataset(sample_dir / "Timeseries Data + Scene Video")
+    for recording in dataset.recordings:
+        assert isinstance(recording, Recording)
