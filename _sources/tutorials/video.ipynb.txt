@@ -17,15 +17,34 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 3,
+   "execution_count": 1,
    "metadata": {},
    "outputs": [
     {
      "name": "stdout",
      "output_type": "stream",
      "text": [
-      "C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\boardView\n",
-      "Dataset | 2 recordings\n"
+      "C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\n",
+      "Dataset | 1 recordings\n",
+      "\n",
+      "Recording ID: 9a141750-95ca-48ee-9693-53bbb896b87e\n",
+      "Wearer ID: c4f68887-e96c-467f-a901-0fc9fce09c0a\n",
+      "Wearer name: JGH\n",
+      "Recording start time: 2025-06-16 12:49:27.817000\n",
+      "Recording duration: 357.538s\n",
+      "                 exist                  filename                                                                                                                                        path\n",
+      "3d_eye_states     True         3d_eye_states.csv         C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\3d_eye_states.csv\n",
+      "blinks            True                blinks.csv                C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\blinks.csv\n",
+      "events            True                events.csv                C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\events.csv\n",
+      "fixations         True             fixations.csv             C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\fixations.csv\n",
+      "gaze              True                  gaze.csv                  C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\gaze.csv\n",
+      "imu               True                   imu.csv                   C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\imu.csv\n",
+      "labels            True                labels.csv                C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\labels.csv\n",
+      "saccades          True              saccades.csv              C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\saccades.csv\n",
+      "world_timestamps  True      world_timestamps.csv      C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\world_timestamps.csv\n",
+      "scene_video_info  True         scene_camera.json         C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\scene_camera.json\n",
+      "scene_video       True  11f35cc2_0.0-357.538.mp4  C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\11f35cc2_0.0-357.538.mp4\n",
+      "\n"
      ]
     }
    ],
@@ -38,14 +57,15 @@
     "\n",
     "\n",
     "# Download sample data (if not existing) and return the path\n",
-    "sample_dir = get_sample_data(\"boardView\")\n",
+    "sample_dir = get_sample_data(\"Artworks\")\n",
     "print(sample_dir)\n",
     "\n",
     "dataset_dir = sample_dir / \"Timeseries Data + Scene Video\"\n",
     "dataset = Dataset(dataset_dir)\n",
     "print(dataset)\n",
     "\n",
-    "recording = dataset[0]"
+    "recording = dataset[0]\n",
+    "print(recording)"
    ]
   },
   {
@@ -67,7 +87,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 4,
+   "execution_count": 2,
    "metadata": {},
    "outputs": [
     {
@@ -76,19 +96,19 @@
      "text": [
       "                     gaze x [px]  gaze y [px]  worn  fixation id  blink id  \\\n",
       "timestamp [ns]                                                               \n",
-      "1732621642940900000   953.513857   416.911286     1           51      <NA>   \n",
-      "1732621642974244444   946.757667   432.689333     1           51      <NA>   \n",
-      "1732621643007588888   947.623000   429.558571     1           51      <NA>   \n",
-      "1732621643040933333   948.243167   426.238667     1           51      <NA>   \n",
-      "1732621643090933333   933.202250   428.496750     1         <NA>      <NA>   \n",
+      "1750071325151422222          NaN          NaN  <NA>         <NA>      <NA>   \n",
+      "1750071325201422222          NaN          NaN  <NA>         <NA>      <NA>   \n",
+      "1750071325251422222          NaN          NaN  <NA>         <NA>      <NA>   \n",
+      "1750071325301422222          NaN          NaN  <NA>         <NA>      <NA>   \n",
+      "1750071325351422222          NaN          NaN  <NA>         <NA>      <NA>   \n",
       "\n",
       "                     azimuth [deg]  elevation [deg]  frame_idx  \n",
       "timestamp [ns]                                                  \n",
-      "1732621642940900000       9.166245        12.391290        476  \n",
-      "1732621642974244444       8.702540        11.386827        477  \n",
-      "1732621643007588888       8.762843        11.586733        478  \n",
-      "1732621643040933333       8.807615        11.798852        479  \n",
-      "1732621643090933333       7.822717        11.664492        480  \n"
+      "1750071325151422222            NaN              NaN      10690  \n",
+      "1750071325201422222            NaN              NaN      10691  \n",
+      "1750071325251422222            NaN              NaN      10692  \n",
+      "1750071325301422222            NaN              NaN      10693  \n",
+      "1750071325351422222            NaN              NaN      10694  \n"
      ]
     }
    ],
@@ -98,27 +118,6 @@
     "\n",
     "# Inspect the mapped gaze data\n",
     "print(synced_gaze.data.tail())"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 5,
-   "metadata": {},
-   "outputs": [
-    {
-     "ename": "AttributeError",
-     "evalue": "'Recording' object has no attribute 'clear_der_dir'",
-     "output_type": "error",
-     "traceback": [
-      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
-      "\u001b[1;31mAttributeError\u001b[0m                            Traceback (most recent call last)",
-      "Cell \u001b[1;32mIn[5], line 1\u001b[0m\n\u001b[1;32m----> 1\u001b[0m \u001b[43mrecording\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mclear_der_dir\u001b[49m()\n",
-      "\u001b[1;31mAttributeError\u001b[0m: 'Recording' object has no attribute 'clear_der_dir'"
-     ]
-    }
-   ],
-   "source": [
-    "recording.clear_der_dir()"
    ]
   },
   {
@@ -151,75 +150,78 @@
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": 3,
    "metadata": {},
    "outputs": [
     {
      "name": "stdout",
      "output_type": "stream",
      "text": [
-      "   time                                          fixations\n",
-      "0  0.00    fixation id   x   y fixation status\n",
-      "0       ...\n",
-      "1  0.05    fixation id   x   y fixation status\n",
-      "1       ...\n",
-      "2  0.10    fixation id   x   y fixation status\n",
-      "2       ...\n",
-      "3  0.15    fixation id   x   y fixation status\n",
-      "3       ...\n",
-      "4  0.20    fixation id   x   y fixation status\n",
-      "4       ...\n"
+      "Loading saved scanpath from C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\derivatives\\scanpath.pkl\n",
+      "                                                             fixations  \\\n",
+      "timestamp [ns]                                                           \n",
+      "1750070967817000000    fixation id gaze x [px] gaze y [px] fixation...   \n",
+      "1750070967867000000    fixation id gaze x [px] gaze y [px] fixation...   \n",
+      "1750070967917000000    fixation id gaze x [px] gaze y [px] fixation...   \n",
+      "1750070967967000000    fixation id gaze x [px] gaze y [px] fixation...   \n",
+      "1750070968017000000    fixation id gaze x [px] gaze y [px] fixation...   \n",
+      "\n",
+      "                     frame_idx  \n",
+      "timestamp [ns]                  \n",
+      "1750070967817000000          0  \n",
+      "1750070967867000000          1  \n",
+      "1750070967917000000          2  \n",
+      "1750070967967000000          3  \n",
+      "1750070968017000000          4  \n"
      ]
     }
    ],
    "source": [
     "# Estimate the scanpath based on the mapped gaze data\n",
-    "recording.estimate_scanpath()\n",
-    "\n",
-    "# Save the estimated scanpath as a pickle and CSV\n",
-    "recording.estimated_scanpath.to_pickle(\"estimated_scanpath.pkl\")\n",
-    "recording.estimated_scanpath.to_csv(\"estimated_scanpath.csv\")\n",
+    "scanpath = recording.estimate_scanpath()\n",
     "\n",
     "# Inspect the estimated scanpath\n",
-    "print(recording.estimated_scanpath.head())"
+    "print(scanpath.data.head())"
    ]
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "We should take a moment to understand the format of the `estimated_scanpath` property. As we care about getting a scanpath mapped on every single video-frame, we create it as a dataframe of dataframes. As such, every row carries the timestamp of the unnderlying video and saves a dataframe in the `fixations` cell. In this dataframe, every present fixation is provided with an id, coordinates and a fixation status, as seen below. The benefit of treating is a dataframe is the possibility to use intuitive pandas indexing, allowing us, for example, to get a list of fixations at frame 1334. This frame corresponds to a turn with a lot of lost fixations.\n",
+    "We should take a moment to understand the format of the `scanpath.data`. As we care about getting a scanpath mapped on every single video-frame, we create it as a dataframe of dataframes. As such, every row carries both the timestamp as well as the frame index of the underlying video and saves a dataframe in the `fixations` cell. In this dataframe, every present fixation is provided with an id, coordinates and a fixation status, as seen below. The benefit of treating is a dataframe is the possibility to use intuitive pandas indexing, allowing us, for example, to get a list of fixations at frame 2000.\n",
     "\n",
     "As a quirk of Neon taking some time to start up, the first frames will usually not yield any usable results. Still, we carry them for consistency. "
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": 4,
    "metadata": {},
    "outputs": [
     {
      "name": "stdout",
      "output_type": "stream",
      "text": [
-      "   fixation id            x           y fixation status\n",
-      "0        102.0  1195.487429  495.576714          during\n",
-      "1         98.0    28.327660  473.548737         tracked\n",
-      "2         97.0   621.986206  691.748291         tracked\n",
-      "3         96.0   154.725586  919.655640         tracked\n",
-      "4         93.0   258.866272  648.244324         tracked\n",
-      "5         91.0    24.861883  335.163666         tracked\n",
-      "6         88.0          NaN         NaN            lost\n",
-      "7         81.0    88.962830  318.220032         tracked\n",
-      "8         80.0    11.042568  376.608856         tracked\n",
-      "9         79.0          NaN         NaN            lost\n",
-      "10        78.0          NaN         NaN            lost\n",
-      "11        74.0          NaN         NaN            lost\n"
+      "   fixation id gaze x [px] gaze y [px] fixation status\n",
+      "0          174  903.107571  428.153429          during\n",
+      "1          173  924.962036  437.257629         tracked\n",
+      "2          172  922.353638  493.392975         tracked\n",
+      "3          171  960.446289  465.010101         tracked\n",
+      "4          170  835.920654  440.765076         tracked\n",
+      "5          169  833.580444  467.248718         tracked\n",
+      "6          168   698.10437  662.543335         tracked\n",
+      "7          167  693.992065  630.123047         tracked\n",
+      "8          166  713.760315  561.713867         tracked\n",
+      "9          165  543.353333  473.653381         tracked\n",
+      "10         164  698.986816   486.05957         tracked\n",
+      "11         163  704.265442  439.653992         tracked\n",
+      "12         162  750.842773  539.532349         tracked\n"
      ]
     }
    ],
    "source": [
-    "print(recording.estimated_scanpath[\"fixations\"][1334])"
+    "# print fixations when column frame_idx is 1334. Frame_idx is not the idx of the dataframe, but the index of the video frame.\n",
+    "print(scanpath.data.loc[scanpath.data[\"frame_idx\"] == 2000, \"fixations\"].values[0])\n"
    ]
   },
   {
@@ -253,12 +255,22 @@
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": 5,
    "metadata": {},
-   "outputs": [],
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Loading saved scanpath from C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\derivatives\\scanpath.pkl\n",
+      "Overlay video already exists at C:\\Users\\jan-gabriel.hartel\\Documents\\GitHub\\PyNeon\\data\\Artworks\\Timeseries Data + Scene Video\\artworks-9a141750\\derivatives\\scanpath.mp4; skipping render.\n",
+      "`show_video=True` has no effect because rendering was skipped.\n"
+     ]
+    }
+   ],
    "source": [
     "# Overlay the scanpath on the video and show the output\n",
-    "recording.overlay_scanpath_on_video(\"../../data/OpticalFlow/test.mp4\", show_video=True)"
+    "recording.overlay_scanpath(show_video=True)"
    ]
   },
   {
@@ -293,7 +305,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.12.5"
+   "version": "3.13.3"
   }
  },
  "nbformat": 4,
