@@ -45,17 +45,16 @@ class Dataset:
         List of :class:`pyneon.Recording` objects for each recording in the dataset.
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
-    
+
     """
 
     def __init__(self, dataset_dir: str | Path, custom: bool = False):
         dataset_dir = Path(dataset_dir)
         if not dataset_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {dataset_dir}")
-        
+
         self.dataset_dir = dataset_dir
         self.recordings = list()
-
 
         if not custom:
             sections_path = dataset_dir.joinpath("sections.csv")
@@ -67,7 +66,9 @@ class Dataset:
 
             for rec_id in recording_ids:
                 rec_id_start = rec_id.split("-")[0]
-                rec_dir = [d for d in dataset_dir.glob(f"*-{rec_id_start}") if d.is_dir()]
+                rec_dir = [
+                    d for d in dataset_dir.glob(f"*-{rec_id_start}") if d.is_dir()
+                ]
                 if len(rec_dir) == 1:
                     rec_dir = rec_dir[0]
                     try:
@@ -98,22 +99,24 @@ class Dataset:
                 raise RuntimeWarning(
                     f"Skipping reading recording {rec_dir.name} due to error:\n{e}"
                 )
-            
-        #rebuild a sections dataframe with the following columns: section id,recording id,recording name,wearer id,wearer name,section start time [ns],section end time [ns],start event name,end event name
-        #data can be read from the Recording objects
+
+        # rebuild a sections dataframe with the following columns: section id,recording id,recording name,wearer id,wearer name,section start time [ns],section end time [ns],start event name,end event name
+        # data can be read from the Recording objects
         sections_data = []
         for i, rec in enumerate(self.recordings):
-            sections_data.append({
+            sections_data.append(
+                {
                     "section id": i,
                     "recording id": rec.recording_id,
                     "recording name": rec.recording_id,
                     "wearer id": rec.info["wearer_id"],
                     "wearer name": rec.info["wearer_name"],
                     "section start time [ns]": rec.start_time,
-                    "section end time [ns]": rec.start_time + rec.info["duration"], 
+                    "section end time [ns]": rec.start_time + rec.info["duration"],
                     "start event name": rec.events.data["name"].iloc[0],
-                    "end event name": rec.events.data["name"].iloc[-1]
-                })
+                    "end event name": rec.events.data["name"].iloc[-1],
+                }
+            )
 
         self.sections = pd.DataFrame(sections_data)
 
