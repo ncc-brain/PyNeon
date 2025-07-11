@@ -34,6 +34,8 @@ class Dataset:
     ----------
     dataset_dir : str or pathlib.Path
         Path to the directory containing the dataset.
+    renamed : bool, optional
+        If True, the dataset is expected to have been renamed from the original recording_ids. Default is False.
 
     Attributes
     ----------
@@ -43,42 +45,77 @@ class Dataset:
         List of :class:`pyneon.Recording` objects for each recording in the dataset.
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
+    
     """
 
-    def __init__(self, dataset_dir: str | Path):
+    def __init__(self, dataset_dir: str | Path, custom: bool = False):
         dataset_dir = Path(dataset_dir)
         if not dataset_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {dataset_dir}")
-
+        
         self.dataset_dir = dataset_dir
-        sections_path = dataset_dir.joinpath("sections.csv")
-        if not sections_path.is_file():
-            raise FileNotFoundError(f"sections.csv not found in {dataset_dir}")
-
         self.recordings = list()
-        self.sections = pd.read_csv(sections_path)
-        recording_ids = self.sections["recording id"]
 
-        for rec_id in recording_ids:
-            rec_id_start = rec_id.split("-")[0]
-            rec_dir = [d for d in dataset_dir.glob(f"*-{rec_id_start}") if d.is_dir()]
-            if len(rec_dir) == 1:
-                rec_dir = rec_dir[0]
-                try:
-                    self.recordings.append(Recording(rec_dir))
-                except Exception as e:
-                    raise RuntimeWarning(
-                        f"Skipping reading recording {rec_id} due to error:\n{e}"
+
+        if not custom:
+            sections_path = dataset_dir.joinpath("sections.csv")
+            if not sections_path.is_file():
+                raise FileNotFoundError(f"sections.csv not found in {dataset_dir}")
+            self.sections = pd.read_csv(sections_path)
+
+            recording_ids = self.sections["recording id"]
+
+            for rec_id in recording_ids:
+                rec_id_start = rec_id.split("-")[0]
+                rec_dir = [d for d in dataset_dir.glob(f"*-{rec_id_start}") if d.is_dir()]
+                if len(rec_dir) == 1:
+                    rec_dir = rec_dir[0]
+                    try:
+                        self.recordings.append(Recording(rec_dir))
+                    except Exception as e:
+                        raise RuntimeWarning(
+                            f"Skipping reading recording {rec_id} due to error:\n{e}"
+                        )
+                elif len(rec_dir) == 0:
+                    raise FileNotFoundError(
+                        f"Recording directory not found for recording id {rec_id_start}"
                     )
-            elif len(rec_dir) == 0:
-                raise FileNotFoundError(
-                    f"Recording directory not found for recording id {rec_id_start}"
+                else:
+                    raise FileNotFoundError(
+                        f"Multiple recording directories found for recording id "
+                        f"{rec_id_start}"
+                    )
+        else:
+            self._load_custom(dataset_dir)
+
+    def _load_custom(self, dataset_dir: str | Path):
+        # if the dataset was renamed, then we assume that every sub diretory is a recording. We read these, and collect the relevant information
+        rec_dirs = [d for d in dataset_dir.iterdir() if d.is_dir()]
+        for rec_dir in rec_dirs:
+            try:
+                self.recordings.append(Recording(rec_dir))
+            except Exception as e:
+                raise RuntimeWarning(
+                    f"Skipping reading recording {rec_dir.name} due to error:\n{e}"
                 )
-            else:
-                raise FileNotFoundError(
-                    f"Multiple recording directories found for recording id "
-                    f"{rec_id_start}"
-                )
+            
+        #rebuild a sections dataframe with the following columns: section id,recording id,recording name,wearer id,wearer name,section start time [ns],section end time [ns],start event name,end event name
+        #data can be read from the Recording objects
+        sections_data = []
+        for i, rec in enumerate(self.recordings):
+            sections_data.append({
+                    "section id": i,
+                    "recording id": rec.recording_id,
+                    "recording name": rec.recording_id,
+                    "wearer id": rec.info["wearer_id"],
+                    "wearer name": rec.info["wearer_name"],
+                    "section start time [ns]": rec.start_time,
+                    "section end time [ns]": rec.start_time + rec.info["duration"], 
+                    "start event name": rec.events.data["name"].iloc[0],
+                    "end event name": rec.events.data["name"].iloc[-1]
+                })
+
+        self.sections = pd.DataFrame(sections_data)
 
     def __repr__(self):
         return f"Dataset | {len(self.recordings)} recordings"
