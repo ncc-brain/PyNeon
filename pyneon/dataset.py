@@ -36,7 +36,7 @@ class Dataset:
         Path to the directory containing the dataset.
     custom : bool, optional
         If True, the dataset is treated as a custom dataset where each subdirectory
-        is considered a recording. If False (default), it expects a standard dataset, 
+        is considered a recording. If False (default), it expects a standard dataset,
         as downloaded from Pupil Cloud.
 
     Attributes
