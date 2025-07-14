@@ -35,9 +35,12 @@ class Dataset:
     dataset_dir : str or pathlib.Path
         Path to the directory containing the dataset.
     custom : bool, optional
-        If True, the dataset is treated as a custom dataset where each subdirectory
-        is considered a recording. If False (default), it expects a standard dataset,
-        as downloaded from Pupil Cloud.
+        Whether to expect a custom dataset structure. If ``False``, the dataset
+        is expected to follow the standard Pupil Cloud dataset structure with a
+        ``sections.csv`` file. If True, every directory in ``dataset_dir`` is
+        considered a recording directory, and the ``sections`` attribute is
+        constructed from the ``info`` of recordings found.
+        Defaults to ``False``.
 
     Attributes
     ----------
@@ -88,39 +91,32 @@ class Dataset:
                         f"Multiple recording directories found for recording id "
                         f"{rec_id_start}"
                     )
-        else:
-            self._load_custom(dataset_dir)
+        else:  # Do not expect sections.csv and construct `sections` from recordings
+            rec_dirs = [d for d in dataset_dir.iterdir() if d.is_dir()]
+            for rec_dir in rec_dirs:
+                try:
+                    self.recordings.append(Recording(rec_dir))
+                except Exception as e:
+                    raise RuntimeWarning(
+                        f"Skipping reading recording {rec_dir.name} due to error:\n{e}"
+                    )
 
-    def _load_custom(self, dataset_dir: str | Path):
-        # if the dataset was renamed, then we assume that every sub diretory is a recording. We read these, and collect the relevant information
-        rec_dirs = [d for d in dataset_dir.iterdir() if d.is_dir()]
-        for rec_dir in rec_dirs:
-            try:
-                self.recordings.append(Recording(rec_dir))
-            except Exception as e:
-                raise RuntimeWarning(
-                    f"Skipping reading recording {rec_dir.name} due to error:\n{e}"
+            # Rebuild a `sections` DataFrame from the Recording objects
+            sections = []
+            for i, rec in enumerate(self.recordings):
+                sections.append(
+                    {
+                        "section id": i,
+                        "recording id": rec.recording_id,
+                        "recording name": rec.recording_id,
+                        "wearer id": rec.info["wearer_id"],
+                        "wearer name": rec.info["wearer_name"],
+                        "section start time [ns]": rec.start_time,
+                        "section end time [ns]": rec.start_time + rec.info["duration"],
+                    }
                 )
 
-        # rebuild a sections dataframe with the following columns: section id,recording id,recording name,wearer id,wearer name,section start time [ns],section end time [ns],start event name,end event name
-        # data can be read from the Recording objects
-        sections_data = []
-        for i, rec in enumerate(self.recordings):
-            sections_data.append(
-                {
-                    "section id": i,
-                    "recording id": rec.recording_id,
-                    "recording name": rec.recording_id,
-                    "wearer id": rec.info["wearer_id"],
-                    "wearer name": rec.info["wearer_name"],
-                    "section start time [ns]": rec.start_time,
-                    "section end time [ns]": rec.start_time + rec.info["duration"],
-                    "start event name": rec.events.data["name"].iloc[0],
-                    "end event name": rec.events.data["name"].iloc[-1],
-                }
-            )
-
-        self.sections = pd.DataFrame(sections_data)
+            self.sections = pd.DataFrame(sections)
 
     def __repr__(self):
         return f"Dataset | {len(self.recordings)} recordings"
