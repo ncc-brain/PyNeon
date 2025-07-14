@@ -34,8 +34,10 @@ class Dataset:
     ----------
     dataset_dir : str or pathlib.Path
         Path to the directory containing the dataset.
-    renamed : bool, optional
-        If True, the dataset is expected to have been renamed from the original recording_ids. Default is False.
+    custom : bool, optional
+        If True, the dataset is treated as a custom dataset where each subdirectory
+        is considered a recording. If False (default), it expects a standard dataset, 
+        as downloaded from Pupil Cloud.
 
     Attributes
     ----------
