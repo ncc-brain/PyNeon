@@ -50,6 +50,7 @@ doc = [
     "numpydoc",
     "pydata-sphinx-theme",
     "nbsphinx",
+    "myst-parser",
 ]
 full = ["pyneon[apriltags,dev,doc]"]
 

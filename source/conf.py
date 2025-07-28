@@ -19,6 +19,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "nbsphinx",
+    "myst_parser",
 ]
 autodoc_member_order = "bysource"
 templates_path = ["_templates"]

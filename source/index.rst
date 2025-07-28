@@ -2,63 +2,8 @@
 
 .. module:: pyneon
 
-Welcome to PyNeon documentation
-===============================
-
-PyNeon is a light-weight library to work with Neon (Pupil Labs) multi-modal
-eye-tracking data. It is a community-driven effort to provide a versatile set
-of tools to work with the rich data (gaze, eye states, IMU, events, etc.)
-provided by Neon.
-
-PyNeon works with the cloud-processed data from Pupil Cloud instead of
-"native" data from the Companion app. To read data in the "native" format, please
-see ``pl-neon-recording`` https://github.com/pupil-labs/pl-neon-recording/
-(which also inspired PyNeon).
-
-Here we provide tutorials and API reference to help you get started with PyNeon.
-
-Installation
-============
-
-To install PyNeon, clone the PyNeon repository from
-https://github.com/ncc-brain/PyNeon and run:
-
-.. code-block:: bash
-
-   pip install .
-
-PyPI and conda releases are planned for the future.
-
-Data format
-===========
-
-PyNeon works with the "Timeseries Data" or "Timeseries Data + Scene Video" formats 
-as exported from Pupil Clouds. The data could be from a single recording or from a 
-project with multiple recordings.
-
-Citing PyNeon
-=============
-If you use PyNeon in your research, please cite the
-`accompanying paper <https://osf.io/preprints/psyarxiv/y5jmg>`_
-as follows:
-
-.. code-block:: bibtex
-
-   @misc{pyneon,
-      title={PyNeon: a Python package for the analysis of Neon multimodal mobile eye-tracking data},
-      url={osf.io/preprints/psyarxiv/y5jmg_v1},
-      DOI={10.31234/osf.io/y5jmg_v1},
-      publisher={PsyArXiv},
-      author={Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia},
-      year={2025},
-      month={Jun}
-   }
-
-License
-=======
-
-.. literalinclude:: ../LICENSE
-   :language: none
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 
 .. toctree::
    :maxdepth: 2
