@@ -1191,7 +1191,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         -----
         Eye-tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
         standardize the organization of eye-tracking data for reproducible research.
-        The extension is still being finialized. This method follows the latest standards
+        The extension is still being finalized. This method follows the latest standards
         outlined in https://github.com/bids-standard/bids-specification/pull/1128.
         """
         export_eye_bids(self, output_dir, prefix, extra_metadata)

@@ -278,7 +278,7 @@ def concat_streams(
     print("Concatenating streams:")
     if "gaze" in stream_names:
         if rec.gaze is None:
-            raise ValueError("Cannnot load gaze data.")
+            raise ValueError("Cannot load gaze data.")
         stream_info = pd.concat(
             [
                 stream_info,
@@ -299,7 +299,7 @@ def concat_streams(
         print("\tGaze")
     if "3d_eye_states" in stream_names or "eye_states" in stream_names:
         if rec.eye_states is None:
-            raise ValueError("Cannnot load eye states data.")
+            raise ValueError("Cannot load eye states data.")
         stream_info = pd.concat(
             [
                 stream_info,
@@ -320,7 +320,7 @@ def concat_streams(
         print("\t3D eye states")
     if "imu" in stream_names:
         if rec.imu is None:
-            raise ValueError("Cannnot load IMU data.")
+            raise ValueError("Cannot load IMU data.")
         stream_info = pd.concat(
             [
                 stream_info,
@@ -451,7 +451,7 @@ def concat_events(
     print("Concatenating events:")
     if "blinks" in event_names or "blink" in event_names:
         if rec.blinks is None:
-            raise ValueError("Cannnot load blink data.")
+            raise ValueError("Cannot load blink data.")
         data = rec.blinks.data
         data["type"] = "blink"
         concat_data = (
@@ -462,7 +462,7 @@ def concat_events(
         print("\tBlinks")
     if "fixations" in event_names or "fixation" in event_names:
         if rec.fixations is None:
-            raise ValueError("Cannnot load fixation data.")
+            raise ValueError("Cannot load fixation data.")
         data = rec.fixations.data
         data["type"] = "fixation"
         concat_data = (
@@ -473,7 +473,7 @@ def concat_events(
         print("\tFixations")
     if "saccades" in event_names or "saccade" in event_names:
         if rec.saccades is None:
-            raise ValueError("Cannnot load saccade data.")
+            raise ValueError("Cannot load saccade data.")
         data = rec.saccades.data
         data["type"] = "saccade"
         concat_data = (
@@ -484,7 +484,7 @@ def concat_events(
         print("\tSaccades")
     if "events" in event_names or "event" in event_names:
         if rec.events is None:
-            raise ValueError("Cannnot load event data.")
+            raise ValueError("Cannot load event data.")
         data = rec.events.data
         data.index.name = "start timestamp [ns]"
         data = data.rename(columns={"name": "message name", "type": "message type"})

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools", "wheel", "setuptools_scm[toml]>=6.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -27,7 +27,6 @@ classifiers = [
 ]
 dependencies = [
     "pandas",
-    "numpy",
     "matplotlib",
     "scipy",
     "opencv-python",
@@ -43,15 +42,12 @@ apriltags = [
 ]
 dev = [
     "pytest",
-    "numpydoc",
-    "codespell",
-    "pre-commit",
 ]
 doc = [
     "ruff",
     "jupyter",
-    "seaborn",
     "sphinx",
+    "numpydoc",
     "pydata-sphinx-theme",
     "nbsphinx",
 ]
