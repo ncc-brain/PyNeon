@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Welcome to PyNeon documentation &#8212; PyNeon dev documentation</title>
+    <title>PyNeon &#8212; PyNeon dev documentation</title>
   
   
   
@@ -305,20 +305,32 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="welcome-to-pyneon-documentation">
-<span id="module-pyneon"></span><h1>Welcome to PyNeon documentation<a class="headerlink" href="#welcome-to-pyneon-documentation" title="Link to this heading">#</a></h1>
-<p>PyNeon is a light-weight library to work with Neon (Pupil Labs) multi-modal
-eye-tracking data. It is a community-driven effort to provide a versatile set
-of tools to work with the rich data (gaze, eye states, IMU, events, etc.)
-provided by Neon.</p>
-<p>PyNeon works with the cloud-processed data from Pupil Cloud instead of
-“native” data from the Companion app. To read data in the “native” format, please
-see <code class="docutils literal notranslate"><span class="pre">pl-neon-recording</span></code> <a class="github reference external" href="https://github.com/pupil-labs/pl-neon-recording/">pupil-labs/pl-neon-recording</a>
-(which also inspired PyNeon).</p>
-<p>Here we provide tutorials and API reference to help you get started with PyNeon.</p>
+  <p id="module-pyneon"><img alt="GitHub License" src="https://img.shields.io/github/license/ncc-brain/PyNeon?style=plastic" />
+<img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fncc-brain.github.io%2FPyNeon%2F&amp;up_message=online&amp;style=plastic&amp;label=Documentation" /></p>
+<section id="pyneon">
+<h1>PyNeon<a class="headerlink" href="#pyneon" title="Link to this heading">#</a></h1>
+<p>PyNeon is a lightweight Python package designed to streamline the processing
+and analysis of multimodal eye-tracking data from the
+<a class="reference external" href="https://pupil-labs.com/products/neon">Neon eye-tracking system</a>
+(Pupil Labs GmbH). This community-driven effort provides a versatile set of
+tools to work with Neon’s rich data, including gaze, eye states, IMU, video,
+events, and more.</p>
+<p>Currently, PyNeon supports the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span></code> or <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> formats of data, downloaded from <a class="reference external" href="https://cloud.pupil-labs.com/">Pupil Cloud</a>. For reading data in the <code class="docutils literal notranslate"><span class="pre">native</span></code> format, please refer to the
+<a class="reference external" href="https://github.com/pupil-labs/pl-neon-recording/"><code class="docutils literal notranslate"><span class="pre">pl-neon-recording</span></code></a> project, which inspired the design of PyNeon.</p>
+<p>Documentation for PyNeon is available at <a class="reference external" href="https://ncc-brain.github.io/PyNeon/">https://ncc-brain.github.io/PyNeon/</a> which includes detailed references for classes and functions, as well as step-by-step tutorials presented as Jupyter notebooks.</p>
+<section id="key-features">
+<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://ncc-brain.github.io/PyNeon/tutorials/read_recording.html">(Tutorial)</a> Easy API for reading in datasets and recordings. Quick access to various modalities of data.</p></li>
+<li><p><a class="reference external" href="https://ncc-brain.github.io/PyNeon/tutorials/interpolate_and_concat.html">(Tutorial)</a> Various preprocessing functions, including data cropping, interpolation,
+concatenation, etc.</p></li>
+<li><p><a class="reference external" href="https://ncc-brain.github.io/PyNeon/tutorials/pupil_size_and_epoching.html">(Tutorial)</a> Flexible epoching of data for trial-based analysis.</p></li>
+<li><p><a class="reference external" href="https://ncc-brain.github.io/PyNeon/tutorials/video.html">(Tutorial)</a> Methods for working with scene video, including scanpath estimation and AprilTags-based mapping.</p></li>
+<li><p><a class="reference external" href="https://ncc-brain.github.io/PyNeon/tutorials/export_to_bids.html">(Tutorial)</a> Exportation to <a class="reference external" href="https://www.nature.com/articles/s41597-024-03559-8">Motion-BIDS</a> (and forthcoming Eye-Tracking-BIDS) format for interoperability across the cognitive neuroscience community.</p></li>
+</ul>
 </section>
 <section id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
 <p>To install PyNeon, clone the PyNeon repository from
 <a class="github reference external" href="https://github.com/ncc-brain/PyNeon">ncc-brain/PyNeon</a> and run:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.
@@ -326,57 +338,26 @@ see <code class="docutils literal notranslate"><span class="pre">pl-neon-recordi
 </div>
 <p>PyPI and conda releases are planned for the future.</p>
 </section>
-<section id="data-format">
-<h1>Data format<a class="headerlink" href="#data-format" title="Link to this heading">#</a></h1>
-<p>PyNeon works with the “Timeseries Data” or “Timeseries Data + Scene Video” formats
-as exported from Pupil Clouds. The data could be from a single recording or from a
-project with multiple recordings.</p>
-</section>
 <section id="citing-pyneon">
-<h1>Citing PyNeon<a class="headerlink" href="#citing-pyneon" title="Link to this heading">#</a></h1>
+<h2>Citing PyNeon<a class="headerlink" href="#citing-pyneon" title="Link to this heading">#</a></h2>
 <p>If you use PyNeon in your research, please cite the
 <a class="reference external" href="https://osf.io/preprints/psyarxiv/y5jmg">accompanying paper</a>
 as follows:</p>
 <div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@misc</span><span class="p">{</span><span class="nl">pyneon</span><span class="p">,</span>
-<span class="w">   </span><span class="na">title</span><span class="p">=</span><span class="s">{PyNeon: a Python package for the analysis of Neon multimodal mobile eye-tracking data}</span><span class="p">,</span>
-<span class="w">   </span><span class="na">url</span><span class="p">=</span><span class="s">{osf.io/preprints/psyarxiv/y5jmg_v1}</span><span class="p">,</span>
-<span class="w">   </span><span class="na">DOI</span><span class="p">=</span><span class="s">{10.31234/osf.io/y5jmg_v1}</span><span class="p">,</span>
-<span class="w">   </span><span class="na">publisher</span><span class="p">=</span><span class="s">{PsyArXiv}</span><span class="p">,</span>
-<span class="w">   </span><span class="na">author</span><span class="p">=</span><span class="s">{Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia}</span><span class="p">,</span>
-<span class="w">   </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span><span class="p">,</span>
-<span class="w">   </span><span class="na">month</span><span class="p">=</span><span class="s">{Jun}</span>
+<span class="w">    </span><span class="na">title</span><span class="p">=</span><span class="s">{PyNeon: a Python package for the analysis of Neon multimodal mobile eye-tracking data}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">url</span><span class="p">=</span><span class="s">{osf.io/preprints/psyarxiv/y5jmg_v1}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">DOI</span><span class="p">=</span><span class="s">{10.31234/osf.io/y5jmg_v1}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">publisher</span><span class="p">=</span><span class="s">{PsyArXiv}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">author</span><span class="p">=</span><span class="s">{Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">month</span><span class="p">=</span><span class="s">{Jun}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 </section>
-<section id="license">
-<h1>License<a class="headerlink" href="#license" title="Link to this heading">#</a></h1>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MIT License
-
-Copyright (c) PyNeon developers
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the &quot;Software&quot;), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-</pre></div>
-</div>
+</section>
 <div class="toctree-wrapper compound">
 </div>
-</section>
 
 
                 </article>
