@@ -44,11 +44,11 @@ as follows:
 ```bibtex
 @misc{pyneon,
     title={PyNeon: a Python package for the analysis of Neon multimodal mobile eye-tracking data},
-    url={osf.io/preprints/psyarxiv/y5jmg_v1},
-    DOI={10.31234/osf.io/y5jmg_v1},
+    url={osf.io/preprints/psyarxiv/y5jmg_v2},
+    DOI={10.31234/osf.io/y5jmg_v2},
     publisher={PsyArXiv},
     author={Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia},
     year={2025},
-    month={Jun}
+    month={August}
 }
 ```
