@@ -298,7 +298,9 @@ def concat_streams(
                         "first_ts": stream_obj.first_ts,
                         "last_ts": stream_obj.last_ts,
                     }
-                ).to_frame().T,
+                )
+                .to_frame()
+                .T,
             ],
             ignore_index=True,
         )
