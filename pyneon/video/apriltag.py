@@ -581,50 +581,64 @@ def gaze_on_surface(
     gaze_df["x_trans"] = np.nan
     gaze_df["y_trans"] = np.nan
 
-    if sample_ts is None:
-        # convert homographies to dict
-        homography_for_frame = {
-            int(row["frame_idx"]): row["homography"]
-            for _, row in homographies.iterrows()
-        }
-
-        for frame in tqdm(
-            gaze_df["frame_idx"].unique(), desc="Applying homography to gaze points"
-        ):
-            idx_sel = gaze_df["frame_idx"] == frame
-            H = homography_for_frame.get(frame, None)
-            if H is None:
-                # no valid homography
-                continue
-            # transform the gaze coords
-            gaze_points = gaze_df.loc[idx_sel, ["gaze x [px]", "gaze y [px]"]].values
-            gaze_trans = _apply_homography(gaze_points, H)
-            gaze_df.loc[idx_sel, "x_trans"] = gaze_trans[:, 0]
-            gaze_df.loc[idx_sel, "y_trans"] = gaze_trans[:, 1]
-
-    else:
-        # sample gaze to sample ts
+    if sample_ts is not None:
+        # 1) interpolate gaze to sample_ts
         gaze_stream = Stream(gaze_df)
         gaze_interp = gaze_stream.interpolate(new_ts=sample_ts)
         gaze_df = gaze_interp.data
 
-        # assert that gaze_interp_df have same timestamps as homographies
-        assert np.array_equal(gaze_df.index.values, homographies.index.values), (
-            "Interpolated gaze timestamps do not match homography timestamps."
+        # 2) must be 1:1 with homographies by index (timestamps)
+        if not np.array_equal(gaze_df.index.values, homographies.index.values):
+            raise ValueError("Interpolated gaze timestamps do not match homography timestamps.")
+
+        # 3) join homographies by index (timestamp)
+        merged = gaze_df.join(homographies[["homography"]], how="left")
+
+    else:
+        # join by frame_idx (left keep order)
+        merged = gaze_df.merge(
+            homographies[["frame_idx", "homography"]],
+            on="frame_idx",
+            how="left",
+            sort=False,
         )
 
-        for ts in tqdm(gaze_df.index.values, desc="Applying homography to gaze points"):
-            idx_sel = gaze_df.index == ts
-            H = homographies.loc[ts, "homography"]
-            if H is None:
-                # no valid homography
-                continue
-            # transform the gaze coords
-            gaze_points = gaze_df.loc[idx_sel, ["gaze x [px]", "gaze y [px]"]].values
-            gaze_trans = _apply_homography(gaze_points, H)
-            gaze_df.loc[idx_sel, "x_trans"] = gaze_trans[:, 0]
-            gaze_df.loc[idx_sel, "y_trans"] = gaze_trans[:, 1]
+    # --- Vectorized per-row transform ---
+    # rows with a valid (3x3) homography
+    H_col = merged["homography"]
+    mask = H_col.notna()
 
+    # homogeneous input points (N, 3)
+    pts = merged[["gaze x [px]", "gaze y [px]"]].to_numpy(dtype=float)
+    N = len(pts)
+    pts_h = np.empty((N, 3), dtype=float)
+    pts_h[:, :2] = pts
+    pts_h[:, 2] = 1.0
+
+    # stack per-row homographies only for valid rows
+    if mask.any():
+        H_stack = np.stack(H_col[mask].to_numpy())          # (M, 3, 3)
+        pts_sel = pts_h[mask]               # (M, 3)
+
+        # batch multiply: (M,3,3) · (M,3) -> (M,3)
+        out = np.einsum("nij,nj->ni", H_stack, pts_sel)      # (M,3)
+
+        # inhomogeneous divide
+        w = out[:, 2]
+        xw = out[:, 0] / w
+        yw = out[:, 1] / w
+
+        x_trans = np.full(N, np.nan, dtype=float)
+        y_trans = np.full(N, np.nan, dtype=float)
+        x_trans[mask.values] = xw
+        y_trans[mask.values] = yw
+    else:
+        x_trans = np.full(N, np.nan, dtype=float)
+        y_trans = np.full(N, np.nan, dtype=float)
+
+    # write back preserving original gaze_df order
+    gaze_df["x_trans"] = x_trans[: len(gaze_df)]
+    gaze_df["y_trans"] = y_trans[: len(gaze_df)]
     return gaze_df
 
 
@@ -731,57 +745,67 @@ def _sample_homography_to_ts(
         DataFrame with interpolated homographies for target timestamps.
         Index: 'timestamp [ns]', columns: 'homography'
     """
-    # ------------------------------------------------------------------
-    # 1) Extract known timestamps and homographies from DataFrame
-    # ------------------------------------------------------------------
-    known_timestamps = homographies_df.index.values
-    known_homographies = homographies_df["homography"].values
-    known_frames = homographies_df["frame_idx"].values
-
-    if len(known_timestamps) == 0:
-        # No known data => return empty DataFrame
-        return pd.DataFrame(columns=["homography"]).set_index("timestamp [ns]")
-
-    results = []
-
-    # ------------------------------------------------------------------
-    # 2) Interpolate homographies for each target timestamp
-    # ------------------------------------------------------------------
-    for target_ts in tqdm(timestamps, desc="Interpolating homographies"):
-        if target_ts <= known_timestamps[0]:
-            # Before first known timestamp - use first homography
-            H_interp = known_homographies[0]
-            frame_idx = known_frames[0]
-        elif target_ts >= known_timestamps[-1]:
-            # After last known timestamp - use last homography
-            H_interp = known_homographies[-1]
-            frame_idx = known_frames[-1]
-        else:
-            # Find surrounding timestamps for interpolation
-            idx = np.searchsorted(known_timestamps, target_ts)
-            frame_1 = known_frames[idx - 1]
-            frame_2 = known_frames[idx]
-
-            t1 = known_timestamps[idx - 1]
-            t2 = known_timestamps[idx]
-            H1 = known_homographies[idx - 1]
-            H2 = known_homographies[idx]
-
-            # Linear interpolation
-            alpha = (target_ts - t1) / (t2 - t1)
-            H_interp = (1 - alpha) * H1 + alpha * H2
-            frame_idx = frame_1 if alpha < 0.5 else frame_2
-
-        results.append(
-            {
-                "timestamp [ns]": target_ts,
-                "frame_idx": frame_idx,
-                "homography": H_interp,
-            }
+    
+    if homographies_df.empty:
+        return pd.DataFrame(columns=["homography", "frame_idx"]).set_index(
+            pd.Index([], name="timestamp [ns]")
         )
 
-    # Create DataFrame and set index
-    df = pd.DataFrame(results)
-    df = df.set_index("timestamp [ns]")
+    # Ensure sorted by timestamp
+    df = homographies_df.sort_index()
+    ts_known = df.index.values
+    frames_known = df["frame_idx"].to_numpy()
 
-    return df
+    # Stack to (K, 3, 3); ensure float dtype
+    H_known = np.stack(df["homography"].to_numpy()).astype(float)  # (K,3,3)
+    K = len(ts_known)
+
+    # Handle degenerate K
+    if K == 1:
+        H_interp = np.repeat(H_known, len(timestamps), axis=0)
+        frames = np.full(len(timestamps), frames_known[0])
+        return pd.DataFrame(
+            {"homography": list(H_interp), "frame_idx": frames},
+            index=pd.Index(timestamps, name="timestamp [ns]"),
+        )
+
+    # For each target, find right insertion index
+    idx_r = np.searchsorted(ts_known, timestamps, side="right")
+    # clamp to [1, K-1] so we always have a left and right
+    idx_r_clamped = np.clip(idx_r, 1, K - 1)
+    idx_l = idx_r_clamped - 1
+
+    t1 = ts_known[idx_l]
+    t2 = ts_known[idx_r_clamped]
+
+    # alpha in [0,1] for interior; set to 0 (left) before first, 1 (right) after last
+    with np.errstate(divide="ignore", invalid="ignore"):
+        alpha = (timestamps - t1) / (t2 - t1)
+    alpha = np.where(timestamps <= ts_known[0], 0.0, alpha)
+    alpha = np.where(timestamps >= ts_known[-1], 1.0, alpha)
+
+    # Gather left/right homographies
+    H1 = H_known[idx_l]            # (N,3,3)
+    H2 = H_known[idx_r_clamped]    # (N,3,3)
+
+    # Broadcast interpolate
+    a = alpha[:, None, None]
+    H_interp = (1.0 - a) * H1 + a * H2  # (N,3,3)
+
+    # Choose frame index (nearest by alpha; ties -> right)
+    frame_l = frames_known[idx_l]
+    frame_r = frames_known[idx_r_clamped]
+    frames = np.where(
+        timestamps <= ts_known[0], frames_known[0],
+        np.where(
+            timestamps >= ts_known[-1], frames_known[-1],
+            np.where(alpha < 0.5, frame_l, frame_r)
+        )
+    )
+
+    # Build result
+    out = pd.DataFrame(
+        {"homography": list(H_interp), "frame_idx": frames},
+        index=pd.Index(timestamps, name="timestamp [ns]"),
+    )
+    return out
