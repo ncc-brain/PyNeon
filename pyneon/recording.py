@@ -592,6 +592,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         all_detections: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        sample_ts: Optional[np.ndarray] = None,
         **kwargs,
     ) -> Stream:
         """
@@ -611,6 +612,8 @@ Recording duration: {self.info["duration"] / 1e9}s
             Whether to force recomputation even if saved homographies exist.
         output_path : str or pathlib.Path, optional
             Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
+        sample_ts : numpy.ndarray, optional
+            Optional array of timestamps (in ns) to which homographies should be sampled.
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
                 - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
@@ -657,6 +660,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             surface_size,
             skip_frames=skip_frames,
             coordinate_system=coordinate_system,
+            sample_ts=sample_ts,
             settings=settings,
         )
 
@@ -671,6 +675,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         synced_gaze: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        sample_to: Union[str, np.ndarray] = "video",
     ) -> Stream:
         """
         Project gaze coordinates from eye space to surface space using homographies.
@@ -691,6 +696,11 @@ Recording duration: {self.info["duration"] / 1e9}s
             If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.
         output_path : str or pathlib.Path, optional
             File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_surface.csv`.
+        sample_to : {'video'} or {'gaze'} or numpy.ndarray, optional
+            Defines the timestamps to which gaze data should be sampled:
+                - 'video': Sample to video frame timestamps (default).
+                - 'gaze': Retain original gaze timestamps.
+                - numpy.ndarray: Custom array of timestamps (in ns) to sample to.
 
         Returns
         -------
@@ -713,18 +723,30 @@ Recording duration: {self.info["duration"] / 1e9}s
                 raise ValueError("Gaze data is empty.")
             return Stream(data)
 
+        if isinstance(sample_to, str):
+            if sample_to == "video":
+                sample_ts = None
+            if sample_to == "gaze":
+                sample_ts = self.gaze.ts
+            else:
+                raise ValueError("sample_to must be 'video', 'gaze', or a DataFrame.")
+        elif isinstance(sample_to, np.ndarray):
+            sample_ts = sample_to
+
         if homographies is None:
             if tag_info is None:
                 raise ValueError(
                     "Marker information is required for homography estimation."
                 )
-            homographies = self.find_homographies(tag_info=tag_info)
+            homographies = self.find_homographies(tag_info=tag_info, sample_ts=sample_ts)
 
-        if synced_gaze is None:
+        if synced_gaze is None and sample_to == "video":
             # Check if synced gaze already exists
             synced_gaze = self.sync_gaze_to_video()
+        elif synced_gaze is None and sample_to != "video":
+            synced_gaze = self.gaze
 
-        data = gaze_on_surface(synced_gaze.data, homographies.data)
+        data = gaze_on_surface(synced_gaze.data, homographies.data, sample_ts=sample_ts)
 
         # Save gaze on surface data to CSV
         data.to_csv(gaze_on_surface_path, index=True)
