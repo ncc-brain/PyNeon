@@ -3,8 +3,12 @@ import numpy as np
 from tqdm import tqdm
 
 from pandas.api.types import (
-    is_float_dtype, is_numeric_dtype, is_bool_dtype,
-    is_object_dtype, is_string_dtype, is_categorical_dtype
+    is_float_dtype,
+    is_numeric_dtype,
+    is_bool_dtype,
+    is_object_dtype,
+    is_string_dtype,
+    is_categorical_dtype,
 )
 
 from numbers import Number
@@ -87,7 +91,6 @@ def interpolate(
             # Now nearest works because the index is unique & monotonic
             vals = ser.reindex(new_ts, method="nearest").to_numpy()
 
-
         else:
             # fallback: treat like other numeric
             y = s.to_numpy(dtype=float, copy=False)
@@ -96,7 +99,11 @@ def interpolate(
 
         # cast back if numeric/bool; leave objects/categories as-is
         try:
-            new_data[col] = vals.astype(s.dtype, copy=False) if (is_numeric_dtype(s) or is_bool_dtype(s)) else vals
+            new_data[col] = (
+                vals.astype(s.dtype, copy=False)
+                if (is_numeric_dtype(s) or is_bool_dtype(s))
+                else vals
+            )
         except (TypeError, ValueError):
             new_data[col] = vals  # safest fallback
 

@@ -738,7 +738,9 @@ Recording duration: {self.info["duration"] / 1e9}s
                 raise ValueError(
                     "Marker information is required for homography estimation."
                 )
-            homographies = self.find_homographies(tag_info=tag_info, sample_ts=sample_ts)
+            homographies = self.find_homographies(
+                tag_info=tag_info, sample_ts=sample_ts
+            )
 
         if synced_gaze is None and sample_to == "video":
             # Check if synced gaze already exists
