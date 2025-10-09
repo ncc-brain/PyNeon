@@ -69,6 +69,26 @@
    ]
   },
   {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "44100\n"
+     ]
+    }
+   ],
+   "source": [
+    "import av\n",
+    "container = av.open(recording.video.video_file)\n",
+    "audio_stream = container.streams.audio[0]\n",
+    "print(audio_stream.rate)  # ← sampling rate\n"
+   ]
+  },
+  {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
