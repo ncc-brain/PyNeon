@@ -589,7 +589,9 @@ def gaze_on_surface(
 
         # 2) must be 1:1 with homographies by index (timestamps)
         if not np.array_equal(gaze_df.index.values, homographies.index.values):
-            raise ValueError("Interpolated gaze timestamps do not match homography timestamps.")
+            raise ValueError(
+                "Interpolated gaze timestamps do not match homography timestamps."
+            )
 
         # 3) join homographies by index (timestamp)
         merged = gaze_df.join(homographies[["homography"]], how="left")
@@ -617,11 +619,11 @@ def gaze_on_surface(
 
     # stack per-row homographies only for valid rows
     if mask.any():
-        H_stack = np.stack(H_col[mask].to_numpy())          # (M, 3, 3)
-        pts_sel = pts_h[mask]               # (M, 3)
+        H_stack = np.stack(H_col[mask].to_numpy())  # (M, 3, 3)
+        pts_sel = pts_h[mask]  # (M, 3)
 
         # batch multiply: (M,3,3) · (M,3) -> (M,3)
-        out = np.einsum("nij,nj->ni", H_stack, pts_sel)      # (M,3)
+        out = np.einsum("nij,nj->ni", H_stack, pts_sel)  # (M,3)
 
         # inhomogeneous divide
         w = out[:, 2]
@@ -745,7 +747,7 @@ def _sample_homography_to_ts(
         DataFrame with interpolated homographies for target timestamps.
         Index: 'timestamp [ns]', columns: 'homography'
     """
-    
+
     if homographies_df.empty:
         return pd.DataFrame(columns=["homography", "frame_idx"]).set_index(
             pd.Index([], name="timestamp [ns]")
@@ -785,8 +787,8 @@ def _sample_homography_to_ts(
     alpha = np.where(timestamps >= ts_known[-1], 1.0, alpha)
 
     # Gather left/right homographies
-    H1 = H_known[idx_l]            # (N,3,3)
-    H2 = H_known[idx_r_clamped]    # (N,3,3)
+    H1 = H_known[idx_l]  # (N,3,3)
+    H2 = H_known[idx_r_clamped]  # (N,3,3)
 
     # Broadcast interpolate
     a = alpha[:, None, None]
@@ -796,11 +798,13 @@ def _sample_homography_to_ts(
     frame_l = frames_known[idx_l]
     frame_r = frames_known[idx_r_clamped]
     frames = np.where(
-        timestamps <= ts_known[0], frames_known[0],
+        timestamps <= ts_known[0],
+        frames_known[0],
         np.where(
-            timestamps >= ts_known[-1], frames_known[-1],
-            np.where(alpha < 0.5, frame_l, frame_r)
-        )
+            timestamps >= ts_known[-1],
+            frames_known[-1],
+            np.where(alpha < 0.5, frame_l, frame_r),
+        ),
     )
 
     # Build result
