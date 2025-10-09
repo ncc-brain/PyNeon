@@ -311,8 +311,8 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        pandas.DataFrame
-            Concatenated data.
+        Stream
+            Stream object containing concatenated data.
         """
         new_data = concat_streams(
             self,
@@ -342,10 +342,11 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         Returns
         -------
-        pandas.DataFrame
-            Concatenated events.
+        Events
+            Events object containing concatenated data.
         """
-        return concat_events(self, event_names)
+        new_data = concat_events(self, event_names)
+        return Events(new_data)
 
     def plot_distribution(
         self,

@@ -309,19 +309,27 @@ def concat_streams(
 
     stream_info = pd.DataFrame(columns=["stream", "name", "sf", "first_ts", "last_ts"])
     print("Concatenating streams:")
-    if "gaze" in stream_names:
-        if rec.gaze is None:
-            raise ValueError("Cannot load gaze data.")
+    stream_map = {
+        "gaze": ("gaze", "gaze"),
+        "3d_eye_states": ("eye_states", "3d_eye_states"),
+        "eye_states": ("eye_states", "3d_eye_states"),
+        "imu": ("imu", "imu"),
+    }
+    for name in stream_names:
+        attr, display_name = stream_map[name]
+        stream_obj = getattr(rec, attr, None)
+        if stream_obj is None:
+            raise ValueError(f"Cannot load {display_name} data.")
         stream_info = pd.concat(
             [
                 stream_info,
                 pd.Series(
                     {
-                        "stream": rec.gaze,
-                        "name": "gaze",
-                        "sf": rec.gaze.sampling_freq_nominal,
-                        "first_ts": rec.gaze.first_ts,
-                        "last_ts": rec.gaze.last_ts,
+                        "stream": stream_obj,
+                        "name": display_name,
+                        "sf": stream_obj.sampling_freq_nominal,
+                        "first_ts": stream_obj.first_ts,
+                        "last_ts": stream_obj.last_ts,
                     }
                 )
                 .to_frame()
@@ -329,49 +337,7 @@ def concat_streams(
             ],
             ignore_index=True,
         )
-        print("\tGaze")
-    if "3d_eye_states" in stream_names or "eye_states" in stream_names:
-        if rec.eye_states is None:
-            raise ValueError("Cannot load eye states data.")
-        stream_info = pd.concat(
-            [
-                stream_info,
-                pd.Series(
-                    {
-                        "stream": rec.eye_states,
-                        "name": "3d_eye_states",
-                        "sf": rec.eye_states.sampling_freq_nominal,
-                        "first_ts": rec.eye_states.first_ts,
-                        "last_ts": rec.eye_states.last_ts,
-                    }
-                )
-                .to_frame()
-                .T,
-            ],
-            ignore_index=True,
-        )
-        print("\t3D eye states")
-    if "imu" in stream_names:
-        if rec.imu is None:
-            raise ValueError("Cannot load IMU data.")
-        stream_info = pd.concat(
-            [
-                stream_info,
-                pd.Series(
-                    {
-                        "stream": rec.imu,
-                        "name": "imu",
-                        "sf": rec.imu.sampling_freq_nominal,
-                        "first_ts": rec.imu.first_ts,
-                        "last_ts": rec.imu.last_ts,
-                    }
-                )
-                .to_frame()
-                .T,
-            ],
-            ignore_index=True,
-        )
-        print("\tIMU")
+        print(f"\t{display_name.capitalize()}")
 
     # Lowest sampling rate
     if sampling_freq == "min":
