@@ -17,7 +17,8 @@ def _check_data(data: pd.DataFrame) -> None:
 
     # Check if index has duplicates
     if data.index.duplicated().any():
-        raise ValueError("Index must not have duplicates")
+        data = data[~data.index.duplicated(keep="first")]
+        print("Warning: Duplicated indices found and removed.")
 
     # Try to convert the index to int64
     try:
