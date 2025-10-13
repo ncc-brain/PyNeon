@@ -97,9 +97,12 @@ class Dataset:
                 try:
                     self.recordings.append(Recording(rec_dir))
                 except Exception as e:
-                    raise RuntimeWarning(
-                        f"Skipping reading recording {rec_dir.name} due to error:\n{e}"
+                    print(
+                        f"Skipping directory {rec_dir} due to error:\n{e}\n"
+                        "Ensure it contains a valid recording structure."
                     )
+                    # Skip this directory if it cannot be loaded as a recording
+                    continue
 
             # Rebuild a `sections` DataFrame from the Recording objects
             sections = []
