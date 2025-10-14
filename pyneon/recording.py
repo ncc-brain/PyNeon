@@ -538,6 +538,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'nthreads': Number of threads to use for detection. Default is 4.
                 - 'quad_decimate': Decimation factor for the quad detection. Default is 1.0, thus no decimation.
                 - 'skip_frames': Number of frames to skip between detections. Default is 1, thus no skipping.
+                - 'return_diagnostics': If True, return additional diagnostic information. Default is False.
 
         Returns
         -------
