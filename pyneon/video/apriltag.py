@@ -342,6 +342,7 @@ def find_homographies(
     undistort: bool = True,
     sample_ts: Optional[np.ndarray] = None,
     settings: Optional[dict] = None,
+    return_diagnostics: bool = True,
 ) -> pd.DataFrame:
     """
     Compute a homography for each frame using available AprilTag detections.
@@ -398,6 +399,9 @@ def find_homographies(
             "confidence": 0.98,
         }
         The defaults are set to a moderate RANSAC approach.
+    return_diagnostics : bool, optional
+        If True, return additional diagnostic information such as the inlier mask from RANSAC.
+        Default is True.
 
     Returns
     -------
@@ -529,11 +533,18 @@ def find_homographies(
     # Get timestamps for each frame_idx
     frame_idx_to_ts = dict(zip(range(len(video.ts)), video.ts))
 
-    records = [
-        {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H}
-        for frame, H in homography_for_frame.items()
-        if frame in frame_idx_to_ts
-    ]
+    if not return_diagnostics:
+        records = [
+            {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H}
+            for frame, H in homography_for_frame.items()
+            if frame in frame_idx_to_ts
+        ]
+    else:
+        records = [
+            {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H, "mask": mask}
+            for frame, H in homography_for_frame.items()
+            if frame in frame_idx_to_ts
+        ]
 
     df = pd.DataFrame.from_records(records)
     df = df.set_index("timestamp [ns]")
