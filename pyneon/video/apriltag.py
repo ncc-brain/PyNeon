@@ -21,6 +21,7 @@ def detect_apriltags(
     nthreads: int = 4,
     quad_decimate: float = 1.0,
     skip_frames: int = 1,
+    return_diagnostics: bool = False,
 ) -> pd.DataFrame:
     """
     Detect AprilTags in a video and report their data for every processed frame,
@@ -40,6 +41,10 @@ def detect_apriltags(
     skip_frames : int, optional
         If > 1, detect tags only in every Nth frame.
         E.g., skip_frames=5 will process frames 0, 5, 10, 15, etc.
+        Default is 1 (process every frame).
+    return_diagnostics : bool, optional
+        If True, return additional diagnostic information.
+        Default is False.
 
     Returns
     -------
@@ -104,16 +109,20 @@ def detect_apriltags(
             for detection in detections:
                 corners = detection.corners
                 center = np.mean(corners, axis=0)
-                all_detections.append(
-                    {
-                        "processed_frame_idx": processed_frame_idx,
-                        "frame_idx": actual_frame_idx,
-                        "timestamp [ns]": video.ts[actual_frame_idx],
-                        "tag_id": detection.tag_id,
-                        "corners": corners,
-                        "center": center,
-                    }
-                )
+                results = {
+                    "processed_frame_idx": processed_frame_idx,
+                    "frame_idx": actual_frame_idx,
+                    "timestamp [ns]": video.ts[actual_frame_idx],
+                    "tag_id": detection.tag_id,
+                    "corners": corners,
+                    "center": center,
+                }
+
+                if return_diagnostics:
+                    results["hamming"] = detection.hamming
+                    results["decision_margin"] = detection.decision_margin
+
+                all_detections.append(results)
 
             processed_frame_idx += 1
 
@@ -142,16 +151,20 @@ def detect_apriltags(
             for detection in detections:
                 corners = detection.corners
                 center = np.mean(corners, axis=0)
-                all_detections.append(
-                    {
-                        "processed_frame_idx": processed_frame_idx,
-                        "frame_idx": actual_frame_idx,
-                        "timestamp [ns]": video.ts[actual_frame_idx],
-                        "tag_id": detection.tag_id,
-                        "corners": corners,
-                        "center": center,
-                    }
-                )
+                results = {
+                    "processed_frame_idx": processed_frame_idx,
+                    "frame_idx": actual_frame_idx,
+                    "timestamp [ns]": video.ts[actual_frame_idx],
+                    "tag_id": detection.tag_id,
+                    "corners": corners,
+                    "center": center,
+                }
+
+                if return_diagnostics:
+                    results["hamming"] = detection.hamming
+                    results["decision_margin"] = detection.decision_margin
+
+                all_detections.append(results)
 
             processed_frame_idx += 1
 
@@ -317,29 +330,6 @@ def estimate_camera_pose(
         results,
         columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"],
     )
-
-
-def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
-    """
-    Transform 2D points by a 3x3 homography.
-
-    Parameters
-    ----------
-    points : numpy.ndarray of shape (N, 2)
-        2D points to be transformed.
-    H : numpy.ndarray of shape (3, 3)
-        Homography matrix.
-
-    Returns
-    -------
-    numpy.ndarray of shape (N, 2)
-        Transformed 2D points.
-    """
-    points_h = np.column_stack([points, np.ones(len(points))])
-    transformed_h = (H @ points_h.T).T
-    # Convert from homogeneous to normal 2D
-    transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
-    return transformed_2d
 
 
 def find_homographies(
