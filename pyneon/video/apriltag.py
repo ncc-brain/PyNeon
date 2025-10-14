@@ -535,13 +535,22 @@ def find_homographies(
 
     if not return_diagnostics:
         records = [
-            {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H}
+            {
+                "timestamp [ns]": frame_idx_to_ts[frame],
+                "frame_idx": frame,
+                "homography": H,
+            }
             for frame, H in homography_for_frame.items()
             if frame in frame_idx_to_ts
         ]
     else:
         records = [
-            {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H, "mask": mask}
+            {
+                "timestamp [ns]": frame_idx_to_ts[frame],
+                "frame_idx": frame,
+                "homography": H,
+                "mask": mask,
+            }
             for frame, H in homography_for_frame.items()
             if frame in frame_idx_to_ts
         ]
