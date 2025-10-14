@@ -621,6 +621,7 @@ Recording duration: {self.info["duration"] / 1e9}s
                 - 'surface_size': Size of the surface in pixels (width, height). Default is (1920, 1080).
                 - 'skip_frames': Number of frames to skip between detections. Default is 1.
                 - 'settings': Additional settings for the homography computation.
+                - 'return_diagnostics': If True, return additional diagnostic information. Default is False.
 
         Returns
         -------
