@@ -1,6 +1,6 @@
 from pathlib import Path
-
 import pandas as pd
+from warnings import warn
 
 from .recording import Recording
 
@@ -97,8 +97,10 @@ class Dataset:
                 try:
                     self.recordings.append(Recording(rec_dir))
                 except Exception as e:
-                    raise RuntimeWarning(
-                        f"Skipping reading recording {rec_dir.name} due to error:\n{e}"
+                    warn(
+                        f"Skipping directory {rec_dir} due to error:\n{e}\n"
+                        "Ensure it contains a valid recording structure.",
+                        RuntimeWarning,
                     )
 
             # Rebuild a `sections` DataFrame from the Recording objects
