@@ -578,7 +578,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             nthreads=nthreads,
             quad_decimate=quad_decimate,
             skip_frames=skip_frames,
-            return_diagnostics=return_diagnostics
+            return_diagnostics=return_diagnostics,
         )
 
         if all_detections.empty:
