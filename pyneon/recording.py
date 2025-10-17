@@ -554,6 +554,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         nthreads = kwargs.get("nthreads", 4)
         quad_decimate = kwargs.get("quad_decimate", 1.0)
         skip_frames = kwargs.get("skip_frames", 1)
+        return_diagnostics = kwargs.get("return_diagnostics", False)
 
         if output_path is None:
             json_file = self.der_dir / "apriltags.json"
@@ -577,6 +578,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             nthreads=nthreads,
             quad_decimate=quad_decimate,
             skip_frames=skip_frames,
+            return_diagnostics=return_diagnostics
         )
 
         if all_detections.empty:
