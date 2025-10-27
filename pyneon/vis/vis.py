@@ -128,12 +128,12 @@ def plot_distribution(
             "At least one of heatmap_source and scatter_source must be provided."
         )
 
-    if rec.video is None:
+    if rec.scene_video is None:
         if width_height is None:
             raise ValueError("No video data available and no width_height provided.")
         width_height = width_height
     else:
-        width_height = (rec.video.width, rec.video.height)
+        width_height = (rec.scene_video.width, rec.scene_video.height)
 
     if rec.gaze is None:
         raise ValueError("No gaze data available.")
@@ -524,7 +524,7 @@ def overlay_detections_and_pose(
             detections_by_frame[fidx] = []
         detections_by_frame[fidx].append((row["tag_id"], row["corners"]))
 
-    cap = recording.video
+    cap = recording.scene_video
     cap.reset()
     frame_idx = 0
 

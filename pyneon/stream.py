@@ -7,6 +7,7 @@ import copy
 
 from .tabular import BaseTabular
 from .preprocess import interpolate, interpolate_events, window_average
+from .utils import nominal_sampling_rates
 
 if TYPE_CHECKING:
     from .events import Events
@@ -22,6 +23,9 @@ class Stream(BaseTabular):
     data : pandas.DataFrame or pathlib.Path
         DataFrame or path to the CSV file containing the stream data.
         The data must be indexed by ``timestamp [ns]``.
+    name : str, optional
+        Name of the stream type (e.g., "gaze", "imu", "eye_states").
+        Defaults to "custom".
 
     Attributes
     ----------
@@ -31,19 +35,22 @@ class Stream(BaseTabular):
         DataFrame containing the stream data.
     sampling_freq_nominal : int or None
         Nominal sampling frequency of the stream as specified by Pupil Labs
-        (https://pupil-labs.com/products/neon/specs).
+        (https://pupil-labs.com/products/neon/specs). If not known, ``None``.
     """
 
-    def __init__(
-        self, data: pd.DataFrame | Path, sampling_freq_nominal: Optional[int] = None
-    ):
-        if isinstance(data, Path):
+    def __init__(self, data: pd.DataFrame | Path, name: str = "custom"):
+        self.name = name
+        if isinstance(data, Path):  # Path to Pupil Cloud CSV file
             self.file = data
+            if not data.is_file():
+                raise FileNotFoundError(
+                    f"{name.title()} data not loaded because no file was found."
+                )
             data = pd.read_csv(data)
         else:
             self.file = None
         super().__init__(data)
-        self.sampling_freq_nominal = sampling_freq_nominal
+        self.sampling_freq_nominal = nominal_sampling_rates.get(name, None)
 
     def __getitem__(self, index: str) -> pd.Series:
         if index not in self.data.columns:

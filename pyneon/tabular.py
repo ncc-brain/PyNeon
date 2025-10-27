@@ -36,15 +36,15 @@ class BaseTabular:
             data = data.drop(columns=["section id"])
 
         # Set the timestamp column as the index if not already
-        if not (
-            data.index.name == "timestamp [ns]"
-            or data.index.name == "start timestamp [ns]"
-        ):
-            if "timestamp [ns]" in data.columns:
-                data = data.set_index("timestamp [ns]")
-            elif "start timestamp [ns]" in data.columns:
-                data = data.set_index("start timestamp [ns]")
-            else:
+        valid_index_names = {"time", "timestamp [ns]", "start timestamp [ns]"}
+        if data.index.name not in valid_index_names:
+            valid = False
+            for col in valid_index_names:
+                if col in data.columns:
+                    data = data.set_index(col)
+                    valid = True
+                    break
+            if not valid:
                 raise ValueError("Data does not contain a valid timestamp column")
 
         # Ensure the index is of integer type and sorted
@@ -56,13 +56,17 @@ class BaseTabular:
             data.index = data.index.astype("int64")
 
         # Set data types
+        unknown_cols = []
         for col in data.columns:
-            if col not in data_types.keys():
-                warn(
-                    f"Column '{col}' not in known data types, using default data type."
-                )
+            if col not in data_types:
+                unknown_cols.append(col)
             else:
                 data[col] = data[col].astype(data_types[col])
+        if unknown_cols:
+            warn(
+                "Following columns not in known data types, using default data types: "
+                f"{', '.join(unknown_cols)}"
+            )
 
         data = data.sort_index()
         self.data = data

@@ -1,8 +1,26 @@
+nominal_sampling_rates = {"gaze": 100, "imu": 110, "eye_states": 200}
+
+expected_files_cloud = [
+    "3d_eye_states.csv",
+    "blinks.csv",
+    "events.csv",
+    "fixations.csv",
+    "gaze.csv",
+    "imu.csv",
+    "info.json",
+    "labels.csv",
+    "saccades.csv",
+    "scene_camera.json",
+    "world_timestamps.csv",
+]
+
 data_types = {
     # Events
     "end timestamp [ns]": "int64",
     "duration [ms]": "Int64",
     # Gaze
+    "point_x": float,  # native
+    "point_y": float,  # native
     "gaze x [px]": float,
     "gaze y [px]": float,
     "worn": "Int32",
@@ -32,25 +50,32 @@ data_types = {
     "eyelid aperture left [mm]": float,
     "eyelid aperture right [mm]": float,
     # IMU
+    "angular_velocity_x": float,  # native
+    "angular_velocity_y": float,  # native
+    "angular_velocity_z": float,  # native
     "gyro x [deg/s]": float,
     "gyro y [deg/s]": float,
     "gyro z [deg/s]": float,
+    "acceleration_x": float,  # native
+    "acceleration_y": float,  # native
+    "acceleration_z": float,  # native
     "acceleration x [g]": float,
     "acceleration y [g]": float,
     "acceleration z [g]": float,
     "roll [deg]": float,
     "pitch [deg]": float,
     "yaw [deg]": float,
+    "quaternion_w": float,  # native
+    "quaternion_x": float,  # native
+    "quaternion_y": float,  # native
+    "quaternion_z": float,  # native
     "quaternion w": float,
     "quaternion x": float,
     "quaternion y": float,
     "quaternion z": float,
     # Blinks
-    "blink id": "Int32",
+    # "blink id": "Int32",
     # Fixations
-    "fixation id": "Int32",
-    "end timestamp [ns]": "Int64",
-    "duration [ms]": "Int64",
     "fixation x [px]": float,
     "fixation y [px]": float,
     # Saccades

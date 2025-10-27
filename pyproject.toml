@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "pandas",
+    "pupil-labs-neon-recording>=0.2",
     "matplotlib",
     "scipy",
     "opencv-python",

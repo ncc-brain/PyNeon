@@ -20,7 +20,7 @@ class Events(BaseTabular):
     data : pandas.DataFrame or pathlib.Path
         DataFrame or path to the CSV file containing the stream data.
         The data must be indexed by ``timestamp [ns]``.
-    event_name : str, optional
+    name : str, optional
         Name of the event type. Defaults to "custom".
     id_name : str, optional
         Name of the column containing the event ID. Defaults to None.
@@ -32,7 +32,7 @@ class Events(BaseTabular):
         Path to the CSV file containing the event data.
     data : pandas.DataFrame
         DataFrame containing the event data.
-    event_name : str
+    name : str
         Name of the event type.
     id_name : str
         Name of the column containing the event ID.
@@ -41,16 +41,20 @@ class Events(BaseTabular):
     def __init__(
         self,
         data: pd.DataFrame | Path,
-        event_name: str = "custom",
+        name: str = "custom",
         id_name: Optional[str] = None,
     ):
         if isinstance(data, Path):
             self.file = data
+            if not data.is_file():
+                raise FileNotFoundError(
+                    f"{name.title()} data not loaded because no file was found."
+                )
             data = pd.read_csv(data)
         else:
             self.file = None
         super().__init__(data)
-        self.event_name = event_name
+        self.name = name
         self.id_name = id_name
 
     @property

@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 import pandas as pd
 import numpy as np
 import json
 from datetime import datetime
-import warnings
 import matplotlib.pyplot as plt
 from numbers import Number
 from functools import cached_property
@@ -23,18 +22,7 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
-from .utils import load_or_compute
-
-
-def _check_file(dir_path: Path, stem: str):
-    csv = dir_path / f"{stem}.csv"
-    if csv.is_file():
-        return True, csv.name, csv
-    elif len(files := sorted(dir_path.glob(f"{stem}*"))) > 0:
-        files_name = ", ".join([f.name for f in files])
-        return True, files_name, files
-    else:
-        return False, None, None
+from .utils import expected_files_cloud
 
 
 class Recording:
@@ -100,177 +88,148 @@ class Recording:
 
         with open(info_path) as f:
             self.info = json.load(f)
+
         self.start_time = int(self.info["start_time"])
         self.start_datetime = datetime.fromtimestamp(self.start_time / 1e9)
 
         self.recording_id = self.info["recording_id"]
         self.recording_dir = recording_dir
 
+        self._infer_format()
+
         self.der_dir = recording_dir / "derivatives"
         if not self.der_dir.is_dir():
             self.der_dir.mkdir()
 
-        self._get_contents()
+    def _infer_format(self):
+        gaze_csv = self.recording_dir / "gaze.csv"
+        gaze_ps1_time = self.recording_dir / "gaze ps1.time"
+        gaze_ps1_raw = self.recording_dir / "gaze ps1.raw"
+
+        if gaze_csv.is_file():
+            self.format = "cloud"
+        elif gaze_ps1_time.is_file() and gaze_ps1_raw.is_file():
+            self.format = "native"
+            import pupil_labs.neon_recording as nr
+
+            self.nr_recording = nr.open(self.recording_dir)
+        else:
+            raise FileNotFoundError(
+                f"Cannot infer recording type in directory: {self.recording_dir}"
+            )
 
     def __repr__(self) -> str:
         return f"""
+Data format: {self.format}
 Recording ID: {self.recording_id}
 Wearer ID: {self.info["wearer_id"]}
 Wearer name: {self.info["wearer_name"]}
 Recording start time: {self.start_datetime}
-Recording duration: {self.info["duration"] / 1e9}s
-{self.contents.to_string()}
+Recording duration: {self.info["duration"]}ns ({self.info["duration"] / 1e9}s)
+Expected files in this format:
+{self._get_contents()}
 """
 
-    def _get_contents(self):
-        contents = pd.DataFrame(
-            index=[
-                "3d_eye_states",
-                "blinks",
-                "events",
-                "fixations",
-                "gaze",
-                "imu",
-                "labels",
-                "saccades",
-                "world_timestamps",
-                "scene_video_info",
-                "scene_video",
-            ],
-            columns=["exist", "filename", "path"],
-        )
-        # Check for CSV files
-        for stem in contents.index:
-            contents.loc[stem, :] = _check_file(self.recording_dir, stem)
-
-        # Check for scene video
-        if len(video_path := list(self.recording_dir.glob("*.mp4"))) == 1:
-            contents.loc["scene_video", :] = (True, video_path[0].name, video_path[0])
-            if (camera_info := self.recording_dir / "scene_camera.json").is_file():
-                contents.loc["scene_video_info", :] = (
-                    True,
-                    camera_info.name,
-                    camera_info,
-                )
-            else:
-                raise FileNotFoundError(
-                    "Scene video has no accompanying scene_camera.json in "
-                    f"{self.recording_dir}"
-                )
-        elif len(video_path) > 1:
-            raise FileNotFoundError(
-                f"Multiple scene video files found in {self.recording_dir}"
+    def _get_contents(self) -> pd.DataFrame:
+        contents = pd.DataFrame(columns=["filename", "exist"])
+        if self.format == "cloud":
+            contents["filename"] = expected_files_cloud
+            contents["exist"] = contents["filename"].apply(
+                lambda f: (self.recording_dir / f).exists()
             )
-        self.contents = contents
+            return contents
+        elif self.format == "native":
+            return pd.empty()
 
     @cached_property
-    def gaze(self) -> Optional[Stream]:
+    def gaze(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing gaze data or
-        ``None`` if no ``gaze.csv`` is present.
+        Returns a (cached) :class:`pyneon.Stream` object containing gaze data.
         """
-        if self.contents.loc["gaze", "exist"]:
-            return Stream(self.contents.loc["gaze", "path"], 200)
+        if self.format == "native":
+            return Stream(self.nr_recording.gaze.pd, name="gaze")
         else:
-            warnings.warn("Gaze data not loaded because no file was found.")
+            return Stream(self.recording_dir / "gaze.csv", "gaze")
 
     @cached_property
-    def imu(self) -> Optional[Stream]:
+    def imu(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing IMU data
-        or ``None`` if no ``imu.csv`` is present.
+        Returns a (cached) :class:`pyneon.Stream` object containing IMU data.
         """
-        if self.contents.loc["imu", "exist"]:
-            return Stream(self.contents.loc["imu", "path"], 110)
+        if self.format == "native":
+            return Stream(self.nr_recording.imu.pd, name="imu")
         else:
-            warnings.warn("IMU data not loaded because no file was found.")
-        return None
+            return Stream(self.recording_dir / "imu.csv", "imu")
 
     @cached_property
-    def eye_states(self) -> Optional[Stream]:
+    def eye_states(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing eye states data
-        or ``None`` if no ``3d_eye_states.csv`` is present.
+        Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
         """
-        if self.contents.loc["3d_eye_states", "exist"]:
-            return Stream(self.contents.loc["3d_eye_states", "path"], 200)
-        else:
-            warnings.warn("3D eye states data not loaded because no file was found.")
-            return None
+        return Stream(self.recording_dir / "3d_eye_states.csv", "eye_states")
 
     @cached_property
     def blinks(self) -> Optional[Events]:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing blinks data
-        or ``None`` if no ``blinks.csv`` is present.
+        Returns a (cached) :class:`pyneon.Events` object containing blinks data.
         """
-        if self.contents.loc["blinks", "exist"]:
-            return Events(self.contents.loc["blinks", "path"], "blinks", "blink id")
-        else:
-            warnings.warn("Blinks data not loaded because no file was found.")
-            return None
+        return Events(self.recording_dir / "blinks.csv", "blinks", "blink id")
 
     @cached_property
     def fixations(self) -> Optional[Events]:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing fixations data
-        or ``None`` if no ``fixations.csv`` is present.
+        Returns a (cached) :class:`pyneon.Events` object containing fixations data.
+
+        Raises
+        ------
+        FileNotFoundError
+            If no corresponding file is present in the recording directory.
         """
-        if self.contents.loc["fixations", "exist"]:
-            return Events(
-                self.contents.loc["fixations", "path"],
-                "fixations",
-                "fixation id",
-            )
-        else:
-            warnings.warn("Fixations data not loaded because no file was found.")
-            return None
+        return Events(
+            self.recording_dir / "fixations.csv",
+            "fixations",
+            "fixation id",
+        )
 
     @cached_property
     def saccades(self) -> Optional[Events]:
         """
         Returns a (cached) :class:`pyneon.Events` object containing saccades data
-        or ``None`` if no ``saccades.csv`` is present.
+        or ``None`` if no corresponding file is present.
         """
-        if self.contents.loc["saccades", "exist"]:
-            return Events(
-                self.contents.loc["saccades", "path"], "saccades", "saccade id"
-            )
-        else:
-            warnings.warn("Saccades data not loaded because no file was found.")
-            return None
+        return Events(self.recording_dir / "saccades.csv", "saccades", "saccade id")
 
     @cached_property
     def events(self) -> Optional[Events]:
         """
         Returns a (cached) :class:`pyneon.Events` object containing events data
-        or ``None`` if no ``events.csv`` is present.
+        or ``None`` if no corresponding file is present.
         """
-        if self.contents.loc["events", "exist"]:
-            events_file = self.contents.loc["events", "path"]
-            return Events(events_file, "events")
-        else:
-            warnings.warn("Events data not loaded because no file was found.")
-            return None
+        return Events(self.recording_dir / "events.csv", "events")
 
     @cached_property
-    def video(self) -> Optional[SceneVideo]:
+    def scene_video(self) -> Optional[SceneVideo]:
         """
         Returns a (cached) :class:`pyneon.SceneVideo` object containing scene video data
-        or ``None`` if no ``scene_video.mp4`` is present.
+        or ``None`` if no corresponding file is present.
         """
-        if (
-            (video_file := self.contents.loc["scene_video", "path"])
-            and (timestamp_file := self.contents.loc["world_timestamps", "path"])
-            and (video_info_file := self.contents.loc["scene_video_info", "path"])
-        ):
-            return SceneVideo(video_file, timestamp_file, video_info_file)
+        if self.format == "native":
+            pass
         else:
-            warnings.warn(
-                "Scene video not loaded because not all video-related files "
-                "(video, scene_camera.json, world_timestamps.csv) are found."
-            )
-            return None
+            video_files = list(self.recording_dir.glob("*.mp4"))
+            if len(video_files) == 1:
+                video_file = video_files[0]
+            elif len(video_files) > 1:
+                raise FileNotFoundError(
+                    f"Multiple video files found in {self.recording_dir}"
+                )
+            else:
+                raise FileNotFoundError(
+                    f"No scene video file found in {self.recording_dir}"
+                )
+            timestamp_file = self.recording_dir / "world_timestamps.csv"
+            video_info_file = self.recording_dir / "scene_camera.json"
+            return SceneVideo(video_file, timestamp_file, video_info_file)
 
     def concat_streams(
         self,
@@ -445,10 +404,10 @@ Recording duration: {self.info["duration"] / 1e9}s
                 raise ValueError("Gaze data is empty.")
             return Stream(synced_gaze)
 
-        if self.gaze is None or self.video is None:
+        if self.gaze is None or self.scene_video is None:
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
-        synced_gaze = self.gaze.window_average(self.video.ts, window_size).data
+        synced_gaze = self.gaze.window_average(self.scene_video.ts, window_size).data
         synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
 
         synced_gaze.index.name = "timestamp [ns]"
@@ -495,13 +454,13 @@ Recording duration: {self.info["duration"] / 1e9}s
             df = pd.read_pickle(scanpath_path)
             if df.empty:
                 raise ValueError("Scanpath data is empty.")
-            return Stream(df, sampling_freq_nominal=int(self.video.fps))
+            return Stream(df, sampling_freq_nominal=int(self.scene_video.fps))
 
         if sync_gaze is None:
             sync_gaze = self.sync_gaze_to_video()
 
         scanpath_df = estimate_scanpath(
-            self.video,
+            self.scene_video,
             sync_gaze,
             lk_params=lk_params,
         )
@@ -510,7 +469,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # ------------------------------------------------------------------ save
         scanpath_df.to_pickle(scanpath_path)
 
-        return Stream(scanpath_df, sampling_freq_nominal=int(self.video.fps))
+        return Stream(scanpath_df, sampling_freq_nominal=int(self.scene_video.fps))
 
     def detect_apriltags(
         self,
@@ -571,7 +530,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             return Stream(all_detections)
 
         all_detections = detect_apriltags(
-            video=self.video,
+            video=self.scene_video,
             tag_family=tag_family,
             nthreads=nthreads,
             quad_decimate=quad_decimate,
@@ -651,7 +610,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         #   raise ValueError("No AprilTag detections found.")
 
         homographies_df = find_homographies(
-            self.video,
+            self.scene_video,
             all_detections.data,
             tag_info.copy(deep=True),
             surface_size,
@@ -856,7 +815,7 @@ Recording duration: {self.info["duration"] / 1e9}s
             df = df.set_index("timestamp [ns]")
             if df.empty:
                 raise ValueError("Camera pose data is empty.")
-            return Stream(df, sampling_freq_nominal=int(self.video.fps))
+            return Stream(df, sampling_freq_nominal=int(self.scene_video.fps))
 
         # ------------------------------------------------------------------ prerequisites
         req = {"tag_id", "pos_vec", "norm_vec", "size"}
@@ -872,7 +831,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         # ------------------------------------------------------------------ compute
         cam_pose_df = estimate_camera_pose(
-            video=self.video,
+            video=self.scene_video,
             tag_locations_df=tag_locations_df,
             all_detections=all_detections.data,
         )
@@ -881,7 +840,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         # ------------------------------------------------------------------ save
         cam_pose_df.reset_index().to_json(json_file, orient="records", lines=True)
 
-        return Stream(cam_pose_df, sampling_freq_nominal=int(self.video.fps))
+        return Stream(cam_pose_df, sampling_freq_nominal=int(self.scene_video.fps))
 
     def smooth_camera_pose(
         self,
@@ -1025,11 +984,11 @@ Recording duration: {self.info["duration"] / 1e9}s
                 print("`show_video=True` has no effect because rendering was skipped.")
             return
 
-        if self.video is None:
+        if self.scene_video is None:
             raise ValueError("A loaded video is required to draw the overlay.")
 
         overlay_scanpath(
-            self.video,
+            self.scene_video,
             scanpath.data,
             circle_radius,
             line_thickness,
@@ -1066,7 +1025,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         show_video : bool
             Whether to display the video with detections and poses overlaid. Defaults to True.
         """
-        if self.video is None:
+        if self.scene_video is None:
             raise ValueError(
                 "Overlaying detections and pose on video requires video data."
             )
