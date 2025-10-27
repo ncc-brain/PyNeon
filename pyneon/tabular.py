@@ -12,8 +12,8 @@ class BaseTabular:
 
     Parameters
     ----------
-    file : Path
-        Path to the CSV file.
+    data : pandas.DataFrame
+        Raw data to be processed.
 
     Attributes
     ----------
@@ -23,16 +23,16 @@ class BaseTabular:
 
     def __init__(self, data: pd.DataFrame):
         if data.empty:
-            raise ValueError(f"Data is empty.")
+            raise ValueError("Data is empty.")
 
         if "recording id" in data.columns:
             if data["recording id"].nunique() > 1:
-                raise ValueError(f"Data contains multiple recording IDs")
+                raise ValueError("Data contains multiple recording IDs")
             data = data.drop(columns=["recording id"])
 
         if "section id" in data.columns:
             if data["section id"].nunique() > 1:
-                raise ValueError(f"Data contains multiple section IDs")
+                raise ValueError("Data contains multiple section IDs")
             data = data.drop(columns=["section id"])
 
         # Set the timestamp column as the index if not already
@@ -45,7 +45,7 @@ class BaseTabular:
             elif "start timestamp [ns]" in data.columns:
                 data = data.set_index("start timestamp [ns]")
             else:
-                raise ValueError(f"Data does not contain a valid timestamp column")
+                raise ValueError("Data does not contain a valid timestamp column")
 
         # Ensure the index is of integer type and sorted
         if not pd.api.types.is_integer_dtype(data.index.dtype):
@@ -58,7 +58,7 @@ class BaseTabular:
         # Set data types
         for col in data.columns:
             if col not in data_types.keys():
-                warn(f"Column '{col}' not in data_types, using default data type.")
+                warn(f"Column '{col}' not in known data types, using default data type.")
             else:
                 data[col] = data[col].astype(data_types[col])
 
