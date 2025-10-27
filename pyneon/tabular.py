@@ -58,7 +58,9 @@ class BaseTabular:
         # Set data types
         for col in data.columns:
             if col not in data_types.keys():
-                warn(f"Column '{col}' not in known data types, using default data type.")
+                warn(
+                    f"Column '{col}' not in known data types, using default data type."
+                )
             else:
                 data[col] = data[col].astype(data_types[col])
 
