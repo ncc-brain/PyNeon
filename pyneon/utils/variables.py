@@ -23,7 +23,7 @@ data_types = {
     "point_y": float,  # native
     "gaze x [px]": float,
     "gaze y [px]": float,
-    "worn": "Int32",
+    "worn": "Int8",
     "fixation id": "Int32",
     "blink id": "Int32",
     "azimuth [deg]": float,
@@ -50,25 +50,15 @@ data_types = {
     "eyelid aperture left [mm]": float,
     "eyelid aperture right [mm]": float,
     # IMU
-    "angular_velocity_x": float,  # native
-    "angular_velocity_y": float,  # native
-    "angular_velocity_z": float,  # native
     "gyro x [deg/s]": float,
     "gyro y [deg/s]": float,
     "gyro z [deg/s]": float,
-    "acceleration_x": float,  # native
-    "acceleration_y": float,  # native
-    "acceleration_z": float,  # native
     "acceleration x [g]": float,
     "acceleration y [g]": float,
     "acceleration z [g]": float,
     "roll [deg]": float,
     "pitch [deg]": float,
     "yaw [deg]": float,
-    "quaternion_w": float,  # native
-    "quaternion_x": float,  # native
-    "quaternion_y": float,  # native
-    "quaternion_z": float,  # native
     "quaternion w": float,
     "quaternion x": float,
     "quaternion y": float,
@@ -103,4 +93,42 @@ data_types = {
     "gaze y [surface coord]": float,
     # scanpath
     "fixations": object,
+}
+
+native_to_cloud_column_map = {
+    # Gaze
+    "x": "gaze x [px]",
+    "y": "gaze y [px]",
+    # Eye states
+    "pupil_diameter_left_mm": "pupil diameter left [mm]",
+    "pupil_diameter_right_mm": "pupil diameter right [mm]",
+    "eyeball_center_left_x": "eye ball center left x [mm]",
+    "eyeball_center_left_y": "eye ball center left y [mm]",
+    "eyeball_center_left_z": "eye ball center left z [mm]",
+    "eyeball_center_right_x": "eyeball center right x [mm]",
+    "eyeball_center_right_y": "eyeball center right y [mm]",
+    "eyeball_center_right_z": "eyeball center right z [mm]",
+    "optical_axis_left_x": "optical axis left x",
+    "optical_axis_left_y": "optical axis left y",
+    "optical_axis_left_z": "optical axis left z",
+    "optical_axis_right_x": "optical axis right x",
+    "optical_axis_right_y": "optical axis right y",
+    "optical_axis_right_z": "optical axis right z",
+    "eyelid_angle_top_left": "eyelid angle top left",
+    "eyelid_angle_bottom_left": "eyelid angle bottom left",
+    "eyelid_angle_top_right": "eyelid angle top right",
+    "eyelid_angle_bottom_right": "eyelid angle bottom right",
+    "eyelid_aperture_left_mm": "eyelid aperture left [mm]",
+    "eyelid_aperture_right_mm": "eyelid aperture right [mm]",
+    # IMU
+    "gyro_x": "gyro x [deg/s]",
+    "gyro_y": "gyro y [deg/s]",
+    "gyro_z": "gyro z [deg/s]",
+    "accel_x": "acceleration x [g]",
+    "accel_y": "acceleration y [g]",
+    "accel_z": "acceleration z [g]",
+    "quaternion_w": "quaternion w",
+    "quaternion_x": "quaternion x",
+    "quaternion_y": "quaternion y",
+    "quaternion_z": "quaternion z",
 }
