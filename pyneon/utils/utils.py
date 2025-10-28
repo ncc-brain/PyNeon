@@ -1,31 +1,59 @@
 import numpy as np
 import pandas as pd
-import pathlib as Path
+from pathlib import Path
 from ast import literal_eval
-from typing import Callable
 from warnings import warn
+from typing import Callable
+from typing_extensions import Literal
 
 from .variables import native_to_cloud_column_map
 
 
-def load_native_data(
-    rec_dir: Path,
-    name: str,
-):
-    time_file = rec_dir / f"{name} ps1.time"
-    raw_file = rec_dir / f"{name} ps1.raw"
-    dtype_file = rec_dir / f"{name}.dtype"
+def load_native_stream(
+    recording_dir: str | Path,
+    name: Literal["gaze", "imu", "eye_state", "eye_states"],
+) -> pd.DataFrame:
+    """
+    Load native data from a recording directory.
+
+    Parameters
+    ----------
+    recording_dir : str | Path
+        _description_
+    name : Literal["gaze", "imu", "eye_state"]
+        Name of the stream to load.
+        Must be one of "gaze", "imu", "eye_state", or "eye_states" (tolerated).
+
+    Returns
+    -------
+    pd.DataFrame
+
+
+    Raises
+    ------
+    FileNotFoundError
+        _description_
+    ValueError
+        _description_
+    """
+    recording_dir = Path(recording_dir)
+    name = "eye_state" if name == "eye_states" else name  # Tolerate plural form
+
+    time_file = recording_dir / f"{name} ps1.time"
+    raw_file = recording_dir / f"{name} ps1.raw"
+    dtype_file = recording_dir / f"{name}.dtype"
     if name == "gaze":  # Use 200hz data if available
-        time_200hz_file = rec_dir / "gaze_200hz.time"
-        raw_200hz_file = rec_dir / "gaze_200hz.raw"
+        time_200hz_file = recording_dir / "gaze_200hz.time"
+        raw_200hz_file = recording_dir / "gaze_200hz.raw"
         if time_200hz_file.is_file() and raw_200hz_file.is_file():
             time_file = time_200hz_file
             raw_file = raw_200hz_file
     for file in [time_file, raw_file, dtype_file]:
         if not file.is_file():
             raise FileNotFoundError(
-                f"Required {name} file {file.name} not found in {rec_dir}"
+                f"Required {name} file {file.name} not found in {recording_dir}"
             )
+
     # Read timestamps
     ts = np.fromfile(time_file, dtype=np.int64)
     # Read data in the correct dtype
@@ -33,8 +61,7 @@ def load_native_data(
     raw = np.fromfile(raw_file, dtype=dtype)
     if ts.shape[0] != raw.shape[0]:
         raise ValueError(
-            f"Timestamp and data length mismatch for {name} data: "
-            f"{ts.shape[0]} vs {raw.shape[0]}"
+            f"Timestamp ({ts.shape[0]}) and data ({raw.shape[0]}) lengths do not match for {name} stream."
         )
     # Concat into a pandas dataframe
     data = pd.DataFrame(raw, index=ts)
@@ -43,7 +70,9 @@ def load_native_data(
     # Stream specific operations
     if name == "gaze":  # Try to attach `worn` column as in Cloud format
         try:
-            worn_dtype = np.dtype(literal_eval((rec_dir / "worn.dtype").read_text()))
+            worn_dtype = np.dtype(
+                literal_eval((recording_dir / "worn.dtype").read_text())
+            )
             worn = np.fromfile(
                 raw_file.with_name(raw_file.name.replace("gaze", "worn")),
                 dtype=worn_dtype,

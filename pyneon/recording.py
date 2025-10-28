@@ -22,7 +22,7 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
-from .utils import expected_files_cloud, load_native_data
+from .utils import expected_files_cloud, load_native_stream
 
 
 class Recording:
@@ -144,7 +144,7 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing gaze data.
         """
         if self.format == "native":
-            return Stream(load_native_data(self.recording_dir, "gaze"), name="gaze")
+            return Stream(load_native_stream(self.recording_dir, "gaze"), name="gaze")
         else:
             return Stream(self.recording_dir / "gaze.csv", "gaze")
 
@@ -154,7 +154,7 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing IMU data.
         """
         if self.format == "native":
-            return Stream(load_native_data(self.recording_dir, "imu"), name="imu")
+            return Stream(load_native_stream(self.recording_dir, "imu"), name="imu")
         else:
             return Stream(self.recording_dir / "imu.csv", "imu")
 
@@ -165,7 +165,7 @@ Expected files in this format:
         """
         if self.format == "native":
             return Stream(
-                load_native_data(self.recording_dir, "eye_state"),
+                load_native_stream(self.recording_dir, "eye_state"),
                 name="eye_states",
             )
         return Stream(self.recording_dir / "3d_eye_states.csv", "eye_states")
