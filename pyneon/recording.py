@@ -22,7 +22,7 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
-from .utils import expected_files_cloud
+from .utils import expected_files_cloud, load_native_data
 
 
 class Recording:
@@ -110,9 +110,6 @@ class Recording:
             self.format = "cloud"
         elif gaze_ps1_time.is_file() and gaze_ps1_raw.is_file():
             self.format = "native"
-            import pupil_labs.neon_recording as nr
-
-            self.nr_recording = nr.open(self.recording_dir)
         else:
             raise FileNotFoundError(
                 f"Cannot infer recording type in directory: {self.recording_dir}"
@@ -125,7 +122,7 @@ Recording ID: {self.recording_id}
 Wearer ID: {self.info["wearer_id"]}
 Wearer name: {self.info["wearer_name"]}
 Recording start time: {self.start_datetime}
-Recording duration: {self.info["duration"]}ns ({self.info["duration"] / 1e9}s)
+Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 Expected files in this format:
 {self._get_contents()}
 """
@@ -147,7 +144,7 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing gaze data.
         """
         if self.format == "native":
-            return Stream(self.nr_recording.gaze.pd, name="gaze")
+            return Stream(load_native_data(self.recording_dir, "gaze"), name="gaze")
         else:
             return Stream(self.recording_dir / "gaze.csv", "gaze")
 
@@ -157,7 +154,7 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing IMU data.
         """
         if self.format == "native":
-            return Stream(self.nr_recording.imu.pd, name="imu")
+            return Stream(load_native_data(self.recording_dir, "imu"), name="imu")
         else:
             return Stream(self.recording_dir / "imu.csv", "imu")
 
@@ -166,6 +163,11 @@ Expected files in this format:
         """
         Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
         """
+        if self.format == "native":
+            return Stream(
+                load_native_data(self.recording_dir, "eye_state"),
+                name="eye_states",
+            )
         return Stream(self.recording_dir / "3d_eye_states.csv", "eye_states")
 
     @cached_property
