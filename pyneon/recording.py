@@ -136,6 +136,8 @@ class Recording:
 
         if gaze_csv.is_file():
             self.format = "cloud"
+        elif gaze_ps1_time.is_file() and gaze_ps1_raw.is_file():
+            self.format = "native"
             if importlib.util.find_spec("pupil_labs.neon_recording") is None:
                 raise ImportError(
                     "To load recordings in native format, the `neon_recording` library is required. "
@@ -144,8 +146,6 @@ class Recording:
             from pupil_labs.neon_recording import open as nr_open
 
             self.nr_recording = nr_open(self.recording_dir)
-        elif gaze_ps1_time.is_file() and gaze_ps1_raw.is_file():
-            self.format = "native"
         else:
             raise FileNotFoundError(
                 f"Cannot infer recording type in directory: {self.recording_dir}"
