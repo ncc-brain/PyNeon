@@ -37,12 +37,9 @@ dependencies = [
 license =  { text = "MIT" }
 
 [project.optional-dependencies]
-apriltags = [
-    "pupil-apriltags"
-]
-dev = [
-    "pytest",
-]
+native = ["pupil-labs-neon-recording>=2.0"]
+apriltags = ["pupil-apriltags"]
+dev = ["pytest"]
 doc = [
     "ruff",
     "jupyter",
@@ -52,7 +49,7 @@ doc = [
     "nbsphinx",
     "myst-parser",
 ]
-full = ["pyneon[apriltags,dev,doc]"]
+full = ["pyneon[native,apriltags,dev,doc]"]
 
 [project.urls]
 Homepage = "https://ncc-brain.github.io/PyNeon/"

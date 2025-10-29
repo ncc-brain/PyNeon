@@ -8,12 +8,6 @@ if TYPE_CHECKING:
     from .video import SceneVideo
 
 
-import cv2
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
-
-
 def detect_apriltags(
     video: "SceneVideo",
     tag_family: str = "tag36h11",

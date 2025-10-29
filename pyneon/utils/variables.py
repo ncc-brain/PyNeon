@@ -96,9 +96,11 @@ data_types = {
 }
 
 native_to_cloud_column_map = {
+    # Time
+    "time": "timestamp [ns]",
     # Gaze
-    "x": "gaze x [px]",
-    "y": "gaze y [px]",
+    "point_x": "gaze x [px]",
+    "point_y": "gaze y [px]",
     # Eye states
     "pupil_diameter_left_mm": "pupil diameter left [mm]",
     "pupil_diameter_right_mm": "pupil diameter right [mm]",
@@ -121,12 +123,12 @@ native_to_cloud_column_map = {
     "eyelid_aperture_left_mm": "eyelid aperture left [mm]",
     "eyelid_aperture_right_mm": "eyelid aperture right [mm]",
     # IMU
-    "gyro_x": "gyro x [deg/s]",
-    "gyro_y": "gyro y [deg/s]",
-    "gyro_z": "gyro z [deg/s]",
-    "accel_x": "acceleration x [g]",
-    "accel_y": "acceleration y [g]",
-    "accel_z": "acceleration z [g]",
+    "angular_velocity_x": "gyro x [deg/s]",
+    "angular_velocity_y": "gyro y [deg/s]",
+    "angular_velocity_z": "gyro z [deg/s]",
+    "acceleration_x": "acceleration x [g]",
+    "acceleration_y": "acceleration y [g]",
+    "acceleration_z": "acceleration z [g]",
     "quaternion_w": "quaternion w",
     "quaternion_x": "quaternion x",
     "quaternion_y": "quaternion y",

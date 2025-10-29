@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from numbers import Number
 from functools import cached_property
 import shutil
+import importlib.util
+from warnings import warn
 
 from .stream import Stream
 from .events import Events
@@ -22,7 +24,33 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
-from .utils import expected_files_cloud, load_native_stream
+from .utils import expected_files_cloud, native_to_cloud_column_map
+
+
+def _load_native(nr_recording, name):
+    if name == "gaze":
+        gaze = nr_recording.gaze.pd
+        worn = nr_recording.worn.pd
+        df = gaze.merge(worn, on="time")
+    elif name == "imu":
+        df = nr_recording.imu.pd
+    elif name == "eye_state":
+        pupil = nr_recording.pupil.pd
+        eyeball = nr_recording.eyeball.pd
+        eyelid = nr_recording.eyelid.pd
+        df = pupil.merge(eyeball, on="time").merge(eyelid, on="time")
+    not_renamed_columns = (
+        set(df.columns) - set(native_to_cloud_column_map.keys()) - {"worn"}
+    )
+    if not_renamed_columns:
+        warn(
+            "Following columns do not have a known alternative name in Pupil Cloud format. "
+            "They will not be renamed: "
+            f"{', '.join(not_renamed_columns)}"
+        )
+    df.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
+    df.set_index("timestamp [ns]", inplace=True)
+    return df
 
 
 class Recording:
@@ -108,6 +136,14 @@ class Recording:
 
         if gaze_csv.is_file():
             self.format = "cloud"
+            if importlib.util.find_spec("pupil_labs.neon_recording") is None:
+                raise ImportError(
+                    "To load recordings in native format, the `neon_recording` library is required. "
+                    "Install via: pip install pupil-labs-neon-recording"
+                )
+            from pupil_labs.neon_recording import open as nr_open
+
+            self.nr_recording = nr_open(self.recording_dir)
         elif gaze_ps1_time.is_file() and gaze_ps1_raw.is_file():
             self.format = "native"
         else:
@@ -144,7 +180,7 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing gaze data.
         """
         if self.format == "native":
-            return Stream(load_native_stream(self.recording_dir, "gaze"), name="gaze")
+            return Stream(_load_native(self.nr_recording, "gaze"), "gaze")
         else:
             return Stream(self.recording_dir / "gaze.csv", "gaze")
 
@@ -154,7 +190,7 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing IMU data.
         """
         if self.format == "native":
-            return Stream(load_native_stream(self.recording_dir, "imu"), name="imu")
+            return Stream(_load_native(self.nr_recording, "imu"), name="imu")
         else:
             return Stream(self.recording_dir / "imu.csv", "imu")
 
@@ -165,7 +201,7 @@ Expected files in this format:
         """
         if self.format == "native":
             return Stream(
-                load_native_stream(self.recording_dir, "eye_state"),
+                _load_native(self.nr_recording, "eye_state"),
                 name="eye_states",
             )
         return Stream(self.recording_dir / "3d_eye_states.csv", "eye_states")

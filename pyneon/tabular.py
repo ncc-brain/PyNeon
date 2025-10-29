@@ -36,7 +36,7 @@ class BaseTabular:
             data = data.drop(columns=["section id"])
 
         # Set the timestamp column as the index if not already
-        valid_index_names = {"time", "timestamp [ns]", "start timestamp [ns]"}
+        valid_index_names = {"timestamp [ns]", "start timestamp [ns]"}
         if data.index.name not in valid_index_names:
             valid = False
             for col in valid_index_names:
