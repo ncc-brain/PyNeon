@@ -14,6 +14,34 @@ expected_files_cloud = [
     "world_timestamps.csv",
 ]
 
+expected_files_native = [
+    "blinks.dtype",
+    "calibration.bin",
+    "event.time",
+    "event.txt",
+    "eye_state.dtype",
+    "fixations ps1.raw",
+    "fixations ps1.time",
+    "fixations.dtype",
+    "gaze ps1.raw",
+    "gaze ps1.time",
+    "gaze.dtype",
+    "imu ps1.raw",
+    "imu ps1.time",
+    "imu.dtype",
+    "info.json",
+    "manifest.json",
+    "manifest.json.crc",
+    "Neon Scene Camera v1 ps1.mp4",
+    "Neon Scene Camera v1 ps1.time",
+    "Neon Sensor Module v1 ps1.mp4",
+    "Neon Sensor Module v1 ps1.time",
+    "template.json",
+    "wearer.json",
+    "worn ps1.raw",
+    "worn.dtype",
+]
+
 data_types = {
     # Events
     "end timestamp [ns]": "int64",
@@ -99,6 +127,8 @@ native_to_cloud_column_map = {
     # Time
     "time": "timestamp [ns]",
     # Gaze
+    "x": "gaze x [px]",
+    "y": "gaze y [px]",
     "point_x": "gaze x [px]",
     "point_y": "gaze y [px]",
     # Eye states
@@ -123,9 +153,15 @@ native_to_cloud_column_map = {
     "eyelid_aperture_left_mm": "eyelid aperture left [mm]",
     "eyelid_aperture_right_mm": "eyelid aperture right [mm]",
     # IMU
+    "gyro_x": "gyro x [deg/s]",
+    "gyro_y": "gyro y [deg/s]",
+    "gyro_z": "gyro z [deg/s]",
     "angular_velocity_x": "gyro x [deg/s]",
     "angular_velocity_y": "gyro y [deg/s]",
     "angular_velocity_z": "gyro z [deg/s]",
+    "accel_x": "acceleration x [g]",
+    "accel_y": "acceleration y [g]",
+    "accel_z": "acceleration z [g]",
     "acceleration_x": "acceleration x [g]",
     "acceleration_y": "acceleration y [g]",
     "acceleration_z": "acceleration z [g]",

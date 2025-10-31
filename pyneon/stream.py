@@ -4,13 +4,80 @@ import numpy as np
 from numbers import Number
 from typing import Literal, Optional, TYPE_CHECKING
 import copy
+from ast import literal_eval
 
 from .tabular import BaseTabular
 from .preprocess import interpolate, interpolate_events, window_average
-from .utils import nominal_sampling_rates
+from .utils import nominal_sampling_rates, native_to_cloud_column_map
+from warnings import warn
 
 if TYPE_CHECKING:
     from .events import Events
+
+
+def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, str, list[Path]]:
+    """
+    Directly load native Pupil Neon stream data from .raw, .time, and .dtype files.
+    """
+    for n in ["gaze", "eye_state", "imu"]:
+        if n in raw_file.name:
+            name = n
+            break
+    else:
+        name = "custom"
+    rec_dir = raw_file.parent
+    time_file = raw_file.with_suffix(".time")
+    dtype_file = rec_dir / f"{name}.dtype"
+    for file in [time_file, dtype_file]:
+        if not file.is_file():
+            raise FileNotFoundError(
+                f"Required .{file.suffix} file {file.name} not found in {rec_dir}"
+            )
+    files = [raw_file, time_file, dtype_file]
+
+    # Read timestamps
+    ts = np.fromfile(time_file, dtype=np.int64)
+    # Read data in the correct dtype
+    dtype = np.dtype(literal_eval(dtype_file.read_text()))
+    raw = np.fromfile(raw_file, dtype=dtype)
+    if ts.shape[0] != raw.shape[0]:
+        raise ValueError(
+            f"Timestamp ({ts.shape[0]}) and data ({raw.shape[0]}) lengths do not match."
+        )
+
+    # Drop "timestamp_ns" field from raw data if present
+    if "timestamp_ns" in raw.dtype.names:
+        raw = raw[[n for n in raw.dtype.names if n != "timestamp_ns"]]
+    data = pd.DataFrame(raw, index=ts)
+    data.index.name = "timestamp [ns]"
+
+    # Stream specific operations
+    if name == "gaze":  # Try to attach `worn` column as in Cloud format
+        try:
+            worn_dtype = np.dtype(literal_eval((rec_dir / "worn.dtype").read_text()))
+            worn = np.fromfile(
+                raw_file.with_name(raw_file.name.replace("gaze", "worn")),
+                dtype=worn_dtype,
+            )["worn"]
+            data["worn"] = worn.astype(np.int8)
+        except Exception as e:
+            warn(f"Could not load 'worn' data for gaze stream: {e}")
+    elif name == "eye_state":
+        name = "eye_states"  # Plural in Cloud format
+
+    # Rename columns to cloud format
+    not_renamed_columns = (
+        set(data.columns) - set(native_to_cloud_column_map.keys()) - {"worn"}
+    )
+    if not_renamed_columns:
+        warn(
+            "Following columns do not have a known alternative name in Pupil Cloud format. "
+            "They will not be renamed: "
+            f"{', '.join(not_renamed_columns)}",
+            UserWarning,
+        )
+    data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
+    return data, name, files
 
 
 class Stream(BaseTabular):
@@ -23,9 +90,6 @@ class Stream(BaseTabular):
     data : pandas.DataFrame or pathlib.Path
         DataFrame or path to the CSV file containing the stream data.
         The data must be indexed by ``timestamp [ns]``.
-    name : str, optional
-        Name of the stream type (e.g., "gaze", "imu", "eye_states").
-        Defaults to "custom".
 
     Attributes
     ----------
@@ -33,23 +97,32 @@ class Stream(BaseTabular):
         Path to the CSV file containing the stream data.
     data : pandas.DataFrame
         DataFrame containing the stream data.
+    name : str
+        Name of the stream type.
     sampling_freq_nominal : int or None
         Nominal sampling frequency of the stream as specified by Pupil Labs
         (https://pupil-labs.com/products/neon/specs). If not known, ``None``.
     """
 
-    def __init__(self, data: pd.DataFrame | Path, name: str = "custom"):
-        self.name = name
-        if isinstance(data, Path):  # Path to Pupil Cloud CSV file
-            self.file = data
+    def __init__(self, data: pd.DataFrame | Path):
+        if isinstance(data, Path):
             if not data.is_file():
-                raise FileNotFoundError(
-                    f"{name.title()} data not loaded because no file was found."
+                raise FileNotFoundError(f"File not exist: {data}")
+            if data.suffix == ".csv":  # Path to Pupil Cloud CSV file
+                self.file = data
+                name = data.stem
+                data = pd.read_csv(data, index_col="timestamp [ns]")
+            elif data.suffix == ".raw":
+                data, name, self.file = _load_native_stream_data(data)
+            else:
+                raise ValueError(
+                    "Unsupported file format. Only .csv and .raw are supported."
                 )
-            data = pd.read_csv(data)
         else:
             self.file = None
+            name = "custom"
         super().__init__(data)
+        self.name = name
         self.sampling_freq_nominal = nominal_sampling_rates.get(name, None)
 
     def __getitem__(self, index: str) -> pd.Series:
