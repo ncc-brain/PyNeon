@@ -24,33 +24,7 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
-from .utils import expected_files_cloud, native_to_cloud_column_map
-
-
-def _load_native(nr_recording, name):
-    if name == "gaze":
-        gaze = nr_recording.gaze.pd
-        worn = nr_recording.worn.pd
-        df = gaze.merge(worn, on="time")
-    elif name == "imu":
-        df = nr_recording.imu.pd
-    elif name == "eye_state":
-        pupil = nr_recording.pupil.pd
-        eyeball = nr_recording.eyeball.pd
-        eyelid = nr_recording.eyelid.pd
-        df = pupil.merge(eyeball, on="time").merge(eyelid, on="time")
-    not_renamed_columns = (
-        set(df.columns) - set(native_to_cloud_column_map.keys()) - {"worn"}
-    )
-    if not_renamed_columns:
-        warn(
-            "Following columns do not have a known alternative name in Pupil Cloud format. "
-            "They will not be renamed: "
-            f"{', '.join(not_renamed_columns)}"
-        )
-    df.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
-    df.set_index("timestamp [ns]", inplace=True)
-    return df
+from .utils import expected_files_cloud, expected_files_native
 
 
 class Recording:
@@ -74,7 +48,7 @@ class Recording:
         ├── labels.csv
         ├── world_timestamps.csv
         ├── scene_camera.json
-        ├── <scene_video>.mp4
+        ├── *.mp4
         └── derivatives/ (PyNeon-generated derivatives)
             └── ...
 
@@ -101,10 +75,6 @@ class Recording:
     start_datetime : datetime.datetime
         Start time (datetime) of the recording as in ``info.json``.
         May not match the start time of each data stream.
-    contents : pandas.DataFrame
-        Contents of the recording directory. Each index is a stream or event name
-        (e.g. ``gaze`` or ``imu``) and columns are ``exist`` (bool),
-        ``filename`` (str), and ``path`` (Path).
     """
 
     def __init__(self, recording_dir: str | Path):
@@ -115,15 +85,29 @@ class Recording:
             raise FileNotFoundError(f"info.json not found in {recording_dir}")
 
         with open(info_path) as f:
-            self.info = json.load(f)
+            info = json.load(f)
 
-        self.start_time = int(self.info["start_time"])
+        self.start_time = int(info["start_time"])
         self.start_datetime = datetime.fromtimestamp(self.start_time / 1e9)
 
-        self.recording_id = self.info["recording_id"]
+        self.recording_id = info["recording_id"]
         self.recording_dir = recording_dir
 
         self._infer_format()
+        self._warn_missing()
+
+        if self.format == "native":
+            try:
+                with open(recording_dir / "wearer.json") as wearer_path:
+                    wearer_info = json.load(wearer_path)
+                info["wearer_name"] = wearer_info.get("name", None)
+                with open(recording_dir / "manifest.json") as wearer_id_path:
+                    manifest_info = json.load(wearer_id_path)
+                info["manifest"] = pd.DataFrame.from_dict(manifest_info)
+            except FileNotFoundError:
+                info["wearer_name"] = None
+                info["manifest"] = pd.DataFrame()
+        self.info = info
 
         self.der_dir = recording_dir / "derivatives"
         if not self.der_dir.is_dir():
@@ -138,17 +122,27 @@ class Recording:
             self.format = "cloud"
         elif gaze_ps1_time.is_file() and gaze_ps1_raw.is_file():
             self.format = "native"
-            if importlib.util.find_spec("pupil_labs.neon_recording") is None:
-                raise ImportError(
-                    "To load recordings in native format, the `neon_recording` library is required. "
-                    "Install via: pip install pupil-labs-neon-recording"
-                )
-            from pupil_labs.neon_recording import open as nr_open
-
-            self.nr_recording = nr_open(self.recording_dir)
         else:
             raise FileNotFoundError(
                 f"Cannot infer recording type in directory: {self.recording_dir}"
+            )
+
+    def _warn_missing(self):
+        if self.format == "cloud":
+            exp_files = expected_files_cloud
+        elif self.format == "native":
+            exp_files = expected_files_native
+
+        files = list(self.recording_dir.glob("*"))
+        missing_files = [f for f in exp_files if (self.recording_dir / f) not in files]
+
+        if self.format == "cloud" and (not list(self.recording_dir.glob("*.mp4"))):
+            missing_files.append("*.mp4")
+        if missing_files:
+            missing_files = "\n".join(missing_files)
+            warn(
+                f"Recording {self.recording_id} misses the following expected files:\n{missing_files}",
+                UserWarning,
             )
 
     def __repr__(self) -> str:
@@ -159,20 +153,7 @@ Wearer ID: {self.info["wearer_id"]}
 Wearer name: {self.info["wearer_name"]}
 Recording start time: {self.start_datetime}
 Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
-Expected files in this format:
-{self._get_contents()}
 """
-
-    def _get_contents(self) -> pd.DataFrame:
-        contents = pd.DataFrame(columns=["filename", "exist"])
-        if self.format == "cloud":
-            contents["filename"] = expected_files_cloud
-            contents["exist"] = contents["filename"].apply(
-                lambda f: (self.recording_dir / f).exists()
-            )
-            return contents
-        elif self.format == "native":
-            return pd.empty()
 
     @cached_property
     def gaze(self) -> Stream:
@@ -180,9 +161,14 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing gaze data.
         """
         if self.format == "native":
-            return Stream(_load_native(self.nr_recording, "gaze"), "gaze")
+            gaze_200hz_file = self.recording_dir / "gaze_200hz.raw"
+            if gaze_200hz_file.is_file():
+                return Stream(gaze_200hz_file)
+            else:
+                return Stream(self.recording_dir / "gaze ps1.raw")
+            # return Stream(_load_native(self.nr_recording, "gaze"), "gaze")
         else:
-            return Stream(self.recording_dir / "gaze.csv", "gaze")
+            return Stream(self.recording_dir / "gaze.csv")
 
     @cached_property
     def imu(self) -> Stream:
@@ -190,9 +176,9 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing IMU data.
         """
         if self.format == "native":
-            return Stream(_load_native(self.nr_recording, "imu"), name="imu")
+            return Stream(self.recording_dir / "imu ps1.raw")
         else:
-            return Stream(self.recording_dir / "imu.csv", "imu")
+            return Stream(self.recording_dir / "imu.csv")
 
     @cached_property
     def eye_states(self) -> Stream:
@@ -200,11 +186,9 @@ Expected files in this format:
         Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
         """
         if self.format == "native":
-            return Stream(
-                _load_native(self.nr_recording, "eye_state"),
-                name="eye_states",
-            )
-        return Stream(self.recording_dir / "3d_eye_states.csv", "eye_states")
+            return Stream(self.recording_dir / "eye_state.raw")
+        else:
+            return Stream(self.recording_dir / "3d_eye_states.csv")
 
     @cached_property
     def blinks(self) -> Optional[Events]:

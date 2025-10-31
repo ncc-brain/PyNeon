@@ -10,6 +10,15 @@ if TYPE_CHECKING:
     from .stream import Stream
 
 
+def _load_native_events_data(file_path: Path) -> tuple[pd.DataFrame, str]:
+    time_file = file_path.with_suffix(".time")
+    ts = np.fromfile(time_file, dtype=np.int64)
+    if file_path.stem == "event":
+        # Read event.txt line by line
+        with open(file_path, "r") as f:
+            lines = f.readlines()
+
+
 class Events(BaseTabular):
     """
     Base for event data (blinks, fixations, saccades, "events" messages).
