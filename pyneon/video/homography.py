@@ -94,6 +94,8 @@ def find_homographies(
         were available to compute a valid homography.
     """
 
+    detection_df = detection_df.copy()
+    
     if "marker_id" not in tag_info.columns and "tag_id" in tag_info.columns:
         tag_info = tag_info.rename(columns={"tag_id": "marker_id"})
 

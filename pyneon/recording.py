@@ -646,7 +646,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
     # ----------------------------------------------------------
 
-    def detect_screen(
+    def detect_screen_corners(
         self,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
@@ -666,28 +666,38 @@ Recording duration: {self.info["duration"] / 1e9}s
             Optional JSON output path. Defaults to `<der_dir>/screen.json`.
         **kwargs : dict, optional
             Additional detection parameters:
-                - skip_frames (int): Frame skip interval (default 1)
-                - brightness_threshold (int): Threshold for binarization (default 180)
-                - min_area_ratio (float): Minimum contour area ratio (default 0.05)
-                - max_area_ratio (float): Maximum contour area ratio (default 0.9)
-                - return_debug (bool): Include diagnostic info (default False)
+            - skip_frames : int, optional
+                Process every Nth frame (default 1 = process all frames).
+            - min_area_ratio : float, optional
+                Minimum contour area relative to frame area. Contours smaller than this
+                ratio are ignored. Default is 0.01 (1% of frame area).
+            - max_area_ratio : float, optional
+                Maximum contour area relative to frame area. Contours larger than this
+                ratio are ignored. Default is 0.98.
+            - brightness_threshold : int, optional
+                Fixed threshold for binarization when `adaptive=False`. Default is 180.
+            - adaptive : bool, optional
+                If True (default), use adaptive thresholding to handle varying
+                illumination across frames.
+            - morph_kernel : int, optional
+                Kernel size for morphological closing (default 5). Use 0 to disable
+                morphological operations.
+            - decimate : float, optional
+                Downsampling factor for faster processing (e.g., 0.5 halves resolution).
+                Detected coordinates are automatically rescaled back. Default is 1.0.
+            - mode : {"largest", "best", "all"}, optional
+                Selection mode determining which contours to return per frame.
 
         Returns
         -------
         Stream
             A Stream indexed by `"timestamp [ns]"` with columns:
-                - frame_idx
-                - tag_id (always 0)
-                - corners (4x2 ndarray)
-                - center (1x2 ndarray)
-                - method = "screen"
+            - frame_idx
+            - tag_id (always 0)
+            - corners (4x2 ndarray)
+            - center (1x2 ndarray)
+            - method = "screen"
         """
-        skip_frames = kwargs.get("skip_frames", 1)
-        brightness_threshold = kwargs.get("brightness_threshold", 180)
-        min_area_ratio = kwargs.get("min_area_ratio", 0.05)
-        max_area_ratio = kwargs.get("max_area_ratio", 0.9)
-        return_debug = kwargs.get("return_debug", False)
-
         json_file = Path(output_path) if output_path else self.der_dir / "screen.json"
 
         if json_file.is_file() and not overwrite:
@@ -698,11 +708,7 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         df = detect_screen_corners(
             video=self.video,
-            skip_frames=skip_frames,
-            brightness_threshold=brightness_threshold,
-            min_area_ratio=min_area_ratio,
-            max_area_ratio=max_area_ratio,
-            return_debug=return_debug,
+            **kwargs,
         )
 
         if df.empty:
@@ -806,7 +812,6 @@ Recording duration: {self.info["duration"] / 1e9}s
             undistort=True,
             sample_ts=sample_ts,
             settings=settings,
-            screen_size=surface_size,
             return_diagnostics=return_diagnostics,
         )
 
