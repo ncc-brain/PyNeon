@@ -20,6 +20,8 @@ from .video import (
     estimate_camera_pose,
     find_homographies,
     gaze_on_surface,
+    detect_screen_corners,
+    detect_aruco,
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids
@@ -511,7 +513,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         scanpath_df.to_pickle(scanpath_path)
 
         return Stream(scanpath_df, sampling_freq_nominal=int(self.video.fps))
-
+    
     def detect_apriltags(
         self,
         tag_family: str = "tag36h11",
@@ -520,59 +522,50 @@ Recording duration: {self.info["duration"] / 1e9}s
         **kwargs,
     ) -> Stream:
         """
-        Detect AprilTags in a video and return their positions per frame.
+        Detect AprilTags in the video and return their positions per frame.
 
-        Runs AprilTag detection on video frames using the `pupil_apriltags` backend.
-        Uses saved results if available unless `overwrite=True`.
+        Uses the `pupil_apriltags` backend. If results already exist and
+        `overwrite=False`, cached detections are loaded instead.
 
         Parameters
         ----------
         tag_family : str, optional
-            The AprilTag family to detect (e.g., "tag36h11"). Default is "tag36h11".
+            The AprilTag family to detect (default: "tag36h11").
         overwrite : bool, optional
-            If True, reruns detection even if saved results exist.
+            Whether to rerun detection even if results exist (default: False).
         output_path : str or pathlib.Path, optional
-            Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
-        **kwargs : keyword arguments
-            Additional parameters for AprilTag detection, including:
-                - 'nthreads': Number of threads to use for detection. Default is 4.
-                - 'quad_decimate': Decimation factor for the quad detection. Default is 1.0, thus no decimation.
-                - 'skip_frames': Number of frames to skip between detections. Default is 1, thus no skipping.
-                - 'return_diagnostics': If True, return additional diagnostic information. Default is False.
+            Optional JSON output path. Defaults to `<der_dir>/apriltags.json`.
+        **kwargs : dict, optional
+            Additional detection parameters:
+                - nthreads (int): Number of CPU threads (default 4)
+                - quad_decimate (float): Downsampling factor (default 1.0)
+                - skip_frames (int): Frame skip interval (default 1)
+                - return_diagnostics (bool): Whether to include diagnostics (default False)
 
         Returns
         -------
         Stream
-            Stream indexed by `"timestamp [ns]"` with one row per detected tag, including:
-                - 'frame_idx': Index in the downsampled video sequence
-                - 'orig_frame_idx': Original frame index in the full video
-                - 'tag_id': ID of the detected AprilTag
-                - 'corners': A 4x2 array of tag corner coordinates
-                - 'center': A 1x2 array of the tag center
+            A Stream indexed by `"timestamp [ns]"` with columns:
+                - frame_idx
+                - tag_id
+                - corners (4x2 ndarray)
+                - center (1x2 ndarray)
+                - method = "apriltag"
         """
-
         nthreads = kwargs.get("nthreads", 4)
         quad_decimate = kwargs.get("quad_decimate", 1.0)
         skip_frames = kwargs.get("skip_frames", 1)
         return_diagnostics = kwargs.get("return_diagnostics", False)
 
-        if output_path is None:
-            json_file = self.der_dir / "apriltags.json"
-        else:
-            json_file = Path(output_path)
+        json_file = Path(output_path) if output_path else self.der_dir / "apriltags.json"
 
-        # If a saved file exists and overwrite is False, just read and return it
         if json_file.is_file() and not overwrite:
             print(f"Loading saved detections from {json_file}")
-            all_detections = pd.read_json(json_file, orient="records", lines=True)
-            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype(
-                "int64"
-            )
-            if all_detections.empty:
-                raise ValueError("AprilTag detection data is empty.")
-            return Stream(all_detections)
+            df = pd.read_json(json_file, orient="records", lines=True)
+            df["timestamp [ns]"] = df["timestamp [ns]"].astype("int64")
+            return Stream(df)
 
-        all_detections = detect_apriltags(
+        df = detect_apriltags(
             video=self.video,
             tag_family=tag_family,
             nthreads=nthreads,
@@ -581,96 +574,245 @@ Recording duration: {self.info["duration"] / 1e9}s
             return_diagnostics=return_diagnostics,
         )
 
-        if all_detections.empty:
+        if df.empty:
             raise ValueError("No AprilTag detections found.")
 
-        # Save results to JSON
-        all_detections.reset_index().to_json(json_file, orient="records", lines=True)
+        df["method"] = "apriltag"
+        df.reset_index().to_json(json_file, orient="records", lines=True)
+        return Stream(df)
 
-        return Stream(all_detections)
-
-    def find_homographies(
+    def detect_aruco(
         self,
-        tag_info: pd.DataFrame,
-        all_detections: Optional[Stream] = None,
+        dictionary: str = "DICT_4X4_50",
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-        sample_ts: Optional[np.ndarray] = None,
         **kwargs,
     ) -> Stream:
         """
-        Compute and return homographies for each frame using AprilTag detections and reference marker layout.
+        Detect ArUco markers in the video and return their positions per frame.
+
+        Uses OpenCV's `cv2.aruco` module. If results already exist and
+        `overwrite=False`, cached detections are loaded instead.
 
         Parameters
         ----------
-        tag_info : pandas.DataFrame
-            DataFrame containing AprilTag reference positions and orientations, with columns:
-                - 'tag_id': ID of the tag
-                - 'x', 'y', 'z': 3D coordinates of the tag's center
-                - 'normal_x', 'normal_y', 'normal_z': Normal vector of the tag surface
-                - 'size': Side length of the tag in meters
-        all_detections : Stream, optional
-            Stream containing AprilTag detection results per frame. If None, detections are recomputed.
+        dictionary : str, optional
+            Name of the ArUco dictionary (default: "DICT_4X4_50").
+            Examples: "DICT_5X5_100", "DICT_6X6_250", etc.
         overwrite : bool, optional
-            Whether to force recomputation even if saved homographies exist.
+            Whether to rerun detection even if results exist (default: False).
         output_path : str or pathlib.Path, optional
-            Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
-        sample_ts : numpy.ndarray, optional
-            Optional array of timestamps (in ns) to which homographies should be sampled.
-        **kwargs : keyword arguments
-            Additional parameters for homography computation, including:
-                - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
-                - 'surface_size': Size of the surface in pixels (width, height). Default is (1920, 1080).
-                - 'skip_frames': Number of frames to skip between detections. Default is 1.
-                - 'settings': Additional settings for the homography computation.
-                - 'return_diagnostics': If True, return additional diagnostic information. Default is False.
+            Optional JSON output path. Defaults to `<der_dir>/aruco.json`.
+        **kwargs : dict, optional
+            Additional detection parameters:
+                - skip_frames (int): Frame skip interval (default 1)
+                - return_diagnostics (bool): Whether to include diagnostics (default False)
 
         Returns
         -------
         Stream
-            A Stream object indexed by `"timestamp [ns]"` containing:
-                - 'frame_idx': Video frame index
-                - 'homography': 3x3 NumPy array representing the homography matrix for that frame
+            A Stream indexed by `"timestamp [ns]"` with columns:
+                - frame_idx
+                - tag_id
+                - corners (4x2 ndarray)
+                - center (1x2 ndarray)
+                - method = "aruco"
         """
+        skip_frames = kwargs.get("skip_frames", 1)
+        return_diagnostics = kwargs.get("return_diagnostics", False)
 
-        # Defaults for kwargs
+        json_file = Path(output_path) if output_path else self.der_dir / "aruco.json"
+
+        if json_file.is_file() and not overwrite:
+            print(f"Loading saved detections from {json_file}")
+            df = pd.read_json(json_file, orient="records", lines=True)
+            df["timestamp [ns]"] = df["timestamp [ns]"].astype("int64")
+            return Stream(df)
+
+            # Perform detection
+        df = detect_aruco(
+            video=self.video,
+            dictionary=dictionary,
+            skip_frames=skip_frames,
+            return_diagnostics=return_diagnostics,
+        )
+
+        if df.empty:
+            raise ValueError("No ArUco markers detected.")
+
+        df["method"] = "aruco"
+        df.reset_index().to_json(json_file, orient="records", lines=True)
+        return Stream(df)
+
+    # ----------------------------------------------------------
+
+    def detect_screen(
+        self,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
+        **kwargs,
+    ) -> Stream:
+        """
+        Detect a bright rectangular screen region in the video and extract its corners.
+
+        Uses OpenCV contour detection to find rectangular regions by luminance contrast.
+        If results already exist and `overwrite=False`, cached detections are loaded.
+
+        Parameters
+        ----------
+        overwrite : bool, optional
+            Whether to rerun detection even if results exist (default: False).
+        output_path : str or pathlib.Path, optional
+            Optional JSON output path. Defaults to `<der_dir>/screen.json`.
+        **kwargs : dict, optional
+            Additional detection parameters:
+                - skip_frames (int): Frame skip interval (default 1)
+                - brightness_threshold (int): Threshold for binarization (default 180)
+                - min_area_ratio (float): Minimum contour area ratio (default 0.05)
+                - max_area_ratio (float): Maximum contour area ratio (default 0.9)
+                - return_debug (bool): Include diagnostic info (default False)
+
+        Returns
+        -------
+        Stream
+            A Stream indexed by `"timestamp [ns]"` with columns:
+                - frame_idx
+                - tag_id (always 0)
+                - corners (4x2 ndarray)
+                - center (1x2 ndarray)
+                - method = "screen"
+        """
+        skip_frames = kwargs.get("skip_frames", 1)
+        brightness_threshold = kwargs.get("brightness_threshold", 180)
+        min_area_ratio = kwargs.get("min_area_ratio", 0.05)
+        max_area_ratio = kwargs.get("max_area_ratio", 0.9)
+        return_debug = kwargs.get("return_debug", False)
+
+        json_file = Path(output_path) if output_path else self.der_dir / "screen.json"
+
+        if json_file.is_file() and not overwrite:
+            print(f"Loading saved detections from {json_file}")
+            df = pd.read_json(json_file, orient="records", lines=True)
+            df["timestamp [ns]"] = df["timestamp [ns]"].astype("int64")
+            return Stream(df)
+
+        df = detect_screen_corners(
+            video=self.video,
+            skip_frames=skip_frames,
+            brightness_threshold=brightness_threshold,
+            min_area_ratio=min_area_ratio,
+            max_area_ratio=max_area_ratio,
+            return_debug=return_debug,
+        )
+
+        if df.empty:
+            raise ValueError("No screen corners detected.")
+
+        df["method"] = "screen"
+        df.reset_index().to_json(json_file, orient="records", lines=True)
+        return Stream(df)
+
+    def find_homographies(
+        self,
+        all_detections: Optional[Stream] = None,
+        tag_info: Optional[pd.DataFrame] = None,
+        overwrite: bool = False,
+        output_path: Optional[str | Path] = None,
+        sample_ts: Optional[np.ndarray] = None,
+        surface_size: tuple[int, int] = (1920, 1080),
+        **kwargs,
+    ) -> Stream:
+        """
+        Compute a per-frame homography mapping from image coordinates to a reference plane.
+
+        This function automatically adapts to the marker detection method used
+        (AprilTags, ArUco, or screen). The detection method is inferred from the
+        `'method'` column in the provided detections.
+
+        Parameters
+        ----------
+        all_detections : Stream, optional
+            Stream of detections returned by one of the `detect_*` methods.
+            If None, AprilTag detections are used by default.
+        tag_info : pandas.DataFrame, optional
+            Reference marker geometry. Required for AprilTag or ArUco, optional for screen.
+            Must contain:
+                - marker_id (int)
+                - marker_corners (4×2 ndarray)
+        overwrite : bool, optional
+            Whether to recompute even if saved results exist (default: False).
+        output_path : str or pathlib.Path, optional
+            Optional file path for saving homographies. Defaults to `<der_dir>/homographies.pkl`.
+        sample_ts : numpy.ndarray, optional
+            Optional timestamps (ns) for resampling the homographies.
+        surface_size : (int, int), optional
+            Surface pixel dimensions (width, height). Used if no tag_info is given for screen.
+        **kwargs : dict, optional
+            - coordinate_system (str): "opencv" or "psychopy" (default: "opencv")
+            - skip_frames (int): Skip interval (default 1)
+            - settings (dict): RANSAC/LMEDS parameters for cv2.findHomography
+            - return_diagnostics (bool): Whether to include diagnostics (default True)
+
+        Returns
+        -------
+        Stream
+            Stream indexed by `"timestamp [ns]"` with columns:
+                - frame_idx
+                - homography (3×3 ndarray)
+                - method (str)
+                - mask (optional RANSAC inlier mask)
+        """
         coordinate_system = kwargs.get("coordinate_system", "opencv")
-        surface_size = kwargs.get("surface_size", (1920, 1080))
         skip_frames = kwargs.get("skip_frames", 1)
         settings = kwargs.get("settings", None)
+        return_diagnostics = kwargs.get("return_diagnostics", True)
 
-        if output_path is None:
-            pkl_file = self.der_dir / "homographies.pkl"
-        else:
-            pkl_file = Path(output_path)
+        pkl_file = Path(output_path) if output_path else self.der_dir / "homographies.pkl"
 
-        # If a saved file exists and overwrite is False, just read and return it
         if pkl_file.is_file() and not overwrite:
             print(f"Loading saved homographies from {pkl_file}")
             df = pd.read_pickle(pkl_file)
-            homographies = Stream(df, sampling_freq_nominal=30)
-            return homographies
+            return Stream(df, sampling_freq_nominal=30)
 
+        # Default detection: AprilTags
         if all_detections is None:
             all_detections = self.detect_apriltags()
 
-        # if all_detections.data.empty:
-        #   raise ValueError("No AprilTag detections found.")
+        detection_df = all_detections.data
+        method = detection_df["method"].iloc[0] if "method" in detection_df.columns else "apriltag"
+
+        # Auto-generate tag_info for screen-based detection
+        if tag_info is None and method == "screen":
+            tag_info = pd.DataFrame([
+                {
+                    "marker_id": 0,
+                    "marker_corners": np.array(
+                        [[0, 0],
+                        [surface_size[0], 0],
+                        [surface_size[0], surface_size[1]],
+                        [0, surface_size[1]]],
+                        dtype=np.float32,
+                    ),
+                }
+            ])
 
         homographies_df = find_homographies(
             self.video,
-            all_detections.data,
-            tag_info.copy(deep=True),
-            surface_size,
-            skip_frames=skip_frames,
+            detection_df,
+            tag_info.copy(deep=True) if tag_info is not None else pd.DataFrame(),
+            frame_size=surface_size,
             coordinate_system=coordinate_system,
+            skip_frames=skip_frames,
+            undistort=True,
             sample_ts=sample_ts,
             settings=settings,
+            screen_size=surface_size,
+            return_diagnostics=return_diagnostics,
         )
 
         homographies_df.to_pickle(pkl_file)
-
         return Stream(homographies_df)
+    
 
     def gaze_on_surface(
         self,

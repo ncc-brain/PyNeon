@@ -18,8 +18,8 @@ from tqdm import tqdm
 def find_homographies(
     video: "SceneVideo",
     detection_df: pd.DataFrame,
-    tag_info: pd.DataFrame,
-    frame_size: tuple[int, int],
+    tag_info: Optional[pd.DataFrame] = None,
+    frame_size: tuple[int, int] = (1920, 1080),
     coordinate_system: str = "opencv",
     skip_frames: int = 1,
     undistort: bool = True,
@@ -112,7 +112,9 @@ def find_homographies(
             "marker_id": 0,
             "marker_corners": np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32)
         }])
-
+    elif method == "apriltag" or method == "aruco":
+        if tag_info is None or tag_info.empty:
+            raise ValueError("tag_info DataFrame must be provided for AprilTag or ArUco methods.")
     # -----------------------------------------------------------------
     # 1. Convert from PsychoPy coords to OpenCV if necessary
     # -----------------------------------------------------------------
