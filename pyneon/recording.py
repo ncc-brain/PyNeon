@@ -513,7 +513,7 @@ Recording duration: {self.info["duration"] / 1e9}s
         scanpath_df.to_pickle(scanpath_path)
 
         return Stream(scanpath_df, sampling_freq_nominal=int(self.video.fps))
-    
+
     def detect_apriltags(
         self,
         tag_family: str = "tag36h11",
@@ -557,7 +557,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         skip_frames = kwargs.get("skip_frames", 1)
         return_diagnostics = kwargs.get("return_diagnostics", False)
 
-        json_file = Path(output_path) if output_path else self.der_dir / "apriltags.json"
+        json_file = (
+            Path(output_path) if output_path else self.der_dir / "apriltags.json"
+        )
 
         if json_file.is_file() and not overwrite:
             print(f"Loading saved detections from {json_file}")
@@ -773,7 +775,9 @@ Recording duration: {self.info["duration"] / 1e9}s
         settings = kwargs.get("settings", None)
         return_diagnostics = kwargs.get("return_diagnostics", True)
 
-        pkl_file = Path(output_path) if output_path else self.der_dir / "homographies.pkl"
+        pkl_file = (
+            Path(output_path) if output_path else self.der_dir / "homographies.pkl"
+        )
 
         if pkl_file.is_file() and not overwrite:
             print(f"Loading saved homographies from {pkl_file}")
@@ -785,22 +789,30 @@ Recording duration: {self.info["duration"] / 1e9}s
             all_detections = self.detect_apriltags()
 
         detection_df = all_detections.data
-        method = detection_df["method"].iloc[0] if "method" in detection_df.columns else "apriltag"
+        method = (
+            detection_df["method"].iloc[0]
+            if "method" in detection_df.columns
+            else "apriltag"
+        )
 
         # Auto-generate tag_info for screen-based detection
         if tag_info is None and method == "screen":
-            tag_info = pd.DataFrame([
-                {
-                    "marker_id": 0,
-                    "marker_corners": np.array(
-                        [[0, 0],
-                        [surface_size[0], 0],
-                        [surface_size[0], surface_size[1]],
-                        [0, surface_size[1]]],
-                        dtype=np.float32,
-                    ),
-                }
-            ])
+            tag_info = pd.DataFrame(
+                [
+                    {
+                        "marker_id": 0,
+                        "marker_corners": np.array(
+                            [
+                                [0, 0],
+                                [surface_size[0], 0],
+                                [surface_size[0], surface_size[1]],
+                                [0, surface_size[1]],
+                            ],
+                            dtype=np.float32,
+                        ),
+                    }
+                ]
+            )
 
         homographies_df = find_homographies(
             self.video,
@@ -817,7 +829,6 @@ Recording duration: {self.info["duration"] / 1e9}s
 
         homographies_df.to_pickle(pkl_file)
         return Stream(homographies_df)
-    
 
     def gaze_on_surface(
         self,

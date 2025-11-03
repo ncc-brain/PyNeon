@@ -172,7 +172,7 @@ def detect_apriltags(
     # Create and return the DataFrame
     # -----------------------------------------------------------------------
     df = pd.DataFrame(all_detections)
-    
+
     if df.empty:
         return df  # no detections found
 

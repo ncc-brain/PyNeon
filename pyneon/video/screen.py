@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .video import SceneVideo
 
+
 def detect_screen_corners(
     video: "SceneVideo",
     skip_frames: int = 1,
@@ -56,7 +57,7 @@ def detect_screen_corners(
         Detected coordinates are automatically rescaled back. Default is 1.0.
     mode : {"largest", "best", "all"}, optional
         Selection mode determining which contours to return per frame:
-        
+
         - `"largest"` : Return only the largest valid rectangular contour.
             Useful when the screen is the outermost bright region. *(Default)*
         - `"best"` : Return the contour that most closely resembles a
@@ -107,11 +108,12 @@ def detect_screen_corners(
         # --- Thresholding ---
         if adaptive:
             thresh = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
-                cv2.THRESH_BINARY, 35, -10
+                gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 35, -10
             )
         else:
-            _, thresh = cv2.threshold(gray, brightness_threshold, 255, cv2.THRESH_BINARY)
+            _, thresh = cv2.threshold(
+                gray, brightness_threshold, 255, cv2.THRESH_BINARY
+            )
 
         # --- Morphological cleanup ---
         if morph_kernel > 0:
@@ -159,11 +161,13 @@ def detect_screen_corners(
                 return -angle_var - abs(aspect_ratio - 1) * 10
 
             score = rectangular_score(corners)
-            candidates.append({
-                "corners": corners,
-                "area_ratio": area_ratio,
-                "score": score,
-            })
+            candidates.append(
+                {
+                    "corners": corners,
+                    "area_ratio": area_ratio,
+                    "score": score,
+                }
+            )
 
         if not candidates:
             continue
@@ -176,23 +180,27 @@ def detect_screen_corners(
         elif mode == "all":
             selected = candidates
         else:
-            raise ValueError(f"Unknown mode '{mode}', must be 'largest', 'best', or 'all'.")
+            raise ValueError(
+                f"Unknown mode '{mode}', must be 'largest', 'best', or 'all'."
+            )
 
         # --- record detections ---
         for cid, sel in enumerate(selected):
             corners = sel["corners"]
             center = np.mean(corners, axis=0)
-            detections.append({
-                "processed_frame_idx": processed_frame_idx,
-                "frame_idx": actual_frame_idx,
-                "timestamp [ns]": int(video.ts[actual_frame_idx]),
-                "tag_id": cid,
-                "corners": corners,
-                "center": center,
-                "method": "screen",
-                "area_ratio": sel["area_ratio"],
-                "score": sel["score"],
-            })
+            detections.append(
+                {
+                    "processed_frame_idx": processed_frame_idx,
+                    "frame_idx": actual_frame_idx,
+                    "timestamp [ns]": int(video.ts[actual_frame_idx]),
+                    "tag_id": cid,
+                    "corners": corners,
+                    "center": center,
+                    "method": "screen",
+                    "area_ratio": sel["area_ratio"],
+                    "score": sel["score"],
+                }
+            )
 
         processed_frame_idx += 1
 
@@ -203,6 +211,7 @@ def detect_screen_corners(
 
     df.set_index("timestamp [ns]", inplace=True)
     return df
+
 
 def _order_corners_tl_tr_br_bl(corners: np.ndarray) -> np.ndarray:
     """

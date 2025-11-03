@@ -1,4 +1,3 @@
-
 import cv2
 import numpy as np
 import pandas as pd
@@ -95,12 +94,15 @@ def find_homographies(
     """
 
     detection_df = detection_df.copy()
-    
+
     if "marker_id" not in tag_info.columns and "tag_id" in tag_info.columns:
         tag_info = tag_info.rename(columns={"tag_id": "marker_id"})
 
-
-    method = detection_df["method"].iloc[0] if "method" in detection_df.columns else "apriltag"
+    method = (
+        detection_df["method"].iloc[0]
+        if "method" in detection_df.columns
+        else "apriltag"
+    )
 
     # -----------------------------------------------------------------
     # 0. Handle special case: screen-based method with no tag_info
@@ -108,15 +110,25 @@ def find_homographies(
 
     if method == "screen" and tag_info.empty:
         if frame_size is None:
-            raise ValueError("For method='screen', frame_size=(width,height) must be set.")
+            raise ValueError(
+                "For method='screen', frame_size=(width,height) must be set."
+            )
         w, h = frame_size
-        tag_info = pd.DataFrame([{
-            "marker_id": 0,
-            "marker_corners": np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32)
-        }])
+        tag_info = pd.DataFrame(
+            [
+                {
+                    "marker_id": 0,
+                    "marker_corners": np.array(
+                        [[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32
+                    ),
+                }
+            ]
+        )
     elif method == "apriltag" or method == "aruco":
         if tag_info is None or tag_info.empty:
-            raise ValueError("tag_info DataFrame must be provided for AprilTag or ArUco methods.")
+            raise ValueError(
+                "tag_info DataFrame must be provided for AprilTag or ArUco methods."
+            )
     # -----------------------------------------------------------------
     # 1. Convert from PsychoPy coords to OpenCV if necessary
     # -----------------------------------------------------------------

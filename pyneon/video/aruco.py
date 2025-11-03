@@ -55,7 +55,9 @@ def detect_aruco(
         )
 
     # List of all available dictionaries
-    available_dicts = {k: v for k, v in cv2.aruco.__dict__.items() if k.startswith("DICT_")}
+    available_dicts = {
+        k: v for k, v in cv2.aruco.__dict__.items() if k.startswith("DICT_")
+    }
     if dictionary not in available_dicts:
         raise ValueError(
             f"Unknown dictionary '{dictionary}'. Available: {list(available_dicts.keys())}"
@@ -76,7 +78,9 @@ def detect_aruco(
     detections = []
     processed_frame_idx = 0
 
-    for frame_idx in tqdm(range(0, total_frames, skip_frames), desc="Detecting ArUco markers"):
+    for frame_idx in tqdm(
+        range(0, total_frames, skip_frames), desc="Detecting ArUco markers"
+    ):
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = video.read()
         if not ret:

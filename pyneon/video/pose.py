@@ -6,6 +6,7 @@ from typing import Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .video import SceneVideo
 
+
 def estimate_camera_pose(
     video: "SceneVideo",
     tag_locations_df: Optional[pd.DataFrame] = None,
@@ -94,7 +95,10 @@ def estimate_camera_pose(
             )
 
         # Normalize column names
-        if "marker_id" in tag_locations_df.columns and "tag_id" not in tag_locations_df.columns:
+        if (
+            "marker_id" in tag_locations_df.columns
+            and "tag_id" not in tag_locations_df.columns
+        ):
             tag_locations_df = tag_locations_df.rename(columns={"marker_id": "tag_id"})
 
         required = {"tag_id", "pos_vec", "norm_vec", "size"}
