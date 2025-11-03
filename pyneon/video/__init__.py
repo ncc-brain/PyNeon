@@ -1,5 +1,5 @@
 from .video import SceneVideo
-from .mapping import estimate_scanpath
+from .scanpath import estimate_scanpath
 from .apriltag import (
     detect_apriltags,
     estimate_camera_pose,
