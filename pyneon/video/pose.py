@@ -14,184 +14,159 @@ def estimate_camera_pose(
     screen_size: Optional[tuple[int, int]] = None,
 ) -> pd.DataFrame:
     """
-    Estimate the camera pose for each frame by solving a Perspective-n-Point (PnP)
-    problem based on marker detections (AprilTag, ArUco, or screen).
+    Estimate the camera pose (translation, rotation, and position) for each frame
+    using 2D–3D correspondences from AprilTag, ArUco, or screen detections.
 
-    The function automatically adapts to the detection method provided in
-    `all_detections["method"]`. For planar screens, if `tag_locations_df` is not
-    provided, reference 3D positions are inferred from `screen_size`.
+    The function automatically adapts to the detection method in
+    `all_detections["method"]`.  For planar screen detections, 3D reference points
+    are generated from `screen_size` if no tag location table is provided.
 
     Parameters
     ----------
     video : SceneVideo
-        SceneVideo instance providing the frames' timestamps and intrinsic
-        calibration matrices (`camera_matrix`, `dist_coeffs`).
+        Video object providing camera intrinsics (`camera_matrix`, `dist_coeffs`)
+        and timestamps (`video.ts`).
     tag_locations_df : pandas.DataFrame, optional
-        Table describing the 3D world coordinates of each marker or screen.
-        Expected columns for tag-based detections:
+        World-space information for tag-based detections.
+        Required columns:
             - "tag_id" or "marker_id" : int
-            - "pos_vec"  : list[float] (3D position of tag center)
+            - "pos_vec"  : list[float] (3D center position)
             - "norm_vec" : list[float] (surface normal)
             - "size"     : float (edge length)
-        For screen-based detection, this can be omitted if `screen_size` is given.
+        Ignored for method='screen' if `screen_size` is supplied.
     all_detections : pandas.DataFrame, optional
-        Per-frame detections returned by any of:
-            - `detect_apriltags()`
-            - `detect_aruco()`
-            - `detect_screen_corners()`
-        Must contain columns:
+        Per-frame detections from `detect_apriltags`, `detect_aruco`,
+        or `detect_screen_corners`.  Must contain:
             - "frame_idx" : int
-            - "corners"   : ndarray (4, 2)
-            - "tag_id"    : int (or 0 for screen)
-            - "method"    : str (e.g. "apriltag", "aruco", "screen")
+            - "corners"   : ndarray (4,2)
+            - "tag_id"    : int (0 for screen)
+            - "method"    : str
     screen_size : tuple[int, int], optional
-        Physical or pixel dimensions of the screen (width, height). Used when
-        `method == "screen"` and `tag_locations_df` is not provided.
+        Screen dimensions (width, height) in pixels or physical units.
+        Used only for `method='screen'` when no tag_locations_df is given.
 
     Returns
     -------
     pandas.DataFrame
-        One row per frame with columns:
-            - "frame_idx"
-            - "translation_vector" : ndarray (3,)
-            - "rotation_vector"    : ndarray (3,)
-            - "camera_pos"         : ndarray (3,)
-            - "method"             : str
+        One row per processed frame with:
+            - 'frame_idx'          : int
+            - 'translation_vector' : np.ndarray (3,)
+            - 'rotation_vector'    : np.ndarray (3,)
+            - 'camera_pos'         : np.ndarray (3,)
+            - 'method'             : str
+
+    Notes
+    -----
+    - Uses OpenCV's `solvePnP` to compute camera extrinsics from all visible
+        markers per frame.
+    - For tag-based detections, 3D corners are built from each tag’s position,
+        normal vector, and edge length.
+    - For screen detections, a planar rectangle centered at the origin is used
+        unless explicit 3D coordinates are supplied.
     """
 
     # ------------------------------------------------------------------
-    # 1. Prepare detections
+    # 1. Validate input
     # ------------------------------------------------------------------
     if all_detections is None or all_detections.empty:
         raise ValueError("`all_detections` must be provided and non-empty.")
 
-    # Extract method from detections
-    method = (
-        all_detections["method"].iloc[0]
-        if "method" in all_detections.columns
-        else "apriltag"
-    )
+    method = all_detections.get("method", pd.Series(["apriltag"])).iloc[0]
 
     # ------------------------------------------------------------------
-    # 2. Handle camera intrinsics
+    # 2. Camera intrinsics
     # ------------------------------------------------------------------
     camera_matrix = getattr(video, "camera_matrix", None)
-    dist_coeffs = getattr(video, "dist_coeffs", None)
     if camera_matrix is None:
         raise ValueError("`video` must provide a valid `camera_matrix`.")
+    dist_coeffs = getattr(video, "dist_coeffs", None)
     if dist_coeffs is None:
-        dist_coeffs = np.zeros((4, 1), dtype=np.float32)
+        dist_coeffs = np.zeros((4, 1), np.float32)
 
     # ------------------------------------------------------------------
-    # 3. Build tag info lookup
+    # 3. Build 3D reference geometry
     # ------------------------------------------------------------------
     tag_info = {}
 
     if method in ("apriltag", "aruco"):
+        # Normalize column names
         if tag_locations_df is None or tag_locations_df.empty:
             raise ValueError(
-                f"`tag_locations_df` is required for method='{method}'. "
-                "Provide tag 3D locations and orientations."
+                f"`tag_locations_df` required for method='{method}'."
             )
-
-        # Normalize column names
-        if (
-            "marker_id" in tag_locations_df.columns
-            and "tag_id" not in tag_locations_df.columns
-        ):
+        if "marker_id" in tag_locations_df.columns and "tag_id" not in tag_locations_df.columns:
             tag_locations_df = tag_locations_df.rename(columns={"marker_id": "tag_id"})
 
         required = {"tag_id", "pos_vec", "norm_vec", "size"}
         missing = required - set(tag_locations_df.columns)
         if missing:
-            raise ValueError(f"tag_locations_df is missing: {missing}")
+            raise ValueError(f"tag_locations_df missing columns: {missing}")
 
         for _, row in tag_locations_df.iterrows():
             tag_id = int(row["tag_id"])
-            center = np.asarray(row["pos_vec"], dtype=np.float32)
-            normal = np.asarray(row["norm_vec"], dtype=np.float32)
+            center = np.asarray(row["pos_vec"], np.float32)
+            normal = np.asarray(row["norm_vec"], np.float32)
             normal /= np.linalg.norm(normal)
             half = float(row["size"]) / 2.0
             tag_info[tag_id] = (center, normal, half)
 
     elif method == "screen":
-        # For screens, assume a single flat rectangle in XY-plane
         if tag_locations_df is not None and not tag_locations_df.empty:
-            # Use provided corners or plane definition
             tag_info[0] = tag_locations_df
         elif screen_size is not None:
             w, h = screen_size
-            # Define a simple square in z=0 plane centered at origin
-            # Using arbitrary scale (1 m per 1000 px if unknown)
-            scale = 0.001
+            scale = 0.001  # 1 m per 1000 px if physical scale unknown
             half_w, half_h = (w * scale) / 2, (h * scale) / 2
-            corners_3d = np.array(
+            tag_info[0] = np.array(
                 [
                     [-half_w, -half_h, 0],
                     [half_w, -half_h, 0],
                     [half_w, half_h, 0],
                     [-half_w, half_h, 0],
                 ],
-                dtype=np.float32,
+                np.float32,
             )
-            tag_info[0] = corners_3d
         else:
-            raise ValueError(
-                "For method='screen', provide either `tag_locations_df` or `screen_size`."
-            )
+            raise ValueError("For 'screen', provide `tag_locations_df` or `screen_size`.")
     else:
         raise ValueError(f"Unsupported detection method: '{method}'")
 
     # ------------------------------------------------------------------
-    # 4. Iterate over frames and solve PnP
+    # 4. Iterate over frames
     # ------------------------------------------------------------------
     results = []
-    for frame_idx in all_detections["frame_idx"].unique():
-        det_frame = all_detections.loc[all_detections["frame_idx"] == frame_idx]
-        if det_frame.empty:
-            continue
-
+    for frame_idx, frame_dets in all_detections.groupby("frame_idx"):
         object_pts, image_pts = [], []
 
-        for _, det in det_frame.iterrows():
+        for _, det in frame_dets.iterrows():
             tag_id = int(det.get("tag_id", 0))
-            corners_2d = np.asarray(det["corners"], dtype=np.float32)
+            corners_2d = np.asarray(det["corners"], np.float32)
 
-            # For screen: use single planar surface definition
             if method == "screen":
-                if 0 not in tag_info:
-                    continue
-                corners_3d = np.asarray(tag_info[0], dtype=np.float32)
-
-            else:  # ArUco / AprilTag
+                corners_3d = np.asarray(tag_info[0], np.float32)
+            else:
                 if tag_id not in tag_info:
                     continue
                 center3d, normal, half = tag_info[tag_id]
 
-                # Construct local tag coordinate basis
+                # Local tag basis
                 Z = normal
-                ref = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+                ref = np.array([0, 0, 1], np.float32)
                 if np.allclose(Z, ref) or np.allclose(Z, -ref):
-                    ref = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+                    ref = np.array([1, 0, 0], np.float32)
                 X = np.cross(Z, ref)
                 if np.linalg.norm(X) < 1e-9:
-                    ref = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+                    ref = np.array([0, 1, 0], np.float32)
                     X = np.cross(Z, ref)
                 X /= np.linalg.norm(X)
                 Y = np.cross(Z, X)
 
-                # 3D tag corners in world coordinates
-                corners_3d = np.vstack(
-                    [
-                        center3d + (-half) * X + (-half) * Y,
-                        center3d + (half) * X + (-half) * Y,
-                        center3d + (half) * X + (half) * Y,
-                        center3d + (-half) * X + (half) * Y,
-                    ]
-                ).astype(np.float32)
-
-            if corners_3d.shape != (4, 3):
-                continue
+                corners_3d = np.vstack([
+                    center3d + (-half)*X + (-half)*Y,
+                    center3d + ( half)*X + (-half)*Y,
+                    center3d + ( half)*X + ( half)*Y,
+                    center3d + (-half)*X + ( half)*Y,
+                ]).astype(np.float32)
 
             object_pts.append(corners_3d)
             image_pts.append(corners_2d)
@@ -203,7 +178,7 @@ def estimate_camera_pose(
         image_pts = np.vstack(image_pts)
 
         # ------------------------------------------------------------------
-        # 5. Solve PnP
+        # 5. Solve PnP for this frame
         # ------------------------------------------------------------------
         ok, r_vec, t_vec = cv2.solvePnP(
             object_pts,
@@ -218,26 +193,12 @@ def estimate_camera_pose(
         R, _ = cv2.Rodrigues(r_vec)
         cam_pos = -R.T @ t_vec
 
-        results.append(
-            {
-                "frame_idx": int(frame_idx),
-                "translation_vector": t_vec.reshape(-1),
-                "rotation_vector": r_vec.reshape(-1),
-                "camera_pos": cam_pos.reshape(-1),
-                "method": method,
-            }
-        )
+        results.append({
+            "frame_idx": int(frame_idx),
+            "translation_vector": t_vec.flatten(),
+            "rotation_vector": r_vec.flatten(),
+            "camera_pos": cam_pos.flatten(),
+            "method": method,
+        })
 
-    # ------------------------------------------------------------------
-    # 6. Return DataFrame
-    # ------------------------------------------------------------------
-    return pd.DataFrame(
-        results,
-        columns=[
-            "frame_idx",
-            "translation_vector",
-            "rotation_vector",
-            "camera_pos",
-            "method",
-        ],
-    )
+    return pd.DataFrame(results)
