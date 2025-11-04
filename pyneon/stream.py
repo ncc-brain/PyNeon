@@ -4,35 +4,29 @@ import numpy as np
 from numbers import Number
 from typing import Literal, Optional, TYPE_CHECKING
 import copy
+from warnings import warn
 from ast import literal_eval
 
 from .tabular import BaseTabular
 from .preprocess import interpolate, interpolate_events, window_average
 from .utils import nominal_sampling_rates, native_to_cloud_column_map
-from warnings import warn
+
 
 if TYPE_CHECKING:
     from .events import Events
 
 
-def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, str, list[Path]]:
+def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
     """
     Directly load native Pupil Neon stream data from .raw, .time, and .dtype files.
     """
-    for n in ["gaze", "eye_state", "imu"]:
-        if n in raw_file.name:
-            name = n
-            break
-    else:
-        name = "custom"
-    rec_dir = raw_file.parent
+    rec_dir = raw_file.parent.resolve()
     time_file = raw_file.with_suffix(".time")
-    dtype_file = rec_dir / f"{name}.dtype"
-    for file in [time_file, dtype_file]:
-        if not file.is_file():
-            raise FileNotFoundError(
-                f"Required .{file.suffix} file {file.name} not found in {rec_dir}"
-            )
+    dtype_file = next(rec_dir.glob(f"{raw_file.name[:3]}*.dtype"), None)
+    if not time_file.is_file():
+        raise FileNotFoundError(f"Missing .time file {time_file.name} in {rec_dir}")
+    if dtype_file is None:
+        raise FileNotFoundError(f"Missing .dtype file for {raw_file.name} in {rec_dir}")
     files = [raw_file, time_file, dtype_file]
 
     # Read timestamps
@@ -48,11 +42,24 @@ def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, str, list[Pa
     # Drop "timestamp_ns" field from raw data if present
     if "timestamp_ns" in raw.dtype.names:
         raw = raw[[n for n in raw.dtype.names if n != "timestamp_ns"]]
+
+    # Create DataFrame with timestamps as index
     data = pd.DataFrame(raw, index=ts)
     data.index.name = "timestamp [ns]"
 
-    # Stream specific operations
-    if name == "gaze":  # Try to attach `worn` column as in Cloud format
+    # Rename columns to cloud format
+    not_renamed_columns = set(data.columns) - set(native_to_cloud_column_map.keys())
+    if not_renamed_columns:
+        warn(
+            "Following columns do not have a known alternative name in Pupil Cloud format. "
+            "They will not be renamed: "
+            f"{', '.join(not_renamed_columns)}",
+            UserWarning,
+        )
+    data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
+
+    # Concatenate worn data if loading gaze stream
+    if "gaze x [px]" in data.columns:
         try:
             worn_dtype = np.dtype(literal_eval((rec_dir / "worn.dtype").read_text()))
             worn = np.fromfile(
@@ -62,22 +69,22 @@ def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, str, list[Pa
             data["worn"] = worn.astype(np.int8)
         except Exception as e:
             warn(f"Could not load 'worn' data for gaze stream: {e}")
-    elif name == "eye_state":
-        name = "eye_states"  # Plural in Cloud format
 
-    # Rename columns to cloud format
-    not_renamed_columns = (
-        set(data.columns) - set(native_to_cloud_column_map.keys()) - {"worn"}
-    )
-    if not_renamed_columns:
-        warn(
-            "Following columns do not have a known alternative name in Pupil Cloud format. "
-            "They will not be renamed: "
-            f"{', '.join(not_renamed_columns)}",
-            UserWarning,
-        )
-    data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
-    return data, name, files
+    return data, files
+
+
+def _infer_stream_name(data: pd.DataFrame) -> str:
+    """
+    Infer stream name based on presence of specific columns.
+    If multiple or no matches found, return "custom".
+    """
+    col_map = {
+        "gaze x [px]": "gaze",
+        "pupil diameter left [mm]": "eye_states",
+        "gyro x [deg/s]": "imu",
+    }
+    names = {col_map[c] for c in data.columns if c in col_map}
+    return names.pop() if len(names) == 1 else "custom"
 
 
 class Stream(BaseTabular):
@@ -110,20 +117,18 @@ class Stream(BaseTabular):
                 raise FileNotFoundError(f"File not exist: {data}")
             if data.suffix == ".csv":  # Path to Pupil Cloud CSV file
                 self.file = data
-                name = data.stem
                 data = pd.read_csv(data, index_col="timestamp [ns]")
             elif data.suffix == ".raw":
-                data, name, self.file = _load_native_stream_data(data)
+                data, self.file = _load_native_stream_data(data)
             else:
                 raise ValueError(
                     "Unsupported file format. Only .csv and .raw are supported."
                 )
         else:
             self.file = None
-            name = "custom"
         super().__init__(data)
-        self.name = name
-        self.sampling_freq_nominal = nominal_sampling_rates.get(name, None)
+        self.name = _infer_stream_name(self.data)
+        self.sampling_freq_nominal = nominal_sampling_rates.get(self.name, None)
 
     def __getitem__(self, index: str) -> pd.Series:
         if index not in self.data.columns:
@@ -220,17 +225,16 @@ class Stream(BaseTabular):
             t = self.times
         else:
             t = np.arange(len(self))
-        tmin = tmin if tmin is not None else t.min()
-        tmax = tmax if tmax is not None else t.max()
+        tmin = t.min() if tmin is None else tmin
+        tmax = t.max() if tmax is None else tmax
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
-        new_data = self.data[mask].copy()
         if inplace:
-            self.data = new_data
+            self.data = self.data[mask].copy()
         else:
             new_stream = copy.copy(self)
-            new_stream.data = new_data
+            new_stream.data = self.data[mask].copy()
             return new_stream
 
     def restrict(
@@ -257,8 +261,6 @@ class Stream(BaseTabular):
         new_stream = self.crop(
             other.first_ts, other.last_ts, by="timestamp", inplace=inplace
         )
-        if new_stream.data.empty:
-            raise ValueError("No data found in the range of the other stream")
         return new_stream
 
     def interpolate(
@@ -314,6 +316,12 @@ class Stream(BaseTabular):
             new_instance = copy.copy(self)
             new_instance.data = new_data
             return new_instance
+
+    def annotate_events(
+        self,
+        events: "Events",
+    ):
+        pass
 
     def interpolate_events(
         self,
