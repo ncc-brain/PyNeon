@@ -4,19 +4,111 @@ import pandas as pd
 from pathlib import Path
 from numbers import Number
 from typing import TYPE_CHECKING, Literal, Optional
+from ast import literal_eval
+from warnings import warn
 import copy
+
+from .utils import native_to_cloud_column_map
 
 if TYPE_CHECKING:
     from .stream import Stream
 
 
-def _load_native_events_data(file_path: Path) -> tuple[pd.DataFrame, str]:
-    time_file = file_path.with_suffix(".time")
-    ts = np.fromfile(time_file, dtype=np.int64)
+def _load_native_events_data(
+    file_path: Path, type: Optional[str] = None
+) -> tuple[pd.DataFrame, list[Path]]:
+    rec_dir = file_path.parent.resolve()
+
+    # Read data in the correct dtype
     if file_path.stem == "event":
-        # Read event.txt line by line
+        # Only events need explicit .time file for timestamps
+        time_file = file_path.with_suffix(".time")
+        if not time_file.is_file():
+            raise FileNotFoundError(f"Missing .time file {time_file.name} in {rec_dir}")
+        ts = np.fromfile(time_file, dtype=np.int64)
+
+        # Read event names
         with open(file_path, "r") as f:
-            lines = f.readlines()
+            event_names = [line.strip() for line in f.readlines()]
+        data = pd.DataFrame({"name": event_names}, index=ts)
+        data["type"] = "recording"
+        data.index.name = "timestamp [ns]"
+        files = [file_path, time_file]
+    else:
+        dtype_file = next(rec_dir.glob(f"{file_path.name[:3]}*.dtype"), None)
+        if dtype_file is None:
+            raise FileNotFoundError(
+                f"Missing .dtype file for {file_path.name} in {rec_dir}"
+            )
+        files = [file_path, dtype_file]
+
+        dtype = np.dtype(literal_eval(dtype_file.read_text()))
+        raw = np.fromfile(file_path, dtype=dtype)
+        if "fixation" in file_path.stem:
+            if type is None or type not in ["saccades", "fixations"]:
+                raise ValueError("Type ('saccades'/'fixations') must be specified")
+            if type == "fixations":
+                mask = raw["event_type"] == 1
+                raw = raw[mask]
+                raw = raw[
+                    [
+                        col
+                        for col in raw.dtype.names
+                        if "mean_gaze" in col or "timestamp" in col
+                    ]
+                ]
+            else:  # type == "saccades"
+                mask = raw["event_type"] == 0
+                raw = raw[mask]
+                raw = raw[
+                    [
+                        col
+                        for col in raw.dtype.names
+                        if col
+                        in [
+                            "start_timestamp_ns",
+                            "end_timestamp_ns",
+                            "amplitude_pixels",
+                            "amplitude_angle_deg",
+                            "mean_velocity",
+                            "max_velocity",
+                        ]
+                    ]
+                ]
+        # Get all column names from raw
+        data = (
+            pd.DataFrame(raw)
+            .rename(columns={"start_timestamp_ns": "start timestamp [ns]"})
+            .set_index("start timestamp [ns]")
+        )
+
+        # Rename columns to cloud format
+        not_renamed_columns = set(data.columns) - set(native_to_cloud_column_map.keys())
+        if not_renamed_columns:
+            warn(
+                "Following columns do not have a known alternative name in Pupil Cloud format. "
+                "They will not be renamed: "
+                f"{', '.join(not_renamed_columns)}",
+                UserWarning,
+            )
+        data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
+
+    return data, files
+
+
+def _infer_events_name(data: pd.DataFrame) -> str:
+    """
+    Infer events name based on presence of specific columns.
+    If multiple or no matches found, return "custom".
+    """
+    col_map = {
+        "blink id": "blinks",
+        "saccade id": "saccades",
+        "fixation id": "fixations",
+        "name": "events",
+    }
+    names = {col_map[c] for c in data.columns if c in col_map}
+    return names.pop() if len(names) == 1 else "custom"
 
 
 class Events(BaseTabular):
@@ -47,24 +139,23 @@ class Events(BaseTabular):
         Name of the column containing the event ID.
     """
 
-    def __init__(
-        self,
-        data: pd.DataFrame | Path,
-        name: str = "custom",
-        id_name: Optional[str] = None,
-    ):
+    def __init__(self, data: pd.DataFrame | Path, type: Optional[str] = None):
         if isinstance(data, Path):
-            self.file = data
             if not data.is_file():
-                raise FileNotFoundError(
-                    f"{name.title()} data not loaded because no file was found."
-                )
-            data = pd.read_csv(data)
+                raise FileNotFoundError(f"File not exist: {data}")
+            if data.suffix == ".csv":
+                self.file = data
+                data = pd.read_csv(data)
+            elif data.suffix in [".txt", ".raw"]:
+                data, self.file = _load_native_events_data(data, type)
         else:
             self.file = None
         super().__init__(data)
-        self.name = name
-        self.id_name = id_name
+        self.name = _infer_events_name(self.data)
+
+    def __getitem__(self, index) -> pd.Series:
+        """Get an event series by index."""
+        return self.data.iloc[index]
 
     @property
     def start_ts(self) -> np.ndarray:
@@ -93,7 +184,7 @@ class Events(BaseTabular):
         if self.id_name in self.data.columns and self.id_name is not None:
             return self.data[self.id_name].to_numpy()
         else:
-            raise ValueError(f"No event ID column found in the instance.")
+            raise ValueError("No event ID column found in the instance.")
 
     def crop(
         self,
@@ -132,17 +223,16 @@ class Events(BaseTabular):
             t = self.start_ts
         else:
             t = np.arange(len(self))
-        tmin = tmin if tmin is not None else t.min()
-        tmax = tmax if tmax is not None else t.max()
+        tmin = t.min() if tmin is None else tmin
+        tmax = t.max() if tmax is None else tmax
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
-        new_data = self.data[mask].copy()
         if inplace:
-            self.data = new_data
+            self.data = self.data[mask].copy()
         else:
             new_events = copy.copy(self)
-            new_events.data = new_data
+            new_events.data = self.data[mask].copy()
             return new_events
 
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
@@ -162,10 +252,4 @@ class Events(BaseTabular):
         new_events = self.crop(
             other.first_ts, other.last_ts, by="timestamp", inplace=inplace
         )
-        if new_events.data.empty:
-            raise ValueError("No data found in the range of the other stream")
         return new_events
-
-    def __getitem__(self, index) -> pd.Series:
-        """Get an event series by index."""
-        return self.data.iloc[index]

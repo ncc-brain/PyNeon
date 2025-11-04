@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from numbers import Number
 from functools import cached_property
 import shutil
-import importlib.util
 from warnings import warn
 
 from .stream import Stream
@@ -195,7 +194,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """
         Returns a (cached) :class:`pyneon.Events` object containing blinks data.
         """
-        return Events(self.recording_dir / "blinks.csv", "blinks", "blink id")
+        if self.format == "native":
+            return Events(self.recording_dir / "blinks ps1.raw")
+        else:
+            return Events(self.recording_dir / "blinks.csv")
 
     @cached_property
     def fixations(self) -> Optional[Events]:
@@ -207,11 +209,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         FileNotFoundError
             If no corresponding file is present in the recording directory.
         """
-        return Events(
-            self.recording_dir / "fixations.csv",
-            "fixations",
-            "fixation id",
-        )
+        if self.format == "native":
+            return Events(self.recording_dir / "fixations ps1.raw", "fixations")
+        else:
+            return Events(self.recording_dir / "fixations.csv")
 
     @cached_property
     def saccades(self) -> Optional[Events]:
@@ -219,7 +220,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns a (cached) :class:`pyneon.Events` object containing saccades data
         or ``None`` if no corresponding file is present.
         """
-        return Events(self.recording_dir / "saccades.csv", "saccades", "saccade id")
+        if self.format == "native":
+            return Events(self.recording_dir / "fixations ps1.raw", "saccades")
+        else:
+            return Events(self.recording_dir / "saccades.csv")
 
     @cached_property
     def events(self) -> Optional[Events]:
@@ -227,7 +231,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns a (cached) :class:`pyneon.Events` object containing events data
         or ``None`` if no corresponding file is present.
         """
-        return Events(self.recording_dir / "events.csv", "events")
+        if self.format == "native":
+            return Events(self.recording_dir / "event.txt")
+        else:
+            return Events(self.recording_dir / "events.csv")
 
     @cached_property
     def scene_video(self) -> Optional[SceneVideo]:

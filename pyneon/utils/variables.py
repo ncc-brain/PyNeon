@@ -47,8 +47,6 @@ data_types = {
     "end timestamp [ns]": "int64",
     "duration [ms]": "Int64",
     # Gaze
-    "point_x": float,  # native
-    "point_y": float,  # native
     "gaze x [px]": float,
     "gaze y [px]": float,
     "worn": "Int8",
@@ -126,6 +124,8 @@ data_types = {
 native_to_cloud_column_map = {
     # Time
     "time": "timestamp [ns]",
+    "start_timestamp_ns": "start timestamp [ns]",
+    "end_timestamp_ns": "end timestamp [ns]",
     # Gaze
     "x": "gaze x [px]",
     "y": "gaze y [px]",
@@ -169,4 +169,12 @@ native_to_cloud_column_map = {
     "quaternion_x": "quaternion x",
     "quaternion_y": "quaternion y",
     "quaternion_z": "quaternion z",
+    # Fixations
+    "mean_gaze_x": "fixation x [px]",
+    "mean_gaze_y": "fixation y [px]",
+    # Saccades
+    "amplitude_pixels": "amplitude [px]",
+    "amplitude_angle_deg": "amplitude [deg]",
+    "mean_velocity": "mean velocity [px/s]",
+    "max_velocity": "peak velocity [px/s]",
 }
