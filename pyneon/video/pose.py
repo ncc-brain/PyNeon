@@ -91,10 +91,11 @@ def estimate_camera_pose(
     if method in ("apriltag", "aruco"):
         # Normalize column names
         if tag_locations_df is None or tag_locations_df.empty:
-            raise ValueError(
-                f"`tag_locations_df` required for method='{method}'."
-            )
-        if "marker_id" in tag_locations_df.columns and "tag_id" not in tag_locations_df.columns:
+            raise ValueError(f"`tag_locations_df` required for method='{method}'.")
+        if (
+            "marker_id" in tag_locations_df.columns
+            and "tag_id" not in tag_locations_df.columns
+        ):
             tag_locations_df = tag_locations_df.rename(columns={"marker_id": "tag_id"})
 
         required = {"tag_id", "pos_vec", "norm_vec", "size"}
@@ -127,7 +128,9 @@ def estimate_camera_pose(
                 np.float32,
             )
         else:
-            raise ValueError("For 'screen', provide `tag_locations_df` or `screen_size`.")
+            raise ValueError(
+                "For 'screen', provide `tag_locations_df` or `screen_size`."
+            )
     else:
         raise ValueError(f"Unsupported detection method: '{method}'")
 
@@ -161,12 +164,14 @@ def estimate_camera_pose(
                 X /= np.linalg.norm(X)
                 Y = np.cross(Z, X)
 
-                corners_3d = np.vstack([
-                    center3d + (-half)*X + (-half)*Y,
-                    center3d + ( half)*X + (-half)*Y,
-                    center3d + ( half)*X + ( half)*Y,
-                    center3d + (-half)*X + ( half)*Y,
-                ]).astype(np.float32)
+                corners_3d = np.vstack(
+                    [
+                        center3d + (-half) * X + (-half) * Y,
+                        center3d + (half) * X + (-half) * Y,
+                        center3d + (half) * X + (half) * Y,
+                        center3d + (-half) * X + (half) * Y,
+                    ]
+                ).astype(np.float32)
 
             object_pts.append(corners_3d)
             image_pts.append(corners_2d)
@@ -193,12 +198,14 @@ def estimate_camera_pose(
         R, _ = cv2.Rodrigues(r_vec)
         cam_pos = -R.T @ t_vec
 
-        results.append({
-            "frame_idx": int(frame_idx),
-            "translation_vector": t_vec.flatten(),
-            "rotation_vector": r_vec.flatten(),
-            "camera_pos": cam_pos.flatten(),
-            "method": method,
-        })
+        results.append(
+            {
+                "frame_idx": int(frame_idx),
+                "translation_vector": t_vec.flatten(),
+                "rotation_vector": r_vec.flatten(),
+                "camera_pos": cam_pos.flatten(),
+                "method": method,
+            }
+        )
 
     return pd.DataFrame(results)

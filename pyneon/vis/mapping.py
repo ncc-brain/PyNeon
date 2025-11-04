@@ -12,6 +12,7 @@ from tqdm import tqdm
 if TYPE_CHECKING:
     from ..video import SceneVideo
 
+
 def plot_frame_detections(
     video: "SceneVideo",
     detection_df: pd.DataFrame,
@@ -55,7 +56,9 @@ def plot_frame_detections(
     if frame_index is None:
         frame_index = int(random.choice(frames_with_dets))
     elif frame_index not in frames_with_dets:
-        print(f"Frame {frame_index} has no detections; available frames: {frames_with_dets[:10]} ...")
+        print(
+            f"Frame {frame_index} has no detections; available frames: {frames_with_dets[:10]} ..."
+        )
         return
 
     dets = detection_df[detection_df["frame_idx"] == frame_index]
@@ -84,20 +87,28 @@ def plot_frame_detections(
 
     for i, (_, det) in enumerate(dets.iterrows()):
         corners = np.asarray(det["corners"], dtype=np.float32).reshape(4, 2)
-        poly = Polygon(corners, closed=True, fill=False, edgecolor=colors[i], linewidth=thickness)
+        poly = Polygon(
+            corners, closed=True, fill=False, edgecolor=colors[i], linewidth=thickness
+        )
         ax.add_patch(poly)
 
         # corner dots
-        ax.scatter(corners[:, 0], corners[:, 1], s=24, c=[colors[i]]*4)
+        ax.scatter(corners[:, 0], corners[:, 1], s=24, c=[colors[i]] * 4)
 
         if show_ids:
             tag_id = det.get("tag_id", i)
             method = det.get("method", None)
             center = corners.mean(axis=0)
             label = f"ID {tag_id}" + (f" ({method})" if method else "")
-            ax.text(center[0] + 8, center[1] - 8, label,
-                    color=colors[i], fontsize=10, weight="bold",
-                    bbox=dict(boxstyle="round,pad=0.2", fc=(1, 1, 1, 0.4), ec="none"))
+            ax.text(
+                center[0] + 8,
+                center[1] - 8,
+                label,
+                color=colors[i],
+                fontsize=10,
+                weight="bold",
+                bbox=dict(boxstyle="round,pad=0.2", fc=(1, 1, 1, 0.4), ec="none"),
+            )
 
     if created_fig:
         plt.tight_layout()
@@ -175,7 +186,9 @@ def detection_overlay_video(
     height, width = fr0.shape[:2]
 
     # Build frame index range
-    nframes_total = len(getattr(video, "ts", [])) or int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    nframes_total = len(getattr(video, "ts", [])) or int(
+        video.get(cv2.CAP_PROP_FRAME_COUNT)
+    )
     start = 0 if frame_range is None else int(frame_range[0])
     end = nframes_total if frame_range is None else int(frame_range[1])
     start = max(0, start)
@@ -222,8 +235,16 @@ def detection_overlay_video(
             if draw_ids:
                 cxy = corners.mean(axis=0).astype(int)
                 label = f"{tag_id}" + (f" ({method})" if method else "")
-                cv2.putText(frame, label, (cxy[0] + 8, cxy[1] - 8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
+                cv2.putText(
+                    frame,
+                    label,
+                    (cxy[0] + 8, cxy[1] - 8),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 255, 0),
+                    2,
+                    cv2.LINE_AA,
+                )
 
             # update state
             state[tag_id] = {"last_frame": f, "corners": corners, "method": method}
@@ -254,8 +275,16 @@ def detection_overlay_video(
                 label = f"{tag_id} (age {age})"
                 if info.get("method"):
                     label = f"{tag_id}, {info['method']}, (age {age})"
-                cv2.putText(frame, label, (cxy[0] + 8, cxy[1] - 8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
+                cv2.putText(
+                    frame,
+                    label,
+                    (cxy[0] + 8, cxy[1] - 8),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    color,
+                    2,
+                    cv2.LINE_AA,
+                )
 
         writer.write(frame)
 

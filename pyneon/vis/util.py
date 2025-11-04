@@ -1,10 +1,10 @@
-
 import cv2
 import matplotlib.pyplot as plt
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ..video import SceneVideo
+
 
 def plot_frame(
     video: "SceneVideo",

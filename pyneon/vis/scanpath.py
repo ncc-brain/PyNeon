@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import cv2
@@ -9,6 +8,7 @@ from tqdm import tqdm
 
 if TYPE_CHECKING:
     from ..video import SceneVideo
+
 
 def overlay_scanpath(
     video: "SceneVideo",
@@ -159,4 +159,3 @@ def overlay_scanpath(
     out.release()
     cv2.destroyAllWindows()
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-

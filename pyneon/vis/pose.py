@@ -1,4 +1,3 @@
-
 from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
@@ -9,6 +8,7 @@ from ..stream import Stream
 
 if TYPE_CHECKING:
     from ..recording import Recording
+
 
 def overlay_detections_and_pose(
     recording: "Recording",

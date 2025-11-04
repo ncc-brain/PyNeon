@@ -119,4 +119,3 @@ def plot_distribution(
         plt.show()
 
     return fig, ax
-
