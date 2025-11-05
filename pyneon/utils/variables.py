@@ -30,8 +30,6 @@ expected_files_native = [
     "imu ps1.time",
     "imu.dtype",
     "info.json",
-    "manifest.json",
-    "manifest.json.crc",
     "Neon Scene Camera v1 ps1.mp4",
     "Neon Scene Camera v1 ps1.time",
     "Neon Sensor Module v1 ps1.mp4",
@@ -44,6 +42,8 @@ expected_files_native = [
 
 data_types = {
     # Events
+    "timestamp [ns]": "int64",
+    "start timestamp [ns]": "int64",
     "end timestamp [ns]": "int64",
     "duration [ms]": "Int64",
     # Gaze
@@ -134,9 +134,9 @@ native_to_cloud_column_map = {
     # Eye states
     "pupil_diameter_left_mm": "pupil diameter left [mm]",
     "pupil_diameter_right_mm": "pupil diameter right [mm]",
-    "eyeball_center_left_x": "eye ball center left x [mm]",
-    "eyeball_center_left_y": "eye ball center left y [mm]",
-    "eyeball_center_left_z": "eye ball center left z [mm]",
+    "eyeball_center_left_x": "eyeball center left x [mm]",
+    "eyeball_center_left_y": "eyeball center left y [mm]",
+    "eyeball_center_left_z": "eyeball center left z [mm]",
     "eyeball_center_right_x": "eyeball center right x [mm]",
     "eyeball_center_right_y": "eyeball center right y [mm]",
     "eyeball_center_right_z": "eyeball center right z [mm]",
@@ -146,10 +146,10 @@ native_to_cloud_column_map = {
     "optical_axis_right_x": "optical axis right x",
     "optical_axis_right_y": "optical axis right y",
     "optical_axis_right_z": "optical axis right z",
-    "eyelid_angle_top_left": "eyelid angle top left",
-    "eyelid_angle_bottom_left": "eyelid angle bottom left",
-    "eyelid_angle_top_right": "eyelid angle top right",
-    "eyelid_angle_bottom_right": "eyelid angle bottom right",
+    "eyelid_angle_top_left": "eyelid angle top left [rad]",
+    "eyelid_angle_bottom_left": "eyelid angle bottom left [rad]",
+    "eyelid_angle_top_right": "eyelid angle top right [rad]",
+    "eyelid_angle_bottom_right": "eyelid angle bottom right [rad]",
     "eyelid_aperture_left_mm": "eyelid aperture left [mm]",
     "eyelid_aperture_right_mm": "eyelid aperture right [mm]",
     # IMU

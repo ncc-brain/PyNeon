@@ -95,17 +95,20 @@ class Stream(BaseTabular):
     Parameters
     ----------
     data : pandas.DataFrame or pathlib.Path
-        DataFrame or path to the CSV file containing the stream data.
-        The data must be indexed by ``timestamp [ns]``.
+        DataFrame or path to the file containing the stream data
+        (`.csv` in Pupil Cloud format, or `.raw` in native format).
+        For native format, the corresponding `.time` and `.dtype` files
+        must be present in the same directory. The columns will be automatically
+        renamed to Pupil Cloud format to ensure consistency.
 
     Attributes
     ----------
     file : pathlib.Path
-        Path to the CSV file containing the stream data.
+        Path to the file(s) containing the stream data.
     data : pandas.DataFrame
-        DataFrame containing the stream data.
+        The stream data indexed by ``timestamp [ns]``.
     name : str
-        Name of the stream type.
+        Name of the stream type. Inferred from the data columns.
     sampling_freq_nominal : int or None
         Nominal sampling frequency of the stream as specified by Pupil Labs
         (https://pupil-labs.com/products/neon/specs). If not known, ``None``.
@@ -126,6 +129,14 @@ class Stream(BaseTabular):
                 )
         else:
             self.file = None
+
+        if data.index.name != "timestamp [ns]":
+            if "timestamp [ns]" in data.columns:
+                data = data.set_index("timestamp [ns]")
+            else:
+                raise ValueError("Data does not contain a valid timestamp column")
+        data.sort_index(inplace=True)
+
         super().__init__(data)
         self.name = _infer_stream_name(self.data)
         self.sampling_freq_nominal = nominal_sampling_rates.get(self.name, None)

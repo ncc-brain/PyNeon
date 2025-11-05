@@ -185,7 +185,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
         """
         if self.format == "native":
-            return Stream(self.recording_dir / "eye_state.raw")
+            return Stream(self.recording_dir / "eye_state ps1.raw")
         else:
             return Stream(self.recording_dir / "3d_eye_states.csv")
 
