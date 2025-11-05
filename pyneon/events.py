@@ -30,9 +30,9 @@ def _load_native_events_data(
         # Read event names
         with open(file_path, "r") as f:
             event_names = [line.strip() for line in f.readlines()]
-        data = pd.DataFrame({"name": event_names}, index=ts)
-        data["type"] = "recording"
-        data.index.name = "timestamp [ns]"
+        data = pd.DataFrame(
+            {"timestamp [ns]": ts, "name": event_names, "type": "recording"}
+        )
         files = [file_path, time_file]
     else:
         dtype_file = next(rec_dir.glob(f"{file_path.name[:3]}*.dtype"), None)
@@ -47,6 +47,7 @@ def _load_native_events_data(
         if "fixation" in file_path.stem:
             if type is None or type not in ["saccades", "fixations"]:
                 raise ValueError("Type ('saccades'/'fixations') must be specified")
+            idx_name = f"{type[:-1]} id"
             if type == "fixations":
                 mask = raw["event_type"] == 1
                 raw = raw[mask]
@@ -75,12 +76,14 @@ def _load_native_events_data(
                         ]
                     ]
                 ]
-        # Get all column names from raw
-        data = (
-            pd.DataFrame(raw)
-            .rename(columns={"start_timestamp_ns": "start timestamp [ns]"})
-            .set_index("start timestamp [ns]")
-        )
+        elif "blink" in file_path.stem:
+            idx_name = "blink id"
+        # Reset index to count events
+        data = pd.DataFrame(raw)
+
+        # Drop "event_type" column if exists
+        if "event_type" in data.columns:
+            data.drop(columns=["event_type"], inplace=True)
 
         # Rename columns to cloud format
         not_renamed_columns = set(data.columns) - set(native_to_cloud_column_map.keys())
@@ -92,11 +95,14 @@ def _load_native_events_data(
                 UserWarning,
             )
         data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
+        
+        # Add event ID column
+        data[idx_name] = np.arange(len(data))
 
     return data, files
 
 
-def _infer_events_name(data: pd.DataFrame) -> str:
+def _infer_events_name_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
     """
     Infer events name based on presence of specific columns.
     If multiple or no matches found, return "custom".
@@ -107,14 +113,21 @@ def _infer_events_name(data: pd.DataFrame) -> str:
         "fixation id": "fixations",
         "name": "events",
     }
+    reverse_map = {v: k for k, v in col_map.items()}
+    
+    # Find all matching event types in the dataframe
     names = {col_map[c] for c in data.columns if c in col_map}
-    return names.pop() if len(names) == 1 else "custom"
+    if len(names) != 1:
+        # None or more than one match → custom event type
+        return "custom", None
+    name = names.pop()
+    id_name = None if name == "events" else reverse_map[name]
+    return name, id_name
 
 
 class Events(BaseTabular):
     """
-    Base for event data (blinks, fixations, saccades, "events" messages).
-    Timestamped by ``start timestamp [ns]`` or ``timestamp [ns]``.
+    Base for events data (blinks, fixations, saccades, "events" messages).
 
     Parameters
     ----------
@@ -151,7 +164,7 @@ class Events(BaseTabular):
         else:
             self.file = None
         super().__init__(data)
-        self.name = _infer_events_name(self.data)
+        self.name, self.id_name = _infer_events_name_and_id(self.data)
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event series by index."""
@@ -160,7 +173,12 @@ class Events(BaseTabular):
     @property
     def start_ts(self) -> np.ndarray:
         """Start timestamps of events in nanoseconds.."""
-        return self.data.index.to_numpy()
+        if self.name == "events":
+            return self.data["timestamp [ns]"].to_numpy()
+        if "start timestamp [ns]" in self.data.columns:
+            return self.data["start timestamp [ns]"].to_numpy()
+        else:
+            raise ValueError("No `start timestamp [ns]` column found in the instance.")
 
     @property
     def end_ts(self) -> Optional[np.ndarray]:
@@ -168,7 +186,7 @@ class Events(BaseTabular):
         if "end timestamp [ns]" in self.data.columns:
             return self.data["end timestamp [ns]"].to_numpy()
         else:
-            raise ValueError("No 'end timestamp [ns]' column found in the instance.")
+            raise ValueError("No `end timestamp [ns]` column found in the instance.")
 
     @property
     def durations(self) -> Optional[np.ndarray]:
@@ -176,7 +194,7 @@ class Events(BaseTabular):
         if "duration [ms]" in self.data.columns:
             return self.data["duration [ms]"].to_numpy()
         else:
-            raise ValueError("No 'duration [ms]' column found in the instance.")
+            raise ValueError("No `duration [ms]` column found in the instance.")
 
     @property
     def id(self) -> Optional[np.ndarray]:
@@ -184,7 +202,7 @@ class Events(BaseTabular):
         if self.id_name in self.data.columns and self.id_name is not None:
             return self.data[self.id_name].to_numpy()
         else:
-            raise ValueError("No event ID column found in the instance.")
+            raise ValueError("No ID column (e.g., `<xxx> id`) found in the instance.")
 
     def crop(
         self,
@@ -253,3 +271,33 @@ class Events(BaseTabular):
             other.first_ts, other.last_ts, by="timestamp", inplace=inplace
         )
         return new_events
+
+    def filter_by_duration(
+        self,
+        dur_min: Optional[Number] = None,
+        dur_max: Optional[Number] = None,
+        reset_id: bool = True,
+        inplace: bool = False,
+    ) -> Optional["Events"]:
+        if dur_min is None and dur_max is None:
+            raise ValueError("At least one of dur_min or dur_max must be provided")
+        dur_min = dur_min if dur_min is not None else self.durations.min()
+        dur_max = dur_max if dur_max is not None else self.durations.max()
+        mask = (self.durations >= dur_min) & (self.durations <= dur_max)
+        if not mask.any():
+            raise ValueError("No data found in the specified duration range")
+        new_data = self.data[mask].copy()
+        if reset_id:
+            if self.id_name is not None:
+                new_data[self.id_name] = np.arange(len(new_data))
+                new_data.reset_index(drop=True, inplace=True)
+            else:
+                raise KeyError(
+                    "Cannot reset event IDs as no event ID column is known for this instance."
+                )
+        if inplace:
+            self.data = new_data
+        else:
+            new_events = copy.copy(self)
+            new_events.data = new_data
+            return new_events

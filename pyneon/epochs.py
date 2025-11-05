@@ -493,8 +493,8 @@ def events_to_times_df(
     pandas.DataFrame
         DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
     """
-    if events.event_name in ["blinks", "fixations", "saccades"]:
-        description = events.event_name[:-1]  # Remove the 's' at the end
+    if events.name in ["blinks", "fixations", "saccades"]:
+        description = events.name[:-1]  # Remove the 's' at the end
         t_ref = events.start_ts
     else:
         if "name" not in events.data.columns:

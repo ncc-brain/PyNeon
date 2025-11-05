@@ -6,9 +6,8 @@ from .utils import data_types
 
 class BaseTabular:
     """
-    Base for Neon tabular data. It reads from a CSV file and stores the data
-    as a pandas DataFrame (with section and recording IDs removed). The `timestamp [ns]`
-    (for streams) or `start timestamp [ns]` (for events) column is set as the index.
+    Base for Neon tabular data. It takes a Pandas DataFrame, strips unnecessary
+    columns (section and recording IDs), and sets the correct data types for known columns.
 
     Parameters
     ----------
@@ -18,7 +17,7 @@ class BaseTabular:
     Attributes
     ----------
     data : pandas.DataFrame
-        The processed data with the timestamp index.
+        The processed data.
     """
 
     def __init__(self, data: pd.DataFrame):
@@ -28,32 +27,12 @@ class BaseTabular:
         if "recording id" in data.columns:
             if data["recording id"].nunique() > 1:
                 raise ValueError("Data contains multiple recording IDs")
-            data = data.drop(columns=["recording id"])
+            data.drop(columns=["recording id"], inplace=True)
 
         if "section id" in data.columns:
             if data["section id"].nunique() > 1:
                 raise ValueError("Data contains multiple section IDs")
-            data = data.drop(columns=["section id"])
-
-        # Set the timestamp column as the index if not already
-        valid_index_names = {"timestamp [ns]", "start timestamp [ns]"}
-        if data.index.name not in valid_index_names:
-            valid = False
-            for col in valid_index_names:
-                if col in data.columns:
-                    data = data.set_index(col)
-                    valid = True
-                    break
-            if not valid:
-                raise ValueError("Data does not contain a valid timestamp column")
-
-        # Ensure the index is of integer type and sorted
-        if not pd.api.types.is_integer_dtype(data.index.dtype):
-            raise ValueError(
-                "Data index must be in UTC time in ns and thus convertible to int64"
-            )
-        else:
-            data.index = data.index.astype("int64")
+            data.drop(columns=["section id"], inplace=True)
 
         # Set data types
         unknown_cols = []
@@ -68,7 +47,6 @@ class BaseTabular:
                 f"{', '.join(unknown_cols)}"
             )
 
-        data = data.sort_index()
         self.data = data
 
     def __len__(self) -> int:
