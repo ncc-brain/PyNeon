@@ -95,7 +95,7 @@ def _load_native_events_data(
                 UserWarning,
             )
         data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
-        
+
         # Add event ID column
         data[idx_name] = np.arange(len(data))
 
@@ -114,7 +114,7 @@ def _infer_events_name_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
         "name": "events",
     }
     reverse_map = {v: k for k, v in col_map.items()}
-    
+
     # Find all matching event types in the dataframe
     names = {col_map[c] for c in data.columns if c in col_map}
     if len(names) != 1:
