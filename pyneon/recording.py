@@ -485,7 +485,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             df = pd.read_pickle(scanpath_path)
             if df.empty:
                 raise ValueError("Scanpath data is empty.")
-            return Stream(df, sampling_freq_nominal=int(self.scene_video.fps))
+            return Stream(df)
 
         if sync_gaze is None:
             sync_gaze = self.sync_gaze_to_video()
