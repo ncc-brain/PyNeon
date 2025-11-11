@@ -288,7 +288,7 @@ class Epochs:
         baseline: tuple[Number | None, Number | None] = (None, 0),
         method: str = "mean",
         inplace: bool = True,
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """
         Perform baseline correction on epochs.
 
@@ -388,8 +388,8 @@ class Epochs:
             epochs_copy = self.epochs
             data_copy = self.data
         else:
-            epochs_copy = self.epochs.copy(deep=True)
-            data_copy = self.data.copy(deep=True)
+            epochs_copy = self.epochs.copy()
+            data_copy = self.data.copy()
 
         for idx, row in epochs_copy.iterrows():
             epoch_df: pd.DataFrame = row["data"]
@@ -401,9 +401,7 @@ class Epochs:
                 mask = data_copy["epoch index"] == idx
                 data_copy.loc[mask, chan_cols] = epoch_df[chan_cols].to_numpy()
 
-        if inplace:
-            return self.data  # type: ignore[return-value]
-        else:
+        if not inplace:
             return data_copy
 
 
