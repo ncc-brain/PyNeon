@@ -219,9 +219,9 @@ class Epochs:
         info : dict
             A dictionary containing:
 
-                ``"column_ids"``: List of provided column names.\n
-                ``"t_rel"``: The common time grid, in nanoseconds.\n
-                ``"nan_flag"``: Boolean indicating whether NaN values were found in the data.
+                "column_ids": List of provided column names.\n
+                "t_rel": The common time grid, in nanoseconds.\n
+                "nan_flag": Boolean indicating whether NaN values were found in the data.
 
         Notes
         -----
@@ -300,8 +300,8 @@ class Epochs:
             up to the last sample".  Default: (None, 0.0) -> the pre-trigger
             part of each epoch.
         method : "mean" or "linear", optional
-            * ``"mean"`` - Subtract the scalar mean of the baseline window.
-            * ``"linear"`` - Fit a first-order (:math:`y = at + b`) model *within* the
+            * "mean" - Subtract the scalar mean of the baseline window.
+            * "linear" - Fit a first-order (:math:`y = at + b`) model *within* the
               baseline window and remove the fitted trend from the entire
               epoch (a very small, fast version of MNE's regression detrending).
 
@@ -480,11 +480,11 @@ def events_to_times_df(
         Time after the event start time to end the epoch. Units specified by ``t_unit``.
     t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``.
-        Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"s"``.
+        Can be "s", "ms", "us", or "ns". Default is "s".
     event_name : str or list of str, optional
         Only used if ``events`` includes more than one event type.
-        If ``"all"``, all events are used. Otherwise, the ``name`` column is used to filter events
-        whose names are in the list. Default to ``"all"``.
+        If "all", all events are used. Otherwise, the ``name`` column is used to filter events
+        whose names are in the list. Default to "all".
 
     Returns
     -------
@@ -556,10 +556,10 @@ def construct_times_df(
         equal length as ``t_ref`` or a single string (to be repeated for all epochs).
     t_ref_unit : str, optional
         Unit of time for ``t_ref``.
-        Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"ns"``.
+        Can be "s", "ms", "us", or "ns". Default is "ns".
     t_other_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``.
-        Can be ``"s"``, ``"ms"``, ``"us"``, or ``"ns"``. Default is ``"s"``.
+        Can be "s", "ms", "us", or "ns". Default is "s".
     global_t_ref : int, optional
         Global reference time (in nanoseconds) to be added to `t_ref`.
         Unit is nanosecond. Defaults to 0. This is useful when the reference times

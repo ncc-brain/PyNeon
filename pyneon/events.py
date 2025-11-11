@@ -6,7 +6,6 @@ from numbers import Number
 from typing import TYPE_CHECKING, Literal, Optional
 from ast import literal_eval
 from warnings import warn
-import copy
 
 from .utils import native_to_cloud_column_map
 
@@ -108,7 +107,7 @@ def _load_native_events_data(
     return data, files
 
 
-def _infer_events_name_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
+def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
     """
     Infer event type based on presence of specific columns.
     If multiple or no matches found, return "custom".
@@ -139,14 +138,14 @@ class Events(BaseTabular):
     ----------
     data : pandas.DataFrame or pathlib.Path
         DataFrame or path to the file containing the events data
-        (``.csv`` in Pupil Cloud format, or ``.raw``/``.txt`` in native format).
-        For native format, the corresponding files (e.g., `.time` and `.dtype`)
+        (.csv in Pupil Cloud format, or .raw/.txt in native format).
+        For native format, the corresponding files (e.g., .time and .dtype)
         must be present in the same directory. The columns will be automatically
         renamed to Pupil Cloud format to ensure consistency.
     type : str, optional
         Type of events when loading fixations or saccades from native format.
         Only needed when ``data`` is a path to a native "fixations ps1.raw"
-        file. Must be one of ``"fixations"`` or ``"saccades"``.
+        file. Must be one of "fixations" or "saccades".
 
     Attributes
     ----------
@@ -155,12 +154,12 @@ class Events(BaseTabular):
     data : pandas.DataFrame
         DataFrame containing the event data.
     type : str, optional
-        Event type. One of ``"blinks"``, ``"fixations"``, ``"saccades"``,
-        ``"events"``, or ``"custom"``. Inferred from the data columns.
+        Event type. One of "blinks", "fixations", "saccades",
+        "events", or "custom". Inferred from the data columns.
     id_name : str, optional
-        Name of the column containing the event ID. One of ``"blink id"``,
-        ``"fixation id"``, ``"saccade id"``, or ``None`` for Events of type
-        ``"events"`` and ``"custom"``.
+        Name of the column containing the event ID. One of "blink id",
+        "fixation id", "saccade id", or ``None`` for Events of type
+        "events" and "custom".
     """
 
     def __init__(self, data: pd.DataFrame | Path, type: Optional[str] = None):
@@ -175,7 +174,7 @@ class Events(BaseTabular):
         else:
             self.file = None
         super().__init__(data)
-        self.type, self.id_name = _infer_events_name_and_id(self.data)
+        self.type, self.id_name = _infer_events_type_and_id(self.data)
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event series by index."""

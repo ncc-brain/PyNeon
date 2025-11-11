@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from numbers import Number
 from typing import Literal, Optional, TYPE_CHECKING
-import copy
 from warnings import warn
 from ast import literal_eval
 
@@ -96,8 +95,8 @@ class Stream(BaseTabular):
     ----------
     data : pandas.DataFrame or pathlib.Path
         DataFrame or path to the file containing the stream data
-        (`.csv` in Pupil Cloud format, or `.raw` in native format).
-        For native format, the corresponding `.time` and `.dtype` files
+        (.csv in Pupil Cloud format, or .raw in native format).
+        For native format, the corresponding .time and .dtype files
         must be present in the same directory. The columns will be automatically
         renamed to Pupil Cloud format to ensure consistency.
 
@@ -108,12 +107,12 @@ class Stream(BaseTabular):
     data : pandas.DataFrame
         The stream data indexed by ``timestamp [ns]``.
     type : str
-        Type of the stream. One of ``"gaze"``, ``"eye_states"``, ``"imu"``,
-        or ``"custom"``. Inferred from the data columns.
+        Type of the stream. One of "gaze", "eye_states", "imu",
+        or "custom". Inferred from the data columns.
     sampling_freq_nominal : int or None
         Nominal sampling frequency of the stream as specified by Pupil Labs
         (https://pupil-labs.com/products/neon/specs). If the stream type is
-        ``"custom"``, this attribute is ``None``.
+        "custom", this attribute is ``None``.
     """
 
     def __init__(self, data: pd.DataFrame | Path):
@@ -291,11 +290,11 @@ class Stream(BaseTabular):
         float_kind : str, optional
             Kind of interpolation applied on columns of ``float`` type,
             For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to ``"linear"``.
+            Defaults to "linear".
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
             For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to ``"nearest"``.
+            Defaults to "nearest".
         inplace : bool, optional
             Whether to replace the data in the object with the interpolated data.
             Defaults to False.
@@ -367,11 +366,11 @@ class Stream(BaseTabular):
         float_kind : str, optional
             Kind of interpolation applied on columns of ``float`` type,
             For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to ``"linear"``.
+            Defaults to "linear".
         other_kind : str, optional
             Kind of interpolation applied on columns of other types,
             For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to ``"nearest"``.
+            Defaults to "nearest".
         inplace : bool, optional
             Whether to replace the data in the object with the interpolated data.
             Defaults to False.
