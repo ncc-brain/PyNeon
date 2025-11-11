@@ -321,9 +321,11 @@ class Events(BaseTabular):
                 inst.data[self.id_name] = np.arange(len(inst.data)) + 1
                 inst.data.reset_index(drop=True, inplace=True)
                 # Only reset index if it's not already a default RangeIndex
-                if not (isinstance(inst.data.index, pd.RangeIndex) and
-                        inst.data.index.start == 0 and
-                        inst.data.index.step == 1):
+                if not (
+                    isinstance(inst.data.index, pd.RangeIndex)
+                    and inst.data.index.start == 0
+                    and inst.data.index.step == 1
+                ):
                     inst.data.reset_index(drop=True, inplace=True)
                 raise KeyError(
                     "Cannot reset event IDs as no event ID column is known for this instance."
