@@ -318,8 +318,7 @@ class Stream(BaseTabular):
 
         inst = self if inplace else self.copy()
         inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
-        if not inplace:
-            return inst
+        return None if inplace else inst
 
     def annotate_events(
         self, events: "Events", inplace: bool = False
@@ -336,9 +335,7 @@ class Stream(BaseTabular):
                 inst.data.index <= event["end timestamp [ns]"]
             )
             inst.data.loc[mask, id_name] = int(event[id_name])
-
-        if not inplace:
-            return inst
+        return None if inplace else inst
 
     def interpolate_events(
         self,
@@ -388,8 +385,7 @@ class Stream(BaseTabular):
             float_kind=float_kind,
             other_kind=other_kind,
         )
-        if not inplace:
-            return inst
+        return None if inplace else inst
 
     def window_average(
         self,
@@ -427,5 +423,4 @@ class Stream(BaseTabular):
         """
         inst = self if inplace else self.copy()
         inst.data = window_average(new_ts, self.data, window_size)
-        if not inplace:
-            return inst
+        return None if inplace else inst

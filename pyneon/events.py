@@ -258,8 +258,7 @@ class Events(BaseTabular):
             raise ValueError("No data found in the specified time range")
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
-        if not inplace:
-            return inst
+        return None if inplace else inst
 
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
@@ -297,7 +296,8 @@ class Events(BaseTabular):
             Maximum duration (in milliseconds) of events to keep.
             If ``None``, no maximum duration filter is applied. Defaults to ``None``.
         reset_id : bool, optional
-            Whether to reset event IDs after filtering. Defaults to ``True``.
+            Whether to reset event IDs after filtering. Also resets the DataFrame index.
+            Defaults to ``True``.
         inplace : bool, optional
             Whether to replace the data in the object with the filtered data.
             Defaults to False.
@@ -320,9 +320,12 @@ class Events(BaseTabular):
             if self.id_name is not None:
                 inst.data[self.id_name] = np.arange(len(inst.data)) + 1
                 inst.data.reset_index(drop=True, inplace=True)
-            else:
+                # Only reset index if it's not already a default RangeIndex
+                if not (isinstance(inst.data.index, pd.RangeIndex) and
+                        inst.data.index.start == 0 and
+                        inst.data.index.step == 1):
+                    inst.data.reset_index(drop=True, inplace=True)
                 raise KeyError(
                     "Cannot reset event IDs as no event ID column is known for this instance."
                 )
-        if not inplace:
-            return inst
+        return None if inplace else inst
