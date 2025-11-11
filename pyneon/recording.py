@@ -846,7 +846,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             df = df.set_index("timestamp [ns]")
             if df.empty:
                 raise ValueError("Camera pose data is empty.")
-            return Stream(df, sampling_freq_nominal=int(self.scene_video.fps))
+            return Stream(df)
 
         # ------------------------------------------------------------------ prerequisites
         req = {"tag_id", "pos_vec", "norm_vec", "size"}
