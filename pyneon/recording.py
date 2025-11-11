@@ -319,7 +319,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional "type" column denotes the event
         type. If ``events`` is selected, its "timestamp [ns]" column will be
-        renamed to "start timestamp [ns]", and the "name`` and "type" columns will
+        renamed to "start timestamp [ns]", and the "name" and "type" columns will
         be renamed to "message name" and "message type" respectively to provide
         a more readable output.
 
@@ -500,7 +500,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         # ------------------------------------------------------------------ save
         scanpath_df.to_pickle(scanpath_path)
 
-        return Stream(scanpath_df, sampling_freq_nominal=int(self.scene_video.fps))
+        return Stream(scanpath_df)
 
     def detect_apriltags(
         self,
