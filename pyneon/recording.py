@@ -221,6 +221,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         or ``None`` if no corresponding file is present.
         """
         if self.format == "native":
+            # Note: In the native format, both fixations and saccades are stored in 'fixations ps1.raw'.
+            # The event type argument ("saccades") is used to distinguish which events to load.
             return Events(self.recording_dir / "fixations ps1.raw", "saccades")
         else:
             return Events(self.recording_dir / "saccades.csv")
@@ -483,7 +485,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             df = pd.read_pickle(scanpath_path)
             if df.empty:
                 raise ValueError("Scanpath data is empty.")
-            return Stream(df, sampling_freq_nominal=int(self.scene_video.fps))
+            return Stream(df)
 
         if sync_gaze is None:
             sync_gaze = self.sync_gaze_to_video()
@@ -844,7 +846,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             df = df.set_index("timestamp [ns]")
             if df.empty:
                 raise ValueError("Camera pose data is empty.")
-            return Stream(df, sampling_freq_nominal=int(self.scene_video.fps))
+            return Stream(df)
 
         # ------------------------------------------------------------------ prerequisites
         req = {"tag_id", "pos_vec", "norm_vec", "size"}
