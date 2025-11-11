@@ -5,6 +5,9 @@ tests/outputs/
 # Ruff
 .ruff_cache/
 
+# VS Code
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
