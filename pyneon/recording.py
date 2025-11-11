@@ -221,6 +221,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         or ``None`` if no corresponding file is present.
         """
         if self.format == "native":
+            # Note: In the native format, both fixations and saccades are stored in 'fixations ps1.raw'.
+            # The event type argument ("saccades") is used to distinguish which events to load.
             return Events(self.recording_dir / "fixations ps1.raw", "saccades")
         else:
             return Events(self.recording_dir / "saccades.csv")
