@@ -97,14 +97,20 @@ def _load_native_events_data(
         data.rename(columns=native_to_cloud_column_map, errors="ignore", inplace=True)
 
         # Add event ID column
-        data[idx_name] = np.arange(len(data))
+        data[idx_name] = np.arange(len(data)) + 1
+
+        # Add duration column
+        durations = (
+            data["end timestamp [ns]"] - data["start timestamp [ns]"]
+        ) // 1_000_000
+        data["duration [ms]"] = durations.astype("int64")
 
     return data, files
 
 
 def _infer_events_name_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
     """
-    Infer events name based on presence of specific columns.
+    Infer event type based on presence of specific columns.
     If multiple or no matches found, return "custom".
     """
     col_map = {
@@ -116,13 +122,13 @@ def _infer_events_name_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
     reverse_map = {v: k for k, v in col_map.items()}
 
     # Find all matching event types in the dataframe
-    names = {col_map[c] for c in data.columns if c in col_map}
-    if len(names) != 1:
+    types = {col_map[c] for c in data.columns if c in col_map}
+    if len(types) != 1:
         # None or more than one match → custom event type
         return "custom", None
-    name = names.pop()
-    id_name = None if name == "events" else reverse_map[name]
-    return name, id_name
+    type = types.pop()
+    id_name = None if type == "events" else reverse_map[type]
+    return type, id_name
 
 
 class Events(BaseTabular):
@@ -132,13 +138,15 @@ class Events(BaseTabular):
     Parameters
     ----------
     data : pandas.DataFrame or pathlib.Path
-        DataFrame or path to the CSV file containing the stream data.
-        The data must be indexed by ``timestamp [ns]``.
-    name : str, optional
-        Name of the event type. Defaults to "custom".
-    id_name : str, optional
-        Name of the column containing the event ID. Defaults to None.
-        If None, the event ID is not included in the data.
+        DataFrame or path to the file containing the events data
+        (``.csv`` in Pupil Cloud format, or ``.raw``/``.txt`` in native format).
+        For native format, the corresponding files (e.g., `.time` and `.dtype`)
+        must be present in the same directory. The columns will be automatically
+        renamed to Pupil Cloud format to ensure consistency.
+    type : str, optional
+        Type of events when loading fixations or saccades from native format.
+        Only needed when ``data`` is a path to a native "fixations ps1.raw"
+        file. Must be one of ``"fixations"`` or ``"saccades"``.
 
     Attributes
     ----------
@@ -146,10 +154,13 @@ class Events(BaseTabular):
         Path to the CSV file containing the event data.
     data : pandas.DataFrame
         DataFrame containing the event data.
-    name : str
-        Name of the event type.
-    id_name : str
-        Name of the column containing the event ID.
+    type : str, optional
+        Event type. One of ``"blinks"``, ``"fixations"``, ``"saccades"``,
+        ``"events"``, or ``"custom"``. Inferred from the data columns.
+    id_name : str, optional
+        Name of the column containing the event ID. One of ``"blink id"``,
+        ``"fixation id"``, ``"saccade id"``, or ``None`` for Events of type
+        ``"events"`` and ``"custom"``.
     """
 
     def __init__(self, data: pd.DataFrame | Path, type: Optional[str] = None):
@@ -164,7 +175,7 @@ class Events(BaseTabular):
         else:
             self.file = None
         super().__init__(data)
-        self.name, self.id_name = _infer_events_name_and_id(self.data)
+        self.type, self.id_name = _infer_events_name_and_id(self.data)
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event series by index."""
@@ -173,7 +184,7 @@ class Events(BaseTabular):
     @property
     def start_ts(self) -> np.ndarray:
         """Start timestamps of events in nanoseconds.."""
-        if self.name == "events":
+        if self.type == "events":
             return self.data["timestamp [ns]"].to_numpy()
         if "start timestamp [ns]" in self.data.columns:
             return self.data["start timestamp [ns]"].to_numpy()
@@ -246,16 +257,15 @@ class Events(BaseTabular):
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
-        if inplace:
-            self.data = self.data[mask].copy()
-        else:
-            new_events = copy.copy(self)
-            new_events.data = self.data[mask].copy()
-            return new_events
+        inst = self if inplace else self.copy()
+        inst.data = self.data[mask].copy()
+        if not inplace:
+            return inst
 
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
-        Restrict events to a time range defined by another stream.
+        Restrict events to the time range of a stream.
+        Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
@@ -264,13 +274,10 @@ class Events(BaseTabular):
 
         Returns
         -------
-        Events
-            Restricted event data.
+        Events or None
+            Restricted event data if ``inplace=False``, otherwise ``None``.
         """
-        new_events = self.crop(
-            other.first_ts, other.last_ts, by="timestamp", inplace=inplace
-        )
-        return new_events
+        return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
     def filter_by_duration(
         self,
@@ -279,6 +286,28 @@ class Events(BaseTabular):
         reset_id: bool = True,
         inplace: bool = False,
     ) -> Optional["Events"]:
+        """
+        Filter events by their durations. Useful for removing very short or long events.
+
+        Parameters
+        ----------
+        dur_min : number, optional
+            Minimum duration (in milliseconds) of events to keep.
+            If ``None``, no minimum duration filter is applied. Defaults to ``None``.
+        dur_max : number, optional
+            Maximum duration (in milliseconds) of events to keep.
+            If ``None``, no maximum duration filter is applied. Defaults to ``None``.
+        reset_id : bool, optional
+            Whether to reset event IDs after filtering. Defaults to ``True``.
+        inplace : bool, optional
+            Whether to replace the data in the object with the filtered data.
+            Defaults to False.
+
+        Returns
+        -------
+        Events or None
+            Filtered event data if ``inplace=False``, otherwise ``None``.
+        """
         if dur_min is None and dur_max is None:
             raise ValueError("At least one of dur_min or dur_max must be provided")
         dur_min = dur_min if dur_min is not None else self.durations.min()
@@ -286,18 +315,15 @@ class Events(BaseTabular):
         mask = (self.durations >= dur_min) & (self.durations <= dur_max)
         if not mask.any():
             raise ValueError("No data found in the specified duration range")
-        new_data = self.data[mask].copy()
+        inst = self if inplace else self.copy()
+        inst.data = self.data[mask].copy()
         if reset_id:
             if self.id_name is not None:
-                new_data[self.id_name] = np.arange(len(new_data))
-                new_data.reset_index(drop=True, inplace=True)
+                inst.data[self.id_name] = np.arange(len(inst.data)) + 1
+                inst.data.reset_index(drop=True, inplace=True)
             else:
                 raise KeyError(
                     "Cannot reset event IDs as no event ID column is known for this instance."
                 )
-        if inplace:
-            self.data = new_data
-        else:
-            new_events = copy.copy(self)
-            new_events.data = new_data
-            return new_events
+        if not inplace:
+            return inst

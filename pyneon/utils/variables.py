@@ -1,4 +1,4 @@
-nominal_sampling_rates = {"gaze": 100, "imu": 110, "eye_states": 200}
+nominal_sampling_rates = {"gaze": 200, "eye_states": 200, "imu": 110}
 
 expected_files_cloud = [
     "3d_eye_states.csv",

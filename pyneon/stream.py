@@ -73,9 +73,9 @@ def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
     return data, files
 
 
-def _infer_stream_name(data: pd.DataFrame) -> str:
+def _infer_stream_type(data: pd.DataFrame) -> str:
     """
-    Infer stream name based on presence of specific columns.
+    Infer stream type based on presence of specific columns.
     If multiple or no matches found, return "custom".
     """
     col_map = {
@@ -83,8 +83,8 @@ def _infer_stream_name(data: pd.DataFrame) -> str:
         "pupil diameter left [mm]": "eye_states",
         "gyro x [deg/s]": "imu",
     }
-    names = {col_map[c] for c in data.columns if c in col_map}
-    return names.pop() if len(names) == 1 else "custom"
+    types = {col_map[c] for c in data.columns if c in col_map}
+    return types.pop() if len(types) == 1 else "custom"
 
 
 class Stream(BaseTabular):
@@ -107,11 +107,13 @@ class Stream(BaseTabular):
         Path to the file(s) containing the stream data.
     data : pandas.DataFrame
         The stream data indexed by ``timestamp [ns]``.
-    name : str
-        Name of the stream type. Inferred from the data columns.
+    type : str
+        Type of the stream. One of ``"gaze"``, ``"eye_states"``, ``"imu"``,
+        or ``"custom"``. Inferred from the data columns.
     sampling_freq_nominal : int or None
         Nominal sampling frequency of the stream as specified by Pupil Labs
-        (https://pupil-labs.com/products/neon/specs). If not known, ``None``.
+        (https://pupil-labs.com/products/neon/specs). If the stream type is
+        ``"custom"``, this attribute is ``None``.
     """
 
     def __init__(self, data: pd.DataFrame | Path):
@@ -138,8 +140,8 @@ class Stream(BaseTabular):
         data.sort_index(inplace=True)
 
         super().__init__(data)
-        self.name = _infer_stream_name(self.data)
-        self.sampling_freq_nominal = nominal_sampling_rates.get(self.name, None)
+        self.type = _infer_stream_type(self.data)
+        self.sampling_freq_nominal = nominal_sampling_rates.get(self.type, None)
 
     def __getitem__(self, index: str) -> pd.Series:
         if index not in self.data.columns:
@@ -153,7 +155,7 @@ class Stream(BaseTabular):
 
     @property
     def ts(self) -> np.ndarray:
-        """Alias for timestamps."""
+        """Alias for ``timestamps``."""
         return self.timestamps
 
     @property
@@ -241,12 +243,10 @@ class Stream(BaseTabular):
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
-        if inplace:
-            self.data = self.data[mask].copy()
-        else:
-            new_stream = copy.copy(self)
-            new_stream.data = self.data[mask].copy()
-            return new_stream
+        inst = self if inplace else self.copy()
+        inst.data = self.data[mask].copy()
+        if not inplace:
+            return inst
 
     def restrict(
         self,
@@ -269,10 +269,7 @@ class Stream(BaseTabular):
         Stream or None
             Restricted stream if ``inplace=False``, otherwise ``None``.
         """
-        new_stream = self.crop(
-            other.first_ts, other.last_ts, by="timestamp", inplace=inplace
-        )
-        return new_stream
+        return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
     def interpolate(
         self,
@@ -320,19 +317,29 @@ class Stream(BaseTabular):
             assert new_ts[0] == self.first_ts
             assert np.allclose(np.diff(new_ts), step_size)
 
-        new_data = interpolate(new_ts, self.data, float_kind, other_kind)
-        if inplace:
-            self.data = new_data
-        else:
-            new_instance = copy.copy(self)
-            new_instance.data = new_data
-            return new_instance
+        inst = self if inplace else self.copy()
+        inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
+        if not inplace:
+            return inst
 
     def annotate_events(
-        self,
-        events: "Events",
-    ):
-        pass
+        self, events: "Events", inplace: bool = False
+    ) -> Optional["Stream"]:
+        id_name = events.id_name
+        inst = self if inplace else self.copy()
+
+        # Initialize nullable integer column
+        inst.data[id_name] = pd.Series(pd.NA, dtype="Int64")
+
+        # Annotate
+        for _, event in events.data.iterrows():
+            mask = (inst.data.index >= event["start timestamp [ns]"]) & (
+                inst.data.index <= event["end timestamp [ns]"]
+            )
+            inst.data.loc[mask, id_name] = int(event[id_name])
+
+        if not inplace:
+            return inst
 
     def interpolate_events(
         self,
@@ -374,19 +381,16 @@ class Stream(BaseTabular):
         Stream or None
             Interpolated stream if ``inplace=False``, otherwise ``None``.
         """
-        new_data = interpolate_events(
+        inst = self if inplace else self.copy()
+        inst.data = interpolate_events(
             self.data,
             events,
             buffer,
             float_kind=float_kind,
             other_kind=other_kind,
         )
-        if inplace:
-            self.data = new_data
-        else:
-            new_instance = copy.copy(self)
-            new_instance.data = new_data
-            return new_instance
+        if not inplace:
+            return inst
 
     def window_average(
         self,
@@ -422,10 +426,7 @@ class Stream(BaseTabular):
         Stream or None
             Stream with window average applied on data if ``inplace=False``, otherwise ``None``.
         """
-        new_data = window_average(new_ts, self.data, window_size)
-        if inplace:
-            self.data = new_data
-        else:
-            new_instance = copy.copy(self)
-            new_instance.data = new_data
-            return new_instance
+        inst = self if inplace else self.copy()
+        inst.data = window_average(new_ts, self.data, window_size)
+        if not inplace:
+            return inst

@@ -65,3 +65,9 @@ class BaseTabular:
     def dtypes(self) -> pd.Series:
         """Data types of the columns in the stream data."""
         return self.data.dtypes
+
+    def copy(self) -> "BaseTabular":
+        """Create a deep copy of the instance."""
+        import copy as _copy
+
+        return _copy.deepcopy(self)
