@@ -57,6 +57,7 @@ class Recording:
     Example native Pupil Labs recording directory structure:
 
     .. code-block:: text
+
         recording_dir/
         ├── blinks ps1.raw
         ├── blinks ps1.time
