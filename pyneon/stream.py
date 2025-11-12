@@ -88,47 +88,69 @@ def _infer_stream_type(data: pd.DataFrame) -> str:
 
 class Stream(BaseTabular):
     """
-    Base for a continuous data stream (gaze, eye states, IMU).
-    Indexed by ``timestamp [ns]``.
+    Container for continuous data streams (gaze, eye states, IMU).
+
+    Data is indexed by timestamps in nanoseconds.
 
     Parameters
     ----------
-    data : pandas.DataFrame or pathlib.Path
-        DataFrame or path to the file containing the stream data
-        (.csv in Pupil Cloud format, or .raw in native format).
-        For native format, the corresponding .time and .dtype files
-        must be present in the same directory. The columns will be automatically
-        renamed to Pupil Cloud format to ensure consistency.
+    source : pandas.DataFrame or pathlib.Path
+        Source of the stream data. Can be either:
+
+        * :class:`pandas.DataFrame`: Must contain a ``timestamp [ns]`` column or index.
+        * :class:`pathlib.Path`: File path to load stream data from. Supported formats:
+
+          - ``.csv``: Pupil Cloud format CSV file
+          - ``.raw``: Native format (requires ``.time`` and ``.dtype``
+            files in the same directory)
+
+        Note: Native format columns are automatically renamed to Pupil Cloud
+        format for consistency. For example, ``gyro_x`` -> ``gyro x [deg/s]``.
 
     Attributes
     ----------
-    file : pathlib.Path
-        Path to the file(s) containing the stream data.
+    file : pathlib.Path or None
+        Path to the source file(s). ``None`` if initialized from DataFrame.
     data : pandas.DataFrame
-        The stream data indexed by ``timestamp [ns]``.
-    type : str
-        Type of the stream. One of "gaze", "eye_states", "imu",
-        or "custom". Inferred from the data columns.
+        Stream data with ``timestamp [ns]`` as index.
+    type : {"gaze", "eye_states", "imu", "custom"}
+        Inferred stream type based on data columns.
     sampling_freq_nominal : int or None
-        Nominal sampling frequency of the stream as specified by Pupil Labs
-        (https://pupil-labs.com/products/neon/specs). If the stream type is
-        "custom", this attribute is ``None``.
+        Nominal sampling frequency in Hz as specified by Pupil Labs
+        (see https://pupil-labs.com/products/neon/specs).
+        ``None`` for custom or unknown stream types.
+
+    Examples
+    --------
+    Load from Pupil Cloud CSV:
+
+    >>> gaze = Stream(Path("gaze.csv"))
+
+    Load from native format:
+
+    >>> gaze = Stream(Path("gaze ps1.raw"))
+
+    Create from DataFrame:
+
+    >>> df = pd.DataFrame({"timestamp [ns]": [...], "gaze x [px]": [...]})
+    >>> gaze = Stream(df)
     """
 
-    def __init__(self, data: pd.DataFrame | Path):
-        if isinstance(data, Path):
-            if not data.is_file():
-                raise FileNotFoundError(f"File not exist: {data}")
-            if data.suffix == ".csv":  # Path to Pupil Cloud CSV file
-                self.file = data
-                data = pd.read_csv(data, index_col="timestamp [ns]")
-            elif data.suffix == ".raw":
-                data, self.file = _load_native_stream_data(data)
+    def __init__(self, source: pd.DataFrame | Path):
+        if isinstance(source, Path):
+            if not source.is_file():
+                raise FileNotFoundError(f"File not exist: {source}")
+            if source.suffix == ".csv":  # Path to Pupil Cloud CSV file
+                self.file = source
+                data = pd.read_csv(source, index_col="timestamp [ns]")
+            elif source.suffix == ".raw":
+                data, self.file = _load_native_stream_data(source)
             else:
                 raise ValueError(
                     "Unsupported file format. Only .csv and .raw are supported."
                 )
         else:
+            self.data = source
             self.file = None
 
         if data.index.name != "timestamp [ns]":
@@ -244,8 +266,7 @@ class Stream(BaseTabular):
             raise ValueError("No data found in the specified time range")
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
-        if not inplace:
-            return inst
+        return None if inplace else inst
 
     def restrict(
         self,

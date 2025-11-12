@@ -132,34 +132,56 @@ def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
 
 class Events(BaseTabular):
     """
-    Base for events data (blinks, fixations, saccades, "events" messages).
+    Container for discrete event data (e.g., blinks, fixations, saccades, or
+    message events).
 
     Parameters
     ----------
-    data : pandas.DataFrame or pathlib.Path
-        DataFrame or path to the file containing the events data
-        (.csv in Pupil Cloud format, or .raw/.txt in native format).
-        For native format, the corresponding files (e.g., .time and .dtype)
-        must be present in the same directory. The columns will be automatically
-        renamed to Pupil Cloud format to ensure consistency.
-    type : str, optional
-        Type of events when loading fixations or saccades from native format.
-        Only needed when ``data`` is a path to a native "fixations ps1.raw"
-        file. Must be one of "fixations" or "saccades".
+    source : pandas.DataFrame or pathlib.Path
+        Source of the event data. Can be either:
+
+        * :class:`pandas.DataFrame`: Must contain appropriate event columns.
+        * :class:`pathlib.Path`: Path to an event data file. Supported formats:
+
+        - ``.csv``: Pupil Cloud format file.
+        - ``.raw`` / ``.txt``: Native Pupil Labs format (requires
+          corresponding ``.time`` and ``.dtype`` files in the same directory).
+
+        Note: Native format columns are automatically renamed to Pupil Cloud
+        format for consistency. For example, ``mean_gaze_x`` -> ``fixation x [px]``.
+
+    type : {"fixations", "saccades"}, optional
+        Required only when loading from native ``fixations ps1.raw`` file, to
+        explicitly specify whether to interpret the data as fixation or
+        saccade events. Ignored for other formats.
 
     Attributes
     ----------
-    file : pathlib.Path
-        Path to the CSV file containing the event data.
+    file : pathlib.Path or None
+        Path to the source file(s). ``None`` if initialized from a DataFrame.
     data : pandas.DataFrame
-        DataFrame containing the event data.
-    type : str, optional
-        Event type. One of "blinks", "fixations", "saccades",
-        "events", or "custom". Inferred from the data columns.
-    id_name : str, optional
-        Name of the column containing the event ID. One of "blink id",
-        "fixation id", "saccade id", or ``None`` for Events of type
-        "events" and "custom".
+        Event data with standardized column names.
+    type : {"blinks", "fixations", "saccades", "events", "custom"}
+        Inferred event type based on data columns.
+    id_name : str or None
+        Column name holding event IDs (e.g., ``blink id``, ``fixation id``,
+        ``saccade id``). ``None`` for ``events`` and ``custom`` types.
+
+    Examples
+    --------
+    Load from Pupil Cloud CSV:
+
+    >>> blinks = Events(Path("blinks.csv"))
+
+    Load from native format:
+
+    >>> blinks = Events(Path("blinks ps1.raw"))
+    >>> fixations = Events(Path("fixations ps1.raw"), type="fixations")
+
+    Create from DataFrame:
+
+    >>> df = pd.DataFrame({"start timestamp [ns]": [...], "end timestamp [ns]": [...]})
+    >>> saccades = Events(df)
     """
 
     def __init__(self, data: pd.DataFrame | Path, type: Optional[str] = None):
@@ -182,7 +204,14 @@ class Events(BaseTabular):
 
     @property
     def start_ts(self) -> np.ndarray:
-        """Start timestamps of events in nanoseconds.."""
+        """
+        Start timestamps of events in nanoseconds.
+
+        Raises
+        ------
+        ValueError
+            If no ``start timestamp [ns]`` or ``timestamp [ns]`` column is found in the instance.
+        """
         if self.type == "events":
             return self.data["timestamp [ns]"].to_numpy()
         if "start timestamp [ns]" in self.data.columns:
@@ -191,24 +220,45 @@ class Events(BaseTabular):
             raise ValueError("No `start timestamp [ns]` column found in the instance.")
 
     @property
-    def end_ts(self) -> Optional[np.ndarray]:
-        """End timestamps of events in nanoseconds."""
+    def end_ts(self) -> np.ndarray:
+        """
+        End timestamps of events in nanoseconds.
+
+        Raises
+        ------
+        ValueError
+            If no ``end timestamp [ns]`` column is found in the instance.
+        """
         if "end timestamp [ns]" in self.data.columns:
             return self.data["end timestamp [ns]"].to_numpy()
         else:
             raise ValueError("No `end timestamp [ns]` column found in the instance.")
 
     @property
-    def durations(self) -> Optional[np.ndarray]:
-        """Duration of events in milliseconds."""
+    def durations(self) -> np.ndarray:
+        """
+        Duration of events in milliseconds.
+
+        Raises
+        ------
+        ValueError
+            If no ``duration [ms]`` column is found in the instance.
+        """
         if "duration [ms]" in self.data.columns:
             return self.data["duration [ms]"].to_numpy()
         else:
             raise ValueError("No `duration [ms]` column found in the instance.")
 
     @property
-    def id(self) -> Optional[np.ndarray]:
-        """Event ID."""
+    def id(self) -> np.ndarray:
+        """
+        Event ID.
+
+        Raises
+        ------
+        ValueError
+            If no ID column (e.g., ``<xxx> id``) is found in the instance.
+        """
         if self.id_name in self.data.columns and self.id_name is not None:
             return self.data[self.id_name].to_numpy()
         else:

@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ..stream import Gaze
-    from .video import SceneVideo
+    from .video import Video
 
 
 def estimate_scanpath(
-    video: "SceneVideo",
+    video: "Video",
     sync_gaze: "Gaze",
     lk_params: Optional[dict] = None,
 ) -> pd.DataFrame:

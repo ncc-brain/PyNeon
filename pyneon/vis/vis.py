@@ -14,12 +14,12 @@ from ..stream import Stream
 if TYPE_CHECKING:
     from ..recording import Recording
     from ..stream import Stream
-    from ..video import SceneVideo
+    from ..video import Video
     from ..epochs import Epochs
 
 
 def plot_frame(
-    video: "SceneVideo",
+    video: "Video",
     index: int = 0,
     ax: Optional[plt.Axes] = None,
     auto_title: bool = True,
@@ -188,7 +188,7 @@ def plot_distribution(
 
 
 def overlay_scanpath(
-    video: "SceneVideo",
+    video: "Video",
     scanpath: pd.DataFrame,
     circle_radius: int = 10,
     line_thickness: int = 2,

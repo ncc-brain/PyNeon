@@ -6,7 +6,12 @@ __all__ = [
     "native_to_cloud_column_map",
 ]
 
-nominal_sampling_rates = {"gaze": 200, "eye_states": 200, "imu": 110}
+nominal_sampling_rates = {
+    "gaze": 200,
+    "eye_states": 200,
+    "imu": 110,
+    "scene_video_features": 30,
+}
 
 expected_files_cloud = [
     "3d_eye_states.csv",
@@ -23,6 +28,8 @@ expected_files_cloud = [
 ]
 
 expected_files_native = [
+    "blinks ps1.raw",
+    "blinks ps1.time",
     "blinks.dtype",
     "calibration.bin",
     "event.time",

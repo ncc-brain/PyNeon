@@ -14,7 +14,7 @@ from .stream import Stream
 from .events import Events
 from .preprocess import concat_streams, concat_events, smooth_camera_pose
 from .video import (
-    SceneVideo,
+    Video,
     estimate_scanpath,
     detect_apriltags,
     estimate_camera_pose,
@@ -28,30 +28,58 @@ from .utils import expected_files_cloud, expected_files_native
 
 class Recording:
     """
-    Data from a single recording. The recording directory could be downloaded from
-    either a single recording or a project on Pupil Cloud. In either case, the directory
-    must contain an ``info.json`` file. For example, a recording directory could have the
-    following structure:
+    Container of a multi-modal recording with streams, events, and videos.
+
+    The recording directory is expected to follow either the Pupil Cloud format
+    (tested with data format version >= 2.3) or the native Pupil Labs format.
+    (tested with data format version >= 2.5).
+    In both cases, the directory must contain an ``info.json`` file.
+
+    Example Pupil Cloud recording directory structure:
 
     .. code-block:: text
 
         recording_dir/
-        ├── info.json (REQUIRED)
-        ├── gaze.csv
         ├── 3d_eye_states.csv
-        ├── imu.csv
         ├── blinks.csv
-        ├── fixations.csv
-        ├── saccades.csv
         ├── events.csv
+        ├── fixations.csv
+        ├── gaze.csv
+        ├── imu.csv
+        ├── saccades.csv
+        ├── info.json (REQUIRED)
         ├── labels.csv
-        ├── world_timestamps.csv
+        ├── saccades.csv
         ├── scene_camera.json
-        ├── *.mp4
-        └── derivatives/ (PyNeon-generated derivatives)
-            └── ...
+        ├── world_timestamps.csv
+        └── *.mp4
 
-    Streams, events, (and scene video) will be located but not loaded until
+    Example native Pupil Labs recording directory structure:
+
+    .. code-block:: text
+        recording_dir/
+        ├── blinks ps1.raw
+        ├── blinks ps1.time
+        ├── blinks.dtype
+        ├── calibration.bin
+        ├── event.time
+        ├── event.txt
+        ├── ...
+        ├── gaze ps1.raw
+        ├── gaze ps1.time
+        ├── gaze.dtype
+        ├── ...
+        ├── info.json (REQUIRED)
+        ├── Neon Scene Camera v1 ps1.mp4
+        ├── Neon Scene Camera v1 ps1.time
+        ├── Neon Sensor Module v1 ps1.mp4
+        ├── Neon Sensor Module v1 ps1.time
+        ├── ...
+        ├── wearer.json
+        ├── worn ps1.raw
+        └── worn.dtype
+
+    Streams, events, and scene video will be located but not loaded until
     accessed as properties such as ``gaze``, ``imu``, and ``eye_states``.
 
     Parameters
@@ -68,12 +96,6 @@ class Recording:
     info : dict
         Information about the recording. Read from ``info.json``. For details, see
         https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json.
-    start_time : int
-        Start time (in ns) of the recording as in ``info.json``.
-        May not match the start time of each data stream.
-    start_datetime : datetime.datetime
-        Start time (datetime) of the recording as in ``info.json``.
-        May not match the start time of each data stream.
     """
 
     def __init__(self, recording_dir: str | Path):
@@ -85,9 +107,6 @@ class Recording:
 
         with open(info_path) as f:
             info = json.load(f)
-
-        self.start_time = int(info["start_time"])
-        self.start_datetime = datetime.fromtimestamp(self.start_time / 1e9)
 
         self.recording_id = info["recording_id"]
         self.recording_dir = recording_dir
@@ -157,7 +176,13 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def gaze(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing gaze data.
+        Return a cached :class:`pyneon.Stream` object containing gaze data.
+
+        For **Pupil Cloud** recordings, the data is loaded from ``gaze.csv``.
+
+        For **native** recordings, the data is loaded from ``gaze_200hz.raw`` (if present;
+        otherwise from ``gaze ps1.raw``) along with the corresponding ``.time`` and
+        ``.dtype`` files.
         """
         if self.format == "native":
             gaze_200hz_file = self.recording_dir / "gaze_200hz.raw"
@@ -165,14 +190,18 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 return Stream(gaze_200hz_file)
             else:
                 return Stream(self.recording_dir / "gaze ps1.raw")
-            # return Stream(_load_native(self.nr_recording, "gaze"), "gaze")
         else:
             return Stream(self.recording_dir / "gaze.csv")
 
     @cached_property
     def imu(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing IMU data.
+        Return a cached :class:`pyneon.Stream` object containing IMU data.
+
+        For **Pupil Cloud** recordings, the data is loaded from ``imu.csv``.
+
+        For **native** recordings, the data is loaded from ``imu ps1.raw``, along with
+        the corresponding ``.time`` and ``.dtype`` files.
         """
         if self.format == "native":
             return Stream(self.recording_dir / "imu ps1.raw")
@@ -183,6 +212,11 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def eye_states(self) -> Stream:
         """
         Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
+
+        For **Pupil Cloud** recordings, the data is loaded from ``3d_eye_states.csv``.
+
+        For **native** recordings, the data is loaded from ``eye_state ps1.raw``, along
+        with the corresponding ``.time`` and ``.dtype`` files.
         """
         if self.format == "native":
             return Stream(self.recording_dir / "eye_state ps1.raw")
@@ -190,9 +224,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return Stream(self.recording_dir / "3d_eye_states.csv")
 
     @cached_property
-    def blinks(self) -> Optional[Events]:
+    def blinks(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing blinks data.
+        Return a cached :class:`pyneon.Events` object containing blink event data.
+
+        For **Pupil Cloud** recordings, the data is loaded from ``blinks.csv``.
+
+        For **native** recordings, the data is loaded from ``blinks ps1.raw``, along with
+        the corresponding ``.time`` and ``.dtype`` files.
         """
         if self.format == "native":
             return Events(self.recording_dir / "blinks ps1.raw")
@@ -200,14 +239,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return Events(self.recording_dir / "blinks.csv")
 
     @cached_property
-    def fixations(self) -> Optional[Events]:
+    def fixations(self) -> Events:
         """
         Returns a (cached) :class:`pyneon.Events` object containing fixations data.
 
-        Raises
-        ------
-        FileNotFoundError
-            If no corresponding file is present in the recording directory.
+        For **Pupil Cloud** recordings, the data is loaded from ``fixations.csv``.
+
+        For **native** recordings, the data is loaded from ``fixations ps1.raw``,
+        along with the corresponding ``.time`` and ``.dtype`` files.
         """
         if self.format == "native":
             return Events(self.recording_dir / "fixations ps1.raw", "fixations")
@@ -215,10 +254,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return Events(self.recording_dir / "fixations.csv")
 
     @cached_property
-    def saccades(self) -> Optional[Events]:
+    def saccades(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing saccades data
-        or ``None`` if no corresponding file is present.
+        Returns a (cached) :class:`pyneon.Events` object containing saccades data.
+
+        For **Pupil Cloud** recordings, the data is loaded from ``saccades.csv``.
+
+        For **native** recordings, the data is loaded from ``fixations ps1.raw``,
+        along with the corresponding ``.time`` and ``.dtype`` files.
         """
         if self.format == "native":
             # Note: In the native format, both fixations and saccades are stored in 'fixations ps1.raw'.
@@ -228,10 +271,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return Events(self.recording_dir / "saccades.csv")
 
     @cached_property
-    def events(self) -> Optional[Events]:
+    def events(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing events data
-        or ``None`` if no corresponding file is present.
+        Returns a (cached) :class:`pyneon.Events` object containing events data.
+
+        For **Pupil Cloud** recordings, the events data is loaded from ``events.csv``.
+
+        For **native** recordings, the events data is loaded from ``event.txt`` and
+        ``event.time``.
         """
         if self.format == "native":
             return Events(self.recording_dir / "event.txt")
@@ -239,28 +286,95 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return Events(self.recording_dir / "events.csv")
 
     @cached_property
-    def scene_video(self) -> Optional[SceneVideo]:
+    def scene_video(self) -> Video:
         """
-        Returns a (cached) :class:`pyneon.SceneVideo` object containing scene video data
-        or ``None`` if no corresponding file is present.
+        Returns a (cached) :class:`pyneon.Video` object containing scene video data.
+
+        For **Pupil Cloud** recordings, the video is loaded from the only ``*.mp4`` file
+        in the recording directory.
+
+        For **native** recordings, the video is loaded from the ``Neon Scene Camera*.mp4``
+        file in the recording directory.
         """
+        reg_exp = "Neon Scene Camera*.mp4" if self.format == "native" else "*.mp4"
+        video_files = list(self.recording_dir.glob(reg_exp))
+        if len(video_files) == 0:
+            raise FileNotFoundError(
+                f"No scene video file found in {self.recording_dir}"
+            )
+        elif len(video_files) > 1:
+            raise FileNotFoundError(
+                f"Multiple scene video files found in {self.recording_dir}"
+            )
+        video_file = video_files[0]
         if self.format == "native":
-            pass
+            ts_file = video_file.with_suffix(".time")
+            if not ts_file.is_file():
+                raise FileNotFoundError(
+                    f"Missing .time file {ts_file.name} in {self.recording_dir}"
+                )
+            ts = np.fromfile(ts_file, dtype=np.int64)
+            info = {}  # TODO: load from calibration.bin
         else:
-            video_files = list(self.recording_dir.glob("*.mp4"))
-            if len(video_files) == 1:
-                video_file = video_files[0]
-            elif len(video_files) > 1:
+            ts_file = self.recording_dir / "world_timestamps.csv"
+            info_file = self.recording_dir / "scene_camera.json"
+            if not ts_file.is_file():
                 raise FileNotFoundError(
-                    f"Multiple video files found in {self.recording_dir}"
+                    f"Missing world_timestamps.csv in {self.recording_dir}"
                 )
-            else:
+            ts = pd.read_csv(ts_file)["timestamp [ns]"].to_numpy().astype(np.int64)
+            if not info_file.is_file():
                 raise FileNotFoundError(
-                    f"No scene video file found in {self.recording_dir}"
+                    f"Missing scene_camera.json in {self.recording_dir}"
                 )
-            timestamp_file = self.recording_dir / "world_timestamps.csv"
-            video_info_file = self.recording_dir / "scene_camera.json"
-            return SceneVideo(video_file, timestamp_file, video_info_file)
+            with open(info_file) as f:
+                info = json.load(f)
+            return Video(video_file, ts, info)
+
+    @cached_property
+    def eye_video(self) -> Video:
+        """
+        Returns a (cached) :class:`pyneon.Video` object containing eye video data.
+
+        Eye video is only available for **native** recordings and is loaded from the
+        ``Neon Sensor Module*.mp4`` file in the recording directory.
+        """
+        if self.format == "cloud":
+            raise NotImplementedError(
+                "Eye video loading is not implemented for cloud recordings."
+            )
+        reg_exp = "Neon Sensor Module*.mp4"
+        video_files = list(self.recording_dir.glob(reg_exp))
+        if len(video_files) == 0:
+            return
+        elif len(video_files) > 1:
+            raise FileNotFoundError(
+                f"Multiple eye video files found in {self.recording_dir}"
+            )
+        video_file = video_files[0]
+        ts_file = video_file.with_suffix(".time")
+        if not ts_file.is_file():
+            raise FileNotFoundError(
+                f"Missing .time file {ts_file.name} in {self.recording_dir}"
+            )
+        ts = np.fromfile(ts_file, dtype=np.int64)
+        return Video(video_file, ts, {})
+
+    @property
+    def start_time(self) -> int:
+        """
+        Start time (in ns) of the recording as in ``info.json``.
+        May not match the start time of each data stream.
+        """
+        return self.info["start_time"]
+
+    @property
+    def start_datetime(self) -> datetime:
+        """
+        Start time (datetime) of the recording as in ``info.json``.
+        May not match the start time of each data stream.
+        """
+        return datetime.fromtimestamp(self.start_time / 1e9)
 
     def concat_streams(
         self,
@@ -631,7 +745,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         if pkl_file.is_file() and not overwrite:
             print(f"Loading saved homographies from {pkl_file}")
             df = pd.read_pickle(pkl_file)
-            homographies = Stream(df, sampling_freq_nominal=30)
+            homographies = Stream(df)
             return homographies
 
         if all_detections is None:
@@ -769,7 +883,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             data = pd.read_csv(fixation_on_surface_path)
             if data.empty:
                 raise ValueError("Fixations data is empty.")
-            return Events(data, id_name="fixation id")
+            return Events(data)
 
         raw_fixations = self.fixations.data
 
