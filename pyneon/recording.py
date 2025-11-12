@@ -344,8 +344,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             raise NotImplementedError(
                 "Pupil Cloud recordings do not contain eye video."
             )
-        reg_exp = "Neon Sensor Module*.mp4"
-        video_files = list(self.recording_dir.glob(reg_exp))
+        video_files = list(self.recording_dir.glob("Neon Sensor Module*.mp4"))
         if len(video_files) == 0:
             return
         elif len(video_files) > 1:
