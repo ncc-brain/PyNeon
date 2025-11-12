@@ -342,7 +342,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """
         if self.format == "cloud":
             raise NotImplementedError(
-                "Eye video loading is not implemented for cloud recordings."
+                "Pupil Cloud recordings do not contain eye video."
             )
         reg_exp = "Neon Sensor Module*.mp4"
         video_files = list(self.recording_dir.glob(reg_exp))
