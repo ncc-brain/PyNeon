@@ -871,7 +871,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         # ------------------------------------------------------------------ save
         cam_pose_df.reset_index().to_json(json_file, orient="records", lines=True)
 
-        return Stream(cam_pose_df, sampling_freq_nominal=int(self.scene_video.fps))
+        return Stream(cam_pose_df)
 
     def smooth_camera_pose(
         self,
