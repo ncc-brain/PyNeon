@@ -203,7 +203,7 @@ class Stream(BaseTabular):
     def sampling_freq_effective(self) -> float:
         """Effective sampling frequency of the stream."""
         return len(self.data) / self.duration
-    
+
     @property
     def sampling_freq_nominal(self) -> Optional[int]:
         """
