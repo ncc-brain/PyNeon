@@ -287,8 +287,8 @@ class Events(BaseTabular):
             or row numbers of the stream data.
             Defaults to "timestamp".
         inplace : bool, optional
-            Whether to replace the data in the object with the cropped data.
-            Defaults to False.
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
 
         Returns
         -------
@@ -319,6 +319,9 @@ class Events(BaseTabular):
         ----------
         other : Stream
             Stream to restrict to.
+        inplace : bool, optional
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
 
         Returns
         -------
@@ -349,8 +352,8 @@ class Events(BaseTabular):
             Whether to reset event IDs after filtering. Also resets the DataFrame index.
             Defaults to ``True``.
         inplace : bool, optional
-            Whether to replace the data in the object with the filtered data.
-            Defaults to False.
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
 
         Returns
         -------

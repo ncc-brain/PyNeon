@@ -115,10 +115,6 @@ class Stream(BaseTabular):
         Stream data with ``timestamp [ns]`` as index.
     type : {"gaze", "eye_states", "imu", "custom"}
         Inferred stream type based on data columns.
-    sampling_freq_nominal : int or None
-        Nominal sampling frequency in Hz as specified by Pupil Labs
-        (see https://pupil-labs.com/products/neon/specs).
-        ``None`` for custom or unknown stream types.
 
     Examples
     --------
@@ -162,7 +158,6 @@ class Stream(BaseTabular):
 
         super().__init__(data)
         self.type = _infer_stream_type(self.data)
-        self.sampling_freq_nominal = nominal_sampling_rates.get(self.type, None)
 
     def __getitem__(self, index: str) -> pd.Series:
         if index not in self.data.columns:
@@ -208,6 +203,15 @@ class Stream(BaseTabular):
     def sampling_freq_effective(self) -> float:
         """Effective sampling frequency of the stream."""
         return len(self.data) / self.duration
+    
+    @property
+    def sampling_freq_nominal(self) -> Optional[int]:
+        """
+        Nominal sampling frequency in Hz as specified by Pupil Labs
+        (see https://pupil-labs.com/products/neon/specs).
+        ``None`` for custom or unknown stream types.
+        """
+        return nominal_sampling_rates.get(self.type, None)
 
     @property
     def is_uniformly_sampled(self) -> bool:
@@ -299,15 +303,14 @@ class Stream(BaseTabular):
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Interpolate the stream to a new set of timestamps.
+        Interpolate the stream to new timestamps.
 
         Parameters
         ----------
         new_ts : numpy.ndarray, optional
             An array of new timestamps (in nanoseconds)
             at which to evaluate the interpolant. If ``None`` (default), new timestamps
-            are generated according to the nominal sampling frequency of the stream as
-            specified by Pupil Labs: https://pupil-labs.com/products/neon/specs.
+            are generated according to ``sampling_freq_nominal``.
         float_kind : str, optional
             Kind of interpolation applied on columns of ``float`` type,
             For details see :class:`scipy.interpolate.interp1d`.
@@ -317,8 +320,8 @@ class Stream(BaseTabular):
             For details see :class:`scipy.interpolate.interp1d`.
             Defaults to "nearest".
         inplace : bool, optional
-            Whether to replace the data in the object with the interpolated data.
-            Defaults to False.
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
 
         Returns
         -------
@@ -390,8 +393,8 @@ class Stream(BaseTabular):
             For details see :class:`scipy.interpolate.interp1d`.
             Defaults to "nearest".
         inplace : bool, optional
-            Whether to replace the data in the object with the interpolated data.
-            Defaults to False.
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
 
         Returns
         -------
@@ -434,8 +437,8 @@ class Stream(BaseTabular):
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
         inplace : bool, optional
-            Whether to replace the data in the object with the window averaged data.
-            Defaults to False.
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
 
         Returns
         -------
