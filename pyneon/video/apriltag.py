@@ -5,17 +5,11 @@ from tqdm import tqdm
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from .video import SceneVideo
-
-
-import cv2
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
+    from .video import Video
 
 
 def detect_apriltags(
-    video: "SceneVideo",
+    video: "Video",
     tag_family: str = "tag36h11",
     nthreads: int = 4,
     quad_decimate: float = 1.0,
@@ -166,7 +160,7 @@ def detect_apriltags(
 
 
 def estimate_camera_pose(
-    video: "SceneVideo",
+    video: "Video",
     tag_locations_df: pd.DataFrame,
     all_detections: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
@@ -342,7 +336,7 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 
 
 def find_homographies(
-    video: "SceneVideo",
+    video: "Video",
     detection_df: pd.DataFrame,
     tag_info: pd.DataFrame,
     frame_size: tuple[int, int],

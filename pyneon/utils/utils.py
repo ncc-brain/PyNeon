@@ -1,5 +1,5 @@
 import pandas as pd
-import pathlib as Path
+from pathlib import Path
 from typing import Callable
 
 

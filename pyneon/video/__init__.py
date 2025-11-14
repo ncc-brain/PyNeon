@@ -1,4 +1,4 @@
-from .video import SceneVideo
+from .video import Video
 from .mapping import estimate_scanpath
 from .apriltag import (
     detect_apriltags,
@@ -8,7 +8,7 @@ from .apriltag import (
 )
 
 __all__ = [
-    "SceneVideo",
+    "Video",
     "estimate_scanpath",
     "detect_apriltags",
     "estimate_camera_pose",

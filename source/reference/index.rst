@@ -12,6 +12,3 @@ PyNeon API
     events
     epochs
     video
-    preprocess
-    vis
-    export

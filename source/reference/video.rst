@@ -1,6 +1,6 @@
 Scene video class
 =================
 
-.. autoclass:: pyneon.SceneVideo
+.. autoclass:: pyneon.Video
     :members:
     :show-inheritance:

@@ -5,7 +5,7 @@ from pyneon import (
     Recording,
     Stream,
     Events,
-    SceneVideo,
+    Video,
     Epochs,
     get_sample_data,
 )
