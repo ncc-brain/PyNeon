@@ -72,6 +72,7 @@ def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
 
     return data, files
 
+
 def _append_gaze_angles(data: pd.DataFrame) -> pd.DataFrame:
     """
     Append gaze azimuth and elevation angles (in degrees) to gaze data
@@ -85,13 +86,18 @@ def _append_gaze_angles(data: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(
             f"Data must contain the following columns to compute gaze angles: {required_cols}"
         )
-    data['azimuth [deg]'] = data['gaze x [px]'].apply(
-        lambda x: (x - camera_resolution[0] / 2) / (camera_resolution[0]) * (camera_fov[0])
+    data["azimuth [deg]"] = data["gaze x [px]"].apply(
+        lambda x: (x - camera_resolution[0] / 2)
+        / (camera_resolution[0])
+        * (camera_fov[0])
     )
-    data['elevation [deg]'] = data['gaze y [px]'].apply(
-        lambda y: - (y - camera_resolution[1] / 2) / (camera_resolution[1]) * (camera_fov[1])
+    data["elevation [deg]"] = data["gaze y [px]"].apply(
+        lambda y: -(y - camera_resolution[1] / 2)
+        / (camera_resolution[1])
+        * (camera_fov[1])
     )
     return data
+
 
 def _infer_stream_type(data: pd.DataFrame) -> str:
     """

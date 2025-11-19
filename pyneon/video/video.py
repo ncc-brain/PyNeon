@@ -40,7 +40,7 @@ class Video(cv2.VideoCapture):
         self.timestamps = timestamps
         self.ts = self.timestamps
         self.info = info
-        
+
         if not info:
             warn("Video info is empty amd will be loaded from default values.")
             self.info = camera_info
