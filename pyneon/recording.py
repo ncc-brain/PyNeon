@@ -166,13 +166,13 @@ class Recording:
 
     def __repr__(self) -> str:
         return f"""
-Data format: {self.format}
-Recording ID: {self.recording_id}
-Wearer ID: {self.info["wearer_id"]}
-Wearer name: {self.info["wearer_name"]}
-Recording start time: {self.start_datetime}
-Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
-"""
+                Data format: {self.format}
+                Recording ID: {self.recording_id}
+                Wearer ID: {self.info["wearer_id"]}
+                Wearer name: {self.info["wearer_name"]}
+                Recording start time: {self.start_datetime}
+                Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
+                """
 
     @cached_property
     def gaze(self) -> Stream:
@@ -330,7 +330,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 )
             with open(info_file) as f:
                 info = json.load(f)
-            return Video(video_file, ts, info)
+        return Video(video_file, ts, info)
 
     @cached_property
     def eye_video(self) -> Video:

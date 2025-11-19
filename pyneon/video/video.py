@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from ..vis import plot_frame, overlay_scanpath
 from .apriltag import detect_apriltags
+from ..utils.variables import camera_info
 
 
 class Video(cv2.VideoCapture):
@@ -38,6 +39,12 @@ class Video(cv2.VideoCapture):
         self.video_file = video_file
         self.timestamps = timestamps
         self.ts = self.timestamps
+        self.info = info
+        
+        if not info:
+            warn("Video info is empty amd will be loaded from default values.")
+            self.info = camera_info
+
         if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
             raise ValueError(
                 f"Number of timestamps ({len(self.timestamps)}) does not match "
