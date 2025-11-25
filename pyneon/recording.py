@@ -168,8 +168,8 @@ class Recording:
         return f"""
                 Data format: {self.format}
                 Recording ID: {self.recording_id}
-                Wearer ID: {self.info["wearer_id"]}
-                Wearer name: {self.info["wearer_name"]}
+                Wearer ID: {self.info.get("wearer_id", "N/A")}
+                Wearer name: {self.info.get("wearer_name", "N/A")}
                 Recording start time: {self.start_datetime}
                 Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 """
@@ -346,7 +346,7 @@ class Recording:
             )
         video_files = list(self.recording_dir.glob("Neon Sensor Module*.mp4"))
         if len(video_files) == 0:
-            return
+            raise FileNotFoundError(f"No eye video file found in {self.recording_dir}")
         elif len(video_files) > 1:
             raise FileNotFoundError(
                 f"Multiple eye video files found in {self.recording_dir}"

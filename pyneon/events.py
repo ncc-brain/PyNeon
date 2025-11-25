@@ -77,6 +77,8 @@ def _load_native_events_data(
                 ]
         elif "blink" in file_path.stem:
             idx_name = "blink id"
+        else:
+            raise ValueError(f"Unknown native events file: {file_path.name}")
         # Reset index to count events
         data = pd.DataFrame(raw)
 
@@ -187,7 +189,7 @@ class Events(BaseTabular):
     def __init__(self, data: pd.DataFrame | Path, type: Optional[str] = None):
         if isinstance(data, Path):
             if not data.is_file():
-                raise FileNotFoundError(f"File not exist: {data}")
+                raise FileNotFoundError(f"File does not exist: {data}")
             if data.suffix == ".csv":
                 self.file = data
                 data = pd.read_csv(data)
@@ -380,6 +382,7 @@ class Events(BaseTabular):
                     and inst.data.index.step == 1
                 ):
                     inst.data.reset_index(drop=True, inplace=True)
+            else:
                 raise KeyError(
                     "Cannot reset event IDs as no event ID column is known for this instance."
                 )

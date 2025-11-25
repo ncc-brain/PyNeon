@@ -42,7 +42,7 @@ class Video(cv2.VideoCapture):
         self.info = info
 
         if not info:
-            warn("Video info is empty amd will be loaded from default values.")
+            warn("Video info is empty and will be loaded from default values.")
             self.info = camera_info
 
         if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):

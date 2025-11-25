@@ -162,7 +162,7 @@ class Stream(BaseTabular):
     def __init__(self, source: pd.DataFrame | Path):
         if isinstance(source, Path):
             if not source.is_file():
-                raise FileNotFoundError(f"File not exist: {source}")
+                raise FileNotFoundError(f"File does not exist: {source}")
             if source.suffix == ".csv":  # Path to Pupil Cloud CSV file
                 self.file = source
                 data = pd.read_csv(source, index_col="timestamp [ns]")
@@ -173,7 +173,7 @@ class Stream(BaseTabular):
                     "Unsupported file format. Only .csv and .raw are supported."
                 )
         else:
-            self.data = source
+            data = source
             self.file = None
 
         if data.index.name != "timestamp [ns]":
@@ -372,20 +372,69 @@ class Stream(BaseTabular):
         return None if inplace else inst
 
     def annotate_events(
-        self, events: "Events", inplace: bool = False
+        self, events: "Events", overwrite: bool = False, inplace: bool = False
     ) -> Optional["Stream"]:
+        """
+        Annotate stream data with event IDs based on event time intervals.
+
+        Parameters
+        ----------
+        events : Events
+            Events object containing the events to annotate.
+            The events must have a valid ``id_name`` attribute,
+            as well as ``start timestamp [ns]`` and ``end timestamp [ns]`` columns.
+        overwrite : bool, optional
+            If ``True``, overwrite existing event ID annotations in the stream data.
+            Defaults to ``False``.
+        inplace : bool, optional
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
+
+        Returns
+        -------
+        Stream or None
+            Annotated stream if ``inplace=False``, otherwise ``None``.
+
+        Raises
+        ------
+        ValueError
+            If no event ID column is known for the Events instance.
+        KeyError
+            If the expected event ID column is not found in the Events data.
+        """
         id_name = events.id_name
+        if id_name is None:
+            raise ValueError(
+                "Cannot annotate events as no event ID column is known for the Events instance."
+            )
+        if id_name not in events.data.columns:
+            raise KeyError(
+                f"Events data does not contain the expected ID column: {id_name}"
+            )
+        if not overwrite and id_name in self.data.columns:
+            raise ValueError(
+                f"Stream data already contains a column named '{id_name}'. "
+                "Use overwrite=True to overwrite existing annotations."
+            )
         inst = self if inplace else self.copy()
 
         # Initialize nullable integer column
         inst.data[id_name] = pd.Series(pd.NA, dtype="Int64")
 
-        # Annotate
-        for _, event in events.data.iterrows():
-            mask = (inst.data.index >= event["start timestamp [ns]"]) & (
-                inst.data.index <= event["end timestamp [ns]"]
-            )
-            inst.data.loc[mask, id_name] = int(event[id_name])
+        # Vectorized annotation using IntervalIndex
+        intervals = pd.IntervalIndex.from_arrays(
+            events.data["start timestamp [ns]"],
+            events.data["end timestamp [ns]"],
+            closed="both",
+        )
+        # Get, for each timestamp, the index of the event it falls into (-1 if none)
+        event_idx = intervals.get_indexer(inst.data.index)
+        # Assign event IDs where applicable
+        valid = event_idx != -1
+        inst.data.loc[valid, id_name] = events.data.iloc[event_idx[valid]][
+            id_name
+        ].values.astype("Int64")
+
         return None if inplace else inst
 
     def interpolate_events(
