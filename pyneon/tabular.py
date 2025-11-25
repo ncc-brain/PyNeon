@@ -27,12 +27,12 @@ class BaseTabular:
         if "recording id" in data.columns:
             if data["recording id"].nunique() > 1:
                 raise ValueError("Data contains multiple recording IDs")
-            data.drop(columns=["recording id"], inplace=True)
+            data = data.drop(columns=["recording id"])
 
         if "section id" in data.columns:
             if data["section id"].nunique() > 1:
                 raise ValueError("Data contains multiple section IDs")
-            data.drop(columns=["section id"], inplace=True)
+            data = data.drop(columns=["section id"])
 
         # Set data types
         unknown_cols = []

@@ -388,8 +388,8 @@ class Epochs:
             epochs_copy = self.epochs
             data_copy = self.data
         else:
-            epochs_copy = self.epochs.copy()
-            data_copy = self.data.copy()
+            epochs_copy = self.epochs.copy(deep=True)
+            data_copy = self.data.copy(deep=True)
 
         for idx, row in epochs_copy.iterrows():
             epoch_df: pd.DataFrame = row["data"]

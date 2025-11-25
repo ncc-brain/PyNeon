@@ -289,7 +289,7 @@ class Events(BaseTabular):
             or row numbers of the stream data.
             Defaults to "timestamp".
         inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
+            If ``True``, replace current data. Otherwise returns a new Events.
             Defaults to ``False``.
 
         Returns
@@ -322,7 +322,7 @@ class Events(BaseTabular):
         other : Stream
             Stream to restrict to.
         inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
+            If ``True``, replace current data. Otherwise returns a new Events.
             Defaults to ``False``.
 
         Returns
@@ -354,7 +354,7 @@ class Events(BaseTabular):
             Whether to reset event IDs after filtering. Also resets the DataFrame index.
             Defaults to ``True``.
         inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
+            If ``True``, replace current data. Otherwise returns a new Events.
             Defaults to ``False``.
 
         Returns
@@ -375,13 +375,6 @@ class Events(BaseTabular):
             if self.id_name is not None:
                 inst.data[self.id_name] = np.arange(len(inst.data)) + 1
                 inst.data.reset_index(drop=True, inplace=True)
-                # Only reset index if it's not already a default RangeIndex
-                if not (
-                    isinstance(inst.data.index, pd.RangeIndex)
-                    and inst.data.index.start == 0
-                    and inst.data.index.step == 1
-                ):
-                    inst.data.reset_index(drop=True, inplace=True)
             else:
                 raise KeyError(
                     "Cannot reset event IDs as no event ID column is known for this instance."
