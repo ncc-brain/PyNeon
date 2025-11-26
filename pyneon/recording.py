@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Literal, Optional
 import pandas as pd
@@ -22,7 +23,7 @@ from .video import (
     gaze_on_surface,
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
-from .export import export_motion_bids, export_eye_bids
+from .export import export_motion_bids, export_eye_bids, export_cloud_format
 from .utils import expected_files_cloud, expected_files_native
 
 
@@ -1232,6 +1233,32 @@ class Recording:
             deleted_paths.append(p.name)
 
         print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
+
+
+    def export_cloud_format(
+        self,
+        target_dir: str | Path,
+        rebase: bool = True,
+    ):
+        """
+        Export native data to cloud-like format.
+
+        Parameters
+        ----------
+        target_dir : str or pathlib.Path
+            Output directory to save the Cloud-Format structured data.
+        rebase : bool, optional
+            If True, re-initialize the recording on the target directory after export.
+        """
+        if self.format == "native":
+            export_cloud_format(self, target_dir) 
+            if rebase:
+                self.format = "cloud"
+                self.__init__(target_dir)
+        elif self.format == "cloud":
+            print("Recording is already in Cloud format; no export needed.")
+        else:
+            raise ValueError(f"Export to Cloud format not supported from {self.format} format.")
 
     def export_motion_bids(
         self,
