@@ -1234,7 +1234,6 @@ class Recording:
 
         print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
 
-
     def export_cloud_format(
         self,
         target_dir: str | Path,
@@ -1251,14 +1250,16 @@ class Recording:
             If True, re-initialize the recording on the target directory after export.
         """
         if self.format == "native":
-            export_cloud_format(self, target_dir) 
+            export_cloud_format(self, target_dir)
             if rebase:
                 self.format = "cloud"
                 self.__init__(target_dir)
         elif self.format == "cloud":
             print("Recording is already in Cloud format; no export needed.")
         else:
-            raise ValueError(f"Export to Cloud format not supported from {self.format} format.")
+            raise ValueError(
+                f"Export to Cloud format not supported from {self.format} format."
+            )
 
     def export_motion_bids(
         self,
