@@ -7,7 +7,12 @@ from warnings import warn
 from ast import literal_eval
 
 from .tabular import BaseTabular
-from .preprocess import interpolate, interpolate_events, window_average
+from .preprocess import (
+    interpolate,
+    interpolate_events,
+    window_average,
+    compute_azimuth_and_elevation,
+)
 from .utils import nominal_sampling_rates, native_to_cloud_column_map
 
 
@@ -66,37 +71,11 @@ def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
                 dtype=worn_dtype,
             )["worn"]
             data["worn"] = worn.astype(np.int8)
-            data = _append_gaze_angles(data)
+            data = compute_azimuth_and_elevation(data)
         except Exception as e:
             warn(f"Could not load 'worn' data for gaze stream: {e}")
 
     return data, files
-
-
-def _append_gaze_angles(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Append gaze azimuth and elevation angles (in degrees) to gaze data
-    based on gaze pixel coordinates.
-    """
-    required_cols = ["gaze x [px]", "gaze y [px]"]
-    camera_resolution = [1600, 1200]  # Pupil Neon camera resolution in pixels
-    camera_fov = [103.0, 77.0]  # Pupil Neon camera field of view in degrees
-
-    if not all(col in data.columns for col in required_cols):
-        raise ValueError(
-            f"Data must contain the following columns to compute gaze angles: {required_cols}"
-        )
-    data["azimuth [deg]"] = (
-        (data["gaze x [px]"] - camera_resolution[0] / 2)
-        / camera_resolution[0]
-        * camera_fov[0]
-    )
-    data["elevation [deg]"] = (
-        -(data["gaze y [px]"] - camera_resolution[1] / 2)
-        / camera_resolution[1]
-        * camera_fov[1]
-    )
-    return data
 
 
 def _infer_stream_type(data: pd.DataFrame) -> str:
@@ -121,15 +100,14 @@ class Stream(BaseTabular):
 
     Parameters
     ----------
-    source : pandas.DataFrame or pathlib.Path
+    source : pandas.DataFrame or pathlib.Path or str
         Source of the stream data. Can be either:
 
         * :class:`pandas.DataFrame`: Must contain a ``timestamp [ns]`` column or index.
-        * :class:`pathlib.Path`: File path to load stream data from. Supported formats:
+        * :class:`pathlib.Path` or :class:`str`: Path to a stream data file. Supported file formats:
 
-          - ``.csv``: Pupil Cloud format CSV file
-          - ``.raw``: Native format (requires ``.time`` and ``.dtype``
-            files in the same directory)
+        - ``.csv``: Pupil Cloud format CSV file
+        - ``.raw``: Native format (requires ``.time`` and ``.dtype`` files in the same directory)
 
         Note: Native format columns are automatically renamed to Pupil Cloud
         format for consistency. For example, ``gyro_x`` -> ``gyro x [deg/s]``.
@@ -147,11 +125,11 @@ class Stream(BaseTabular):
     --------
     Load from Pupil Cloud CSV:
 
-    >>> gaze = Stream(Path("gaze.csv"))
+    >>> gaze = Stream("gaze.csv")
 
     Load from native format:
 
-    >>> gaze = Stream(Path("gaze ps1.raw"))
+    >>> gaze = Stream("gaze ps1.raw")
 
     Create from DataFrame:
 
@@ -159,7 +137,9 @@ class Stream(BaseTabular):
     >>> gaze = Stream(df)
     """
 
-    def __init__(self, source: pd.DataFrame | Path):
+    def __init__(self, source: pd.DataFrame | Path | str):
+        if isinstance(source, str):
+            source = Path(source)
         if isinstance(source, Path):
             if not source.is_file():
                 raise FileNotFoundError(f"File does not exist: {source}")
@@ -172,8 +152,8 @@ class Stream(BaseTabular):
                 raise ValueError(
                     "Unsupported file format. Only .csv and .raw are supported."
                 )
-        else:
-            data = source
+        else:  # pd.DataFrame
+            data = source.copy(deep=True)
             self.file = None
 
         if data.index.name != "timestamp [ns]":
@@ -523,4 +503,48 @@ class Stream(BaseTabular):
         """
         inst = self if inplace else self.copy()
         inst.data = window_average(new_ts, self.data, window_size)
+        return None if inplace else inst
+
+    def compute_azimuth_and_elevation(
+        self,
+        method: Literal["linear"] = "linear",
+        overwrite: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Stream"]:
+        """
+        Compute gaze azimuth and elevation angles (in degrees)
+        based on gaze pixel coordinates and append them to the stream data.
+
+        Parameters
+        ----------
+        method : {"linear"}, optional
+            Method to compute gaze angles. Defaults to "linear".
+        overwrite : bool, optional
+            Only applicable if azimuth and elevation columns already exist.
+            If ``True``, overwrite existing columns. If ``False``, raise an error.
+            Defaults to ``False``.
+        inplace : bool, optional
+            If ``True``, replace current data. Otherwise returns a new Stream.
+            Defaults to ``False``.
+
+        Returns
+        -------
+        Stream or None
+            Stream with gaze angles computed if ``inplace=False``, otherwise ``None``.
+
+        Raises
+        ------
+        ValueError
+            If required gaze pixel columns are not present in the data.
+        """
+        if not overwrite and (
+            "azimuth [deg]" in self.data.columns
+            or "elevation [deg]" in self.data.columns
+        ):
+            raise ValueError(
+                "Stream data already contains azimuth and/or elevation columns. "
+                "Use overwrite=True to overwrite existing columns."
+            )
+        inst = self if inplace else self.copy()
+        inst.data = compute_azimuth_and_elevation(inst.data, method=method)
         return None if inplace else inst

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
+from typing import Literal
 
 from pandas.api.types import (
     is_float_dtype,
@@ -250,6 +250,51 @@ def window_average(
     new_data.index = new_ts
     new_data.index.name = data.index.name
     return new_data
+
+
+def compute_azimuth_and_elevation(
+    data: pd.DataFrame,
+    method: Literal["linear"] = "linear",
+) -> None:
+    """
+    Append gaze azimuth and elevation angles (in degrees) to gaze data
+    based on gaze pixel coordinates. Operates in-place.
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Gaze data containing ``gaze x [px]`` and ``gaze y [px]`` columns.
+    method : str, optional
+        Method to compute gaze angles. Currently only "linear" is supported.
+        Defaults to "linear".
+        
+    Returns
+    -------
+    None
+        The function modifies the input DataFrame in-place by adding two new columns:
+        ``azimuth [deg]`` and ``elevation [deg]``.
+    """
+    required_cols = ["gaze x [px]", "gaze y [px]"]
+    camera_resolution = [1600, 1200]  # Pupil Neon camera resolution in pixels
+    camera_fov = [103, 77]  # Pupil Neon camera field of view in degrees
+
+    if not all(col in data.columns for col in required_cols):
+        raise ValueError(
+            f"Data must contain the following columns to compute gaze angles: {required_cols}"
+        )
+    if method == "linear":
+        data["azimuth [deg]"] = (
+            (data["gaze x [px]"] - camera_resolution[0] / 2)
+            / camera_resolution[0]
+            * camera_fov[0]
+        )
+        data["elevation [deg]"] = (
+            -(data["gaze y [px]"] - camera_resolution[1] / 2)
+            / camera_resolution[1]
+            * camera_fov[1]
+        )
+    else:
+        raise NotImplementedError(f"Method '{method}' not implemented for gaze angles.")
 
 
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}

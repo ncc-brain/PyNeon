@@ -342,7 +342,7 @@ class Recording:
         ``Neon Sensor Module*.mp4`` file in the recording directory.
         """
         if self.format == "cloud":
-            raise NotImplementedError(
+            raise ValueError(
                 "Pupil Cloud recordings do not contain eye video."
             )
         video_files = list(self.recording_dir.glob("Neon Sensor Module*.mp4"))

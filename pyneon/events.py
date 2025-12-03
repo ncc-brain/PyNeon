@@ -139,11 +139,12 @@ class Events(BaseTabular):
 
     Parameters
     ----------
-    source : pandas.DataFrame or pathlib.Path
+    source : pandas.DataFrame or pathlib.Path or str
         Source of the event data. Can be either:
 
         * :class:`pandas.DataFrame`: Must contain appropriate event columns.
-        * :class:`pathlib.Path`: Path to an event data file. Supported formats:
+        * :class:`pathlib.Path` or :class:`str`: Path to an event data file.
+        Supported file formats:
 
         - ``.csv``: Pupil Cloud format file.
         - ``.raw`` / ``.txt``: Native Pupil Labs format (requires
@@ -173,12 +174,13 @@ class Events(BaseTabular):
     --------
     Load from Pupil Cloud CSV:
 
-    >>> blinks = Events(Path("blinks.csv"))
+    >>> blinks = Events("blinks.csv")
 
     Load from native format:
 
-    >>> blinks = Events(Path("blinks ps1.raw"))
-    >>> fixations = Events(Path("fixations ps1.raw"), type="fixations")
+    >>> blinks = Events("blinks ps1.raw")
+    >>> fixations = Events("fixations ps1.raw", type="fixations")
+    >>> events = Events("event.txt")
 
     Create from DataFrame:
 
@@ -186,16 +188,19 @@ class Events(BaseTabular):
     >>> saccades = Events(df)
     """
 
-    def __init__(self, data: pd.DataFrame | Path, type: Optional[str] = None):
-        if isinstance(data, Path):
-            if not data.is_file():
-                raise FileNotFoundError(f"File does not exist: {data}")
-            if data.suffix == ".csv":
-                self.file = data
-                data = pd.read_csv(data)
-            elif data.suffix in [".txt", ".raw"]:
-                data, self.file = _load_native_events_data(data, type)
-        else:
+    def __init__(self, source: pd.DataFrame | Path | str, type: Optional[str] = None):
+        if isinstance(source, str):
+            source = Path(source)
+        if isinstance(source, Path):
+            if not source.is_file():
+                raise FileNotFoundError(f"File does not exist: {source}")
+            if source.suffix == ".csv":
+                self.file = source
+                data = pd.read_csv(source)
+            elif source.suffix in [".txt", ".raw"]:
+                data, self.file = _load_native_events_data(source, type)
+        else:  # pd.DataFrame
+            data = source.copy(deep=True)
             self.file = None
         super().__init__(data)
         self.type, self.id_name = _infer_events_type_and_id(self.data)
@@ -369,6 +374,7 @@ class Events(BaseTabular):
         mask = (self.durations >= dur_min) & (self.durations <= dur_max)
         if not mask.any():
             raise ValueError("No data found in the specified duration range")
+        print(f"Filtering out {len(self) - mask.sum()} out of {len(self)} events.")
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
         if reset_id:
