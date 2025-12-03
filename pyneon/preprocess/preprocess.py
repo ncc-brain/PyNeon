@@ -259,7 +259,7 @@ def compute_azimuth_and_elevation(
     """
     Append gaze azimuth and elevation angles (in degrees) to gaze data
     based on gaze pixel coordinates. Operates in-place.
-    
+
     Parameters
     ----------
     data : pandas.DataFrame
@@ -267,7 +267,7 @@ def compute_azimuth_and_elevation(
     method : str, optional
         Method to compute gaze angles. Currently only "linear" is supported.
         Defaults to "linear".
-        
+
     Returns
     -------
     None
