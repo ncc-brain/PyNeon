@@ -163,13 +163,13 @@ class Recording:
 
     def __repr__(self) -> str:
         return f"""
-                Data format: {self.format}
-                Recording ID: {self.recording_id}
-                Wearer ID: {self.info.get("wearer_id", "N/A")}
-                Wearer name: {self.info.get("wearer_name", "N/A")}
-                Recording start time: {self.start_datetime}
-                Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
-                """
+Data format: {self.format}
+Recording ID: {self.recording_id}
+Wearer ID: {self.info.get("wearer_id", "N/A")}
+Wearer name: {self.info.get("wearer_name", "N/A")}
+Recording start time: {self.start_datetime}
+Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
+"""
 
     @cached_property
     def gaze(self) -> Stream:
