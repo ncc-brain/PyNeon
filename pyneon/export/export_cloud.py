@@ -60,7 +60,7 @@ def _export_data(recording, attr_name, filename, target_dir):
     data["section id"] = recording.info.get("section_id", pd.NA)
     data["recording id"] = recording.recording_id
     cols = data.columns.tolist()
-    data = data[cols[-2:] + cols[:-2]] # Move new columns to front
+    data = data[cols[-2:] + cols[:-2]]  # Move new columns to front
     # Export to CSV
     data.to_csv(target_dir / filename, index=False)
 
@@ -76,11 +76,13 @@ def _export_scene_video(recording: "Recording", target_dir: Path):
     except Exception as e:
         warn(f"Warning: Failed to copy video file: {e}")
     # Export timestamps
-    world_ts_df = pd.DataFrame({
-        "section_id": recording.info.get("section_id", pd.NA),
-        "recording_id": recording.recording_id,
-        "timestamp [ns]": scene_video.ts
-    })
+    world_ts_df = pd.DataFrame(
+        {
+            "section_id": recording.info.get("section_id", pd.NA),
+            "recording_id": recording.recording_id,
+            "timestamp [ns]": scene_video.ts,
+        }
+    )
     world_ts_df.to_csv(target_dir / "world_timestamps.csv", index=False)
     with open(target_dir / "scene_camera.json", "w", encoding="utf-8") as f:
         json.dump(scene_video.info, f, indent=4)
