@@ -290,9 +290,6 @@
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events classes (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="vis.html">Visualization module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export.html">Exportation module</a></li>
 </ul>
 </div>
 </nav></div>
@@ -358,28 +355,53 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Recording">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording" title="Link to this definition">#</a></dt>
-<dd><p>Data from a single recording. The recording directory could be downloaded from
-either a single recording or a project on Pupil Cloud. In either case, the directory
-must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file. For example, a recording directory could have the
-following structure:</p>
+<dd><p>Container of a multi-modal recording with streams, events, and videos.</p>
+<p>The recording directory is expected to follow either the Pupil Cloud format
+(tested with data format version &gt;= 2.3) or the native Pupil Labs format.
+(tested with data format version &gt;= 2.5).
+In both cases, the directory must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file.</p>
+<p>Example Pupil Cloud recording directory structure:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>recording_dir/
-├── info.json (REQUIRED)
-├── gaze.csv
 ├── 3d_eye_states.csv
-├── imu.csv
 ├── blinks.csv
-├── fixations.csv
-├── saccades.csv
 ├── events.csv
+├── fixations.csv
+├── gaze.csv
+├── imu.csv
+├── saccades.csv
+├── info.json (REQUIRED)
 ├── labels.csv
-├── world_timestamps.csv
+├── saccades.csv
 ├── scene_camera.json
-├── &lt;scene_video&gt;.mp4
-└── derivatives/ (PyNeon-generated derivatives)
-    └── ...
+├── world_timestamps.csv
+└── *.mp4
 </pre></div>
 </div>
-<p>Streams, events, (and scene video) will be located but not loaded until
+<p>Example native Pupil Labs recording directory structure:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>recording_dir/
+├── blinks ps1.raw
+├── blinks ps1.time
+├── blinks.dtype
+├── calibration.bin
+├── event.time
+├── event.txt
+├── ...
+├── gaze ps1.raw
+├── gaze ps1.time
+├── gaze.dtype
+├── ...
+├── info.json (REQUIRED)
+├── Neon Scene Camera v1 ps1.mp4
+├── Neon Scene Camera v1 ps1.time
+├── Neon Sensor Module v1 ps1.mp4
+├── Neon Sensor Module v1 ps1.time
+├── ...
+├── wearer.json
+├── worn ps1.raw
+└── worn.dtype
+</pre></div>
+</div>
+<p>Streams, events, and scene video will be located but not loaded until
 accessed as properties such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>, and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -420,97 +442,100 @@ accessed as properties such as <code class="docutils literal notranslate"><span 
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Recording.start_time">
-<span class="sig-name descname"><span class="pre">start_time</span></span><a class="headerlink" href="#pyneon.Recording.start_time" title="Link to this definition">#</a></dt>
-<dd><p>Start time (in ns) of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
-May not match the start time of each data stream.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Recording.start_datetime">
-<span class="sig-name descname"><span class="pre">start_datetime</span></span><a class="headerlink" href="#pyneon.Recording.start_datetime" title="Link to this definition">#</a></dt>
-<dd><p>Start time (datetime) of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
-May not match the start time of each data stream.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)">datetime.datetime</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Recording.contents">
-<span class="sig-name descname"><span class="pre">contents</span></span><a class="headerlink" href="#pyneon.Recording.contents" title="Link to this definition">#</a></dt>
-<dd><p>Contents of the recording directory. Each index is a stream or event name
-(e.g. <code class="docutils literal notranslate"><span class="pre">gaze</span></code> or <code class="docutils literal notranslate"><span class="pre">imu</span></code>) and columns are <code class="docutils literal notranslate"><span class="pre">exist</span></code> (bool),
-<code class="docutils literal notranslate"><span class="pre">filename</span></code> (str), and <code class="docutils literal notranslate"><span class="pre">path</span></code> (Path).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)">pandas.DataFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.gaze">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.gaze" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing gaze data or
-<code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">gaze.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.gaze" title="Link to this definition">#</a></dt>
+<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing gaze data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">gaze.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">gaze_200hz.raw</span></code> (if present;
+otherwise from <code class="docutils literal notranslate"><span class="pre">gaze</span> <span class="pre">ps1.raw</span></code>) along with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and
+<code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.imu">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.imu" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing IMU data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">imu.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.imu" title="Link to this definition">#</a></dt>
+<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing IMU data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">imu.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">imu</span> <span class="pre">ps1.raw</span></code>, along with
+the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.eye_states">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_states</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_states" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing eye states data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">3d_eye_states.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_states</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_states" title="Link to this definition">#</a></dt>
+<dd><p>Returns a (cached) <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing eye states data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">3d_eye_states.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">eye_state</span> <span class="pre">ps1.raw</span></code>, along
+with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.blinks">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">blinks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.blinks" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing blinks data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">blinks.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">blinks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.blinks" title="Link to this definition">#</a></dt>
+<dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing blink event data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">blinks.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">blinks</span> <span class="pre">ps1.raw</span></code>, along with
+the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.fixations">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fixations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.fixations" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing fixations data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">fixations.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fixations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.fixations" title="Link to this definition">#</a></dt>
+<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing fixations data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations</span> <span class="pre">ps1.raw</span></code>,
+along with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.saccades">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">saccades</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.saccades" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing saccades data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">saccades.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">saccades</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.saccades" title="Link to this definition">#</a></dt>
+<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing saccades data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">saccades.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations</span> <span class="pre">ps1.raw</span></code>,
+along with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.events">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">events</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.events" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing events data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">events.csv</span></code> is present.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">events</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.events" title="Link to this definition">#</a></dt>
+<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing events data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the events data is loaded from <code class="docutils literal notranslate"><span class="pre">events.csv</span></code>.</p>
+<p>For <strong>native</strong> recordings, the events data is loaded from <code class="docutils literal notranslate"><span class="pre">event.txt</span></code> and
+<code class="docutils literal notranslate"><span class="pre">event.time</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Recording.video">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.SceneVideo" title="pyneon.video.video.SceneVideo"><span class="pre">SceneVideo</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Recording.video" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.SceneVideo" title="pyneon.SceneVideo"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.SceneVideo</span></code></a> object containing scene video data
-or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no <code class="docutils literal notranslate"><span class="pre">scene_video.mp4</span></code> is present.</p>
+<dt class="sig sig-object py" id="pyneon.Recording.scene_video">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scene_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></em><a class="headerlink" href="#pyneon.Recording.scene_video" title="Link to this definition">#</a></dt>
+<dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> object containing scene video data.</p>
+<p>For <strong>Pupil Cloud</strong> recordings, the video is loaded from the only <code class="docutils literal notranslate"><span class="pre">*.mp4</span></code> file
+in the recording directory.</p>
+<p>For <strong>native</strong> recordings, the video is loaded from the <code class="docutils literal notranslate"><span class="pre">Neon</span> <span class="pre">Scene</span> <span class="pre">Camera*.mp4</span></code>
+file in the recording directory.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Recording.eye_video">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_video" title="Link to this definition">#</a></dt>
+<dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> object containing eye video data.</p>
+<p>Eye video is only available for <strong>native</strong> recordings and is loaded from the
+<code class="docutils literal notranslate"><span class="pre">Neon</span> <span class="pre">Sensor</span> <span class="pre">Module*.mp4</span></code> file in the recording directory.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Recording.start_time">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.Recording.start_time" title="Link to this definition">#</a></dt>
+<dd><p>Start time (in ns) of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
+May not match the start time of each data stream.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Recording.start_datetime">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_datetime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><a class="headerlink" href="#pyneon.Recording.start_datetime" title="Link to this definition">#</a></dt>
+<dd><p>Start time (datetime) of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
+May not match the start time of each data stream.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -526,16 +551,16 @@ are used to define the common timestamps.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>stream_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Stream names to concatenate. If “all”, then all streams will be used.
 If a list, items must be in <code class="docutils literal notranslate"><span class="pre">{&quot;gaze&quot;,</span> <span class="pre">&quot;imu&quot;,</span> <span class="pre">&quot;eye_states&quot;}</span></code>
-(<code class="docutils literal notranslate"><span class="pre">&quot;3d_eye_states&quot;</span></code>) is also tolerated as an alias for <code class="docutils literal notranslate"><span class="pre">&quot;eye_states&quot;</span></code>).</p></li>
+(“3d_eye_states”) is also tolerated as an alias for “eye_states”).</p></li>
 <li><p><strong>sampling_freq</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Sampling frequency of the concatenated streams.
 If numeric, the streams will be interpolated to this frequency.
-If <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code> (default), the lowest nominal sampling frequency
+If “min” (default), the lowest nominal sampling frequency
 of the selected streams will be used.
-If <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, the highest nominal sampling frequency will be used.</p></li>
+If “max”, the highest nominal sampling frequency will be used.</p></li>
 <li><p><strong>interp_float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of float type,
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.16.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
+Defaults to “linear”. For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.16.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.</p></li>
 <li><p><strong>interp_other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types.
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.</p></li>
+Defaults to “nearest”.</p></li>
 <li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Replace selected stream data with interpolated data during concatenation
 if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
@@ -553,10 +578,10 @@ if <code class="docutils literal notranslate"><span class="pre">True</span></cod
 <dt class="sig sig-object py" id="pyneon.Recording.concat_events">
 <span class="sig-name descname"><span class="pre">concat_events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.Recording.concat_events" title="Link to this definition">#</a></dt>
 <dd><p>Concatenate different events. All columns in the selected event type will be
-present in the final DataFrame. An additional <code class="docutils literal notranslate"><span class="pre">&quot;type&quot;</span></code> column denotes the event
-type. If <code class="docutils literal notranslate"><span class="pre">events</span></code> is selected, its <code class="docutils literal notranslate"><span class="pre">&quot;timestamp</span> <span class="pre">[ns]&quot;</span></code> column will be
-renamed to <code class="docutils literal notranslate"><span class="pre">&quot;start</span> <span class="pre">timestamp</span> <span class="pre">[ns]&quot;</span></code>, and the <code class="docutils literal notranslate"><span class="pre">&quot;name</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;type&quot;</span></code> columns will
-be renamed to <code class="docutils literal notranslate"><span class="pre">&quot;message</span> <span class="pre">name&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;message</span> <span class="pre">type&quot;</span></code> respectively to provide
+present in the final DataFrame. An additional “type” column denotes the event
+type. If <code class="docutils literal notranslate"><span class="pre">events</span></code> is selected, its “timestamp [ns]” column will be
+renamed to “start timestamp [ns]”, and the “name” and “type” columns will
+be renamed to “message name” and “message type” respectively to provide
 a more readable output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -659,7 +684,7 @@ Recording.sync_gaze_to_video().</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Indexed by <code class="docutils literal notranslate"><span class="pre">&quot;timestamp</span> <span class="pre">[ns]&quot;</span></code> with one column <code class="docutils literal notranslate"><span class="pre">&quot;fixations&quot;</span></code>
+<dd class="field-even"><p>Indexed by “timestamp [ns]” with one column “fixations”
 containing a nested DataFrame for each video frame.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -852,7 +877,7 @@ If None, defaults to <cite>self.der_dir / “fixations_on_surface.csv”</cite>.
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Indexed by <code class="docutils literal notranslate"><span class="pre">&quot;timestamp</span> <span class="pre">[ns]&quot;</span></code> with columns
+<dd class="field-even"><p>Indexed by “timestamp [ns]” with columns
 <code class="docutils literal notranslate"><span class="pre">'frame_idx',</span> <span class="pre">'translation_vector',</span> <span class="pre">'rotation_vector',</span> <span class="pre">'camera_pos'</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -975,6 +1000,20 @@ Also supports base names.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Recording.export_cloud_format">
+<span class="sig-name descname"><span class="pre">export_cloud_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rebase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.export_cloud_format" title="Link to this definition">#</a></dt>
+<dd><p>Export native data to cloud-like format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a>) – Output directory to save the Cloud-Format structured data.</p></li>
+<li><p><strong>rebase</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, re-initialize the recording on the target directory after export.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Recording.export_motion_bids">
 <span class="sig-name descname"><span class="pre">export_motion_bids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">motion_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.export_motion_bids" title="Link to this definition">#</a></dt>
 <dd><p>Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
@@ -1086,9 +1125,6 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.recording_id"><code class="docutils literal notranslate"><span class="pre">Recording.recording_id</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.recording_dir"><code class="docutils literal notranslate"><span class="pre">Recording.recording_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.info"><code class="docutils literal notranslate"><span class="pre">Recording.info</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.start_time"><code class="docutils literal notranslate"><span class="pre">Recording.start_time</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.start_datetime"><code class="docutils literal notranslate"><span class="pre">Recording.start_datetime</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.contents"><code class="docutils literal notranslate"><span class="pre">Recording.contents</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.gaze"><code class="docutils literal notranslate"><span class="pre">Recording.gaze</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.imu"><code class="docutils literal notranslate"><span class="pre">Recording.imu</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.eye_states"><code class="docutils literal notranslate"><span class="pre">Recording.eye_states</span></code></a></li>
@@ -1096,7 +1132,10 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.fixations"><code class="docutils literal notranslate"><span class="pre">Recording.fixations</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.saccades"><code class="docutils literal notranslate"><span class="pre">Recording.saccades</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.events"><code class="docutils literal notranslate"><span class="pre">Recording.events</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.video"><code class="docutils literal notranslate"><span class="pre">Recording.video</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.scene_video"><code class="docutils literal notranslate"><span class="pre">Recording.scene_video</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.eye_video"><code class="docutils literal notranslate"><span class="pre">Recording.eye_video</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.start_time"><code class="docutils literal notranslate"><span class="pre">Recording.start_time</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.start_datetime"><code class="docutils literal notranslate"><span class="pre">Recording.start_datetime</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.concat_streams"><code class="docutils literal notranslate"><span class="pre">Recording.concat_streams()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.concat_events"><code class="docutils literal notranslate"><span class="pre">Recording.concat_events()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.plot_distribution"><code class="docutils literal notranslate"><span class="pre">Recording.plot_distribution()</span></code></a></li>
@@ -1111,6 +1150,7 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.overlay_scanpath"><code class="docutils literal notranslate"><span class="pre">Recording.overlay_scanpath()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.overlay_detections_and_pose"><code class="docutils literal notranslate"><span class="pre">Recording.overlay_detections_and_pose()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.clear_der_dir"><code class="docutils literal notranslate"><span class="pre">Recording.clear_der_dir()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_cloud_format"><code class="docutils literal notranslate"><span class="pre">Recording.export_cloud_format()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_motion_bids"><code class="docutils literal notranslate"><span class="pre">Recording.export_motion_bids()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_eye_bids"><code class="docutils literal notranslate"><span class="pre">Recording.export_eye_bids()</span></code></a></li>
 </ul>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Reading a Neon dataset/recording &#8212; PyNeon dev documentation</title>
+    <title>Reading a Pupil Cloud-format dataset/recording &#8212; PyNeon dev documentation</title>
   
   
   
@@ -45,7 +45,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/read_recording';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/read_recording_cloud';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Interpolate data and concatenate streams" href="interpolate_and_concat.html" />
@@ -287,7 +287,7 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Reading a Neon dataset/recording</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Reading a Pupil Cloud-format dataset/recording</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
@@ -335,7 +335,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Reading a Neon dataset/recording</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Reading a Pupil Cloud-format dataset/recording</span></li>
   </ul>
 </nav>
 </div>
@@ -352,13 +352,13 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Reading-a-Neon-dataset/recording">
-<h1>Reading a Neon dataset/recording<a class="headerlink" href="#Reading-a-Neon-dataset/recording" title="Link to this heading">#</a></h1>
+  <section id="Reading-a-Pupil-Cloud-format-dataset/recording">
+<h1>Reading a Pupil Cloud-format dataset/recording<a class="headerlink" href="#Reading-a-Pupil-Cloud-format-dataset/recording" title="Link to this heading">#</a></h1>
 <p>In this tutorial, we will show how to load a single Neon recording downloaded from <a class="reference external" href="https://docs.pupil-labs.com/neon/pupil-cloud/">Pupil Cloud</a> and give an overview of the data structure.</p>
 <section id="Reading-sample-data">
 <h2>Reading sample data<a class="headerlink" href="#Reading-sample-data" title="Link to this heading">#</a></h2>
-<p>We will use a sample recording produced by the NCC Lab, called <code class="docutils literal notranslate"><span class="pre">boardView</span></code>. This project (collection of recordings on Pupil Cloud) contains two recordings downloaded with the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> option and a marker mapper enrichment. It can be downloaded with the <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code> function. The function returns a <code class="docutils literal notranslate"><span class="pre">Pathlib.Path</span></code> <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">(reference)</a> instance pointing to the downloaded and unzipped directory. PyNeon
-accepts both <code class="docutils literal notranslate"><span class="pre">Path</span></code> and <code class="docutils literal notranslate"><span class="pre">string</span></code> objects but internally always uses <code class="docutils literal notranslate"><span class="pre">Path</span></code>.</p>
+<p>We will use a sample recording produced by our lab, called “boardView”. This project (collection of recordings on Pupil Cloud) contains two recordings downloaded with the <code class="docutils literal notranslate"><span class="pre">Timeseries</span> <span class="pre">Data</span> <span class="pre">+</span> <span class="pre">Scene</span> <span class="pre">Video</span></code> option and a marker mapper enrichment. It can be downloaded with the <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code> function. The function returns a <code class="docutils literal notranslate"><span class="pre">Pathlib.Path</span></code> <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">(reference)</a> instance pointing to the downloaded and unzipped directory. PyNeon accepts
+both <code class="docutils literal notranslate"><span class="pre">Path</span></code> and <code class="docutils literal notranslate"><span class="pre">string</span></code> objects but internally always uses <code class="docutils literal notranslate"><span class="pre">Path</span></code>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -474,23 +474,12 @@ C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 
+Data format: cloud
 Recording ID: d4fd9a27-3e28-45bf-937f-b9c14c3c1c5e
 Wearer ID: af6cd360-443a-4d3d-adda-7dc8510473c2
 Wearer name: Qian
 Recording start time: 2024-11-26 12:44:48.937000
-Recording duration: 32.046s
-                 exist                 filename                                                                                                                                path
-3d_eye_states     True        3d_eye_states.csv        C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\3d_eye_states.csv
-blinks            True               blinks.csv               C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\blinks.csv
-events            True               events.csv               C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\events.csv
-fixations         True            fixations.csv            C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\fixations.csv
-gaze              True                 gaze.csv                 C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\gaze.csv
-imu               True                  imu.csv                  C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\imu.csv
-labels            True               labels.csv               C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\labels.csv
-saccades          True             saccades.csv             C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\saccades.csv
-world_timestamps  True     world_timestamps.csv     C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\world_timestamps.csv
-scene_video_info  True        scene_camera.json        C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\scene_camera.json
-scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\GitHub\PyNeon\data\boardView\Timeseries Data + Scene Video\boardview1-d4fd9a27\182240fd_0.0-32.046.mp4
+Recording duration: 32046000000 ns (32.046 s)
 
 </pre></div></div>
 </div>
@@ -507,8 +496,8 @@ scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\Git
 <span class="n">saccades</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">saccades</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.saccades is </span><span class="si">{</span><span class="n">saccades</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">video</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.video is </span><span class="si">{</span><span class="n">video</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">scene_video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">scene_video</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recording.scene_video is </span><span class="si">{</span><span class="n">scene_video</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -517,9 +506,9 @@ scene_video       True  182240fd_0.0-32.046.mp4  C:\Users\qian.chu\Documents\Git
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-recording.gaze is &lt;pyneon.stream.Stream object at 0x000002A59ECFC980&gt;
-recording.saccades is &lt;pyneon.events.Events object at 0x000002A59ECFC590&gt;
-recording.video is &lt; cv2.VideoCapture 000002A5C052BA10&gt;
+recording.gaze is &lt;pyneon.stream.Stream object at 0x00000265AD7B1550&gt;
+recording.saccades is &lt;pyneon.events.Events object at 0x00000265CE308D70&gt;
+recording.scene_video is &lt; cv2.VideoCapture 00000265CE14F590&gt;
 </pre></div></div>
 </div>
 <p>PyNeon reads tabular CSV file into specialized classes (e.g., gaze.csv to <code class="docutils literal notranslate"><span class="pre">NeonGaze</span></code>) which all have a <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute that holds the tabular data as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">(reference)</a>. Depending on the nature of the data, such classes could be of <code class="docutils literal notranslate"><span class="pre">Stream</span></code> or <code class="docutils literal notranslate"><span class="pre">Events</span></code> super classes. <code class="docutils literal notranslate"><span class="pre">Stream</span></code> contains (semi)-continuous data streams, while <code class="docutils literal notranslate"><span class="pre">Events</span></code> (dubbed so to avoid confusion with the
@@ -573,7 +562,7 @@ timestamp [ns]
 1732621490445625343      -7.690596         3.250055
 gaze x [px]        float64
 gaze y [px]        float64
-worn                 Int32
+worn                  Int8
 fixation id          Int32
 blink id             Int32
 azimuth [deg]      float64
@@ -595,31 +584,22 @@ dtype: object
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-                      saccade id   end timestamp [ns]  duration [ms]  \
-start timestamp [ns]
-1732621490876132343            1  1732621490891115343             15
-1732621491241357343            2  1732621491291481343             50
-1732621491441602343            3  1732621491516601343             75
-1732621491626723343            4  1732621491696847343             70
-1732621491917092343            5  1732621491977090343             60
+   saccade id  start timestamp [ns]   end timestamp [ns]  duration [ms]  \
+0           1   1732621490876132343  1732621490891115343             15
+1           2   1732621491241357343  1732621491291481343             50
+2           3   1732621491441602343  1732621491516601343             75
+3           4   1732621491626723343  1732621491696847343             70
+4           5   1732621491917092343  1732621491977090343             60
 
-                      amplitude [px]  amplitude [deg]  mean velocity [px/s]  \
-start timestamp [ns]
-1732621490876132343        14.938179         0.962102           1025.709879
-1732621491241357343       130.743352         8.378644           2700.713283
-1732621491441602343       241.003342        15.391730           3615.380044
-1732621491626723343       212.619205        13.608618           3757.394092
-1732621491917092343       220.842812        13.914266           4220.180601
-
-                      peak velocity [px/s]
-start timestamp [ns]
-1732621490876132343            1191.520740
-1732621491241357343            3687.314947
-1732621491441602343            5337.244676
-1732621491626723343            6164.040944
-1732621491917092343            6369.217052
+   amplitude [px]  amplitude [deg]  mean velocity [px/s]  peak velocity [px/s]
+0       14.938179         0.962102           1025.709879           1191.520740
+1      130.743352         8.378644           2700.713283           3687.314947
+2      241.003342        15.391730           3615.380044           5337.244676
+3      212.619205        13.608618           3757.394092           6164.040944
+4      220.842812        13.914266           4220.180601           6369.217052
 saccade id                Int32
-end timestamp [ns]        Int64
+start timestamp [ns]      int64
+end timestamp [ns]        int64
 duration [ms]             Int64
 amplitude [px]          float64
 amplitude [deg]         float64
@@ -779,7 +759,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_read_recording_28_0.png" src="../_images/tutorials_read_recording_28_0.png" />
+<img alt="../_images/tutorials_read_recording_cloud_28_0.png" src="../_images/tutorials_read_recording_cloud_28_0.png" />
 </div>
 </div>
 </section>
@@ -798,7 +778,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_read_recording_30_0.png" src="../_images/tutorials_read_recording_30_0.png" />
+<img alt="../_images/tutorials_read_recording_cloud_30_0.png" src="../_images/tutorials_read_recording_cloud_30_0.png" />
 </div>
 </div>
 <p>We can see a clear centre-bias, as participants tend to look more centrally relative to head position.</p>
@@ -865,7 +845,7 @@ IMU last timestamp: 1732621500421101343 &lt; Gaze last timestamp: 17326215004249
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/tutorials/read_recording.ipynb.txt"
+      <li><a href="../_sources/tutorials/read_recording_cloud.ipynb.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

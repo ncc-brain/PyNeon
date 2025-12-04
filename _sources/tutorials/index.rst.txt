@@ -9,7 +9,7 @@ started with PyNeon.
 .. toctree::
     :maxdepth: 1
 
-    read_recording
+    read_recording_cloud
     interpolate_and_concat
     pupil_size_and_epoching
     video

@@ -290,9 +290,6 @@
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events classes (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Scene video class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="preprocess.html">Preprocessing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="vis.html">Visualization module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export.html">Exportation module</a></li>
 </ul>
 </div>
 </nav></div>
@@ -357,23 +354,33 @@
 <h1>Data stream classes (gaze, eye states, IMU)<a class="headerlink" href="#data-stream-classes-gaze-eye-states-imu" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Stream">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_freq_nominal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Stream" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Stream" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTabular</span></code></p>
-<p>Base for a continuous data stream (gaze, eye states, IMU).
-Indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>.</p>
+<p>Container for continuous data streams (gaze, eye states, IMU).</p>
+<p>Data is indexed by timestamps in nanoseconds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><em>pandas.DataFrame</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a>) – DataFrame or path to the CSV file containing the stream data.
-The data must be indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>.</p>
+<dd class="field-odd"><p><strong>source</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><em>pandas.DataFrame</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Source of the stream data. Can be either:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>: Must contain a <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column or index.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>: Path to a stream data file. Supported file formats:</p></li>
+</ul>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.csv</span></code>: Pupil Cloud format CSV file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.raw</span></code>: Native format (requires <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files in the same directory)</p></li>
+</ul>
+<p>Note: Native format columns are automatically renamed to Pupil Cloud
+format for consistency. For example, <code class="docutils literal notranslate"><span class="pre">gyro_x</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">gyro</span> <span class="pre">x</span> <span class="pre">[deg/s]</span></code>.</p>
+</p>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.Stream.file">
 <span class="sig-name descname"><span class="pre">file</span></span><a class="headerlink" href="#pyneon.Stream.file" title="Link to this definition">#</a></dt>
-<dd><p>Path to the CSV file containing the stream data.</p>
+<dd><p>Path to the source file(s). <code class="docutils literal notranslate"><span class="pre">None</span></code> if initialized from DataFrame.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)">pathlib.Path</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)">pathlib.Path</a> or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -381,7 +388,7 @@ The data must be indexed by <code class="docutils literal notranslate"><span cla
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.Stream.data">
 <span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#pyneon.Stream.data" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the stream data.</p>
+<dd><p>Stream data with <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> as index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)">pandas.DataFrame</a></p>
@@ -390,17 +397,30 @@ The data must be indexed by <code class="docutils literal notranslate"><span cla
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Stream.sampling_freq_nominal">
-<span class="sig-name descname"><span class="pre">sampling_freq_nominal</span></span><a class="headerlink" href="#pyneon.Stream.sampling_freq_nominal" title="Link to this definition">#</a></dt>
-<dd><p>Nominal sampling frequency of the stream as specified by Pupil Labs
-(<a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>).</p>
+<dt class="sig sig-object py" id="pyneon.Stream.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#pyneon.Stream.type" title="Link to this definition">#</a></dt>
+<dd><p>Inferred stream type based on data columns.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> or None</p>
+<dd class="field-odd"><p>{“gaze”, “eye_states”, “imu”, “custom”}</p>
 </dd>
 </dl>
 </dd></dl>
 
+<p class="rubric">Examples</p>
+<p>Load from Pupil Cloud CSV:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gaze</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span><span class="s2">&quot;gaze.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Load from native format:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gaze</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span><span class="s2">&quot;gaze ps1.raw&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Create from DataFrame:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="s2">&quot;gaze x [px]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gaze</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Stream.timestamps">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">timestamps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Stream.timestamps" title="Link to this definition">#</a></dt>
@@ -410,7 +430,7 @@ The data must be indexed by <code class="docutils literal notranslate"><span cla
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Stream.ts">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Stream.ts" title="Link to this definition">#</a></dt>
-<dd><p>Alias for timestamps.</p>
+<dd><p>Alias for <code class="docutils literal notranslate"><span class="pre">timestamps</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -447,6 +467,14 @@ The data must be indexed by <code class="docutils literal notranslate"><span cla
 <dt class="sig sig-object py" id="pyneon.Stream.sampling_freq_effective">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sampling_freq_effective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pyneon.Stream.sampling_freq_effective" title="Link to this definition">#</a></dt>
 <dd><p>Effective sampling frequency of the stream.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Stream.sampling_freq_nominal">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sampling_freq_nominal</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#pyneon.Stream.sampling_freq_nominal" title="Link to this definition">#</a></dt>
+<dd><p>Nominal sampling frequency in Hz as specified by Pupil Labs
+(see <a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>).
+<code class="docutils literal notranslate"><span class="pre">None</span></code> for custom or unknown stream types.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -513,22 +541,21 @@ Equivalent to <code class="docutils literal notranslate"><span class="pre">crop(
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Stream.interpolate">
 <span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Stream.interpolate" title="Link to this definition">#</a></dt>
-<dd><p>Interpolate the stream to a new set of timestamps.</p>
+<dd><p>Interpolate the stream to new timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>new_ts</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><em>numpy.ndarray</em></a><em>, </em><em>optional</em>) – An array of new timestamps (in nanoseconds)
 at which to evaluate the interpolant. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), new timestamps
-are generated according to the nominal sampling frequency of the stream as
-specified by Pupil Labs: <a class="reference external" href="https://pupil-labs.com/products/neon/specs">https://pupil-labs.com/products/neon/specs</a>.</p></li>
+are generated according to <code class="docutils literal notranslate"><span class="pre">sampling_freq_nominal</span></code>.</p></li>
 <li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of <code class="docutils literal notranslate"><span class="pre">float</span></code> type,
 For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.16.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>.</p></li>
+Defaults to “linear”.</p></li>
 <li><p><strong>other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types,
 For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.16.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.</p></li>
-<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the interpolated data.
-Defaults to False.</p></li>
+Defaults to “nearest”.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new Stream.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -541,10 +568,41 @@ Defaults to False.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Stream.annotate_events">
+<span class="sig-name descname"><span class="pre">annotate_events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><span class="pre">Events</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Stream" title="pyneon.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Stream.annotate_events" title="Link to this definition">#</a></dt>
+<dd><p>Annotate stream data with event IDs based on event time intervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>events</strong> (<a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><em>Events</em></a>) – Events object containing the events to annotate.
+The events must have a valid <code class="docutils literal notranslate"><span class="pre">id_name</span></code> attribute,
+as well as <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> columns.</p></li>
+<li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, overwrite existing event ID annotations in the stream data.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new Stream.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Annotated stream if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.Stream" title="pyneon.Stream">Stream</a> or None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no event ID column is known for the Events instance.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.14)"><strong>KeyError</strong></a> – If the expected event ID column is not found in the Events data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Stream.interpolate_events">
 <span class="sig-name descname"><span class="pre">interpolate_events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><span class="pre">Events</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Stream" title="pyneon.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Stream.interpolate_events" title="Link to this definition">#</a></dt>
 <dd><p>Interpolate data in the duration of events in the stream data.
-Similar to <a class="reference external" href="https://mne.tools/stable/generated/mne.preprocessing.eyetracking.interpolate_blinks.html#mne.preprocessing.eyetracking.interpolate_blinks" title="(in MNE v1.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.eyetracking.interpolate_blinks()</span></code></a>.</p>
+Similar to <a class="reference external" href="https://mne.tools/stable/generated/mne.preprocessing.eyetracking.interpolate_blinks.html#mne.preprocessing.eyetracking.interpolate_blinks" title="(in MNE v1.11)"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.eyetracking.interpolate_blinks()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -557,12 +615,12 @@ to both before and after the event.
 Defaults to 0.05.</p></li>
 <li><p><strong>float_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of <code class="docutils literal notranslate"><span class="pre">float</span></code> type,
 For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.16.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>.</p></li>
+Defaults to “linear”.</p></li>
 <li><p><strong>other_kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Kind of interpolation applied on columns of other types,
 For details see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d" title="(in SciPy v1.16.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code></a>.
-Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.</p></li>
-<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the interpolated data.
-Defaults to False.</p></li>
+Defaults to “nearest”.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new Stream.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -573,6 +631,29 @@ Defaults to False.</p></li>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Stream.columns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">columns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.3.3)"><span class="pre">Index</span></a></em><a class="headerlink" href="#pyneon.Stream.columns" title="Link to this definition">#</a></dt>
+<dd><p>Column names of the stream data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Stream.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Stream.copy" title="Link to this definition">#</a></dt>
+<dd><p>Create a deep copy of the instance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Stream.dtypes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.3.3)"><span class="pre">Series</span></a></em><a class="headerlink" href="#pyneon.Stream.dtypes" title="Link to this definition">#</a></dt>
+<dd><p>Data types of the columns in the stream data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Stream.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#pyneon.Stream.shape" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Stream.window_average">
@@ -594,8 +675,8 @@ If <code class="docutils literal notranslate"><span class="pre">None</span></cod
 between the new timestamps, i.e., <code class="docutils literal notranslate"><span class="pre">np.median(np.diff(new_ts))</span></code>.
 The window size must be larger than the median interval between the original data timestamps,
 i.e., <code class="docutils literal notranslate"><span class="pre">window_size</span> <span class="pre">&gt;</span> <span class="pre">np.median(np.diff(data.index))</span></code>.</p></li>
-<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to replace the data in the object with the window averaged data.
-Defaults to False.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new Stream.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -603,6 +684,34 @@ Defaults to False.</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#pyneon.Stream" title="pyneon.Stream">Stream</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Stream.compute_azimuth_and_elevation">
+<span class="sig-name descname"><span class="pre">compute_azimuth_and_elevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Stream.compute_azimuth_and_elevation" title="Link to this definition">#</a></dt>
+<dd><p>Compute gaze azimuth and elevation angles (in degrees)
+based on gaze pixel coordinates and append them to the stream data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>{&quot;linear&quot;}</em><em>, </em><em>optional</em>) – Method to compute gaze angles. Defaults to “linear”.</p></li>
+<li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Only applicable if azimuth and elevation columns already exist.
+If <code class="docutils literal notranslate"><span class="pre">True</span></code>, overwrite existing columns. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, raise an error.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>inplace</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new Stream.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stream with gaze angles computed if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyneon.Stream" title="pyneon.Stream">Stream</a> or None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If required gaze pixel columns are not present in the data.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -661,7 +770,7 @@ Defaults to False.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream"><code class="docutils literal notranslate"><span class="pre">Stream</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.file"><code class="docutils literal notranslate"><span class="pre">Stream.file</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.data"><code class="docutils literal notranslate"><span class="pre">Stream.data</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.sampling_freq_nominal"><code class="docutils literal notranslate"><span class="pre">Stream.sampling_freq_nominal</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.type"><code class="docutils literal notranslate"><span class="pre">Stream.type</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.timestamps"><code class="docutils literal notranslate"><span class="pre">Stream.timestamps</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.ts"><code class="docutils literal notranslate"><span class="pre">Stream.ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.first_ts"><code class="docutils literal notranslate"><span class="pre">Stream.first_ts</span></code></a></li>
@@ -670,13 +779,20 @@ Defaults to False.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.times"><code class="docutils literal notranslate"><span class="pre">Stream.times</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.duration"><code class="docutils literal notranslate"><span class="pre">Stream.duration</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.sampling_freq_effective"><code class="docutils literal notranslate"><span class="pre">Stream.sampling_freq_effective</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.sampling_freq_nominal"><code class="docutils literal notranslate"><span class="pre">Stream.sampling_freq_nominal</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.is_uniformly_sampled"><code class="docutils literal notranslate"><span class="pre">Stream.is_uniformly_sampled</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.time_to_ts"><code class="docutils literal notranslate"><span class="pre">Stream.time_to_ts()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.crop"><code class="docutils literal notranslate"><span class="pre">Stream.crop()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.restrict"><code class="docutils literal notranslate"><span class="pre">Stream.restrict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.interpolate"><code class="docutils literal notranslate"><span class="pre">Stream.interpolate()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.annotate_events"><code class="docutils literal notranslate"><span class="pre">Stream.annotate_events()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.interpolate_events"><code class="docutils literal notranslate"><span class="pre">Stream.interpolate_events()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.columns"><code class="docutils literal notranslate"><span class="pre">Stream.columns</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.copy"><code class="docutils literal notranslate"><span class="pre">Stream.copy()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.dtypes"><code class="docutils literal notranslate"><span class="pre">Stream.dtypes</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.shape"><code class="docutils literal notranslate"><span class="pre">Stream.shape</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.window_average"><code class="docutils literal notranslate"><span class="pre">Stream.window_average()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Stream.compute_azimuth_and_elevation"><code class="docutils literal notranslate"><span class="pre">Stream.compute_azimuth_and_elevation()</span></code></a></li>
 </ul>
 </li>
 </ul>

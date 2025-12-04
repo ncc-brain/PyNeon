@@ -305,7 +305,8 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
- <a href="#B"><strong>B</strong></a>
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
@@ -315,7 +316,6 @@
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
- | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
@@ -326,6 +326,14 @@
  | <a href="#W"><strong>W</strong></a>
  
 </div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/stream.html#pyneon.Stream.annotate_events">annotate_events() (pyneon.Stream method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -341,26 +349,32 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/video.html#pyneon.Video.camera_matrix">camera_matrix (pyneon.Video property)</a>
+</li>
       <li><a href="reference/recording.html#pyneon.Recording.clear_der_dir">clear_der_dir() (pyneon.Recording method)</a>
 </li>
-      <li><a href="reference/preprocess.html#pyneon.preprocess.concat_events">concat_events() (in module pyneon.preprocess)</a>
+      <li><a href="reference/events.html#pyneon.Events.columns">columns (pyneon.Events property)</a>
 
       <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.concat_events">(pyneon.Recording method)</a>
+        <li><a href="reference/stream.html#pyneon.Stream.columns">(pyneon.Stream property)</a>
 </li>
       </ul></li>
-      <li><a href="reference/preprocess.html#pyneon.preprocess.concat_streams">concat_streams() (in module pyneon.preprocess)</a>
-
-      <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.concat_streams">(pyneon.Recording method)</a>
+      <li><a href="reference/stream.html#pyneon.Stream.compute_azimuth_and_elevation">compute_azimuth_and_elevation() (pyneon.Stream method)</a>
 </li>
-      </ul></li>
+      <li><a href="reference/recording.html#pyneon.Recording.concat_events">concat_events() (pyneon.Recording method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/recording.html#pyneon.Recording.concat_streams">concat_streams() (pyneon.Recording method)</a>
+</li>
       <li><a href="reference/epochs.html#pyneon.construct_times_df">construct_times_df() (in module pyneon)</a>
 </li>
-      <li><a href="reference/recording.html#pyneon.Recording.contents">contents (pyneon.Recording attribute)</a>
+      <li><a href="reference/events.html#pyneon.Events.copy">copy() (pyneon.Events method)</a>
+
+      <ul>
+        <li><a href="reference/stream.html#pyneon.Stream.copy">(pyneon.Stream method)</a>
 </li>
+      </ul></li>
       <li><a href="reference/events.html#pyneon.Events.crop">crop() (pyneon.Events method)</a>
 
       <ul>
@@ -385,18 +399,26 @@
 </li>
       <li><a href="reference/dataset.html#pyneon.Dataset.dataset_dir">dataset_dir (pyneon.Dataset attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/epochs.html#pyneon.Epochs.description">description (pyneon.Epochs property)</a>
 </li>
       <li><a href="reference/recording.html#pyneon.Recording.detect_apriltags">detect_apriltags() (pyneon.Recording method)</a>
 
       <ul>
-        <li><a href="reference/video.html#pyneon.SceneVideo.detect_apriltags">(pyneon.SceneVideo method)</a>
+        <li><a href="reference/video.html#pyneon.Video.detect_apriltags">(pyneon.Video method)</a>
 </li>
       </ul></li>
-      <li><a href="reference/epochs.html#pyneon.Epochs.dtypes">dtypes (pyneon.Epochs property)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/video.html#pyneon.Video.distortion_coefficients">distortion_coefficients (pyneon.Video property)</a>
 </li>
+      <li><a href="reference/epochs.html#pyneon.Epochs.dtypes">dtypes (pyneon.Epochs property)</a>
+
+      <ul>
+        <li><a href="reference/events.html#pyneon.Events.dtypes">(pyneon.Events property)</a>
+</li>
+        <li><a href="reference/stream.html#pyneon.Stream.dtypes">(pyneon.Stream property)</a>
+</li>
+      </ul></li>
       <li><a href="reference/stream.html#pyneon.Stream.duration">duration (pyneon.Stream property)</a>
 </li>
       <li><a href="reference/events.html#pyneon.Events.durations">durations (pyneon.Events property)</a>
@@ -417,8 +439,6 @@
 </li>
       <li><a href="reference/recording.html#pyneon.Recording.estimate_scanpath">estimate_scanpath() (pyneon.Recording method)</a>
 </li>
-      <li><a href="reference/events.html#pyneon.Events.event_name">event_name (pyneon.Events attribute)</a>
-</li>
       <li><a href="reference/events.html#pyneon.Events">Events (class in pyneon)</a>
 </li>
   </ul></td>
@@ -427,19 +447,15 @@
 </li>
       <li><a href="reference/epochs.html#pyneon.events_to_times_df">events_to_times_df() (in module pyneon)</a>
 </li>
-      <li><a href="reference/export.html#pyneon.export.export_eye_bids">export_eye_bids() (in module pyneon.export)</a>
-
-      <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.export_eye_bids">(pyneon.Recording method)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.export_cloud_format">export_cloud_format() (pyneon.Recording method)</a>
 </li>
-      </ul></li>
-      <li><a href="reference/export.html#pyneon.export.export_motion_bids">export_motion_bids() (in module pyneon.export)</a>
-
-      <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.export_motion_bids">(pyneon.Recording method)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.export_eye_bids">export_eye_bids() (pyneon.Recording method)</a>
 </li>
-      </ul></li>
+      <li><a href="reference/recording.html#pyneon.Recording.export_motion_bids">export_motion_bids() (pyneon.Recording method)</a>
+</li>
       <li><a href="reference/recording.html#pyneon.Recording.eye_states">eye_states (pyneon.Recording property)</a>
+</li>
+      <li><a href="reference/recording.html#pyneon.Recording.eye_video">eye_video (pyneon.Recording property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -453,6 +469,8 @@
         <li><a href="reference/stream.html#pyneon.Stream.file">(pyneon.Stream attribute)</a>
 </li>
       </ul></li>
+      <li><a href="reference/events.html#pyneon.Events.filter_by_duration">filter_by_duration() (pyneon.Events method)</a>
+</li>
       <li><a href="reference/recording.html#pyneon.Recording.find_homographies">find_homographies() (pyneon.Recording method)</a>
 </li>
   </ul></td>
@@ -463,7 +481,7 @@
 </li>
       <li><a href="reference/recording.html#pyneon.Recording.fixations_on_surface">fixations_on_surface() (pyneon.Recording method)</a>
 </li>
-      <li><a href="reference/video.html#pyneon.SceneVideo.fps">fps (pyneon.SceneVideo attribute)</a>
+      <li><a href="reference/video.html#pyneon.Video.fps">fps (pyneon.Video property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -477,7 +495,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/recording.html#pyneon.Recording.gaze_on_surface">gaze_on_surface() (pyneon.Recording method)</a>
 </li>
-      <li><a href="reference/video.html#pyneon.SceneVideo.get_frame">get_frame() (pyneon.SceneVideo method)</a>
+      <li><a href="reference/video.html#pyneon.Video.get_frame">get_frame() (pyneon.Video method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -489,7 +507,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/video.html#pyneon.SceneVideo.height">height (pyneon.SceneVideo attribute)</a>
+      <li><a href="reference/video.html#pyneon.Video.height">height (pyneon.Video property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -505,20 +523,12 @@
 </li>
       <li><a href="reference/recording.html#pyneon.Recording.info">info (pyneon.Recording attribute)</a>
 </li>
-      <li><a href="reference/preprocess.html#pyneon.preprocess.interpolate">interpolate() (in module pyneon.preprocess)</a>
-
-      <ul>
-        <li><a href="reference/stream.html#pyneon.Stream.interpolate">(pyneon.Stream method)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/preprocess.html#pyneon.preprocess.interpolate_events">interpolate_events() (in module pyneon.preprocess)</a>
-
-      <ul>
-        <li><a href="reference/stream.html#pyneon.Stream.interpolate_events">(pyneon.Stream method)</a>
+      <li><a href="reference/stream.html#pyneon.Stream.interpolate">interpolate() (pyneon.Stream method)</a>
 </li>
-      </ul></li>
+      <li><a href="reference/stream.html#pyneon.Stream.interpolate_events">interpolate_events() (pyneon.Stream method)</a>
+</li>
       <li><a href="reference/epochs.html#pyneon.Epochs.is_equal_length">is_equal_length (pyneon.Epochs property)</a>
 </li>
       <li><a href="reference/stream.html#pyneon.Stream.is_uniformly_sampled">is_uniformly_sampled (pyneon.Stream property)</a>
@@ -547,41 +557,21 @@
       <ul>
         <li><a href="index.html#module-pyneon">pyneon</a>
 </li>
-        <li><a href="reference/export.html#module-pyneon.export">pyneon.export</a>
-</li>
-        <li><a href="reference/preprocess.html#module-pyneon.preprocess">pyneon.preprocess</a>
-</li>
-        <li><a href="reference/vis.html#module-pyneon.vis">pyneon.vis</a>
-</li>
       </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="N">N</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/video.html#pyneon.SceneVideo.n_frames">n_frames (pyneon.SceneVideo attribute)</a>
-</li>
   </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/vis.html#pyneon.vis.overlay_detections_and_pose">overlay_detections_and_pose() (in module pyneon.vis)</a>
-
-      <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.overlay_detections_and_pose">(pyneon.Recording method)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.overlay_detections_and_pose">overlay_detections_and_pose() (pyneon.Recording method)</a>
 </li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/vis.html#pyneon.vis.overlay_scanpath">overlay_scanpath() (in module pyneon.vis)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.overlay_scanpath">overlay_scanpath() (pyneon.Recording method)</a>
 
       <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.overlay_scanpath">(pyneon.Recording method)</a>
-</li>
-        <li><a href="reference/video.html#pyneon.SceneVideo.overlay_scanpath">(pyneon.SceneVideo method)</a>
+        <li><a href="reference/video.html#pyneon.Video.overlay_scanpath">(pyneon.Video method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -592,48 +582,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/epochs.html#pyneon.Epochs.plot">plot() (pyneon.Epochs method)</a>
 </li>
-      <li><a href="reference/vis.html#pyneon.vis.plot_distribution">plot_distribution() (in module pyneon.vis)</a>
-
-      <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.plot_distribution">(pyneon.Recording method)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.plot_distribution">plot_distribution() (pyneon.Recording method)</a>
 </li>
-      </ul></li>
-      <li><a href="reference/vis.html#pyneon.vis.plot_epochs">plot_epochs() (in module pyneon.vis)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/video.html#pyneon.Video.plot_frame">plot_frame() (pyneon.Video method)</a>
 </li>
-      <li><a href="reference/vis.html#pyneon.vis.plot_frame">plot_frame() (in module pyneon.vis)</a>
-
-      <ul>
-        <li><a href="reference/video.html#pyneon.SceneVideo.plot_frame">(pyneon.SceneVideo method)</a>
-</li>
-      </ul></li>
       <li>
     pyneon
 
       <ul>
         <li><a href="index.html#module-pyneon">module</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    pyneon.export
-
-      <ul>
-        <li><a href="reference/export.html#module-pyneon.export">module</a>
-</li>
-      </ul></li>
-      <li>
-    pyneon.preprocess
-
-      <ul>
-        <li><a href="reference/preprocess.html#module-pyneon.preprocess">module</a>
-</li>
-      </ul></li>
-      <li>
-    pyneon.vis
-
-      <ul>
-        <li><a href="reference/vis.html#module-pyneon.vis">module</a>
 </li>
       </ul></li>
   </ul></td>
@@ -668,23 +627,25 @@
 </li>
       <li><a href="reference/stream.html#pyneon.Stream.sampling_freq_effective">sampling_freq_effective (pyneon.Stream property)</a>
 </li>
-      <li><a href="reference/stream.html#pyneon.Stream.sampling_freq_nominal">sampling_freq_nominal (pyneon.Stream attribute)</a>
+      <li><a href="reference/stream.html#pyneon.Stream.sampling_freq_nominal">sampling_freq_nominal (pyneon.Stream property)</a>
 </li>
-      <li><a href="reference/video.html#pyneon.SceneVideo">SceneVideo (class in pyneon)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.scene_video">scene_video (pyneon.Recording property)</a>
 </li>
       <li><a href="reference/dataset.html#pyneon.Dataset.sections">sections (pyneon.Dataset attribute)</a>
 </li>
-      <li><a href="reference/preprocess.html#pyneon.preprocess.smooth_camera_pose">smooth_camera_pose() (in module pyneon.preprocess)</a>
+      <li><a href="reference/events.html#pyneon.Events.shape">shape (pyneon.Events property)</a>
 
       <ul>
-        <li><a href="reference/recording.html#pyneon.Recording.smooth_camera_pose">(pyneon.Recording method)</a>
+        <li><a href="reference/stream.html#pyneon.Stream.shape">(pyneon.Stream property)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/recording.html#pyneon.Recording.start_datetime">start_datetime (pyneon.Recording attribute)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.smooth_camera_pose">smooth_camera_pose() (pyneon.Recording method)</a>
 </li>
-      <li><a href="reference/recording.html#pyneon.Recording.start_time">start_time (pyneon.Recording attribute)</a>
+      <li><a href="reference/recording.html#pyneon.Recording.start_datetime">start_datetime (pyneon.Recording property)</a>
+</li>
+      <li><a href="reference/recording.html#pyneon.Recording.start_time">start_time (pyneon.Recording property)</a>
 </li>
       <li><a href="reference/events.html#pyneon.Events.start_ts">start_ts (pyneon.Events property)</a>
 </li>
@@ -708,31 +669,37 @@
 </li>
       <li><a href="reference/stream.html#pyneon.Stream.times">times (pyneon.Stream property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/video.html#pyneon.SceneVideo.timestamps">timestamps (pyneon.SceneVideo attribute)</a>
+      <li><a href="reference/stream.html#pyneon.Stream.timestamps">timestamps (pyneon.Stream property)</a>
 
       <ul>
-        <li><a href="reference/stream.html#pyneon.Stream.timestamps">(pyneon.Stream property)</a>
+        <li><a href="reference/video.html#pyneon.Video.timestamps">(pyneon.Video attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/epochs.html#pyneon.Epochs.to_numpy">to_numpy() (pyneon.Epochs method)</a>
 </li>
-      <li><a href="reference/video.html#pyneon.SceneVideo.ts">ts (pyneon.SceneVideo attribute)</a>
+      <li><a href="reference/stream.html#pyneon.Stream.ts">ts (pyneon.Stream property)</a>
 
       <ul>
-        <li><a href="reference/stream.html#pyneon.Stream.ts">(pyneon.Stream property)</a>
+        <li><a href="reference/video.html#pyneon.Video.ts">(pyneon.Video attribute)</a>
 </li>
       </ul></li>
       <li><a href="reference/stream.html#pyneon.Stream.ts_diff">ts_diff (pyneon.Stream property)</a>
 </li>
+      <li><a href="reference/events.html#pyneon.Events.type">type (pyneon.Events attribute)</a>
+
+      <ul>
+        <li><a href="reference/stream.html#pyneon.Stream.type">(pyneon.Stream attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/video.html#pyneon.SceneVideo.undistort">undistort() (pyneon.SceneVideo method)</a>
+      <li><a href="reference/video.html#pyneon.Video.undistort">undistort() (pyneon.Video method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -740,7 +707,7 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/recording.html#pyneon.Recording.video">video (pyneon.Recording property)</a>
+      <li><a href="reference/video.html#pyneon.Video">Video (class in pyneon)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -748,16 +715,12 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/video.html#pyneon.SceneVideo.width">width (pyneon.SceneVideo attribute)</a>
+      <li><a href="reference/video.html#pyneon.Video.width">width (pyneon.Video property)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/preprocess.html#pyneon.preprocess.window_average">window_average() (in module pyneon.preprocess)</a>
-
-      <ul>
-        <li><a href="reference/stream.html#pyneon.Stream.window_average">(pyneon.Stream method)</a>
+      <li><a href="reference/stream.html#pyneon.Stream.window_average">window_average() (pyneon.Stream method)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
