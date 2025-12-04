@@ -6,11 +6,11 @@
 PyNeon is a lightweight Python package designed to streamline the processing
 and analysis of multimodal data from the
 [Neon eye-tracking system](https://pupil-labs.com/products/neon)
-(Pupil Labs GmbH) or . This community-driven effort provides a versatile set of
+(Pupil Labs GmbH). This community-driven effort provides a versatile set of
 tools to work with Neon's rich data, including gaze, eye states, IMU, video,
 events, and more.
 
-PyNeon supports both **native** (data stored in the comapnion device) and [**Pupil Cloud**](https://cloud.pupil-labs.com/) data formats. We want to acknowledge the [`pupil-labs/pl-neon-recording`](https://github.com/pupil-labs/pl-neon-recording/) project, which inspired the design of PyNeon.
+PyNeon supports both **native** (data stored in the companion device) and [**Pupil Cloud**](https://cloud.pupil-labs.com/) data formats. We want to acknowledge the [`pupil-labs/pl-neon-recording`](https://github.com/pupil-labs/pl-neon-recording/) project, which inspired the design of PyNeon.
 
 Documentation for PyNeon is available at <https://ncc-brain.github.io/PyNeon/> which includes detailed references for classes and functions, as well as step-by-step tutorials presented as Jupyter notebooks.
 
@@ -41,7 +41,7 @@ as follows:
 
 ```bibtex
 @misc{pyneon,
-    title={PyNeon: a Python package for the analysis of Neon multimodal mobile eye-tracking data},
+    title={PyNeon: A Python package for the analysis of Neon multimodal mobile eye-tracking data},
     url={osf.io/preprints/psyarxiv/y5jmg_v2},
     DOI={10.31234/osf.io/y5jmg_v2},
     publisher={PsyArXiv},
