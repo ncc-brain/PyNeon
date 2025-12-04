@@ -1,11 +1,3 @@
-__all__ = [
-    "nominal_sampling_rates",
-    "expected_files_cloud",
-    "expected_files_native",
-    "data_types",
-    "native_to_cloud_column_map",
-]
-
 nominal_sampling_rates = {
     "gaze": 200,
     "eye_states": 200,
@@ -34,6 +26,8 @@ expected_files_native = [
     "calibration.bin",
     "event.time",
     "event.txt",
+    "eye_state ps1.raw",
+    "eye_state ps1.time",
     "eye_state.dtype",
     "fixations ps1.raw",
     "fixations ps1.time",
@@ -194,7 +188,22 @@ native_to_cloud_column_map = {
     "max_velocity": "peak velocity [px/s]",
 }
 
-camera_info = {
+calib_dtype = [
+    ("version", "u1"),
+    ("serial", "6S"),
+    ("scene_camera_matrix", "(3,3)d"),
+    ("scene_distortion_coefficients", "8d"),
+    ("scene_extrinsics_affine_matrix", "(4,4)d"),
+    ("right_camera_matrix", "(3,3)d"),
+    ("right_distortion_coefficients", "8d"),
+    ("right_extrinsics_affine_matrix", "(4,4)d"),
+    ("left_camera_matrix", "(3,3)d"),
+    ("left_distortion_coefficients", "8d"),
+    ("left_extrinsics_affine_matrix", "(4,4)d"),
+    ("crc", "u4"),
+]
+
+default_camera_info = {
     "camera_matrix": [
         [888.2934878427146, 0.0, 797.1412921708228],
         [0.0, 888.1105774610824, 612.7149562541089],

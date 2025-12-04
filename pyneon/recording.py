@@ -23,7 +23,7 @@ from .video import (
 )
 from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
 from .export import export_motion_bids, export_eye_bids, export_cloud_format
-from .utils import expected_files_cloud, expected_files_native
+from .utils.variables import expected_files_cloud, expected_files_native, calib_dtype
 
 
 class Recording:
@@ -309,10 +309,26 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             ts_file = video_file.with_suffix(".time")
             if not ts_file.is_file():
                 raise FileNotFoundError(
-                    f"Missing .time file {ts_file.name} in {self.recording_dir}"
+                    f"Missing {ts_file.name} in {self.recording_dir}"
                 )
             ts = np.fromfile(ts_file, dtype=np.int64)
-            info = {}  # TODO: load from calibration.bin
+            calib_file = self.recording_dir / "calibration.bin"
+            if not calib_file.is_file():
+                warn(
+                    f"Missing calibration.bin in {self.recording_dir}; "
+                    "scene camera info will be empty."
+                )
+                info = {}
+            else:
+                dtype = np.dtype(calib_dtype)
+            calibration = np.frombuffer(calib_file.open("rb").read(), dtype)[0]
+            info = {
+                "camera_matrix": calibration["scene_camera_matrix"].tolist(),
+                "distortion_coefficients": calibration[
+                    "scene_distortion_coefficients"
+                ].tolist(),
+                "serial_number": calibration["serial"].decode("utf-8"),
+            }
         else:
             ts_file = self.recording_dir / "world_timestamps.csv"
             info_file = self.recording_dir / "scene_camera.json"

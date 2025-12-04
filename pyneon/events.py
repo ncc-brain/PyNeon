@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 from ast import literal_eval
 from warnings import warn
 
-from .utils import native_to_cloud_column_map
+from .utils.variables import native_to_cloud_column_map
 
 if TYPE_CHECKING:
     from .stream import Stream

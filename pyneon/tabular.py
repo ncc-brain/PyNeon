@@ -1,7 +1,7 @@
 import pandas as pd
 from warnings import warn
 
-from .utils import data_types
+from .utils.variables import data_types
 
 
 class BaseTabular:

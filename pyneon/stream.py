@@ -13,7 +13,7 @@ from .preprocess import (
     window_average,
     compute_azimuth_and_elevation,
 )
-from .utils import nominal_sampling_rates, native_to_cloud_column_map
+from .utils.variables import nominal_sampling_rates, native_to_cloud_column_map
 
 
 if TYPE_CHECKING:

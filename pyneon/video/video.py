@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from ..vis import plot_frame, overlay_scanpath
 from .apriltag import detect_apriltags
-from ..utils.variables import camera_info
+from ..utils.variables import default_camera_info
 
 
 class Video(cv2.VideoCapture):
@@ -43,7 +43,7 @@ class Video(cv2.VideoCapture):
 
         if not info:
             warn("Video info is empty and will be loaded from default values.")
-            self.info = camera_info
+            self.info = default_camera_info
 
         if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
             raise ValueError(
