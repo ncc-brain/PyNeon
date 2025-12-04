@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Literal, Optional
 import pandas as pd
@@ -121,12 +120,9 @@ class Recording:
                 with open(recording_dir / "wearer.json") as wearer_path:
                     wearer_info = json.load(wearer_path)
                 info["wearer_name"] = wearer_info.get("name", None)
-                with open(recording_dir / "manifest.json") as wearer_id_path:
-                    manifest_info = json.load(wearer_id_path)
-                info["manifest"] = pd.DataFrame.from_dict(manifest_info)
             except FileNotFoundError:
                 info["wearer_name"] = None
-                info["manifest"] = pd.DataFrame()
+                warn("Cannot find wearer.json in native recording.")
         self.info = info
 
         self.der_dir = recording_dir / "derivatives"
@@ -1247,17 +1243,9 @@ class Recording:
         rebase : bool, optional
             If True, re-initialize the recording on the target directory after export.
         """
-        if self.format == "native":
-            export_cloud_format(self, target_dir)
-            if rebase:
-                self.format = "cloud"
-                self.__init__(target_dir)
-        elif self.format == "cloud":
-            print("Recording is already in Cloud format; no export needed.")
-        else:
-            raise ValueError(
-                f"Export to Cloud format not supported from {self.format} format."
-            )
+        export_cloud_format(self, target_dir)
+        if rebase:
+            self.__init__(target_dir)
 
     def export_motion_bids(
         self,

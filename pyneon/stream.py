@@ -71,7 +71,7 @@ def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
                 dtype=worn_dtype,
             )["worn"]
             data["worn"] = worn.astype(np.int8)
-            data = compute_azimuth_and_elevation(data)
+            compute_azimuth_and_elevation(data)
         except Exception as e:
             warn(f"Could not load 'worn' data for gaze stream: {e}")
 
@@ -546,5 +546,5 @@ class Stream(BaseTabular):
                 "Use overwrite=True to overwrite existing columns."
             )
         inst = self if inplace else self.copy()
-        inst.data = compute_azimuth_and_elevation(inst.data, method=method)
+        compute_azimuth_and_elevation(inst.data, method=method)
         return None if inplace else inst

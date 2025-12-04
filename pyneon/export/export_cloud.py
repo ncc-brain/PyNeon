@@ -1,15 +1,34 @@
-import os
 from pathlib import Path
 import pandas as pd
+import json
+from shutil import copy
 from typing import TYPE_CHECKING
+from warnings import warn
 
 if TYPE_CHECKING:
     from ..recording import Recording
 
 
 def export_cloud_format(recording: "Recording", target_dir: str | Path):
-    """Export the recording in a cloud-compatible format."""
-    os.makedirs(target_dir, exist_ok=True)
+    """Export the recording in a cloud-compatible format.
+
+    Parameters
+    ----------
+    recording : Recording
+        The recording to export. ``recording.format`` must be "native".
+    target_dir : str | Path
+        The target directory to save the exported files.
+        Will be created if it does not exist.
+    """
+    if recording.format != "native":
+        raise ValueError("Recording is already in Cloud format; no export needed.")
+
+    target_dir = Path(target_dir)
+    if target_dir == recording.recording_dir:
+        raise ValueError(
+            "Target directory must be different from the native recording directory."
+        )
+    target_dir.mkdir(parents=True, exist_ok=True)
 
     data_exports = [
         ("gaze", "gaze.csv"),
@@ -20,69 +39,62 @@ def export_cloud_format(recording: "Recording", target_dir: str | Path):
         ("blinks", "blinks.csv"),
         ("events", "events.csv"),
     ]
-    for attr, filename in data_exports:
-        _export_data(recording, attr, filename, target_dir)
+    for attr_name, filename in data_exports:
+        _export_data(recording, attr_name, filename, target_dir)
 
     _export_scene_video(recording, target_dir)
     _export_template(recording, target_dir)
     _export_info(recording, target_dir)
 
 
-def _export_data(recording, attr, filename, target_dir):
-    obj = getattr(recording, attr, None)
-    if obj and hasattr(obj, "data"):
-        obj.data.to_csv(os.path.join(target_dir, filename), index=False)
-    else:
-        print(f"Warning: '{attr}.data' not found in recording.")
+def _export_data(recording, attr_name, filename, target_dir):
+    try:
+        attr = getattr(recording, attr_name)
+    except FileNotFoundError:
+        warn(f"Warning: '{attr_name}' data file not found in recording.")
+        return
+    data = attr.data.copy()
+    # Make index a column again
+    data.reset_index(inplace=True, drop=False)
+    # Append recording ID and section ID columns
+    data["recording id"] = recording.recording_id
+    data["section id"] = recording.info.get("section_id", pd.NA)
+    cols = data.columns.tolist()
+    new_order = cols[-2:] + cols[:-2]
+    data = data[new_order]
+    # Export to CSV
+    data.to_csv(target_dir / filename, index=False)
 
 
-def _export_scene_video(recording, target_dir):
-    scene_video = getattr(recording, "scene_video", None)
-    if scene_video and hasattr(scene_video, "video_file") and scene_video.video_file:
-        video_filename = os.path.basename(scene_video.video_file)
-        target_video_path = os.path.join(target_dir, video_filename)
-        if scene_video.video_file != target_video_path:
-            try:
-                import shutil
-
-                shutil.copy(scene_video.video_file, target_video_path)
-            except Exception as e:
-                print(f"Warning: Failed to copy video file: {e}")
-            if hasattr(scene_video, "ts"):
-                world_ts_df = pd.DataFrame()
-                world_ts_df["timestamp [ns]"] = scene_video.ts
-                world_ts_df["section_id"] = recording.info.get("section_id", 0)
-                world_ts_df["recording_id"] = recording.recording_id
-
-                world_ts_df.to_csv(
-                    os.path.join(target_dir, "world_timestamps.csv"), index=False
-                )
-            else:
-                print("Warning: 'scene_video.ts' not found in recording.")
-            if hasattr(scene_video, "info"):
-                import json
-
-                with open(
-                    os.path.join(target_dir, "scene_camera.json"), "w", encoding="utf-8"
-                ) as f:
-                    json.dump(scene_video.info, f, indent=4)
-        else:
-            print("Warning: 'scene_camera.video_path' not found or is None.")
+def _export_scene_video(recording: "Recording", target_dir: Path):
+    if not hasattr(recording, "scene_video"):
+        warn("Warning: 'scene_video' not found in recording.")
+        return
+    scene_video = recording.scene_video
+    target_video_path = target_dir / scene_video.video_file.name
+    try:
+        copy(scene_video.video_file, target_video_path)
+    except Exception as e:
+        warn(f"Warning: Failed to copy video file: {e}")
+    # Export timestamps
+    world_ts_df = pd.DataFrame()
+    world_ts_df["section_id"] = recording.info.get("section_id", pd.NA)
+    world_ts_df["recording_id"] = recording.recording_id
+    world_ts_df["timestamp [ns]"] = scene_video.ts
+    world_ts_df.to_csv(target_dir / "world_timestamps.csv", index=False)
+    with open(target_dir / "scene_camera.json", "w", encoding="utf-8") as f:
+        json.dump(scene_video.info, f, indent=4)
 
 
 def _export_template(recording, target_dir):
     if hasattr(recording, "recording_dir"):
         template_path = recording.recording_dir / "template.json"
         try:
-            import json
-
             with open(template_path, "r", encoding="utf-8") as f:
                 template_json = json.load(f)
             if "items" in template_json and isinstance(template_json["items"], list):
                 relevant_info_df = pd.DataFrame(template_json["items"])
-                relevant_info_df.to_csv(
-                    os.path.join(target_dir, "template.csv"), index=False
-                )
+                relevant_info_df.to_csv(target_dir / "template.csv", index=False)
             else:
                 print("Warning: 'items' not found or not a list in template.json.")
         except Exception as e:
@@ -92,15 +104,6 @@ def _export_template(recording, target_dir):
 
 
 def _export_info(recording, target_dir):
-    info = getattr(recording, "info", None)
-    if info:
-        # drop manifest if present
-        info.pop("manifest", None)
-
-        # directly dump info dictionary to json
-        import json
-
-        with open(os.path.join(target_dir, "info.json"), "w", encoding="utf-8") as f:
-            json.dump(info, f, indent=4)
-    else:
-        print("Warning: 'info' not found in recording.")
+    info = recording.info
+    with open(target_dir / "info.json", "w", encoding="utf-8") as f:
+        json.dump(info, f, indent=4)
