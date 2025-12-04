@@ -1,11 +1,64 @@
+nominal_sampling_rates = {
+    "gaze": 200,
+    "eye_states": 200,
+    "imu": 110,
+    "scene_video_features": 30,
+}
+
+expected_files_cloud = [
+    "3d_eye_states.csv",
+    "blinks.csv",
+    "events.csv",
+    "fixations.csv",
+    "gaze.csv",
+    "imu.csv",
+    "info.json",
+    "labels.csv",
+    "saccades.csv",
+    "scene_camera.json",
+    "world_timestamps.csv",
+]
+
+expected_files_native = [
+    "blinks ps1.raw",
+    "blinks ps1.time",
+    "blinks.dtype",
+    "calibration.bin",
+    "event.time",
+    "event.txt",
+    "eye_state ps1.raw",
+    "eye_state ps1.time",
+    "eye_state.dtype",
+    "fixations ps1.raw",
+    "fixations ps1.time",
+    "fixations.dtype",
+    "gaze ps1.raw",
+    "gaze ps1.time",
+    "gaze.dtype",
+    "imu ps1.raw",
+    "imu ps1.time",
+    "imu.dtype",
+    "info.json",
+    "Neon Scene Camera v1 ps1.mp4",
+    "Neon Scene Camera v1 ps1.time",
+    "Neon Sensor Module v1 ps1.mp4",
+    "Neon Sensor Module v1 ps1.time",
+    "template.json",
+    "wearer.json",
+    "worn ps1.raw",
+    "worn.dtype",
+]
+
 data_types = {
     # Events
+    "timestamp [ns]": "int64",
+    "start timestamp [ns]": "int64",
     "end timestamp [ns]": "int64",
     "duration [ms]": "Int64",
     # Gaze
     "gaze x [px]": float,
     "gaze y [px]": float,
-    "worn": "Int32",
+    "worn": "Int8",
     "fixation id": "Int32",
     "blink id": "Int32",
     "azimuth [deg]": float,
@@ -46,11 +99,8 @@ data_types = {
     "quaternion y": float,
     "quaternion z": float,
     # Blinks
-    "blink id": "Int32",
+    # "blink id": "Int32",
     # Fixations
-    "fixation id": "Int32",
-    "end timestamp [ns]": "Int64",
-    "duration [ms]": "Int64",
     "fixation x [px]": float,
     "fixation y [px]": float,
     # Saccades
@@ -78,4 +128,98 @@ data_types = {
     "gaze y [surface coord]": float,
     # scanpath
     "fixations": object,
+}
+
+native_to_cloud_column_map = {
+    # Time
+    "time": "timestamp [ns]",
+    "start_timestamp_ns": "start timestamp [ns]",
+    "end_timestamp_ns": "end timestamp [ns]",
+    # Gaze
+    "x": "gaze x [px]",
+    "y": "gaze y [px]",
+    "point_x": "gaze x [px]",
+    "point_y": "gaze y [px]",
+    # Eye states
+    "pupil_diameter_left_mm": "pupil diameter left [mm]",
+    "pupil_diameter_right_mm": "pupil diameter right [mm]",
+    "eyeball_center_left_x": "eyeball center left x [mm]",
+    "eyeball_center_left_y": "eyeball center left y [mm]",
+    "eyeball_center_left_z": "eyeball center left z [mm]",
+    "eyeball_center_right_x": "eyeball center right x [mm]",
+    "eyeball_center_right_y": "eyeball center right y [mm]",
+    "eyeball_center_right_z": "eyeball center right z [mm]",
+    "optical_axis_left_x": "optical axis left x",
+    "optical_axis_left_y": "optical axis left y",
+    "optical_axis_left_z": "optical axis left z",
+    "optical_axis_right_x": "optical axis right x",
+    "optical_axis_right_y": "optical axis right y",
+    "optical_axis_right_z": "optical axis right z",
+    "eyelid_angle_top_left": "eyelid angle top left [rad]",
+    "eyelid_angle_bottom_left": "eyelid angle bottom left [rad]",
+    "eyelid_angle_top_right": "eyelid angle top right [rad]",
+    "eyelid_angle_bottom_right": "eyelid angle bottom right [rad]",
+    "eyelid_aperture_left_mm": "eyelid aperture left [mm]",
+    "eyelid_aperture_right_mm": "eyelid aperture right [mm]",
+    # IMU
+    "gyro_x": "gyro x [deg/s]",
+    "gyro_y": "gyro y [deg/s]",
+    "gyro_z": "gyro z [deg/s]",
+    "angular_velocity_x": "gyro x [deg/s]",
+    "angular_velocity_y": "gyro y [deg/s]",
+    "angular_velocity_z": "gyro z [deg/s]",
+    "accel_x": "acceleration x [g]",
+    "accel_y": "acceleration y [g]",
+    "accel_z": "acceleration z [g]",
+    "acceleration_x": "acceleration x [g]",
+    "acceleration_y": "acceleration y [g]",
+    "acceleration_z": "acceleration z [g]",
+    "quaternion_w": "quaternion w",
+    "quaternion_x": "quaternion x",
+    "quaternion_y": "quaternion y",
+    "quaternion_z": "quaternion z",
+    # Fixations
+    "mean_gaze_x": "fixation x [px]",
+    "mean_gaze_y": "fixation y [px]",
+    # Saccades
+    "amplitude_pixels": "amplitude [px]",
+    "amplitude_angle_deg": "amplitude [deg]",
+    "mean_velocity": "mean velocity [px/s]",
+    "max_velocity": "peak velocity [px/s]",
+}
+
+calib_dtype = [
+    ("version", "u1"),
+    ("serial", "6S"),
+    ("scene_camera_matrix", "(3,3)d"),
+    ("scene_distortion_coefficients", "8d"),
+    ("scene_extrinsics_affine_matrix", "(4,4)d"),
+    ("right_camera_matrix", "(3,3)d"),
+    ("right_distortion_coefficients", "8d"),
+    ("right_extrinsics_affine_matrix", "(4,4)d"),
+    ("left_camera_matrix", "(3,3)d"),
+    ("left_distortion_coefficients", "8d"),
+    ("left_extrinsics_affine_matrix", "(4,4)d"),
+    ("crc", "u4"),
+]
+
+default_camera_info = {
+    "camera_matrix": [
+        [888.2934878427146, 0.0, 797.1412921708228],
+        [0.0, 888.1105774610824, 612.7149562541089],
+        [0.0, 0.0, 1.0],
+    ],
+    "distortion_coefficients": [
+        [
+            -0.1297193048199076,
+            0.10875170107148817,
+            6.7953760874676e-07,
+            -0.00022697967572936557,
+            5.796552672316462e-06,
+            0.16980611822301264,
+            0.050610238505094475,
+            0.025633412650283308,
+        ]
+    ],
+    "serial_number": "XXXXXX",
 }

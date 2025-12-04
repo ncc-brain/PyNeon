@@ -37,12 +37,8 @@ dependencies = [
 license =  { text = "MIT" }
 
 [project.optional-dependencies]
-apriltags = [
-    "pupil-apriltags"
-]
-dev = [
-    "pytest",
-]
+apriltags = ["pupil-apriltags"]
+dev = ["pytest"]
 doc = [
     "ruff",
     "jupyter",

@@ -6,6 +6,14 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+import sys
+
+# Make sure the project root is on sys.path so autodoc can import the package
+# when building docs from the `source/` directory. `pyneon` lives in the repo
+# root one level up from this file.
+sys.path.insert(0, os.path.abspath(".."))
+
 project = "PyNeon"
 copyright = "2024-%Y, PyNeon developers"
 author = "PyNeon developers"
@@ -22,6 +30,7 @@ extensions = [
     "myst_parser",
 ]
 autodoc_member_order = "bysource"
+autodoc_inherit_docstrings = True
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 

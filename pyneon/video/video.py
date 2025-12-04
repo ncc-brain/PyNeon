@@ -4,14 +4,15 @@ import pandas as pd
 from pathlib import Path
 from typing import Optional, Union
 import matplotlib.pyplot as plt
-import json
+from warnings import warn
 from tqdm import tqdm
 
 from ..vis import plot_frame, overlay_scanpath
 from .apriltag import detect_apriltags
+from ..utils.variables import default_camera_info
 
 
-class SceneVideo(cv2.VideoCapture):
+class Video(cv2.VideoCapture):
     """
     Loaded video file with timestamps.
 
@@ -19,10 +20,11 @@ class SceneVideo(cv2.VideoCapture):
     ----------
     video_file : pathlib.Path
         Path to the video file.
-    timestamps_file : pathlib.Path
-        Path to the timestamps file.
-    info_file : pathlib.Path
-        Path to the scene camera info file.
+    timestamps : numpy.ndarray
+        Timestamps of the video frames in nanoseconds.
+        Must have the same length as the number of frames in the video.
+    info : dict
+        Dictionary containing video info, including camera matrix and distortion coefficients.
 
     Attributes
     ----------
@@ -30,39 +32,56 @@ class SceneVideo(cv2.VideoCapture):
         Timestamps of the video frames in nanoseconds.
     ts : numpy.ndarray
         Alias for timestamps.
-    n_frames : int
-        Number of frames in the video.
-    fps : float
-        Frames per second of the video.
-    width : int
-        Width of the video frames in pixels.
-    height : int
-        Height of the video frames in pixels.
     """
 
-    def __init__(self, video_file: Path, timestamps_file: Path, info_file: Path):
+    def __init__(self, video_file: Path, timestamps: np.ndarray, info: dict):
         super().__init__(video_file)
         self.video_file = video_file
-        self.timestamps_file = timestamps_file
-        self.info_file = info_file
-        with open(info_file) as f:
-            self.info = json.load(f)
-        self.timestamps = (
-            pd.read_csv(timestamps_file)["timestamp [ns]"].to_numpy().astype(np.int64)
-        )
+        self.timestamps = timestamps
         self.ts = self.timestamps
-        assert len(self.timestamps) == self.get(cv2.CAP_PROP_FRAME_COUNT), (
-            f"Number of timestamps ({len(self.timestamps)}) does not match "
-            f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
-        )
-        self.fps = self.get(cv2.CAP_PROP_FPS)
-        self.width = int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.camera_matrix = np.array(self.info["camera_matrix"])
-        self.dist_coeffs = np.array(self.info["distortion_coefficients"])
+        self.info = info
+
+        if not info:
+            warn("Video info is empty and will be loaded from default values.")
+            self.info = default_camera_info
+
+        if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
+            raise ValueError(
+                f"Number of timestamps ({len(self.timestamps)}) does not match "
+                f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
+            )
 
     def __len__(self) -> int:
         return int(len(self.ts))
+
+    @property
+    def fps(self) -> float:
+        """Frames per second of the video."""
+        return self.get(cv2.CAP_PROP_FPS)
+
+    @property
+    def width(self) -> int:
+        """Width of the video frames in pixels."""
+        return int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+    @property
+    def height(self) -> int:
+        """Height of the video frames in pixels."""
+        return int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    @property
+    def camera_matrix(self) -> np.ndarray:
+        """Camera matrix of the video camera."""
+        if "camera_matrix" not in self.info:
+            raise ValueError("Camera matrix not found in video info.")
+        return np.array(self.info["camera_matrix"])
+
+    @property
+    def distortion_coefficients(self) -> np.ndarray:
+        """Distortion coefficients of the video camera."""
+        if "distortion_coefficients" not in self.info:
+            raise ValueError("Distortion coefficients not found in video info.")
+        return np.array(self.info["distortion_coefficients"])
 
     def get_frame(self, timestamp: Union[int, np.int64]) -> int:
         """

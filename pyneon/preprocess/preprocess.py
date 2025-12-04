@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
+from typing import Literal
 
 from pandas.api.types import (
     is_float_dtype,
@@ -42,11 +42,11 @@ def interpolate(
     float_kind : str, optional
         Kind of interpolation applied on columns of ``float`` type,
         For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to ``"linear"``.
+        Defaults to "linear".
     other_kind : str, optional
         Kind of interpolation applied on columns of other types,
         For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to ``"nearest"``.
+        Defaults to "nearest".
 
     Returns
     -------
@@ -139,11 +139,11 @@ def interpolate_events(
     float_kind : str, optional
         Kind of interpolation applied on columns of ``float`` type,
         For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to ``"linear"``.
+        Defaults to "linear".
     other_kind : str, optional
         Kind of interpolation applied on columns of other types,
         For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to ``"nearest"``.
+        Defaults to "nearest".
 
     Returns
     -------
@@ -252,6 +252,51 @@ def window_average(
     return new_data
 
 
+def compute_azimuth_and_elevation(
+    data: pd.DataFrame,
+    method: Literal["linear"] = "linear",
+) -> None:
+    """
+    Append gaze azimuth and elevation angles (in degrees) to gaze data
+    based on gaze pixel coordinates. Operates in-place.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Gaze data containing ``gaze x [px]`` and ``gaze y [px]`` columns.
+    method : str, optional
+        Method to compute gaze angles. Currently only "linear" is supported.
+        Defaults to "linear".
+
+    Returns
+    -------
+    None
+        The function modifies the input DataFrame in-place by adding two new columns:
+        ``azimuth [deg]`` and ``elevation [deg]``.
+    """
+    required_cols = ["gaze x [px]", "gaze y [px]"]
+    camera_resolution = [1600, 1200]  # Pupil Neon camera resolution in pixels
+    camera_fov = [103, 77]  # Pupil Neon camera field of view in degrees
+
+    if not all(col in data.columns for col in required_cols):
+        raise ValueError(
+            f"Data must contain the following columns to compute gaze angles: {required_cols}"
+        )
+    if method == "linear":
+        data["azimuth [deg]"] = (
+            (data["gaze x [px]"] - camera_resolution[0] / 2)
+            / camera_resolution[0]
+            * camera_fov[0]
+        )
+        data["elevation [deg]"] = (
+            -(data["gaze y [px]"] - camera_resolution[1] / 2)
+            / camera_resolution[1]
+            * camera_fov[1]
+        )
+    else:
+        raise NotImplementedError(f"Method '{method}' not implemented for gaze angles.")
+
+
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
@@ -277,7 +322,7 @@ def concat_streams(
     stream_names : str or list of str
         Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
-        (``"3d_eye_states"``) is also tolerated as an alias for ``"eye_states"``).
+        ("3d_eye_states") is also tolerated as an alias for "eye_states").
     sampling_freq : numbers.Number or str, optional
         Sampling frequency of the concatenated streams.
         If numeric, the streams will be interpolated to this frequency.
@@ -286,10 +331,10 @@ def concat_streams(
         If "max", the highest nominal sampling frequency will be used.
     interp_float_kind : str, optional
         Kind of interpolation applied on columns of ``float`` type,
-        Defaults to ``"linear"``. For details see :class:`scipy.interpolate.interp1d`.
+        Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
     interp_other_kind : str, optional
         Kind of interpolation applied on columns of other types.
-        Defaults to ``"nearest"``.
+        Defaults to "nearest".
     inplace : bool, optional
         Replace selected stream data with interpolated data during concatenation
         if``True``. Defaults to ``False``.
@@ -412,7 +457,7 @@ def concat_events(
     """
     Concatenate different events. All columns in the selected event type will be
     present in the final DataFrame. An additional ``type`` column denotes the event
-    type. If ``"events"`` is in ``event_names``, its ``timestamp [ns]`` column will be
+    type. If "events" is in ``event_names``, its ``timestamp [ns]`` column will be
     renamed to ``start timestamp [ns]``, and the ``name`` and ``type`` columns will
     be renamed to ``message name`` and ``message type`` respectively to prevent confusion
     between physiological events and user-supplied messages.
