@@ -431,6 +431,18 @@ accessed as properties such as <code class="docutils literal notranslate"><span 
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Recording.format">
+<span class="sig-name descname"><span class="pre">format</span></span><a class="headerlink" href="#pyneon.Recording.format" title="Link to this definition">#</a></dt>
+<dd><p>Recording format, either “cloud” for Pupil Cloud format or “native” for
+native format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{‘cloud’, ‘native’}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="pyneon.Recording.info">
 <span class="sig-name descname"><span class="pre">info</span></span><a class="headerlink" href="#pyneon.Recording.info" title="Link to this definition">#</a></dt>
 <dd><p>Information about the recording. Read from <code class="docutils literal notranslate"><span class="pre">info.json</span></code>. For details, see
@@ -438,6 +450,17 @@ accessed as properties such as <code class="docutils literal notranslate"><span 
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Recording.data_format_version">
+<span class="sig-name descname"><span class="pre">data_format_version</span></span><a class="headerlink" href="#pyneon.Recording.data_format_version" title="Link to this definition">#</a></dt>
+<dd><p>Data format version as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1124,7 +1147,9 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording"><code class="docutils literal notranslate"><span class="pre">Recording</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.recording_id"><code class="docutils literal notranslate"><span class="pre">Recording.recording_id</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.recording_dir"><code class="docutils literal notranslate"><span class="pre">Recording.recording_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.format"><code class="docutils literal notranslate"><span class="pre">Recording.format</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.info"><code class="docutils literal notranslate"><span class="pre">Recording.info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.data_format_version"><code class="docutils literal notranslate"><span class="pre">Recording.data_format_version</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.gaze"><code class="docutils literal notranslate"><span class="pre">Recording.gaze</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.imu"><code class="docutils literal notranslate"><span class="pre">Recording.imu</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.eye_states"><code class="docutils literal notranslate"><span class="pre">Recording.eye_states</span></code></a></li>
