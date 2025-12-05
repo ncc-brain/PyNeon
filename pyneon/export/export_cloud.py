@@ -54,8 +54,11 @@ def _export_data(recording, attr_name, filename, target_dir):
         warn(f"Warning: '{attr_name}' data file not found in recording.")
         return
     data = attr.data.copy()
-    # Make index a column again
-    data.reset_index(inplace=True, drop=False)
+    # Make timestamp index a column again
+    if data.index.name == "timestamp [ns]":
+        data.reset_index(inplace=True, drop=False)
+    else:
+        data.reset_index(inplace=True, drop=True)
     # Append recording ID and section ID columns
     data["section id"] = recording.info.get("section_id", pd.NA)
     data["recording id"] = recording.recording_id

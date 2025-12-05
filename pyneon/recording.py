@@ -94,9 +94,14 @@ class Recording:
         Recording ID.
     recording_dir : pathlib.Path
         Path to the recording directory.
+    format : {'cloud', 'native'}
+        Recording format, either "cloud" for Pupil Cloud format or "native" for
+        native format.
     info : dict
         Information about the recording. Read from ``info.json``. For details, see
         https://docs.pupil-labs.com/neon/data-collection/data-format/#info-json.
+    data_format_version : str | None
+        Data format version as in ``info.json``.
     """
 
     def __init__(self, recording_dir: str | Path):
@@ -124,6 +129,7 @@ class Recording:
                 info["wearer_name"] = None
                 warn("Cannot find wearer.json in native recording.")
         self.info = info
+        self.data_format_version = info.get("data_format_version", None)
 
         self.der_dir = recording_dir / "derivatives"
         if not self.der_dir.is_dir():
