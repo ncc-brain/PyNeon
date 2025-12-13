@@ -445,7 +445,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         )
         return Stream(new_data)
 
-    def concat_events(self, event_names: str | list[str]) -> pd.DataFrame:
+    def concat_events(self, event_names: str | list[str]) -> Events:
         """
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional "type" column denotes the event
