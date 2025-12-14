@@ -12,7 +12,6 @@ from ..utils import _check_data
 if TYPE_CHECKING:
     from ..events import Events
     from ..recording import Recording
-    from ..stream import Stream
 
 
 def interpolate(
@@ -69,19 +68,17 @@ def interpolate(
             UserWarning,
         )
 
-    x = data.index.astype("int64")
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
     new_data.index.name = data.index.name
 
     for col in data.columns:
         s = data[col]
-        y = s.to_numpy(copy=False)
 
         if is_float_dtype(s):  # Interp with float_kind
-            vals = interp1d(x, y, kind=float_kind, bounds_error=False)(new_ts)
+            vals = interp1d(s.index, s, kind=float_kind, bounds_error=False)(new_ts)
             new_data[col] = vals.astype(s.dtype, copy=False)
         else:  # Interp with nearest for other dtypes
-            vals = interp1d(x, y, kind="nearest", bounds_error=False)(new_ts)
+            vals = interp1d(s.index, s, kind="nearest", bounds_error=False)(new_ts)
             try:
                 new_data[col] = vals.astype(s.dtype, copy=False)
             except (TypeError, ValueError):  # fallback in case .astype fails
