@@ -424,9 +424,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         interp_float_kind : str, optional
             Kind of interpolation applied on columns of float type,
             Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
-        interp_other_kind : str, optional
-            Kind of interpolation applied on columns of other types.
-            Defaults to "nearest".
         inplace : bool, optional
             Replace selected stream data with interpolated data during concatenation
             if ``True``. Defaults to ``False``.
@@ -436,15 +433,15 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Stream
             Stream object containing concatenated data.
         """
-        new_data = concat_streams(
-            self,
-            stream_names,
-            sampling_freq,
-            interp_float_kind,
-            interp_other_kind,
-            inplace,
+        return Stream(
+            concat_streams(
+                self,
+                stream_names,
+                sampling_freq,
+                interp_float_kind,
+                inplace,
+            )
         )
-        return Stream(new_data)
 
     def concat_events(self, event_names: str | list[str]) -> Events:
         """

@@ -12,6 +12,7 @@ from ..utils import _check_data
 if TYPE_CHECKING:
     from ..events import Events
     from ..recording import Recording
+    from ..stream import Stream
 
 
 def interpolate(
@@ -281,9 +282,8 @@ _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 def concat_streams(
     rec: "Recording",
     stream_names: str | list[str] = "all",
-    sampling_freq: Number | str = "min",
+    sampling_freq: int | float | str = "min",
     interp_float_kind: str = "linear",
-    interp_other_kind: str = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
     """
@@ -301,101 +301,95 @@ def concat_streams(
         Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
         ("3d_eye_states") is also tolerated as an alias for "eye_states").
-    sampling_freq : numbers.Number or str, optional
+    sampling_freq : int, float, or str, optional
         Sampling frequency of the concatenated streams.
-        If numeric, the streams will be interpolated to this frequency.
+        If numeric, all streams will be interpolated to this frequency.
         If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
     interp_float_kind : str, optional
         Kind of interpolation applied on columns of ``float`` type,
         Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
-    interp_other_kind : str, optional
-        Kind of interpolation applied on columns of other types.
-        Defaults to "nearest".
     inplace : bool, optional
         Replace selected stream data with interpolated data during concatenation
         if``True``. Defaults to ``False``.
 
     Returns
     -------
-    concat_data : pandas.DataFrame
+    pandas.DataFrame
         Concatenated data.
     """
-    if isinstance(stream_names, str):
+    if isinstance(stream_names, str):  # Only "all" is allowed as a string
         if stream_names == "all":
             stream_names = list(_VALID_STREAMS)
         else:
             raise ValueError(
                 "Invalid stream_names, must be 'all' or a list of stream names."
             )
-    if len(stream_names) <= 1:
-        raise ValueError("Must provide at least two streams to concatenate.")
 
-    stream_names = [ch.lower() for ch in stream_names]
+    # Normalize stream names and handle aliases
+    stream_names = [
+        ("eye_states" if ch.lower() == "3d_eye_states" else ch.lower())
+        for ch in stream_names
+    ]
+    stream_names = list(
+        dict.fromkeys(stream_names)
+    )  # Remove duplicates while preserving order
+
     # Check if all streams are valid
     if not all([ch in _VALID_STREAMS for ch in stream_names]):
         raise ValueError(f"Invalid stream name, can only one of {_VALID_STREAMS}")
+    # Check at least two streams are provided
+    if len(stream_names) <= 1:
+        raise ValueError("Must provide at least two different streams to concatenate.")
 
-    stream_info = pd.DataFrame(columns=["stream", "name", "sf", "first_ts", "last_ts"])
+    concat_list = []
     print("Concatenating streams:")
-    stream_map = {
-        "gaze": ("gaze", "gaze"),
-        "3d_eye_states": ("eye_states", "3d_eye_states"),
-        "eye_states": ("eye_states", "3d_eye_states"),
-        "imu": ("imu", "imu"),
-    }
     for name in stream_names:
-        attr, display_name = stream_map[name]
-        stream_obj = getattr(rec, attr, None)
+        stream_obj = getattr(rec, name, None)
         if stream_obj is None:
-            raise ValueError(f"Cannot load {display_name} data.")
-        stream_info = pd.concat(
-            [
-                stream_info,
-                pd.Series(
-                    {
-                        "stream": stream_obj,
-                        "name": display_name,
-                        "sf": stream_obj.sampling_freq_nominal,
-                        "first_ts": stream_obj.first_ts,
-                        "last_ts": stream_obj.last_ts,
-                    }
-                )
-                .to_frame()
-                .T,
-            ],
-            ignore_index=True,
+            raise ValueError(f"Cannot load {name} data.")
+        concat_list.append(
+            {
+                "stream": stream_obj,
+                "name": name,
+                "sf": stream_obj.sampling_freq_nominal,
+                "first_ts": stream_obj.first_ts,
+                "last_ts": stream_obj.last_ts,
+            }
         )
-        print(f"\t{display_name.capitalize()}")
+        print(f"\t{name}")
+
+    streams_info = pd.DataFrame(concat_list)
 
     # Lowest sampling rate
     if sampling_freq == "min":
-        sf = stream_info["sf"].min()
-        sf_type = "lowest"
+        sf = streams_info["sf"].min()
+        sf_note = "lowest"
     elif sampling_freq == "max":
-        sf = stream_info["sf"].max()
-        sf_type = "highest"
+        sf = streams_info["sf"].max()
+        sf_note = "highest"
     elif isinstance(sampling_freq, (int, float)):
         sf = sampling_freq
-        sf_type = "customized"
+        sf_note = "custom"
     else:
         raise ValueError("Invalid sampling_freq, must be 'min', 'max', or numeric")
-    sf_name = stream_info.loc[stream_info["sf"] == sf, "name"].values
-    print(f"Using {sf_type} sampling rate: {sf} Hz ({sf_name})")
+    sf_name = streams_info.loc[streams_info["sf"] == sf, "name"].values
+    print(f"Using {sf_note} sampling rate: {sf} Hz ({sf_name})")
 
-    max_first_ts = stream_info["first_ts"].max()
-    max_first_ts_name = stream_info.loc[
-        stream_info["first_ts"] == max_first_ts, "name"
+    max_first_ts = streams_info["first_ts"].max()
+    max_first_ts_name = streams_info.loc[
+        streams_info["first_ts"] == max_first_ts, "name"
     ].values
     print(f"Using latest start timestamp: {max_first_ts} ({max_first_ts_name})")
 
-    min_last_ts = stream_info["last_ts"].min()
-    min_last_ts_name = stream_info.loc[
-        stream_info["last_ts"] == min_last_ts, "name"
+    min_last_ts = streams_info["last_ts"].min()
+    min_last_ts_name = streams_info.loc[
+        streams_info["last_ts"] == min_last_ts, "name"
     ].values
     print(f"Using earliest last timestamp: {min_last_ts} ({min_last_ts_name})")
 
+    # Generate new common timestamps
     new_ts = np.arange(
         max_first_ts,
         min_last_ts,
@@ -404,9 +398,9 @@ def concat_streams(
     )
 
     concat_data = pd.DataFrame(index=new_ts)
-    for stream in stream_info["stream"]:
+    for stream in streams_info["stream"]:
         interp_data = stream.interpolate(
-            new_ts, interp_float_kind, interp_other_kind, inplace=inplace
+            new_ts, interp_float_kind, inplace=inplace
         ).data
         assert concat_data.shape[0] == interp_data.shape[0]
         assert concat_data.index.equals(interp_data.index)
