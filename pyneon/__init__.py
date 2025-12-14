@@ -1,6 +1,7 @@
 __version__ = "0.0.1"
 
 from typeguard import install_import_hook
+
 from .dataset import Dataset
 from .epochs import Epochs, construct_times_df, events_to_times_df
 from .events import Events
