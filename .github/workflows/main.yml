@@ -22,9 +22,6 @@ jobs:
       - name: Sort imports with isort
         run: isort --profile black .
 
-      - name: Fix lint issues with Ruff
-        run: ruff check --fix .
-
       - name: Format code with Ruff
         run: ruff format .
 
