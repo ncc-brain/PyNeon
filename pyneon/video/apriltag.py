@@ -1,8 +1,9 @@
+from typing import TYPE_CHECKING, Optional
+
 import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .video import Video

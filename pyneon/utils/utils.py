@@ -1,6 +1,7 @@
-import pandas as pd
 from pathlib import Path
 from typing import Callable
+
+import pandas as pd
 
 
 def _check_data(data: pd.DataFrame) -> None:
@@ -23,9 +24,10 @@ def _check_data(data: pd.DataFrame) -> None:
     # Try to convert the index to int64
     try:
         data.index = data.index.astype("int64")
-    except:
+    except Exception as e:
         raise ValueError(
-            "Event index must be in UTC time in ns and thus convertible to int64"
+            "Event index must be in UTC time in ns and thus convertible to int64. "
+            f"Got error: {e}"
         )
 
     # Sort by index

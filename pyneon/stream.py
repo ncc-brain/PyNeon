@@ -1,20 +1,20 @@
-from pathlib import Path
-import pandas as pd
-import numpy as np
-from numbers import Number
-from typing import Literal, Optional, TYPE_CHECKING
-from warnings import warn
 from ast import literal_eval
+from numbers import Number
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal, Optional
+from warnings import warn
 
-from .tabular import BaseTabular
+import numpy as np
+import pandas as pd
+
 from .preprocess import (
+    compute_azimuth_and_elevation,
     interpolate,
     interpolate_events,
     window_average,
-    compute_azimuth_and_elevation,
 )
-from .utils.variables import nominal_sampling_rates, native_to_cloud_column_map
-
+from .tabular import BaseTabular
+from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
 if TYPE_CHECKING:
     from .events import Events
@@ -456,6 +456,12 @@ class Stream(BaseTabular):
         -------
         Stream or None
             Interpolated stream if ``inplace=False``, otherwise ``None``.
+
+        Examples
+        --------
+        Interpolate eye states data during blinks with a 50 ms buffer before and after:
+
+        >>> eye_states = eye_states.interpolate_events(blinks, buffer=0.05)
         """
         inst = self if inplace else self.copy()
         inst.data = interpolate_events(

@@ -1,5 +1,6 @@
-import pandas as pd
 from warnings import warn
+
+import pandas as pd
 
 from .utils.variables import data_types
 

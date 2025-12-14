@@ -1,29 +1,30 @@
+import json
+import shutil
+from datetime import datetime
+from functools import cached_property
+from numbers import Number
 from pathlib import Path
 from typing import Literal, Optional
-import pandas as pd
-import numpy as np
-import json
-from datetime import datetime
-import matplotlib.pyplot as plt
-from numbers import Number
-from functools import cached_property
-import shutil
 from warnings import warn
 
-from .stream import Stream
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from .events import Events
-from .preprocess import concat_streams, concat_events, smooth_camera_pose
+from .export import export_cloud_format, export_eye_bids, export_motion_bids
+from .preprocess import concat_events, concat_streams, smooth_camera_pose
+from .stream import Stream
+from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
 from .video import (
     Video,
-    estimate_scanpath,
     detect_apriltags,
     estimate_camera_pose,
+    estimate_scanpath,
     find_homographies,
     gaze_on_surface,
 )
-from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
-from .export import export_motion_bids, export_eye_bids, export_cloud_format
-from .utils.variables import expected_files_cloud, expected_files_native, calib_dtype
+from .vis import overlay_detections_and_pose, overlay_scanpath, plot_distribution
 
 
 class Recording:

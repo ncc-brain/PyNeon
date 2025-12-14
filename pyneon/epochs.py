@@ -1,13 +1,13 @@
-import pandas as pd
-import numpy as np
-
+import warnings
 from numbers import Number
 from typing import Literal, Optional
-import warnings
-import matplotlib.pyplot as plt
 
-from .stream import Stream
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from .events import Events
+from .stream import Stream
 from .vis import plot_epochs
 
 

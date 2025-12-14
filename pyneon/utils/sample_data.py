@@ -1,6 +1,7 @@
-from pathlib import Path
-import requests
 import zipfile
+from pathlib import Path
+
+import requests
 
 data_dir = Path(__file__).parent.parent.parent / "data"
 

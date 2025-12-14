@@ -1,14 +1,7 @@
 import pytest
+
 import pyneon
-from pyneon import (
-    Dataset,
-    Recording,
-    Stream,
-    Events,
-    Video,
-    Epochs,
-    get_sample_data,
-)
+from pyneon import Dataset, Recording, get_sample_data
 
 
 def test_basic_import():

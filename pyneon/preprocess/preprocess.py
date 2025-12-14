@@ -1,25 +1,17 @@
-import pandas as pd
-import numpy as np
-from typing import Literal
-
-from pandas.api.types import (
-    is_float_dtype,
-    is_numeric_dtype,
-    is_bool_dtype,
-    is_object_dtype,
-    is_string_dtype,
-    is_categorical_dtype,
-)
-
 from numbers import Number
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
+from warnings import warn
+
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
 from ..utils import _check_data
 
 if TYPE_CHECKING:
-    from ..recording import Recording
     from ..events import Events
+    from ..recording import Recording
 
 
 def interpolate(

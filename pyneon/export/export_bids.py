@@ -1,9 +1,10 @@
-from pathlib import Path
-import pandas as pd
-import json
 import datetime
+import json
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+
+import pandas as pd
 
 from ._bids_parameters import MOTION_META_DEFAULT
 

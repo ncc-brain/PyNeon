@@ -1,9 +1,9 @@
 from .vis import (
-    plot_frame,
+    overlay_detections_and_pose,
+    overlay_scanpath,
     plot_distribution,
     plot_epochs,
-    overlay_scanpath,
-    overlay_detections_and_pose,
+    plot_frame,
 )
 
 __all__ = [

@@ -1,11 +1,11 @@
-from .video import Video
-from .mapping import estimate_scanpath
 from .apriltag import (
     detect_apriltags,
     estimate_camera_pose,
     find_homographies,
     gaze_on_surface,
 )
+from .mapping import estimate_scanpath
+from .video import Video
 
 __all__ = [
     "Video",

@@ -1,6 +1,7 @@
 from pathlib import Path
-import pandas as pd
 from warnings import warn
+
+import pandas as pd
 
 from .recording import Recording
 

@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from typing import Optional
-
 
 def smooth_camera_pose(
     camera_position_raw: pd.DataFrame,

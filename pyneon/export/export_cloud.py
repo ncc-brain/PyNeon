@@ -1,9 +1,10 @@
-from pathlib import Path
-import pandas as pd
 import json
+from pathlib import Path
 from shutil import copy
 from typing import TYPE_CHECKING
 from warnings import warn
+
+import pandas as pd
 
 if TYPE_CHECKING:
     from ..recording import Recording
