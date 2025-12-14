@@ -18,88 +18,74 @@ def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
     float_kind: str = "linear",
-    other_kind: str = "nearest",
 ) -> pd.DataFrame:
     """
     Interpolate a data stream to a new set of timestamps.
 
+    Columns with floating-point dtype are interpolated using the method
+    given by ``float_kind`` (see :class:`scipy.interpolate.interp1d`).
+    All other columns (integers, booleans, objects, strings, categoricals)
+    are interpolated using ``nearest`` (sampling from the closest timestamp).
+
     Parameters
     ----------
     new_ts : numpy.ndarray
-        An array of new timestamps (in nanoseconds)
-        at which to evaluate the interpolant.
+        An array of new timestamps (in nanoseconds) at which to evaluate
+        the interpolant.
     data : pandas.DataFrame
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
     float_kind : str, optional
-        Kind of interpolation applied on columns of ``float`` type,
+        Kind of interpolation applied to columns of float type.
         For details see :class:`scipy.interpolate.interp1d`.
         Defaults to "linear".
-    other_kind : str, optional
-        Kind of interpolation applied on columns of other types,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "nearest".
 
     Returns
     -------
     pandas.DataFrame
         Interpolated data with the same columns and dtypes as ``data``
         and indexed by ``new_ts``.
+
+    Notes
+    -----
+    - If ``new_ts`` contains timestamps outside the range of ``data.index``,
+      the corresponding rows will contain NaN.
+    - Non-float columns are not numerically interpolated; instead, the
+      nearest neighbor in time is used.
     """
     _check_data(data)
-
-    if isinstance(data.index, pd.DatetimeIndex):
-        x = data.index.view("int64")
-    else:
-        x = data.index.astype("int64")
-
     new_ts = np.sort(new_ts).astype("int64")
+    if new_ts[0] < data.index[0]:
+        warn(
+            "new_ts contains timestamps before the data start time; "
+            "These samples will be NaN.",
+            UserWarning,
+        )
+    if new_ts[-1] > data.index[-1]:
+        warn(
+            "new_ts contains timestamps after the data end time; "
+            "These samples will be NaN.",
+            UserWarning,
+        )
+
+    x = data.index.astype("int64")
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
+    new_data.index.name = data.index.name
 
     for col in data.columns:
         s = data[col]
+        y = s.to_numpy(copy=False)
 
-        # 1) floats -> interp with float_kind
-        if is_float_dtype(s):
-            y = s.to_numpy(dtype=float, copy=False)
-            f = interp1d(x, y, kind=float_kind, bounds_error=False)
-            vals = f(new_ts)
+        if is_float_dtype(s):  # Interp with float_kind
+            vals = interp1d(x, y, kind=float_kind, bounds_error=False)(new_ts)
+            new_data[col] = vals.astype(s.dtype, copy=False)
+        else:  # Interp with nearest for other dtypes
+            vals = interp1d(x, y, kind="nearest", bounds_error=False)(new_ts)
+            try:
+                new_data[col] = vals.astype(s.dtype, copy=False)
+            except (TypeError, ValueError):  # fallback in case .astype fails
+                new_data[col] = vals
 
-        # 2) other numeric / bool -> interp with other_kind
-        elif is_numeric_dtype(s) or is_bool_dtype(s):
-            y = s.to_numpy(dtype=float, copy=False)
-            f = interp1d(x, y, kind=other_kind, bounds_error=False)
-            vals = f(new_ts)
-
-        # 3) strings / objects / categoricals -> nearest neighbor (no numeric interp!)
-        elif is_object_dtype(s) or is_string_dtype(s) or is_categorical_dtype(s):
-            # Build a Series with the original (numeric) time index
-            ser = pd.Series(s.values, index=x).sort_index()
-            # Collapse duplicate timestamps (keep the last; choose 'first' if you prefer)
-            if ser.index.has_duplicates:
-                # either of these is fine:
-                # ser = ser.groupby(level=0).last()
-                ser = ser[~ser.index.duplicated(keep="last")]
-            # Now nearest works because the index is unique & monotonic
-            vals = ser.reindex(new_ts, method="nearest").to_numpy()
-
-        else:
-            # fallback: treat like other numeric
-            y = s.to_numpy(dtype=float, copy=False)
-            f = interp1d(x, y, kind=other_kind, bounds_error=False)
-            vals = f(new_ts)
-
-        # cast back if numeric/bool; leave objects/categories as-is
-        try:
-            new_data[col] = (
-                vals.astype(s.dtype, copy=False)
-                if (is_numeric_dtype(s) or is_bool_dtype(s))
-                else vals
-            )
-        except (TypeError, ValueError):
-            new_data[col] = vals  # safest fallback
-
-    new_data.index.name = data.index.name
     return new_data
 
 
