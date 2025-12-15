@@ -10,8 +10,8 @@ from pyneon.utils.variables import nominal_sampling_rates
 def simple_streams():
     gaze_ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
     eye_states_ts = np.arange(2e9, 6e9, 1e9 / 100)  # 100 Hz
-    imu_ts = np.arange(3e9, 7e9, 1e9 / 200)  # 200 Hz
-    custom_ts = np.arange(4e9, 8e9, int(1e9 / 30))  # 30 Hz
+    imu_ts = np.arange(1e9, 4e9, 1e9 / 200)  # 200 Hz
+    custom_ts = np.arange(0, 6e9, int(1e9 / 30))  # 30 Hz
     gaze_df = pd.DataFrame(
         np.random.rand(len(gaze_ts), 2),
         index=gaze_ts,
