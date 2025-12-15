@@ -23,8 +23,8 @@ release = "dev"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "numpydoc",
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "nbsphinx",
     "myst_parser",

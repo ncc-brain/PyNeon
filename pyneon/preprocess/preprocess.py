@@ -37,6 +37,7 @@ def interpolate(
     data : pandas.DataFrame
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
+    
     %(interp_kwargs)s
 
     Returns
@@ -118,6 +119,7 @@ def interpolate_events(
         If a single number is provided, the same buffer is applied
         to both before and after the event.
         Defaults to 0.05.
+    
     %(interp_kwargs)s
 
     Returns
@@ -305,6 +307,7 @@ def concat_streams(
         If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
+    
     %(interp_kwargs)s
     %(inplace)s
 

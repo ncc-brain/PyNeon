@@ -296,6 +296,7 @@ class Events(BaseTabular):
             Whether tmin and tmax are UTC timestamps in nanoseconds
             or row numbers of the stream data.
             Defaults to "timestamp".
+
         %(inplace)s
 
         Returns
@@ -329,6 +330,7 @@ class Events(BaseTabular):
         ----------
         other : Stream
             Stream to restrict to.
+
         %(inplace)s
 
         Returns
@@ -360,6 +362,7 @@ class Events(BaseTabular):
         reset_id : bool, optional
             Whether to reset event IDs after filtering. Also resets the DataFrame index.
             Defaults to ``True``.
+
         %(inplace)s
 
         Returns
