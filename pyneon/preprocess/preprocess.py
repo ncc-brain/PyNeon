@@ -8,16 +8,19 @@ from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
 from ..utils import _check_data
+from ..utils.doc_decorators import interp_doc, inplace_doc
 
 if TYPE_CHECKING:
     from ..events import Events
     from ..recording import Recording
 
 
+@interp_doc
 def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
-    float_kind: str = "linear",
+    float_kind: str | int = "linear",
+    other_kind: str | int = "nearest",
 ) -> pd.DataFrame:
     """
     Interpolate a data stream to a new set of timestamps.
@@ -35,10 +38,7 @@ def interpolate(
     data : pandas.DataFrame
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
-    float_kind : str, optional
-        Kind of interpolation applied to columns of float type.
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "linear".
+    {interp_doc}
 
     Returns
     -------
@@ -50,8 +50,6 @@ def interpolate(
     -----
     - If ``new_ts`` contains timestamps outside the range of ``data.index``,
       the corresponding rows will contain NaN.
-    - Non-float columns are not numerically interpolated; instead, the
-      nearest neighbor in time is used.
     """
     _check_data(data)
     new_ts = np.sort(new_ts).astype("int64")
@@ -67,6 +65,14 @@ def interpolate(
             "These samples will be NaN.",
             UserWarning,
         )
+    if other_kind not in ("nearest", "nearest-up", "previous", "next"):
+        warn(
+            f"Interpolation kind '{other_kind}' for non-float columns "
+            "is not among the recommended kinds ('nearest', 'nearest-up', "
+            "'previous', 'next'). Numerical interpolation could result in "
+            "invalid values. ",
+            UserWarning,
+        )
 
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
     new_data.index.name = data.index.name
@@ -77,8 +83,8 @@ def interpolate(
         if is_float_dtype(s):  # Interp with float_kind
             vals = interp1d(s.index, s, kind=float_kind, bounds_error=False)(new_ts)
             new_data[col] = vals.astype(s.dtype, copy=False)
-        else:  # Interp with nearest for other dtypes
-            vals = interp1d(s.index, s, kind="nearest", bounds_error=False)(new_ts)
+        else:  # Interp with other_kind
+            vals = interp1d(s.index, s, kind=other_kind, bounds_error=False)(new_ts)
             try:
                 new_data[col] = vals.astype(s.dtype, copy=False)
             except (TypeError, ValueError):  # fallback in case .astype fails
@@ -87,12 +93,13 @@ def interpolate(
     return new_data
 
 
+@interp_doc
 def interpolate_events(
     data: pd.DataFrame,
     events: "Events",
     buffer: Number | tuple[Number, Number] = 0.05,
-    float_kind: str = "linear",
-    other_kind: str = "nearest",
+    float_kind: str | int = "linear",
+    other_kind: str | int = "nearest",
 ) -> pd.DataFrame:
     """
     Interpolate data in the duration of events in the stream data.
@@ -112,14 +119,7 @@ def interpolate_events(
         If a single number is provided, the same buffer is applied
         to both before and after the event.
         Defaults to 0.05.
-    float_kind : str, optional
-        Kind of interpolation applied on columns of ``float`` type,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "linear".
-    other_kind : str, optional
-        Kind of interpolation applied on columns of other types,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "nearest".
+    {interp_doc}
 
     Returns
     -------
@@ -276,11 +276,14 @@ def compute_azimuth_and_elevation(
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
+@interp_doc
+@inplace_doc
 def concat_streams(
     rec: "Recording",
     stream_names: str | list[str] = "all",
     sampling_freq: int | float | str = "min",
-    interp_float_kind: str = "linear",
+    float_kind: str | int = "linear",
+    other_kind: str | int = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
     """
@@ -304,12 +307,8 @@ def concat_streams(
         If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
-    interp_float_kind : str, optional
-        Kind of interpolation applied on columns of ``float`` type,
-        Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
-    inplace : bool, optional
-        Replace selected stream data with interpolated data during concatenation
-        if``True``. Defaults to ``False``.
+    {interp_doc}
+    {inplace_doc}
 
     Returns
     -------
@@ -397,7 +396,7 @@ def concat_streams(
     concat_data = pd.DataFrame(index=new_ts)
     for stream in streams_info["stream"]:
         interp_data = stream.interpolate(
-            new_ts, interp_float_kind, inplace=inplace
+            new_ts, float_kind, other_kind, inplace=inplace
         ).data
         assert concat_data.shape[0] == interp_data.shape[0]
         assert concat_data.index.equals(interp_data.index)

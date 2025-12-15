@@ -398,8 +398,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         self,
         stream_names: str | list[str],
         sampling_freq: Number | str = "min",
-        interp_float_kind: str = "linear",
-        interp_other_kind: str = "nearest",
+        float_kind: str | int = "linear",
+        other_kind: str | int = "nearest",
         inplace: bool = False,
     ) -> Stream:
         """
@@ -421,9 +421,12 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             If "min" (default), the lowest nominal sampling frequency
             of the selected streams will be used.
             If "max", the highest nominal sampling frequency will be used.
-        interp_float_kind : str, optional
+        float_kind : str, optional
             Kind of interpolation applied on columns of float type,
             Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
+        other_kind : str, optional
+            Kind of interpolation applied on columns of other types,
+            Defaults to "nearest". Only "nearest", "previous", and "next" are recommended.
         inplace : bool, optional
             Replace selected stream data with interpolated data during concatenation
             if ``True``. Defaults to ``False``.
@@ -438,7 +441,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 self,
                 stream_names,
                 sampling_freq,
-                interp_float_kind,
+                float_kind,
+                other_kind,
                 inplace,
             )
         )

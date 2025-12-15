@@ -35,6 +35,17 @@ class BaseTabular:
                 raise ValueError("Data contains multiple section IDs")
             data = data.drop(columns=["section id"])
 
+        # Deal with duplicate columns
+        duplicate_cols = data.columns[data.columns.duplicated()].unique()
+        if len(duplicate_cols) > 0:
+            warn(
+                "Data contains duplicate columns: "
+                f"{', '.join(duplicate_cols)}. "
+                "Using the first occurrence.",
+                UserWarning,
+            )
+            data = data.loc[:, ~data.columns.duplicated()]
+
         # Set data types
         unknown_cols = []
         for col in data.columns:
