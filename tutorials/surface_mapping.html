@@ -342,6 +342,7 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
 
 <span class="c1"># Load a sample recording</span>
@@ -711,7 +712,7 @@ Applying homography to gaze points: 100%|██████████| 10695/1
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">events_to_times_df</span><span class="p">,</span> <span class="n">Epochs</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Epochs</span><span class="p">,</span> <span class="n">events_to_times_df</span>
 
 <span class="n">event_times</span> <span class="o">=</span> <span class="n">events_to_times_df</span><span class="p">(</span>
     <span class="n">rec</span><span class="o">.</span><span class="n">events</span><span class="p">,</span> <span class="n">t_before</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">t_after</span><span class="o">=</span><span class="mf">4.5</span><span class="p">,</span> <span class="n">event_name</span><span class="o">=</span><span class="s2">&quot;fixation onset&quot;</span>

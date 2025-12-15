@@ -360,9 +360,10 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">Recording</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
 
 <span class="n">recording_dir</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;boardView&quot;</span><span class="p">)</span>
@@ -568,7 +569,7 @@ dtype: object
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
@@ -576,6 +577,15 @@ dtype: object
 Original gaze data length: 6091
 Original IMU data length: 3459
 Gaze data length after interpolating to IMU timestamps: 3459
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+D:\GitHub\PyNeon\pyneon\preprocess\preprocess.py:66: UserWarning: new_ts contains timestamps after the data end time; These samples will be NaN.
+  warn(
 </pre></div></div>
 </div>
 <p>By default, float-type data is interpolated using the <code class="docutils literal notranslate"><span class="pre">'linear'</span></code> method. We are examine its behavior by comparing interpolated data with the raw data.</p>
@@ -628,35 +638,35 @@ Gaze data length after interpolating to IMU timestamps: 3459
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Concatenating streams:
-        Gaze
-        3d_eye_states
-        Imu
+        gaze
+        eye_states
+        imu
 Using lowest sampling rate: 110 Hz ([&#39;imu&#39;])
 Using latest start timestamp: 1732621490607650343 ([&#39;imu&#39;])
-Using earliest last timestamp: 1732621520979070343 ([&#39;gaze&#39; &#39;3d_eye_states&#39;])
+Using earliest last timestamp: 1732621520979070343 ([&#39;gaze&#39; &#39;eye_states&#39;])
                      gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
 timestamp [ns]
-1732621490607650343   705.518843   554.990998     1            1      &lt;NA&gt;
-1732621490616741252   704.882466   553.793144     1            1      &lt;NA&gt;
-1732621490625832161   707.703787   556.712159     1            1      &lt;NA&gt;
-1732621490634923070   711.389879   553.846843     1            1      &lt;NA&gt;
-1732621490644013979   709.281775   555.543777     1            1      &lt;NA&gt;
+1732621490607650343   705.518840   554.991000     1            1      &lt;NA&gt;
+1732621490616741252   704.882473   553.793142     1            1      &lt;NA&gt;
+1732621490625832161   707.703762   556.712119     1            1      &lt;NA&gt;
+1732621490634923070   711.389933   553.846792     1            1      &lt;NA&gt;
+1732621490644013979   709.281792   555.543786     1            1      &lt;NA&gt;
 
                      azimuth [deg]  elevation [deg]  pupil diameter left [mm]  \
 timestamp [ns]
 1732621490607650343      -7.085339         3.473196                  3.346414
-1732621490616741252      -7.126717         3.550038                  3.363306
-1732621490625832161      -6.944033         3.363048                  3.368352
-1732621490634923070      -6.707339         3.547815                  3.365432
-1732621490644013979      -6.842683         3.438366                  3.374732
+1732621490616741252      -7.126717         3.550039                  3.363306
+1732621490625832161      -6.944035         3.363050                  3.368352
+1732621490634923070      -6.707335         3.547818                  3.365432
+1732621490644013979      -6.842681         3.438366                  3.374732
 
                      pupil diameter right [mm]  eyeball center left x [mm]  \
 timestamp [ns]
 1732621490607650343                   3.360563                  -32.282935
 1732621490616741252                   3.359459                  -32.249418
-1732621490625832161                   3.350918                  -32.216781
-1732621490634923070                   3.361014                  -32.249155
-1732621490644013979                   3.365781                  -32.234159
+1732621490625832161                   3.350918                  -32.216782
+1732621490634923070                   3.361014                  -32.249156
+1732621490644013979                   3.365781                  -32.234158
 
                      ...  acceleration x [g]  acceleration y [g]  \
 timestamp [ns]       ...
@@ -731,7 +741,8 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
     <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Concatenated&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Gaze x [px]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;gaze x [px]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">imu_middle</span><span class="p">[</span><span class="s2">&quot;acceleration x [g]&quot;</span><span class="p">],</span>
     <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
@@ -742,9 +753,9 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
     <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Concatenated&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Acceleration x [g]&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Timestamp [ns]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;acceleration x [g]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;timestamp [ns]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
