@@ -377,50 +377,38 @@ would have the following folder structure:</p>
 <code class="docutils literal notranslate"><span class="pre">sections.csv</span></code>. They are accessible through the <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a>) – Path to the directory containing the dataset.</p></li>
-<li><p><strong>custom</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to expect a custom dataset structure. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the dataset
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dataset_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
+</dd>
+<dt><strong>custom</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to expect a custom dataset structure. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the dataset
 is expected to follow the standard Pupil Cloud dataset structure with a
 <code class="docutils literal notranslate"><span class="pre">sections.csv</span></code> file. If True, every directory in <code class="docutils literal notranslate"><span class="pre">dataset_dir</span></code> is
 considered a recording directory, and the <code class="docutils literal notranslate"><span class="pre">sections</span></code> attribute is
 constructed from the <code class="docutils literal notranslate"><span class="pre">info</span></code> of recordings found.
-Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-</ul>
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Dataset.dataset_dir">
-<span class="sig-name descname"><span class="pre">dataset_dir</span></span><a class="headerlink" href="#pyneon.Dataset.dataset_dir" title="Link to this definition">#</a></dt>
-<dd><p>Path to the directory containing the dataset.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)">pathlib.Path</a></p>
+</dd>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dataset_dir</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
+</dd>
+<dt><strong>recordings</strong><span class="classifier">list of Recording</span></dt><dd><p>List of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Recording</span></code></a> objects for each recording in the dataset.</p>
+</dd>
+<dt><strong>sections</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the sections of the dataset.</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Dataset.recordings">
-<span class="sig-name descname"><span class="pre">recordings</span></span><a class="headerlink" href="#pyneon.Dataset.recordings" title="Link to this definition">#</a></dt>
-<dd><p>List of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Recording</span></code></a> objects for each recording in the dataset.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a> of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording">Recording</a></p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Dataset.sections">
-<span class="sig-name descname"><span class="pre">sections</span></span><a class="headerlink" href="#pyneon.Dataset.sections" title="Link to this definition">#</a></dt>
-<dd><p>DataFrame containing the sections of the dataset.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)">pandas.DataFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
+<p class="rubric">Methods</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Dataset.load_enrichment" title="pyneon.Dataset.load_enrichment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_enrichment</span></code></a>(enrichment_dir)</p></td>
+<td><p>Load enrichment information from an enrichment directory.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Dataset.load_enrichment">
 <span class="sig-name descname"><span class="pre">load_enrichment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enrichment_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset.load_enrichment" title="Link to this definition">#</a></dt>
@@ -430,7 +418,10 @@ recording ID and added to Recording object in the dataset.</p>
 <p>The method is currently being developed and is not yet implemented.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>enrichment_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a>) – Path to the directory containing the enrichment information.</p>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>enrichment_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Path to the directory containing the enrichment information.</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -487,9 +478,6 @@ recording ID and added to Recording object in the dataset.</p>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.dataset_dir"><code class="docutils literal notranslate"><span class="pre">Dataset.dataset_dir</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.recordings"><code class="docutils literal notranslate"><span class="pre">Dataset.recordings</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.sections"><code class="docutils literal notranslate"><span class="pre">Dataset.sections</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.load_enrichment"><code class="docutils literal notranslate"><span class="pre">Dataset.load_enrichment()</span></code></a></li>
 </ul>
 </li>

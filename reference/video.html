@@ -358,36 +358,90 @@
 <p>Loaded video file with timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>video_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a>) – Path to the video file.</p></li>
-<li><p><strong>timestamps</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><em>numpy.ndarray</em></a>) – Timestamps of the video frames in nanoseconds.
-Must have the same length as the number of frames in the video.</p></li>
-<li><p><strong>info</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Dictionary containing video info, including camera matrix and distortion coefficients.</p></li>
-</ul>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>video_file</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the video file.</p>
+</dd>
+<dt><strong>timestamps</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Timestamps of the video frames in nanoseconds.
+Must have the same length as the number of frames in the video.</p>
+</dd>
+<dt><strong>info</strong><span class="classifier">dict</span></dt><dd><p>Dictionary containing video info, including camera matrix and distortion coefficients.</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Video.timestamps">
-<span class="sig-name descname"><span class="pre">timestamps</span></span><a class="headerlink" href="#pyneon.Video.timestamps" title="Link to this definition">#</a></dt>
-<dd><p>Timestamps of the video frames in nanoseconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)">numpy.ndarray</a></p>
+</dd>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>timestamps</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Timestamps of the video frames in nanoseconds.</p>
+</dd>
+<dt><strong>ts</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Alias for timestamps.</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pyneon.Video.ts">
-<span class="sig-name descname"><span class="pre">ts</span></span><a class="headerlink" href="#pyneon.Video.ts" title="Link to this definition">#</a></dt>
-<dd><p>Alias for timestamps.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)">numpy.ndarray</a></p>
 </dd>
 </dl>
-</dd></dl>
-
+<p class="rubric">Methods</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.detect_apriltags" title="pyneon.Video.detect_apriltags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_apriltags</span></code></a>([tag_family])</p></td>
+<td><p>Detect AprilTags in the video frames.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(propId)</p></td>
+<td><p>.   &#64;brief Returns the specified VideoCapture property</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBackendName</span></code>()</p></td>
+<td><p>.   &#64;brief Returns used backend API name</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExceptionMode</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.get_frame" title="pyneon.Video.get_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_frame</span></code></a>(timestamp)</p></td>
+<td><p>Get the frame index corresponding to a given timestamp.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab</span></code>()</p></td>
+<td><p>.   &#64;brief Grabs the next frame from video file or capturing device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isOpened</span></code>()</p></td>
+<td><p>.   &#64;brief Returns true if video capturing has been initialized already.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code>(filename[, apiPreference])</p></td>
+<td><p>.   &#64;brief  Opens a video file or a capturing device or an IP video stream for video capturing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.overlay_scanpath" title="pyneon.Video.overlay_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_scanpath</span></code></a>(scanpath[, circle_radius, ...])</p></td>
+<td><p>Plot scanpath on top of the video frames.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.plot_frame" title="pyneon.Video.plot_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_frame</span></code></a>([index, ax, auto_title, show])</p></td>
+<td><p>Plot a frame from the video on a matplotlib axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code>([, image])</p></td>
+<td><p>.   &#64;brief Grabs, decodes and returns the next video frame.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">release</span></code>()</p></td>
+<td><p>.   &#64;brief Closes video file or capturing device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve</span></code>([, image[, flag]])</p></td>
+<td><p>.   &#64;brief Decodes and returns the grabbed video frame.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(propId, value)</p></td>
+<td><p>.   &#64;brief Sets a property in the VideoCapture.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExceptionMode</span></code>(enable)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.undistort" title="pyneon.Video.undistort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undistort</span></code></a>([output_video_path])</p></td>
+<td><p>Undistort a video using the known camera matrix and distortion coefficients.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">waitAny</span></code>(streams[, timeoutNs])</p></td>
+<td><p>.   &#64;brief Wait for ready frames from VideoCapture.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<tbody>
+<tr class="row-odd"><td><p><strong>reset</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Video.camera_matrix">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">camera_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Video.camera_matrix" title="Link to this definition">#</a></dt>
@@ -400,18 +454,21 @@ Must have the same length as the number of frames in the video.</p></li>
 <dd><p>Detect AprilTags in the video frames.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tag_family</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The AprilTag family to detect (default is ‘tag36h11’).</p>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>tag_family</strong><span class="classifier">str, optional</span></dt><dd><p>The AprilTag family to detect (default is ‘tag36h11’).</p>
+</dd>
+</dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A DataFrame containing AprilTag detections, with columns:
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>A DataFrame containing AprilTag detections, with columns:
 - ‘timestamp [ns]’: The timestamp of the frame in nanoseconds, as an index
 - ‘frame_idx’: The frame number
 - ‘tag_id’: The ID of the detected AprilTag
 - ‘corners’: A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
 - ‘center’: A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -434,13 +491,16 @@ Must have the same length as the number of frames in the video.</p></li>
 <dd><p>Get the frame index corresponding to a given timestamp.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>timestamp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Timestamp in nanoseconds.</p>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>timestamp</strong><span class="classifier">int</span></dt><dd><p>Timestamp in nanoseconds.</p>
+</dd>
+</dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Frame index corresponding to the timestamp.</p>
+<dd class="field-even"><dl class="simple">
+<dt>int</dt><dd><p>Frame index corresponding to the timestamp.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -457,16 +517,22 @@ Must have the same length as the number of frames in the video.</p></li>
 <dd><p>Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>scanpath</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><em>pandas.DataFrame</em></a>) – DataFrame containing the fixations and gaze data.</p></li>
-<li><p><strong>circle_radius</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Radius of the fixation circles in pixels. Defaults to 10.</p></li>
-<li><p><strong>line_thickness</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><em>None</em>) – Thickness of the lines connecting fixations. If None, no lines are drawn.
-Defaults to 2.</p></li>
-<li><p><strong>max_fixations</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of fixations to plot per frame. Defaults to 10.</p></li>
-<li><p><strong>show_video</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to display the video with fixations overlaid. Defaults to False.</p></li>
-<li><p><strong>video_output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>pathlib.Path</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><em>None</em>) – Path to save the video with fixations overlaid. If None, the video is not saved.
-Defaults to ‘scanpath.mp4’.</p></li>
-</ul>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>scanpath</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the fixations and gaze data.</p>
+</dd>
+<dt><strong>circle_radius</strong><span class="classifier">int</span></dt><dd><p>Radius of the fixation circles in pixels. Defaults to 10.</p>
+</dd>
+<dt><strong>line_thickness</strong><span class="classifier">int or None</span></dt><dd><p>Thickness of the lines connecting fixations. If None, no lines are drawn.
+Defaults to 2.</p>
+</dd>
+<dt><strong>max_fixations</strong><span class="classifier">int</span></dt><dd><p>Maximum number of fixations to plot per frame. Defaults to 10.</p>
+</dd>
+<dt><strong>show_video</strong><span class="classifier">bool</span></dt><dd><p>Whether to display the video with fixations overlaid. Defaults to False.</p>
+</dd>
+<dt><strong>video_output_path</strong><span class="classifier">pathlib.Path or str or None</span></dt><dd><p>Path to save the video with fixations overlaid. If None, the video is not saved.
+Defaults to ‘scanpath.mp4’.</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -477,21 +543,25 @@ Defaults to ‘scanpath.mp4’.</p></li>
 <dd><p>Plot a frame from the video on a matplotlib axis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Index of the frame to plot.</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><em>matplotlib.axes.Axes</em></a><em> or </em><em>None</em>) – Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
-Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>auto_title</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to automatically set the title of the axis.
+<dd class="field-odd"><dl class="simple">
+<dt><strong>index</strong><span class="classifier">int</span></dt><dd><p>Index of the frame to plot.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes or None</span></dt><dd><p>Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>auto_title</strong><span class="classifier">bool</span></dt><dd><p>Whether to automatically set the title of the axis.
 The automatic title includes the video file name and the frame index.
-Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-</ul>
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+</dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em>) – Figure object containing the plot.</p></li>
-<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – Axis object containing the plot.</p></li>
-</ul>
-</p>
+<dd class="field-even"><dl class="simple">
+<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure object containing the plot.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis object containing the plot.</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -502,7 +572,10 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 <dd><p>Undistort a video using the known camera matrix and distortion coefficients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>output_video_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to save the undistorted output video.</p>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>output_video_path</strong><span class="classifier">str</span></dt><dd><p>Path to save the undistorted output video.</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -556,8 +629,6 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video"><code class="docutils literal notranslate"><span class="pre">Video</span></code></a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.timestamps"><code class="docutils literal notranslate"><span class="pre">Video.timestamps</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.ts"><code class="docutils literal notranslate"><span class="pre">Video.ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.camera_matrix"><code class="docutils literal notranslate"><span class="pre">Video.camera_matrix</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.detect_apriltags"><code class="docutils literal notranslate"><span class="pre">Video.detect_apriltags()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.distortion_coefficients"><code class="docutils literal notranslate"><span class="pre">Video.distortion_coefficients</span></code></a></li>
