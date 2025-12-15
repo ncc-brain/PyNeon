@@ -145,7 +145,7 @@ class Events(BaseTabular):
 
         * :class:`pandas.DataFrame`: Must contain appropriate event columns.
         * :class:`pathlib.Path` or :class:`str`: Path to an event data file.
-        Supported file formats:
+          Supported file formats:
 
         - ``.csv``: Pupil Cloud format file.
         - ``.raw`` / ``.txt``: Native Pupil Labs format (requires
