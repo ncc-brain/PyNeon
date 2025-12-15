@@ -25,10 +25,9 @@ def interpolate(
     """
     Interpolate a data stream to a new set of timestamps.
 
-    Columns with floating-point dtype are interpolated using the method
-    given by ``float_kind`` (see :class:`scipy.interpolate.interp1d`).
-    All other columns (integers, booleans, objects, strings, categoricals)
-    are interpolated using ``nearest`` (sampling from the closest timestamp).
+    Data columns of float type are interpolated using ``float_kind``,
+    while other columns use ``other_kind``. This distinction allows
+    for appropriate interpolation methods based on data type.
 
     Parameters
     ----------
@@ -70,7 +69,7 @@ def interpolate(
             f"Interpolation kind '{other_kind}' for non-float columns "
             "is not among the recommended kinds ('nearest', 'nearest-up', "
             "'previous', 'next'). Numerical interpolation could result in "
-            "invalid values. ",
+            "invalid values.",
             UserWarning,
         )
 
@@ -334,7 +333,7 @@ def concat_streams(
 
     # Check if all streams are valid
     if not all([ch in _VALID_STREAMS for ch in stream_names]):
-        raise ValueError(f"Invalid stream name, can only one of {_VALID_STREAMS}")
+        raise ValueError(f"Invalid stream name, can only be one of {_VALID_STREAMS}")
     # Check at least two streams are provided
     if len(stream_names) <= 1:
         raise ValueError("Must provide at least two different streams to concatenate.")

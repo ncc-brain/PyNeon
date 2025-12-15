@@ -591,5 +591,5 @@ class Stream(BaseTabular):
             other_data.drop(columns=overlap_cols, inplace=True)
 
         inst = self if inplace else self.copy()
-        inst.data = pd.concat([self.data, other_data], axis=1)
+        inst.data = pd.concat([inst.data, other_data], axis=1)
         return None if inplace else inst

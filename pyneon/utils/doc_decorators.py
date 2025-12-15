@@ -18,8 +18,8 @@ def interp_doc(func):
         "other_kind : str or int, optional\n"
         "   Kind of interpolation applied to columns of other types.\n"
         "   See :class:`scipy.interpolate.interp1d` for details.\n"
-        '   Defaults to "nearest". Only "nearest", "nearest-up", '
-        '   "previous", and "next" are recommended.\n'
+        '   Only "nearest", "nearest-up", "previous", and "next" are recommended.\n'
+        '   Defaults to "nearest".\n'
     )
     if func.__doc__:  # only do formatting if docstring exists
         func.__doc__ = func.__doc__.format_map(SafeDict(interp_doc=text))
