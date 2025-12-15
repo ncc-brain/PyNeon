@@ -14,8 +14,8 @@ from .preprocess import (
     window_average,
 )
 from .tabular import BaseTabular
-from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 from .utils.doc_decorators import inplace_doc, interp_doc
+from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
 if TYPE_CHECKING:
     from .events import Events

@@ -8,7 +8,7 @@ from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
 from ..utils import _check_data
-from ..utils.doc_decorators import interp_doc, inplace_doc
+from ..utils.doc_decorators import inplace_doc, interp_doc
 
 if TYPE_CHECKING:
     from ..events import Events
