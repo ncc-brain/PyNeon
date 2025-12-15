@@ -8,14 +8,14 @@ from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
 from ..utils import _check_data
-from ..utils.doc_decorators import inplace_doc, interp_doc
+from ..utils.doc_decorators import fill_doc
 
 if TYPE_CHECKING:
     from ..events import Events
     from ..recording import Recording
 
 
-@interp_doc
+@fill_doc
 def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
@@ -37,7 +37,7 @@ def interpolate(
     data : pandas.DataFrame
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
-    {interp_doc}
+    %(interp_kwargs)s
 
     Returns
     -------
@@ -92,7 +92,7 @@ def interpolate(
     return new_data
 
 
-@interp_doc
+@fill_doc
 def interpolate_events(
     data: pd.DataFrame,
     events: "Events",
@@ -118,7 +118,7 @@ def interpolate_events(
         If a single number is provided, the same buffer is applied
         to both before and after the event.
         Defaults to 0.05.
-    {interp_doc}
+    %(interp_kwargs)s
 
     Returns
     -------
@@ -275,8 +275,7 @@ def compute_azimuth_and_elevation(
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
-@interp_doc
-@inplace_doc
+@fill_doc
 def concat_streams(
     rec: "Recording",
     stream_names: str | list[str] = "all",
@@ -306,8 +305,8 @@ def concat_streams(
         If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
-    {interp_doc}
-    {inplace_doc}
+    %(interp_kwargs)s
+    %(inplace)s
 
     Returns
     -------

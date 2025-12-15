@@ -1,41 +1,25 @@
-class SafeDict(dict):
-    """A dict that returns the placeholder itself if the key is missing."""
+DOC = dict()
 
-    def __missing__(self, key):
-        return "{" + key + "}"
-
-
-def interp_doc(func):
-    """
-    Decorator to inject common interpolation parameter docs into a function docstring.
-    Leaves other placeholders intact if they are not provided.
-    """
-    text = (
-        "float_kind : str or int, optional\n"
-        "   Kind of interpolation applied to columns of float type.\n"
-        "   See :class:`scipy.interpolate.interp1d` for details.\n"
-        '   Defaults to "linear".\n'
-        "other_kind : str or int, optional\n"
-        "   Kind of interpolation applied to columns of other types.\n"
-        "   See :class:`scipy.interpolate.interp1d` for details.\n"
-        '   Only "nearest", "nearest-up", "previous", and "next" are recommended.\n'
-        '   Defaults to "nearest".'
-    )
-    if func.__doc__:  # only do formatting if docstring exists
-        func.__doc__ = func.__doc__.format_map(SafeDict(interp_doc=text))
-    return func
+DOC["interp_kwargs"] = """\
+float_kind : str or int, optional
+    Kind of interpolation applied to columns of float type.
+    See :class:`scipy.interpolate.interp1d` for details.
+    Defaults to "linear".
+other_kind : str or int, optional
+    Kind of interpolation applied to columns of other types.
+    See :class:`scipy.interpolate.interp1d` for details.
+    Only "nearest", "nearest-up", "previous", and "next" are recommended.
+    Defaults to "nearest"."""
 
 
-def inplace_doc(func):
-    """
-    Decorator to inject the common 'inplace' parameter docs into a function docstring.
-    Leaves other placeholders intact if they are not provided.
-    """
-    text = (
-        "inplace : bool, optional\n"
-        "   If ``True``, replace current data. Otherwise returns a new instance.\n"
-        "   Defaults to ``False``."
-    )
+DOC["inplace"] = """\
+inplace : bool, optional
+    If ``True``, replace current data. Otherwise returns a new instance.
+    Defaults to ``False``."""
+
+
+def fill_doc(func):
+    """Fill a function docstring with common doc snippets using %-format."""
     if func.__doc__:
-        func.__doc__ = func.__doc__.format_map(SafeDict(inplace_doc=text))
+        func.__doc__ = func.__doc__ % DOC
     return func

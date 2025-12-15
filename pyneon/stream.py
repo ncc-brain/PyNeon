@@ -14,7 +14,7 @@ from .preprocess import (
     window_average,
 )
 from .tabular import BaseTabular
-from .utils.doc_decorators import inplace_doc, interp_doc
+from .utils.doc_decorators import fill_doc
 from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
 if TYPE_CHECKING:
@@ -231,7 +231,7 @@ class Stream(BaseTabular):
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
 
-    @inplace_doc
+    @fill_doc
     def crop(
         self,
         tmin: Optional[Number] = None,
@@ -255,7 +255,7 @@ class Stream(BaseTabular):
             Whether tmin and tmax are UTC timestamps in nanoseconds
             OR relative times in seconds OR row numbers of the stream data.
             Defaults to "timestamp".
-        {inplace_doc}
+        %(inplace)s
 
         Returns
         -------
@@ -279,7 +279,7 @@ class Stream(BaseTabular):
         inst.data = self.data[mask].copy()
         return None if inplace else inst
 
-    @inplace_doc
+    @fill_doc
     def restrict(
         self,
         other: "Stream",
@@ -293,7 +293,7 @@ class Stream(BaseTabular):
         ----------
         other : Stream
             The other stream whose timestamps are used to restrict the data.
-        {inplace_doc}
+        %(inplace)s
 
         Returns
         -------
@@ -302,8 +302,7 @@ class Stream(BaseTabular):
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
-    @interp_doc
-    @inplace_doc
+    @fill_doc
     def interpolate(
         self,
         new_ts: Optional[np.ndarray] = None,
@@ -323,9 +322,9 @@ class Stream(BaseTabular):
         new_ts : numpy.ndarray, optional
             An array of new timestamps (in nanoseconds) at which to evaluate
             the interpolant. If ``None`` (default), new and equally-spaced timestamps
-            are generated according to ``self.sampling_freq_nominal``.
-        {interp_doc}
-        {inplace_doc}
+            are generated according to :attr:`sampling_freq_nominal`.
+        %(interp_kwargs)s
+        %(inplace)s
 
         Returns
         -------
@@ -353,7 +352,7 @@ class Stream(BaseTabular):
         inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
         return None if inplace else inst
 
-    @inplace_doc
+    @fill_doc
     def annotate_events(
         self, events: "Events", overwrite: bool = False, inplace: bool = False
     ) -> Optional["Stream"]:
@@ -369,7 +368,7 @@ class Stream(BaseTabular):
         overwrite : bool, optional
             If ``True``, overwrite existing event ID annotations in the stream data.
             Defaults to ``False``.
-        {inplace_doc}
+        %(inplace)s
 
         Returns
         -------
@@ -418,8 +417,7 @@ class Stream(BaseTabular):
 
         return None if inplace else inst
 
-    @interp_doc
-    @inplace_doc
+    @fill_doc
     def interpolate_events(
         self,
         events: "Events",
@@ -443,8 +441,8 @@ class Stream(BaseTabular):
             If a single number is provided, the same buffer is applied
             to both before and after the event.
             Defaults to 0.05.
-        {interp_doc}
-        {inplace_doc}
+        %(interp_kwargs)s
+        %(inplace)s
 
         Returns
         -------
@@ -467,7 +465,7 @@ class Stream(BaseTabular):
         )
         return None if inplace else inst
 
-    @inplace_doc
+    @fill_doc
     def window_average(
         self,
         new_ts: np.ndarray,
@@ -493,7 +491,7 @@ class Stream(BaseTabular):
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
-        {inplace_doc}
+        %(inplace)s
 
         Returns
         -------
@@ -504,7 +502,7 @@ class Stream(BaseTabular):
         inst.data = window_average(new_ts, self.data, window_size)
         return None if inplace else inst
 
-    @inplace_doc
+    @fill_doc
     def compute_azimuth_and_elevation(
         self,
         method: Literal["linear"] = "linear",
@@ -523,7 +521,7 @@ class Stream(BaseTabular):
             Only applicable if azimuth and elevation columns already exist.
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
-        {inplace_doc}
+        %(inplace)s
 
         Returns
         -------
@@ -547,8 +545,7 @@ class Stream(BaseTabular):
         compute_azimuth_and_elevation(inst.data, method=method)
         return None if inplace else inst
 
-    @interp_doc
-    @inplace_doc
+    @fill_doc
     def concat(
         self,
         other: "Stream",
@@ -565,8 +562,8 @@ class Stream(BaseTabular):
         ----------
         other : Stream
             The other stream to concatenate.
-        {interp_doc}
-        {inplace_doc}
+        %(interp_kwargs)s
+        %(inplace)s
 
         Returns
         -------
