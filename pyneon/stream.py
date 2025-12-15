@@ -327,6 +327,7 @@ class Stream(BaseTabular):
             are generated according to :attr:`sampling_freq_nominal`.
 
         %(interp_kwargs)s
+
         %(inplace)s
 
         Returns
@@ -447,6 +448,7 @@ class Stream(BaseTabular):
             Defaults to 0.05.
 
         %(interp_kwargs)s
+
         %(inplace)s
 
         Returns
@@ -571,6 +573,7 @@ class Stream(BaseTabular):
             The other stream to concatenate.
 
         %(interp_kwargs)s
+
         %(inplace)s
 
         Returns

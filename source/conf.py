@@ -29,6 +29,10 @@ extensions = [
     "nbsphinx",
     "myst_parser",
 ]
+
+autosummary_generate = True  # Enable automatic generation
+autosummary_imported_members = True  # Optional: include imported members
+
 autodoc_member_order = "alphabetical"
 autodoc_inherit_docstrings = True
 templates_path = ["_templates"]

@@ -309,6 +309,7 @@ def concat_streams(
         If "max", the highest nominal sampling frequency will be used.
 
     %(interp_kwargs)s
+
     %(inplace)s
 
     Returns
