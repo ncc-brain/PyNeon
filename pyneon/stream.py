@@ -371,7 +371,7 @@ class Stream(BaseTabular):
         overwrite : bool, optional
             If ``True``, overwrite existing event ID annotations in the stream data.
             Defaults to ``False``.
-        
+
         %(inplace)s
 
         Returns
@@ -445,7 +445,7 @@ class Stream(BaseTabular):
             If a single number is provided, the same buffer is applied
             to both before and after the event.
             Defaults to 0.05.
-        
+
         %(interp_kwargs)s
         %(inplace)s
 
@@ -496,7 +496,7 @@ class Stream(BaseTabular):
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
-        
+
         %(inplace)s
 
         Returns
@@ -527,7 +527,7 @@ class Stream(BaseTabular):
             Only applicable if azimuth and elevation columns already exist.
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
-        
+
         %(inplace)s
 
         Returns
@@ -569,7 +569,7 @@ class Stream(BaseTabular):
         ----------
         other : Stream
             The other stream to concatenate.
-        
+
         %(interp_kwargs)s
         %(inplace)s
 
