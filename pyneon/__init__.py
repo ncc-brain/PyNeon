@@ -13,7 +13,6 @@ from .stream import Stream
 from .utils import *
 from .video import Video
 
-
 __all__ = [
     "Dataset",
     "Recording",
