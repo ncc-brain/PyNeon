@@ -19,7 +19,7 @@ def interp_doc(func):
         "   Kind of interpolation applied to columns of other types.\n"
         "   See :class:`scipy.interpolate.interp1d` for details.\n"
         '   Only "nearest", "nearest-up", "previous", and "next" are recommended.\n'
-        '   Defaults to "nearest".\n'
+        '   Defaults to "nearest".'
     )
     if func.__doc__:  # only do formatting if docstring exists
         func.__doc__ = func.__doc__.format_map(SafeDict(interp_doc=text))
@@ -34,7 +34,7 @@ def inplace_doc(func):
     text = (
         "inplace : bool, optional\n"
         "   If ``True``, replace current data. Otherwise returns a new instance.\n"
-        "   Defaults to ``False``.\n"
+        "   Defaults to ``False``."
     )
     if func.__doc__:
         func.__doc__ = func.__doc__.format_map(SafeDict(inplace_doc=text))
