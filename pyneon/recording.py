@@ -414,7 +414,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         stream_names : str or list of str
             Stream names to concatenate. If "all", then all streams will be used.
             If a list, items must be in ``{"gaze", "imu", "eye_states"}``
-            ("3d_eye_states") is also tolerated as an alias for "eye_states").
+            ("3d_eye_states" is also tolerated as an alias for "eye_states").
         sampling_freq : float or int or str, optional
             Sampling frequency of the concatenated streams.
             If numeric, the streams will be interpolated to this frequency.
