@@ -1,20 +1,21 @@
-from pathlib import Path
-import pandas as pd
-import numpy as np
-from numbers import Number
-from typing import Literal, Optional, TYPE_CHECKING
-from warnings import warn
 from ast import literal_eval
+from numbers import Number
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal, Optional
+from warnings import warn
 
-from .tabular import BaseTabular
+import numpy as np
+import pandas as pd
+
 from .preprocess import (
+    compute_azimuth_and_elevation,
     interpolate,
     interpolate_events,
     window_average,
-    compute_azimuth_and_elevation,
 )
-from .utils.variables import nominal_sampling_rates, native_to_cloud_column_map
-
+from .tabular import BaseTabular
+from .utils.doc_decorators import inplace_doc, interp_doc
+from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
 if TYPE_CHECKING:
     from .events import Events
@@ -230,6 +231,7 @@ class Stream(BaseTabular):
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
 
+    @inplace_doc
     def crop(
         self,
         tmin: Optional[Number] = None,
@@ -253,9 +255,7 @@ class Stream(BaseTabular):
             Whether tmin and tmax are UTC timestamps in nanoseconds
             OR relative times in seconds OR row numbers of the stream data.
             Defaults to "timestamp".
-        inplace : bool, optional
-            Whether to replace the data in the object with the cropped data.
-            Defaults to False.
+        {inplace_doc}
 
         Returns
         -------
@@ -279,21 +279,21 @@ class Stream(BaseTabular):
         inst.data = self.data[mask].copy()
         return None if inplace else inst
 
+    @inplace_doc
     def restrict(
         self,
         other: "Stream",
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Temporally restrict the stream to the timestamps of another stream.
+        Temporally crop the stream to the range of timestamps in another stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
         other : Stream
             The other stream whose timestamps are used to restrict the data.
-        inplace : bool, optional
-            Whether to replace the data in the object with the restricted data.
+        {inplace_doc}
 
         Returns
         -------
@@ -302,38 +302,40 @@ class Stream(BaseTabular):
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
+    @interp_doc
+    @inplace_doc
     def interpolate(
         self,
         new_ts: Optional[np.ndarray] = None,
-        float_kind: str = "linear",
-        other_kind: str = "nearest",
+        float_kind: str | int = "linear",
+        other_kind: str | int = "nearest",
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
         Interpolate the stream to new timestamps.
 
+        Data columns of float type are interpolated using ``float_kind``,
+        while other columns use ``other_kind``. This distinction allows
+        for appropriate interpolation methods based on data type.
+
         Parameters
         ----------
         new_ts : numpy.ndarray, optional
-            An array of new timestamps (in nanoseconds)
-            at which to evaluate the interpolant. If ``None`` (default), new timestamps
-            are generated according to ``sampling_freq_nominal``.
-        float_kind : str, optional
-            Kind of interpolation applied on columns of ``float`` type,
-            For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to "linear".
-        other_kind : str, optional
-            Kind of interpolation applied on columns of other types,
-            For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to "nearest".
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
-            Defaults to ``False``.
+            An array of new timestamps (in nanoseconds) at which to evaluate
+            the interpolant. If ``None`` (default), new and equally-spaced timestamps
+            are generated according to ``self.sampling_freq_nominal``.
+        {interp_doc}
+        {inplace_doc}
 
         Returns
         -------
         Stream or None
             Interpolated stream if ``inplace=False``, otherwise ``None``.
+
+        Notes
+        -----
+        - If ``new_ts`` contains timestamps outside the range of ``self.ts``,
+          the corresponding rows will contain NaN.
         """
         # If new_ts is not provided, generate a evenly spaced array of timestamps
         if new_ts is None:
@@ -351,6 +353,7 @@ class Stream(BaseTabular):
         inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
         return None if inplace else inst
 
+    @inplace_doc
     def annotate_events(
         self, events: "Events", overwrite: bool = False, inplace: bool = False
     ) -> Optional["Stream"]:
@@ -366,9 +369,7 @@ class Stream(BaseTabular):
         overwrite : bool, optional
             If ``True``, overwrite existing event ID annotations in the stream data.
             Defaults to ``False``.
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
-            Defaults to ``False``.
+        {inplace_doc}
 
         Returns
         -------
@@ -417,12 +418,14 @@ class Stream(BaseTabular):
 
         return None if inplace else inst
 
+    @interp_doc
+    @inplace_doc
     def interpolate_events(
         self,
         events: "Events",
         buffer: Number | tuple[Number, Number] = 0.05,
-        float_kind: str = "linear",
-        other_kind: str = "nearest",
+        float_kind: str | int = "linear",
+        other_kind: str | int = "nearest",
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -440,22 +443,19 @@ class Stream(BaseTabular):
             If a single number is provided, the same buffer is applied
             to both before and after the event.
             Defaults to 0.05.
-        float_kind : str, optional
-            Kind of interpolation applied on columns of ``float`` type,
-            For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to "linear".
-        other_kind : str, optional
-            Kind of interpolation applied on columns of other types,
-            For details see :class:`scipy.interpolate.interp1d`.
-            Defaults to "nearest".
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
-            Defaults to ``False``.
+        {interp_doc}
+        {inplace_doc}
 
         Returns
         -------
         Stream or None
             Interpolated stream if ``inplace=False``, otherwise ``None``.
+
+        Examples
+        --------
+        Interpolate eye states data during blinks with a 50 ms buffer before and after:
+
+        >>> eye_states = eye_states.interpolate_events(blinks, buffer=0.05)
         """
         inst = self if inplace else self.copy()
         inst.data = interpolate_events(
@@ -467,6 +467,7 @@ class Stream(BaseTabular):
         )
         return None if inplace else inst
 
+    @inplace_doc
     def window_average(
         self,
         new_ts: np.ndarray,
@@ -492,9 +493,7 @@ class Stream(BaseTabular):
             between the new timestamps, i.e., ``np.median(np.diff(new_ts))``.
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
-            Defaults to ``False``.
+        {inplace_doc}
 
         Returns
         -------
@@ -505,6 +504,7 @@ class Stream(BaseTabular):
         inst.data = window_average(new_ts, self.data, window_size)
         return None if inplace else inst
 
+    @inplace_doc
     def compute_azimuth_and_elevation(
         self,
         method: Literal["linear"] = "linear",
@@ -523,9 +523,7 @@ class Stream(BaseTabular):
             Only applicable if azimuth and elevation columns already exist.
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Stream.
-            Defaults to ``False``.
+        {inplace_doc}
 
         Returns
         -------
@@ -535,7 +533,7 @@ class Stream(BaseTabular):
         Raises
         ------
         ValueError
-            If required gaze pixel columns are not present in the data.
+            If required gaze columns are not present in the data.
         """
         if not overwrite and (
             "azimuth [deg]" in self.data.columns
@@ -547,4 +545,51 @@ class Stream(BaseTabular):
             )
         inst = self if inplace else self.copy()
         compute_azimuth_and_elevation(inst.data, method=method)
+        return None if inplace else inst
+
+    @interp_doc
+    @inplace_doc
+    def concat(
+        self,
+        other: "Stream",
+        float_kind: str | int = "linear",
+        other_kind: str | int = "nearest",
+        inplace: bool = False,
+    ) -> Optional["Stream"]:
+        """
+        Concatenate additional columns from another Stream to this Stream.
+        The other Stream will be interpolated to the timestamps of this Stream
+        to achieve temporal alignment. See :meth:`interpolate` for details.
+
+        Parameters
+        ----------
+        other : Stream
+            The other stream to concatenate.
+        {interp_doc}
+        {inplace_doc}
+
+        Returns
+        -------
+        Stream or None
+            Concatenated stream if ``inplace=False``, otherwise ``None``.
+        """
+        # Interpolate other to self timestamps if needed
+        if not np.array_equal(self.ts, other.ts):
+            other = other.interpolate(self.ts, float_kind, other_kind, inplace=False)
+
+        other_data = other.data.copy()
+
+        # Check for overlapping columns
+        overlap_cols = self.columns.intersection(other_data.columns)
+        if len(overlap_cols) > 0:
+            warn(
+                f"Overlapping columns detected: {list(overlap_cols)}. "
+                "Keeping values from the first dataframe only.",
+                UserWarning,
+            )
+            # Drop overlapping columns from other
+            other_data.drop(columns=overlap_cols, inplace=True)
+
+        inst = self if inplace else self.copy()
+        inst.data = pd.concat([inst.data, other_data], axis=1)
         return None if inplace else inst

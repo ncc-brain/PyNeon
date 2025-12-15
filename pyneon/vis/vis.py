@@ -1,21 +1,19 @@
-import numpy as np
-import pandas as pd
-from scipy.ndimage import gaussian_filter
-import cv2
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from matplotlib.colors import Normalize
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
+
+import cv2
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.colors import Normalize
+from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
 
-from ..stream import Stream
-
 if TYPE_CHECKING:
-    from ..recording import Recording
-    from ..stream import Stream
-    from ..video import Video
     from ..epochs import Epochs
+    from ..recording import Recording
+    from ..video import Video
 
 
 def plot_frame(
@@ -372,7 +370,7 @@ def plot_epochs(
     ax : matplotlib.axes.Axes
         Axis object containing the plot.
     """
-    from pyneon import Stream, Events  # for source class check
+    from pyneon import Events, Stream  # for source class check
 
     if epochs.source_class == Stream:
         if column_name is None:

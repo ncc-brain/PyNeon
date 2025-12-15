@@ -29,7 +29,7 @@ extensions = [
     "nbsphinx",
     "myst_parser",
 ]
-autodoc_member_order = "bysource"
+autodoc_member_order = "alphabetical"
 autodoc_inherit_docstrings = True
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

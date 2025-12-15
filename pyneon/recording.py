@@ -1,29 +1,30 @@
+import json
+import shutil
+from datetime import datetime
+from functools import cached_property
+from numbers import Number
 from pathlib import Path
 from typing import Literal, Optional
-import pandas as pd
-import numpy as np
-import json
-from datetime import datetime
-import matplotlib.pyplot as plt
-from numbers import Number
-from functools import cached_property
-import shutil
 from warnings import warn
 
-from .stream import Stream
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from .events import Events
-from .preprocess import concat_streams, concat_events, smooth_camera_pose
+from .export import export_cloud_format, export_eye_bids, export_motion_bids
+from .preprocess import concat_events, concat_streams, smooth_camera_pose
+from .stream import Stream
+from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
 from .video import (
     Video,
-    estimate_scanpath,
     detect_apriltags,
     estimate_camera_pose,
+    estimate_scanpath,
     find_homographies,
     gaze_on_surface,
 )
-from .vis import plot_distribution, overlay_scanpath, overlay_detections_and_pose
-from .export import export_motion_bids, export_eye_bids, export_cloud_format
-from .utils.variables import expected_files_cloud, expected_files_native, calib_dtype
+from .vis import overlay_detections_and_pose, overlay_scanpath, plot_distribution
 
 
 class Recording:
@@ -397,8 +398,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         self,
         stream_names: str | list[str],
         sampling_freq: Number | str = "min",
-        interp_float_kind: str = "linear",
-        interp_other_kind: str = "nearest",
+        float_kind: str | int = "linear",
+        other_kind: str | int = "nearest",
         inplace: bool = False,
     ) -> Stream:
         """
@@ -420,12 +421,12 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             If "min" (default), the lowest nominal sampling frequency
             of the selected streams will be used.
             If "max", the highest nominal sampling frequency will be used.
-        interp_float_kind : str, optional
+        float_kind : str, optional
             Kind of interpolation applied on columns of float type,
             Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
-        interp_other_kind : str, optional
-            Kind of interpolation applied on columns of other types.
-            Defaults to "nearest".
+        other_kind : str, optional
+            Kind of interpolation applied on columns of other types,
+            Defaults to "nearest". Only "nearest", "previous", and "next" are recommended.
         inplace : bool, optional
             Replace selected stream data with interpolated data during concatenation
             if ``True``. Defaults to ``False``.
@@ -435,15 +436,16 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Stream
             Stream object containing concatenated data.
         """
-        new_data = concat_streams(
-            self,
-            stream_names,
-            sampling_freq,
-            interp_float_kind,
-            interp_other_kind,
-            inplace,
+        return Stream(
+            concat_streams(
+                self,
+                stream_names,
+                sampling_freq,
+                float_kind,
+                other_kind,
+                inplace,
+            )
         )
-        return Stream(new_data)
 
     def concat_events(self, event_names: str | list[str]) -> Events:
         """

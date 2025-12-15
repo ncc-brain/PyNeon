@@ -1,15 +1,16 @@
-import cv2
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from typing import Optional, Union
-import matplotlib.pyplot as plt
 from warnings import warn
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
-from ..vis import plot_frame, overlay_scanpath
-from .apriltag import detect_apriltags
 from ..utils.variables import default_camera_info
+from ..vis import overlay_scanpath, plot_frame
+from .apriltag import detect_apriltags
 
 
 class Video(cv2.VideoCapture):

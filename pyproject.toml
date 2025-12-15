@@ -34,13 +34,14 @@ dependencies = [
     "requests",
     "tqdm",
 ]
-license =  { text = "MIT" }
+license = "MIT"
 
 [project.optional-dependencies]
 apriltags = ["pupil-apriltags"]
 dev = ["pytest"]
 doc = [
     "ruff",
+    "isort",
     "jupyter",
     "sphinx",
     "numpydoc",
@@ -53,3 +54,4 @@ full = ["pyneon[apriltags,dev,doc]"]
 [project.urls]
 Homepage = "https://ncc-brain.github.io/PyNeon/"
 Issues = "https://github.com/ncc-brain/PyNeon/issues"
+

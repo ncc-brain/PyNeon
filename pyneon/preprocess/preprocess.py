@@ -1,122 +1,104 @@
-import pandas as pd
-import numpy as np
-from typing import Literal
-
-from pandas.api.types import (
-    is_float_dtype,
-    is_numeric_dtype,
-    is_bool_dtype,
-    is_object_dtype,
-    is_string_dtype,
-    is_categorical_dtype,
-)
-
 from numbers import Number
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
+from warnings import warn
+
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
 from ..utils import _check_data
+from ..utils.doc_decorators import inplace_doc, interp_doc
 
 if TYPE_CHECKING:
-    from ..recording import Recording
     from ..events import Events
+    from ..recording import Recording
 
 
+@interp_doc
 def interpolate(
     new_ts: np.ndarray,
     data: pd.DataFrame,
-    float_kind: str = "linear",
-    other_kind: str = "nearest",
+    float_kind: str | int = "linear",
+    other_kind: str | int = "nearest",
 ) -> pd.DataFrame:
     """
     Interpolate a data stream to a new set of timestamps.
 
+    Data columns of float type are interpolated using ``float_kind``,
+    while other columns use ``other_kind``. This distinction allows
+    for appropriate interpolation methods based on data type.
+
     Parameters
     ----------
     new_ts : numpy.ndarray
-        An array of new timestamps (in nanoseconds)
-        at which to evaluate the interpolant.
+        An array of new timestamps (in nanoseconds) at which to evaluate
+        the interpolant.
     data : pandas.DataFrame
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
-    float_kind : str, optional
-        Kind of interpolation applied on columns of ``float`` type,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "linear".
-    other_kind : str, optional
-        Kind of interpolation applied on columns of other types,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "nearest".
+    {interp_doc}
 
     Returns
     -------
     pandas.DataFrame
         Interpolated data with the same columns and dtypes as ``data``
         and indexed by ``new_ts``.
+
+    Notes
+    -----
+    - If ``new_ts`` contains timestamps outside the range of ``data.index``,
+      the corresponding rows will contain NaN.
     """
     _check_data(data)
-
-    if isinstance(data.index, pd.DatetimeIndex):
-        x = data.index.view("int64")
-    else:
-        x = data.index.astype("int64")
-
     new_ts = np.sort(new_ts).astype("int64")
+    if new_ts[0] < data.index[0]:
+        warn(
+            "new_ts contains timestamps before the data start time; "
+            "These samples will be NaN.",
+            UserWarning,
+        )
+    if new_ts[-1] > data.index[-1]:
+        warn(
+            "new_ts contains timestamps after the data end time; "
+            "These samples will be NaN.",
+            UserWarning,
+        )
+    if other_kind not in ("nearest", "nearest-up", "previous", "next"):
+        warn(
+            f"Interpolation kind '{other_kind}' for non-float columns "
+            "is not among the recommended kinds ('nearest', 'nearest-up', "
+            "'previous', 'next'). Numerical interpolation could result in "
+            "invalid values.",
+            UserWarning,
+        )
+
     new_data = pd.DataFrame(index=new_ts, columns=data.columns)
+    new_data.index.name = data.index.name
 
     for col in data.columns:
         s = data[col]
 
-        # 1) floats -> interp with float_kind
-        if is_float_dtype(s):
-            y = s.to_numpy(dtype=float, copy=False)
-            f = interp1d(x, y, kind=float_kind, bounds_error=False)
-            vals = f(new_ts)
+        if is_float_dtype(s):  # Interp with float_kind
+            vals = interp1d(s.index, s, kind=float_kind, bounds_error=False)(new_ts)
+            new_data[col] = vals.astype(s.dtype, copy=False)
+        else:  # Interp with other_kind
+            vals = interp1d(s.index, s, kind=other_kind, bounds_error=False)(new_ts)
+            try:
+                new_data[col] = vals.astype(s.dtype, copy=False)
+            except (TypeError, ValueError):  # fallback in case .astype fails
+                new_data[col] = vals
 
-        # 2) other numeric / bool -> interp with other_kind
-        elif is_numeric_dtype(s) or is_bool_dtype(s):
-            y = s.to_numpy(dtype=float, copy=False)
-            f = interp1d(x, y, kind=other_kind, bounds_error=False)
-            vals = f(new_ts)
-
-        # 3) strings / objects / categoricals -> nearest neighbor (no numeric interp!)
-        elif is_object_dtype(s) or is_string_dtype(s) or is_categorical_dtype(s):
-            # Build a Series with the original (numeric) time index
-            ser = pd.Series(s.values, index=x).sort_index()
-            # Collapse duplicate timestamps (keep the last; choose 'first' if you prefer)
-            if ser.index.has_duplicates:
-                # either of these is fine:
-                # ser = ser.groupby(level=0).last()
-                ser = ser[~ser.index.duplicated(keep="last")]
-            # Now nearest works because the index is unique & monotonic
-            vals = ser.reindex(new_ts, method="nearest").to_numpy()
-
-        else:
-            # fallback: treat like other numeric
-            y = s.to_numpy(dtype=float, copy=False)
-            f = interp1d(x, y, kind=other_kind, bounds_error=False)
-            vals = f(new_ts)
-
-        # cast back if numeric/bool; leave objects/categories as-is
-        try:
-            new_data[col] = (
-                vals.astype(s.dtype, copy=False)
-                if (is_numeric_dtype(s) or is_bool_dtype(s))
-                else vals
-            )
-        except (TypeError, ValueError):
-            new_data[col] = vals  # safest fallback
-
-    new_data.index.name = data.index.name
     return new_data
 
 
+@interp_doc
 def interpolate_events(
     data: pd.DataFrame,
     events: "Events",
     buffer: Number | tuple[Number, Number] = 0.05,
-    float_kind: str = "linear",
-    other_kind: str = "nearest",
+    float_kind: str | int = "linear",
+    other_kind: str | int = "nearest",
 ) -> pd.DataFrame:
     """
     Interpolate data in the duration of events in the stream data.
@@ -136,14 +118,7 @@ def interpolate_events(
         If a single number is provided, the same buffer is applied
         to both before and after the event.
         Defaults to 0.05.
-    float_kind : str, optional
-        Kind of interpolation applied on columns of ``float`` type,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "linear".
-    other_kind : str, optional
-        Kind of interpolation applied on columns of other types,
-        For details see :class:`scipy.interpolate.interp1d`.
-        Defaults to "nearest".
+    {interp_doc}
 
     Returns
     -------
@@ -300,12 +275,14 @@ def compute_azimuth_and_elevation(
 _VALID_STREAMS = {"3d_eye_states", "eye_states", "gaze", "imu"}
 
 
+@interp_doc
+@inplace_doc
 def concat_streams(
     rec: "Recording",
     stream_names: str | list[str] = "all",
-    sampling_freq: Number | str = "min",
-    interp_float_kind: str = "linear",
-    interp_other_kind: str = "nearest",
+    sampling_freq: int | float | str = "min",
+    float_kind: str | int = "linear",
+    other_kind: str | int = "nearest",
     inplace: bool = False,
 ) -> pd.DataFrame:
     """
@@ -323,101 +300,91 @@ def concat_streams(
         Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
         ("3d_eye_states") is also tolerated as an alias for "eye_states").
-    sampling_freq : numbers.Number or str, optional
+    sampling_freq : int, float, or str, optional
         Sampling frequency of the concatenated streams.
-        If numeric, the streams will be interpolated to this frequency.
+        If numeric, all streams will be interpolated to this frequency.
         If "min" (default), the lowest nominal sampling frequency
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
-    interp_float_kind : str, optional
-        Kind of interpolation applied on columns of ``float`` type,
-        Defaults to "linear". For details see :class:`scipy.interpolate.interp1d`.
-    interp_other_kind : str, optional
-        Kind of interpolation applied on columns of other types.
-        Defaults to "nearest".
-    inplace : bool, optional
-        Replace selected stream data with interpolated data during concatenation
-        if``True``. Defaults to ``False``.
+    {interp_doc}
+    {inplace_doc}
 
     Returns
     -------
-    concat_data : pandas.DataFrame
+    pandas.DataFrame
         Concatenated data.
     """
-    if isinstance(stream_names, str):
+    if isinstance(stream_names, str):  # Only "all" is allowed as a string
         if stream_names == "all":
             stream_names = list(_VALID_STREAMS)
         else:
             raise ValueError(
                 "Invalid stream_names, must be 'all' or a list of stream names."
             )
-    if len(stream_names) <= 1:
-        raise ValueError("Must provide at least two streams to concatenate.")
 
-    stream_names = [ch.lower() for ch in stream_names]
+    # Normalize stream names and handle aliases
+    stream_names = [
+        ("eye_states" if ch.lower() == "3d_eye_states" else ch.lower())
+        for ch in stream_names
+    ]
+    stream_names = list(
+        dict.fromkeys(stream_names)
+    )  # Remove duplicates while preserving order
+
     # Check if all streams are valid
     if not all([ch in _VALID_STREAMS for ch in stream_names]):
-        raise ValueError(f"Invalid stream name, can only one of {_VALID_STREAMS}")
+        raise ValueError(f"Invalid stream name, can only be one of {_VALID_STREAMS}")
+    # Check at least two streams are provided
+    if len(stream_names) <= 1:
+        raise ValueError("Must provide at least two different streams to concatenate.")
 
-    stream_info = pd.DataFrame(columns=["stream", "name", "sf", "first_ts", "last_ts"])
+    concat_list = []
     print("Concatenating streams:")
-    stream_map = {
-        "gaze": ("gaze", "gaze"),
-        "3d_eye_states": ("eye_states", "3d_eye_states"),
-        "eye_states": ("eye_states", "3d_eye_states"),
-        "imu": ("imu", "imu"),
-    }
     for name in stream_names:
-        attr, display_name = stream_map[name]
-        stream_obj = getattr(rec, attr, None)
+        stream_obj = getattr(rec, name, None)
         if stream_obj is None:
-            raise ValueError(f"Cannot load {display_name} data.")
-        stream_info = pd.concat(
-            [
-                stream_info,
-                pd.Series(
-                    {
-                        "stream": stream_obj,
-                        "name": display_name,
-                        "sf": stream_obj.sampling_freq_nominal,
-                        "first_ts": stream_obj.first_ts,
-                        "last_ts": stream_obj.last_ts,
-                    }
-                )
-                .to_frame()
-                .T,
-            ],
-            ignore_index=True,
+            raise ValueError(f"Cannot load {name} data.")
+        concat_list.append(
+            {
+                "stream": stream_obj,
+                "name": name,
+                "sf": stream_obj.sampling_freq_nominal,
+                "first_ts": stream_obj.first_ts,
+                "last_ts": stream_obj.last_ts,
+            }
         )
-        print(f"\t{display_name.capitalize()}")
+        print(f"\t{name}")
+
+    streams_info = pd.DataFrame(concat_list)
 
     # Lowest sampling rate
     if sampling_freq == "min":
-        sf = stream_info["sf"].min()
-        sf_type = "lowest"
+        sf = streams_info["sf"].min()
+        sf_note = "lowest"
     elif sampling_freq == "max":
-        sf = stream_info["sf"].max()
-        sf_type = "highest"
+        sf = streams_info["sf"].max()
+        sf_note = "highest"
     elif isinstance(sampling_freq, (int, float)):
         sf = sampling_freq
-        sf_type = "customized"
+        sf_note = "custom"
     else:
         raise ValueError("Invalid sampling_freq, must be 'min', 'max', or numeric")
-    sf_name = stream_info.loc[stream_info["sf"] == sf, "name"].values
-    print(f"Using {sf_type} sampling rate: {sf} Hz ({sf_name})")
+    sf_name = streams_info.loc[streams_info["sf"] == sf, "name"].values
+    print(f"Using {sf_note} sampling rate: {sf} Hz ({sf_name})")
 
-    max_first_ts = stream_info["first_ts"].max()
-    max_first_ts_name = stream_info.loc[
-        stream_info["first_ts"] == max_first_ts, "name"
+    max_first_ts = streams_info["first_ts"].max()
+    max_first_ts_name = streams_info.loc[
+        streams_info["first_ts"] == max_first_ts, "name"
     ].values
     print(f"Using latest start timestamp: {max_first_ts} ({max_first_ts_name})")
 
-    min_last_ts = stream_info["last_ts"].min()
-    min_last_ts_name = stream_info.loc[
-        stream_info["last_ts"] == min_last_ts, "name"
+    min_last_ts = streams_info["last_ts"].min()
+    min_last_ts_name = streams_info.loc[
+        streams_info["last_ts"] == min_last_ts, "name"
     ].values
     print(f"Using earliest last timestamp: {min_last_ts} ({min_last_ts_name})")
 
+    # Generate new common timestamps
     new_ts = np.arange(
         max_first_ts,
         min_last_ts,
@@ -426,9 +393,9 @@ def concat_streams(
     )
 
     concat_data = pd.DataFrame(index=new_ts)
-    for stream in stream_info["stream"]:
+    for stream in streams_info["stream"]:
         interp_data = stream.interpolate(
-            new_ts, interp_float_kind, interp_other_kind, inplace=inplace
+            new_ts, float_kind, other_kind, inplace=inplace
         ).data
         assert concat_data.shape[0] == interp_data.shape[0]
         assert concat_data.index.equals(interp_data.index)
