@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .tabular import BaseTabular
+from .utils.doc_decorators import inplace_doc
 from .utils.variables import native_to_cloud_column_map
 
 if TYPE_CHECKING:
@@ -272,6 +273,7 @@ class Events(BaseTabular):
         else:
             raise ValueError("No ID column (e.g., `<xxx> id`) found in the instance.")
 
+    @inplace_doc
     def crop(
         self,
         tmin: Optional[Number] = None,
@@ -294,14 +296,12 @@ class Events(BaseTabular):
             Whether tmin and tmax are UTC timestamps in nanoseconds
             or row numbers of the stream data.
             Defaults to "timestamp".
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Events.
-            Defaults to ``False``.
+        {inplace_doc}
 
         Returns
         -------
         Events or None
-            Cropped stream if ``inplace=False``, otherwise ``None``.
+            Cropped events if ``inplace=False``, otherwise ``None``.
         """
         if tmin is None and tmax is None:
             raise ValueError("At least one of tmin or tmax must be provided")
@@ -314,30 +314,31 @@ class Events(BaseTabular):
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
+
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
         return None if inplace else inst
 
+    @inplace_doc
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
-        Restrict events to the time range of a stream.
+        Temporally crop the events to the range of timestamps a stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
         other : Stream
             Stream to restrict to.
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Events.
-            Defaults to ``False``.
+        {inplace_doc}
 
         Returns
         -------
         Events or None
-            Restricted event data if ``inplace=False``, otherwise ``None``.
+            Restricted events if ``inplace=False``, otherwise ``None``.
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
+    @inplace_doc
     def filter_by_duration(
         self,
         dur_min: Optional[Number] = None,
@@ -359,14 +360,12 @@ class Events(BaseTabular):
         reset_id : bool, optional
             Whether to reset event IDs after filtering. Also resets the DataFrame index.
             Defaults to ``True``.
-        inplace : bool, optional
-            If ``True``, replace current data. Otherwise returns a new Events.
-            Defaults to ``False``.
+        {inplace_doc}
 
         Returns
         -------
         Events or None
-            Filtered event data if ``inplace=False``, otherwise ``None``.
+            Filtered events if ``inplace=False``, otherwise ``None``.
         """
         if dur_min is None and dur_max is None:
             raise ValueError("At least one of dur_min or dur_max must be provided")

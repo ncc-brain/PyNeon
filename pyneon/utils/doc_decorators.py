@@ -33,7 +33,7 @@ def inplace_doc(func):
     """
     text = (
         "inplace : bool, optional\n"
-        "   If ``True``, replace current data. Otherwise returns a new Stream.\n"
+        "   If ``True``, replace current data. Otherwise returns a new instance.\n"
         "   Defaults to ``False``.\n"
     )
     if func.__doc__:
