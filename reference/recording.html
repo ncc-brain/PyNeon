@@ -354,7 +354,7 @@
 <h1>Recording class<a class="headerlink" href="#recording-class" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Recording">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording" title="Link to this definition">#</a></dt>
 <dd><p>Container of a multi-modal recording with streams, events, and videos.</p>
 <p>The recording directory is expected to follow either the Pupil Cloud format
 (tested with data format version &gt;= 2.3) or the native Pupil Labs format.
@@ -428,7 +428,7 @@ native format.</p>
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.clear_der_dir" title="pyneon.Recording.clear_der_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_der_dir</span></code></a>([include, exclude])</p></td>
 <td><p>Clear the derived data directory by removing files and folders.</p></td>
@@ -486,7 +486,7 @@ native format.</p>
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.blinks">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">blinks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.blinks" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">blinks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.blinks" title="Link to this definition">#</a></dt>
 <dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing blink event data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">blinks.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">blinks</span> <span class="pre">ps1.raw</span></code>, along with
@@ -682,7 +682,7 @@ containing a nested DataFrame for each video frame.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.events">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">events</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.events" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">events</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.events" title="Link to this definition">#</a></dt>
 <dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing events data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the events data is loaded from <code class="docutils literal notranslate"><span class="pre">events.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the events data is loaded from <code class="docutils literal notranslate"><span class="pre">event.txt</span></code> and
@@ -769,7 +769,7 @@ For more information, see
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.eye_states">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_states</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_states" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_states</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_states" title="Link to this definition">#</a></dt>
 <dd><p>Returns a (cached) <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing eye states data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">3d_eye_states.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">eye_state</span> <span class="pre">ps1.raw</span></code>, along
@@ -778,7 +778,7 @@ with the corresponding <code class="docutils literal notranslate"><span class="p
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.eye_video">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_video" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eye_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></em><a class="headerlink" href="#pyneon.Recording.eye_video" title="Link to this definition">#</a></dt>
 <dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> object containing eye video data.</p>
 <p>Eye video is only available for <strong>native</strong> recordings and is loaded from the
 <code class="docutils literal notranslate"><span class="pre">Neon</span> <span class="pre">Sensor</span> <span class="pre">Module*.mp4</span></code> file in the recording directory.</p>
@@ -836,7 +836,7 @@ with the corresponding <code class="docutils literal notranslate"><span class="p
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.fixations">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fixations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.fixations" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fixations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.fixations" title="Link to this definition">#</a></dt>
 <dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing fixations data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations</span> <span class="pre">ps1.raw</span></code>,
@@ -892,7 +892,7 @@ If None, defaults to <cite>self.der_dir / “fixations_on_surface.csv”</cite>.
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.gaze">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.gaze" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gaze</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.gaze" title="Link to this definition">#</a></dt>
 <dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing gaze data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">gaze.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">gaze_200hz.raw</span></code> (if present;
@@ -940,7 +940,7 @@ and <cite>overwrite</cite> is False, the data is loaded from disk.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.imu">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.imu" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></em><a class="headerlink" href="#pyneon.Recording.imu" title="Link to this definition">#</a></dt>
 <dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing IMU data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">imu.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">imu</span> <span class="pre">ps1.raw</span></code>, along with
@@ -1065,7 +1065,7 @@ for scatter plots.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.saccades">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">saccades</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.saccades" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">saccades</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></em><a class="headerlink" href="#pyneon.Recording.saccades" title="Link to this definition">#</a></dt>
 <dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing saccades data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">saccades.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations</span> <span class="pre">ps1.raw</span></code>,
@@ -1074,7 +1074,7 @@ along with the corresponding <code class="docutils literal notranslate"><span cl
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.scene_video">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scene_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></em><a class="headerlink" href="#pyneon.Recording.scene_video" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scene_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></em><a class="headerlink" href="#pyneon.Recording.scene_video" title="Link to this definition">#</a></dt>
 <dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> object containing scene video data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the video is loaded from the only <code class="docutils literal notranslate"><span class="pre">*.mp4</span></code> file
 in the recording directory.</p>
@@ -1122,14 +1122,14 @@ computes it via Recording.estimate_camera_pose().</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.start_datetime">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_datetime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><a class="headerlink" href="#pyneon.Recording.start_datetime" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_datetime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><a class="headerlink" href="#pyneon.Recording.start_datetime" title="Link to this definition">#</a></dt>
 <dd><p>Start time (datetime) of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
 May not match the start time of each data stream.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.start_time">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.Recording.start_time" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#pyneon.Recording.start_time" title="Link to this definition">#</a></dt>
 <dd><p>Start time (in ns) of the recording as in <code class="docutils literal notranslate"><span class="pre">info.json</span></code>.
 May not match the start time of each data stream.</p>
 </dd></dl>
@@ -1295,7 +1295,7 @@ If None, defaults to the median interval between video frame timestamps.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     <br/>
   </p>
 </div>
