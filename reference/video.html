@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Scene video class &#8212; PyNeon dev documentation</title>
+    <title>Video class &#8212; PyNeon dev documentation</title>
   
   
   
@@ -285,10 +285,10 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stream.html">Data stream classes (gaze, eye states, IMU)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Events classes (blinks, fixations, saccades, events)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stream.html">Stream class (gaze, eye states, IMU)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Scene video class</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Video class</a></li>
 </ul>
 </div>
 </nav></div>
@@ -332,7 +332,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Scene video class</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Video class</span></li>
   </ul>
 </nav>
 </div>
@@ -349,8 +349,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="scene-video-class">
-<h1>Scene video class<a class="headerlink" href="#scene-video-class" title="Link to this heading">#</a></h1>
+  <section id="video-class">
+<h1>Video class<a class="headerlink" href="#video-class" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Video">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video" title="Link to this definition">#</a></dt>
@@ -380,55 +380,58 @@ Must have the same length as the number of frames in the video.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.detect_apriltags" title="pyneon.Video.detect_apriltags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_apriltags</span></code></a>([tag_family])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.compute_intensity" title="pyneon.Video.compute_intensity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_intensity</span></code></a>()</p></td>
+<td><p>Generate a <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing the mean intensity of each video frame.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.detect_apriltags" title="pyneon.Video.detect_apriltags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_apriltags</span></code></a>([tag_family])</p></td>
 <td><p>Detect AprilTags in the video frames.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(propId)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(propId)</p></td>
 <td><p>.   &#64;brief Returns the specified VideoCapture property</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBackendName</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBackendName</span></code>()</p></td>
 <td><p>.   &#64;brief Returns used backend API name</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExceptionMode</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExceptionMode</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.get_frame" title="pyneon.Video.get_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_frame</span></code></a>(timestamp)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.get_frame" title="pyneon.Video.get_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_frame</span></code></a>(timestamp)</p></td>
 <td><p>Get the frame index corresponding to a given timestamp.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab</span></code>()</p></td>
 <td><p>.   &#64;brief Grabs the next frame from video file or capturing device.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isOpened</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isOpened</span></code>()</p></td>
 <td><p>.   &#64;brief Returns true if video capturing has been initialized already.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code>(filename[, apiPreference])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code>(filename[, apiPreference])</p></td>
 <td><p>.   &#64;brief  Opens a video file or a capturing device or an IP video stream for video capturing.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.overlay_scanpath" title="pyneon.Video.overlay_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_scanpath</span></code></a>(scanpath[, circle_radius, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.overlay_scanpath" title="pyneon.Video.overlay_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_scanpath</span></code></a>(scanpath[, circle_radius, ...])</p></td>
 <td><p>Plot scanpath on top of the video frames.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.plot_frame" title="pyneon.Video.plot_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_frame</span></code></a>([index, ax, auto_title, show])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.plot_frame" title="pyneon.Video.plot_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_frame</span></code></a>([index, ax, auto_title, show])</p></td>
 <td><p>Plot a frame from the video on a matplotlib axis.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code>([, image])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code>([, image])</p></td>
 <td><p>.   &#64;brief Grabs, decodes and returns the next video frame.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">release</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">release</span></code>()</p></td>
 <td><p>.   &#64;brief Closes video file or capturing device.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve</span></code>([, image[, flag]])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve</span></code>([, image[, flag]])</p></td>
 <td><p>.   &#64;brief Decodes and returns the grabbed video frame.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(propId, value)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(propId, value)</p></td>
 <td><p>.   &#64;brief Sets a property in the VideoCapture.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExceptionMode</span></code>(enable)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExceptionMode</span></code>(enable)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.undistort" title="pyneon.Video.undistort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undistort</span></code></a>([output_video_path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.undistort" title="pyneon.Video.undistort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undistort</span></code></a>([output_video_path])</p></td>
 <td><p>Undistort a video using the known camera matrix and distortion coefficients.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">waitAny</span></code>(streams[, timeoutNs])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">waitAny</span></code>(streams[, timeoutNs])</p></td>
 <td><p>.   &#64;brief Wait for ready frames from VideoCapture.</p></td>
 </tr>
 </tbody>
@@ -446,6 +449,13 @@ Must have the same length as the number of frames in the video.</p>
 <dt class="sig sig-object py" id="pyneon.Video.camera_matrix">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">camera_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Video.camera_matrix" title="Link to this definition">#</a></dt>
 <dd><p>Camera matrix of the video camera.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.compute_intensity">
+<span class="sig-name descname"><span class="pre">compute_intensity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.compute_intensity" title="Link to this definition">#</a></dt>
+<dd><p>Generate a <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing the
+mean intensity of each video frame.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -630,6 +640,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video"><code class="docutils literal notranslate"><span class="pre">Video</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.camera_matrix"><code class="docutils literal notranslate"><span class="pre">Video.camera_matrix</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.compute_intensity"><code class="docutils literal notranslate"><span class="pre">Video.compute_intensity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.detect_apriltags"><code class="docutils literal notranslate"><span class="pre">Video.detect_apriltags()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.distortion_coefficients"><code class="docutils literal notranslate"><span class="pre">Video.distortion_coefficients</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.fps"><code class="docutils literal notranslate"><span class="pre">Video.fps</span></code></a></li>

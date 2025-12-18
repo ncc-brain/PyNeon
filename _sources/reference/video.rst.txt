@@ -1,5 +1,5 @@
-Scene video class
-=================
+Video class
+===========
 
 .. autoclass:: pyneon.Video
     :members:
