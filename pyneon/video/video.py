@@ -280,7 +280,5 @@ class Video(cv2.VideoCapture):
             vals.append(brightness)
         vals = np.array(vals)
         assert len(vals) == len(self.ts)
-        stream = Stream(
-            pd.DataFrame({"timestamp [ns]": self.ts, "intensity": vals})
-        )
+        stream = Stream(pd.DataFrame({"timestamp [ns]": self.ts, "intensity": vals}))
         return stream
