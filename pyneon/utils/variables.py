@@ -118,6 +118,8 @@ data_types = {
     "tag_id": "Int32",
     "corners": object,
     "center": object,
+    # Video mean intensity
+    "intensity": float,
     # Homographies
     "homography": object,
     # Gaze on surface
