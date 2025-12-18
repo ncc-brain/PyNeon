@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from ..stream import Stream
 from ..utils.variables import default_camera_info
 from ..vis import overlay_scanpath, plot_frame
 from .apriltag import detect_apriltags
@@ -250,7 +251,7 @@ class Video(cv2.VideoCapture):
             cv2.CV_16SC2,
         )
 
-        for frame_idx in tqdm(range(frame_count), desc="Undistorting video"):
+        for _ in tqdm(range(frame_count), desc="Undistorting video"):
             ret, frame = self.read()
             if not ret:
                 break
@@ -262,3 +263,24 @@ class Video(cv2.VideoCapture):
 
         out.release()
         print(f"Undistorted video saved to {output_video_path}")
+
+    def compute_intensity(self):
+        """
+        Generate a :class:`pyneon.Stream` object containing the
+        mean intensity of each video frame.
+        """
+        vals = []
+        self.reset()
+        for _ in tqdm(range(len(self)), desc="Computing frame brightness"):
+            ret, frame = self.read()
+            if not ret:
+                break
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            brightness = np.mean(gray_frame)
+            vals.append(brightness)
+        vals = np.array(vals)
+        assert len(vals) == len(self.ts)
+        stream = Stream(
+            pd.DataFrame({"timestamp [ns]": self.ts, "intensity": vals})
+        )
+        return stream

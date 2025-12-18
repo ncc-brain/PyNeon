@@ -1,5 +1,5 @@
-Data stream classes (gaze, eye states, IMU)
-===========================================
+Stream class (gaze, eye states, IMU)
+====================================
 
 .. autoclass:: pyneon.Stream
     :members:
