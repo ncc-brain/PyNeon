@@ -7,8 +7,17 @@ from .utils.variables import data_types
 
 class BaseTabular:
     """
-    Base for Neon tabular data. It takes a Pandas DataFrame, strips unnecessary
-    columns (section and recording IDs), and sets the correct data types for known columns.
+    Base for tabular data classes like :class:`pyneon.Events` and :class:`pyneon.Stream`.
+
+    When initialized, performs the following checks and processing on the input data:
+
+    1. Ensures the data is not empty.
+    2. If present, checks that ``recording id`` and ``section id`` columns contain
+       only a single unique value, and removes these columns.
+    3. Identifies and handles duplicate columns by retaining only the first occurrence
+       and issuing a warning.
+    4. Sets the data types of columns based on a predefined mapping. Columns not found
+       in this mapping are left with their default data types, and a warning is issued.
 
     Parameters
     ----------
@@ -66,16 +75,35 @@ class BaseTabular:
 
     @property
     def shape(self) -> tuple[int, int]:
+        """Return a tuple representing the shape of the data.
+
+        Returns
+        -------
+        tuple[int, int]
+            Shape of the data as (rows, columns).
+        """
         return self.data.shape
 
     @property
     def columns(self) -> pd.Index:
-        """Column names of the stream data."""
+        """Return the column labels of the data.
+
+        Returns
+        -------
+        pd.Index
+            Column labels of the data.
+        """
         return self.data.columns
 
     @property
     def dtypes(self) -> pd.Series:
-        """Data types of the columns in the stream data."""
+        """Return the data types of the columns in the data.
+
+        Returns
+        -------
+        pd.Series
+            Data types of the columns in the data.
+        """
         return self.data.dtypes
 
     def copy(self):

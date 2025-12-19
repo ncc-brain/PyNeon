@@ -144,13 +144,13 @@ class Events(BaseTabular):
     source : pandas.DataFrame or pathlib.Path or str
         Source of the event data. Can be either:
 
-        * :class:`pandas.DataFrame`: Must contain appropriate event columns.
-        * :class:`pathlib.Path` or :class:`str`: Path to an event data file.
+        - :class:`pandas.DataFrame`: Direct input of event data.
+        - :class:`pathlib.Path` or :class:`str`: Path to an event data file.
           Supported file formats:
 
-        - ``.csv``: Pupil Cloud format file.
-        - ``.raw`` / ``.txt``: Native Pupil Labs format (requires
-          corresponding ``.time`` and ``.dtype`` files in the same directory).
+          - ``.csv``: Pupil Cloud format CSV file.
+          - ``.raw`` / ``.txt``: Native format (requires corresponding
+            ``.time`` and ``.dtype`` files in the same directory).
 
         Note: Native format columns are automatically renamed to Pupil Cloud
         format for consistency. For example, ``mean_gaze_x`` -> ``fixation x [px]``.
@@ -182,6 +182,7 @@ class Events(BaseTabular):
 
     >>> blinks = Events("blinks ps1.raw")
     >>> fixations = Events("fixations ps1.raw", type="fixations")
+    >>> saccades = Events("fixations ps1.raw", type="saccades")
     >>> events = Events("event.txt")
 
     Create from DataFrame:

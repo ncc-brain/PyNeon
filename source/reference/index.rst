@@ -8,6 +8,7 @@ PyNeon API
 
     dataset
     recording
+    base_tabular
     stream
     events
     epochs

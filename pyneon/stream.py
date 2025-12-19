@@ -104,11 +104,11 @@ class Stream(BaseTabular):
     source : pandas.DataFrame or pathlib.Path or str
         Source of the stream data. Can be either:
 
-        * :class:`pandas.DataFrame`: Must contain a ``timestamp [ns]`` column or index.
-        * :class:`pathlib.Path` or :class:`str`: Path to a stream data file. Supported file formats:
+        - :class:`pandas.DataFrame`: Must contain a ``timestamp [ns]`` column or index.
+        - :class:`pathlib.Path` or :class:`str`: Path to a stream data file. Supported file formats:
 
-        - ``.csv``: Pupil Cloud format CSV file
-        - ``.raw``: Native format (requires ``.time`` and ``.dtype`` files in the same directory)
+          - ``.csv``: Pupil Cloud format CSV file
+          - ``.raw``: Native format (requires ``.time`` and ``.dtype`` files in the same directory)
 
         Note: Native format columns are automatically renamed to Pupil Cloud
         format for consistency. For example, ``gyro_x`` -> ``gyro x [deg/s]``.
@@ -130,7 +130,7 @@ class Stream(BaseTabular):
 
     Load from native format:
 
-    >>> gaze = Stream("gaze ps1.raw")
+    >>> gaze = Stream("gaze ps1.raw") # Or "gaze_200hz.raw"
 
     Create from DataFrame:
 
