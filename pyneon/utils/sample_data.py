@@ -33,4 +33,5 @@ def get_sample_data(data_name: str, replace=False) -> Path:
 
 
 if __name__ == "__main__":
-    get_sample_data("screenFlash")
+    data_dir = get_sample_data("PLR")
+    assert data_dir.exists()
