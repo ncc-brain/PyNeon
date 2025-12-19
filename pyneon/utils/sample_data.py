@@ -7,7 +7,7 @@ data_dir = Path(__file__).parent.parent.parent / "data"
 
 data_url_dict = {
     "boardView": "https://osf.io/download/t52b4/",
-    "screenFlash": "https://osf.io/download/6836d6e49bf72b3880d6a388/",
+    "PLR": "https://osf.io/bfw87/download/",
     "Artworks": "https://osf.io/download/685036cf0675b635986df74f/",
 }
 
