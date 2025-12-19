@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Dataset class &#8212; PyNeon dev documentation</title>
+    <title>BaseTabular Class &#8212; PyNeon dev documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/dataset';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/base_tabular';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Recording class" href="recording.html" />
-    <link rel="prev" title="PyNeon API" href="index.html" />
+    <link rel="next" title="Stream class (gaze, eye states, IMU)" href="stream.html" />
+    <link rel="prev" title="Recording class" href="recording.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -284,9 +284,9 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Dataset class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="base_tabular.html">BaseTabular Class</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">BaseTabular Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Stream class (gaze, eye states, IMU)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
@@ -334,7 +334,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Dataset class</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">BaseTabular Class</span></li>
   </ul>
 </nav>
 </div>
@@ -351,52 +351,36 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="dataset-class">
-<h1>Dataset class<a class="headerlink" href="#dataset-class" title="Link to this heading">#</a></h1>
+  <section id="basetabular-class">
+<h1>BaseTabular Class<a class="headerlink" href="#basetabular-class" title="Link to this heading">#</a></h1>
+<p>This is the base class for tabular data structures in PyNeon, such as
+<a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> and <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a>. It is not intended to be
+used directly, but provides common functionality for its subclasses.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="pyneon.Dataset">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset" title="Link to this definition">#</a></dt>
-<dd><p>Holder for multiple recordings. It reads from a directory containing a multiple
-recordings downloaded from Pupil Cloud with the <strong>Timeseries CSV</strong> or
-<strong>Timeseries CSV and Scene Video</strong> option. For example, a dataset with 2 recordings
-would have the following folder structure:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
-├── recording_dir_1/
-│   ├── info.json
-│   ├── gaze.csv
-|   └── ...
-├── recording_dir_2/
-│   ├── info.json
-│   ├── gaze.csv
-|   └── ...
-├── ...
-├── enrichment_info.txt
-└── sections.csv
-</pre></div>
-</div>
-<p>Individual recordings will be read into <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Recording</span></code></a> objects based on
-<code class="docutils literal notranslate"><span class="pre">sections.csv</span></code>. They are accessible through the <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute.</p>
+<dt class="sig sig-object py" id="pyneon.tabular.BaseTabular">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.tabular.</span></span><span class="sig-name descname"><span class="pre">BaseTabular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.tabular.BaseTabular" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Base for tabular data classes like <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> and <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a>.</p>
+<p>When initialized, performs the following checks and processing on the input data:</p>
+<ol class="arabic simple">
+<li><p>Ensures the data is not empty.</p></li>
+<li><p>If present, checks that <code class="docutils literal notranslate"><span class="pre">recording</span> <span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">section</span> <span class="pre">id</span></code> columns contain
+only a single unique value, and removes these columns.</p></li>
+<li><p>Identifies and handles duplicate columns by retaining only the first occurrence
+and issuing a warning.</p></li>
+<li><p>Sets the data types of columns based on a predefined mapping. Columns not found
+in this mapping are left with their default data types, and a warning is issued.</p></li>
+</ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>dataset_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
-</dd>
-<dt><strong>custom</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to expect a custom dataset structure. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the dataset
-is expected to follow the standard Pupil Cloud dataset structure with a
-<code class="docutils literal notranslate"><span class="pre">sections.csv</span></code> file. If True, every directory in <code class="docutils literal notranslate"><span class="pre">dataset_dir</span></code> is
-considered a recording directory, and the <code class="docutils literal notranslate"><span class="pre">sections</span></code> attribute is
-constructed from the <code class="docutils literal notranslate"><span class="pre">info</span></code> of recordings found.
-Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dt><strong>data</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>Raw data to be processed.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>dataset_dir</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
-</dd>
-<dt><strong>recordings</strong><span class="classifier">list of Recording</span></dt><dd><p>List of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Recording</span></code></a> objects for each recording in the dataset.</p>
-</dd>
-<dt><strong>sections</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the sections of the dataset.</p>
+<dt><strong>data</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>The processed data.</p>
 </dd>
 </dl>
 </dd>
@@ -404,27 +388,58 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Dataset.load_enrichment" title="pyneon.Dataset.load_enrichment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_enrichment</span></code></a>(enrichment_dir)</p></td>
-<td><p>Load enrichment information from an enrichment directory.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.tabular.BaseTabular.copy" title="pyneon.tabular.BaseTabular.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>()</p></td>
+<td><p>Create a deep copy of the instance.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Dataset.load_enrichment">
-<span class="sig-name descname"><span class="pre">load_enrichment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enrichment_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset.load_enrichment" title="Link to this definition">#</a></dt>
-<dd><p>Load enrichment information from an enrichment directory. The directory must
-contain an enrichment_info.txt file. Enrichment data will be parsed for each
-recording ID and added to Recording object in the dataset.</p>
-<p>The method is currently being developed and is not yet implemented.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.tabular.BaseTabular.shape">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#pyneon.tabular.BaseTabular.shape" title="Link to this definition">#</a></dt>
+<dd><p>Return a tuple representing the shape of the data.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>enrichment_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Path to the directory containing the enrichment information.</p>
+<dt>tuple[int, int]</dt><dd><p>Shape of the data as (rows, columns).</p>
 </dd>
 </dl>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.tabular.BaseTabular.columns">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">columns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.3.3)"><span class="pre">Index</span></a></em><a class="headerlink" href="#pyneon.tabular.BaseTabular.columns" title="Link to this definition">#</a></dt>
+<dd><p>Return the column labels of the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>pd.Index</dt><dd><p>Column labels of the data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.tabular.BaseTabular.dtypes">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.3.3)"><span class="pre">Series</span></a></em><a class="headerlink" href="#pyneon.tabular.BaseTabular.dtypes" title="Link to this definition">#</a></dt>
+<dd><p>Return the data types of the columns in the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>pd.Series</dt><dd><p>Data types of the columns in the data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.tabular.BaseTabular.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.tabular.BaseTabular.copy" title="Link to this definition">#</a></dt>
+<dd><p>Create a deep copy of the instance.</p>
 </dd></dl>
 
 </dd></dl>
@@ -442,20 +457,20 @@ recording ID and added to Recording object in the dataset.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="recording.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">PyNeon API</p>
+        <p class="prev-next-title">Recording class</p>
       </div>
     </a>
     <a class="right-next"
-       href="recording.html"
+       href="stream.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Recording class</p>
+        <p class="prev-next-title">Stream class (gaze, eye states, IMU)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -478,8 +493,11 @@ recording ID and added to Recording object in the dataset.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset.load_enrichment"><code class="docutils literal notranslate"><span class="pre">Dataset.load_enrichment()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.BaseTabular"><code class="docutils literal notranslate"><span class="pre">BaseTabular</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.BaseTabular.shape"><code class="docutils literal notranslate"><span class="pre">BaseTabular.shape</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.BaseTabular.columns"><code class="docutils literal notranslate"><span class="pre">BaseTabular.columns</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.BaseTabular.dtypes"><code class="docutils literal notranslate"><span class="pre">BaseTabular.dtypes</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.tabular.BaseTabular.copy"><code class="docutils literal notranslate"><span class="pre">BaseTabular.copy()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -489,7 +507,7 @@ recording ID and added to Recording object in the dataset.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/reference/dataset.rst.txt"
+      <li><a href="../_sources/reference/base_tabular.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

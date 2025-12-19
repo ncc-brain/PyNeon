@@ -286,6 +286,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base_tabular.html">BaseTabular Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Stream class (gaze, eye states, IMU)</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
@@ -355,7 +356,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Events">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Events" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTabular</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="base_tabular.html#pyneon.tabular.BaseTabular" title="pyneon.tabular.BaseTabular"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTabular</span></code></a></p>
 <p>Container for discrete event data (e.g., blinks, fixations, saccades, or
 message events).</p>
 <dl class="field-list">
@@ -363,14 +364,15 @@ message events).</p>
 <dd class="field-odd"><dl>
 <dt><strong>source</strong><span class="classifier">pandas.DataFrame or pathlib.Path or str</span></dt><dd><p>Source of the event data. Can be either:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>: Must contain appropriate event columns.</p></li>
+<li><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>: Direct input of event data.</p></li>
 <li><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>: Path to an event data file.
-Supported file formats:</p></li>
+Supported file formats:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">.csv</span></code>: Pupil Cloud format CSV file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.raw</span></code> / <code class="docutils literal notranslate"><span class="pre">.txt</span></code>: Native format (requires corresponding
+<code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files in the same directory).</p></li>
 </ul>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">.csv</span></code>: Pupil Cloud format file.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.raw</span></code> / <code class="docutils literal notranslate"><span class="pre">.txt</span></code>: Native Pupil Labs format (requires
-corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files in the same directory).</p></li>
+</li>
 </ul>
 <p>Note: Native format columns are automatically renamed to Pupil Cloud
 format for consistency. For example, <code class="docutils literal notranslate"><span class="pre">mean_gaze_x</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">fixation</span> <span class="pre">x</span> <span class="pre">[px]</span></code>.</p>
@@ -398,7 +400,7 @@ saccade events. Ignored for other formats.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Events.copy" title="pyneon.Events.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code>()</p></td>
 <td><p>Create a deep copy of the instance.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Events.crop" title="pyneon.Events.crop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crop</span></code></a>([tmin, tmax, by, inplace])</p></td>
@@ -421,6 +423,7 @@ saccade events. Ignored for other formats.</p>
 <p>Load from native format:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">blinks</span> <span class="o">=</span> <span class="n">Events</span><span class="p">(</span><span class="s2">&quot;blinks ps1.raw&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fixations</span> <span class="o">=</span> <span class="n">Events</span><span class="p">(</span><span class="s2">&quot;fixations ps1.raw&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;fixations&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">saccades</span> <span class="o">=</span> <span class="n">Events</span><span class="p">(</span><span class="s2">&quot;fixations ps1.raw&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;saccades&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">Events</span><span class="p">(</span><span class="s2">&quot;event.txt&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -430,15 +433,59 @@ saccade events. Ignored for other formats.</p>
 </pre></div>
 </div>
 <dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.columns">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">columns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.3.3)"><span class="pre">Index</span></a></em><a class="headerlink" href="#pyneon.Events.columns" title="Link to this definition">#</a></dt>
-<dd><p>Column names of the stream data.</p>
+<dt class="sig sig-object py" id="pyneon.Events.start_ts">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.start_ts" title="Link to this definition">#</a></dt>
+<dd><p>Start timestamps of events in nanoseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If no <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> or <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column is found in the instance.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Events.copy">
-<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Events.copy" title="Link to this definition">#</a></dt>
-<dd><p>Create a deep copy of the instance.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Events.end_ts">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.end_ts" title="Link to this definition">#</a></dt>
+<dd><p>End timestamps of events in nanoseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If no <code class="docutils literal notranslate"><span class="pre">end</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column is found in the instance.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Events.durations">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">durations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.durations" title="Link to this definition">#</a></dt>
+<dd><p>Duration of events in milliseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If no <code class="docutils literal notranslate"><span class="pre">duration</span> <span class="pre">[ms]</span></code> column is found in the instance.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Events.id">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.id" title="Link to this definition">#</a></dt>
+<dd><p>Event ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If no ID column (e.g., <code class="docutils literal notranslate"><span class="pre">&lt;xxx&gt;</span> <span class="pre">id</span></code>) is found in the instance.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -472,34 +519,24 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 </dl>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.dtypes">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.3.3)"><span class="pre">Series</span></a></em><a class="headerlink" href="#pyneon.Events.dtypes" title="Link to this definition">#</a></dt>
-<dd><p>Data types of the columns in the stream data.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.durations">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">durations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.durations" title="Link to this definition">#</a></dt>
-<dd><p>Duration of events in milliseconds.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Events.restrict">
+<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.restrict" title="Link to this definition">#</a></dt>
+<dd><p>Temporally crop the events to the range of timestamps a stream.
+Equivalent to <code class="docutils literal notranslate"><span class="pre">crop(other.first_ts,</span> <span class="pre">other.last_ts)</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt>ValueError</dt><dd><p>If no <code class="docutils literal notranslate"><span class="pre">duration</span> <span class="pre">[ms]</span></code> column is found in the instance.</p>
+<dt><strong>other</strong><span class="classifier">Stream</span></dt><dd><p>Stream to restrict to.</p>
+</dd>
+<dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 </dl>
 </dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.end_ts">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.end_ts" title="Link to this definition">#</a></dt>
-<dd><p>End timestamps of events in nanoseconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>ValueError</dt><dd><p>If no <code class="docutils literal notranslate"><span class="pre">end</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column is found in the instance.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Events or None</dt><dd><p>Restricted events if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -530,63 +567,6 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>Events or None</dt><dd><p>Filtered events if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.id">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.id" title="Link to this definition">#</a></dt>
-<dd><p>Event ID.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>ValueError</dt><dd><p>If no ID column (e.g., <code class="docutils literal notranslate"><span class="pre">&lt;xxx&gt;</span> <span class="pre">id</span></code>) is found in the instance.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Events.restrict">
-<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.restrict" title="Link to this definition">#</a></dt>
-<dd><p>Temporally crop the events to the range of timestamps a stream.
-Equivalent to <code class="docutils literal notranslate"><span class="pre">crop(other.first_ts,</span> <span class="pre">other.last_ts)</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>other</strong><span class="classifier">Stream</span></dt><dd><p>Stream to restrict to.</p>
-</dd>
-<dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
-Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Events or None</dt><dd><p>Restricted events if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.shape">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#pyneon.Events.shape" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Events.start_ts">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_ts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Events.start_ts" title="Link to this definition">#</a></dt>
-<dd><p>Start timestamps of events in nanoseconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>ValueError</dt><dd><p>If no <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">timestamp</span> <span class="pre">[ns]</span></code> or <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> column is found in the instance.</p>
 </dd>
 </dl>
 </dd>
@@ -645,17 +625,13 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events"><code class="docutils literal notranslate"><span class="pre">Events</span></code></a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.columns"><code class="docutils literal notranslate"><span class="pre">Events.columns</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.copy"><code class="docutils literal notranslate"><span class="pre">Events.copy()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.crop"><code class="docutils literal notranslate"><span class="pre">Events.crop()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.dtypes"><code class="docutils literal notranslate"><span class="pre">Events.dtypes</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.durations"><code class="docutils literal notranslate"><span class="pre">Events.durations</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.end_ts"><code class="docutils literal notranslate"><span class="pre">Events.end_ts</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.filter_by_duration"><code class="docutils literal notranslate"><span class="pre">Events.filter_by_duration()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.id"><code class="docutils literal notranslate"><span class="pre">Events.id</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.restrict"><code class="docutils literal notranslate"><span class="pre">Events.restrict()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.shape"><code class="docutils literal notranslate"><span class="pre">Events.shape</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.start_ts"><code class="docutils literal notranslate"><span class="pre">Events.start_ts</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.end_ts"><code class="docutils literal notranslate"><span class="pre">Events.end_ts</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.durations"><code class="docutils literal notranslate"><span class="pre">Events.durations</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.id"><code class="docutils literal notranslate"><span class="pre">Events.id</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.crop"><code class="docutils literal notranslate"><span class="pre">Events.crop()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.restrict"><code class="docutils literal notranslate"><span class="pre">Events.restrict()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.filter_by_duration"><code class="docutils literal notranslate"><span class="pre">Events.filter_by_duration()</span></code></a></li>
 </ul>
 </li>
 </ul>

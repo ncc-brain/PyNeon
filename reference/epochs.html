@@ -288,6 +288,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base_tabular.html">BaseTabular Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Stream class (gaze, eye states, IMU)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Epochs class</a></li>
@@ -419,40 +420,22 @@ the following columns are added:</p>
 ├--------------------------------------------------------------------------------┤
 </pre></div>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Epochs.baseline_correction">
-<span class="sig-name descname"><span class="pre">baseline_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(None,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Epochs.baseline_correction" title="Link to this definition">#</a></dt>
-<dd><p>Perform baseline correction on epochs.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>baseline</strong><span class="classifier">(t_min, t_max), iterable of float | None</span></dt><dd><p>Start and end of the baseline window <strong>in seconds</strong>, relative to
-the event trigger (t_ref = 0).  <code class="docutils literal notranslate"><span class="pre">None</span></code> means “from the first /
-up to the last sample”.  Default: (None, 0.0) -&gt; the pre-trigger
-part of each epoch.</p>
-</dd>
-<dt><strong>method</strong><span class="classifier">“mean” or “linear”, optional</span></dt><dd><ul class="simple">
-<li><p>“mean” - Subtract the scalar mean of the baseline window.</p></li>
-<li><p>“linear” - Fit a first-order (<span class="math notranslate nohighlight">\(y = at + b\)</span>) model <em>within</em> the
-baseline window and remove the fitted trend from the entire
-epoch (a very small, fast version of MNE’s regression detrending).</p></li>
-</ul>
-<p>Defaults to “mean”.</p>
-</dd>
-<dt><strong>inplace</strong><span class="classifier">bool</span></dt><dd><p>If True, overwrite epochs data.
-Otherwise return a <strong>new, corrected</strong> pandas.DataFrame
-and leave the object unchanged.
-Defaults to True.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>pandas.DataFrame</dt><dd><p>The baseline-corrected data (same shape &amp; dtypes as original data).</p>
-</dd>
-</dl>
-</dd>
-</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.t_ref">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_ref</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_ref" title="Link to this definition">#</a></dt>
+<dd><p>The reference time for each epoch in UTC nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.t_before">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_before</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_before" title="Link to this definition">#</a></dt>
+<dd><p>The time before the reference time for each epoch in nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.t_after">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_after" title="Link to this definition">#</a></dt>
+<dd><p>The time after the reference time for each epoch in nanoseconds.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -468,15 +451,15 @@ Defaults to True.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Epochs.has_overlap">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_overlap</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#pyneon.Epochs.has_overlap" title="Link to this definition">#</a></dt>
-<dd><p>Whether any adjacent epochs overlap.</p>
-</dd></dl>
-
-<dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Epochs.is_equal_length">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_equal_length</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#pyneon.Epochs.is_equal_length" title="Link to this definition">#</a></dt>
 <dd><p>Whether all epochs have the same length.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Epochs.has_overlap">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_overlap</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#pyneon.Epochs.has_overlap" title="Link to this definition">#</a></dt>
+<dd><p>Whether any adjacent epochs overlap.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -508,24 +491,6 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 </dl>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Epochs.t_after">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_after" title="Link to this definition">#</a></dt>
-<dd><p>The time after the reference time for each epoch in nanoseconds.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Epochs.t_before">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_before</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_before" title="Link to this definition">#</a></dt>
-<dd><p>The time before the reference time for each epoch in nanoseconds.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pyneon.Epochs.t_ref">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">t_ref</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#pyneon.Epochs.t_ref" title="Link to this definition">#</a></dt>
-<dd><p>The reference time for each epoch in UTC nanoseconds.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -562,6 +527,42 @@ Default is ‘all’.</p>
 <li><p>The time grid (<code class="docutils literal notranslate"><span class="pre">t_rel</span></code>) is in nanoseconds.</p></li>
 <li><p>If <cite>NaN</cite> values are present after interpolation, they are noted in <code class="docutils literal notranslate"><span class="pre">nan_flag</span></code>.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Epochs.baseline_correction">
+<span class="sig-name descname"><span class="pre">baseline_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(None,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Epochs.baseline_correction" title="Link to this definition">#</a></dt>
+<dd><p>Perform baseline correction on epochs.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>baseline</strong><span class="classifier">(t_min, t_max), iterable of float | None</span></dt><dd><p>Start and end of the baseline window <strong>in seconds</strong>, relative to
+the event trigger (t_ref = 0).  <code class="docutils literal notranslate"><span class="pre">None</span></code> means “from the first /
+up to the last sample”.  Default: (None, 0.0) -&gt; the pre-trigger
+part of each epoch.</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">“mean” or “linear”, optional</span></dt><dd><ul class="simple">
+<li><p>“mean” - Subtract the scalar mean of the baseline window.</p></li>
+<li><p>“linear” - Fit a first-order (<span class="math notranslate nohighlight">\(y = at + b\)</span>) model <em>within</em> the
+baseline window and remove the fitted trend from the entire
+epoch (a very small, fast version of MNE’s regression detrending).</p></li>
+</ul>
+<p>Defaults to “mean”.</p>
+</dd>
+<dt><strong>inplace</strong><span class="classifier">bool</span></dt><dd><p>If True, overwrite epochs data.
+Otherwise return a <strong>new, corrected</strong> pandas.DataFrame
+and leave the object unchanged.
+Defaults to True.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pandas.DataFrame</dt><dd><p>The baseline-corrected data (same shape &amp; dtypes as original data).</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -694,16 +695,16 @@ are relative to a global start time
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs"><code class="docutils literal notranslate"><span class="pre">Epochs</span></code></a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.baseline_correction"><code class="docutils literal notranslate"><span class="pre">Epochs.baseline_correction()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_ref"><code class="docutils literal notranslate"><span class="pre">Epochs.t_ref</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_before"><code class="docutils literal notranslate"><span class="pre">Epochs.t_before</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_after"><code class="docutils literal notranslate"><span class="pre">Epochs.t_after</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.description"><code class="docutils literal notranslate"><span class="pre">Epochs.description</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.dtypes"><code class="docutils literal notranslate"><span class="pre">Epochs.dtypes</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.has_overlap"><code class="docutils literal notranslate"><span class="pre">Epochs.has_overlap</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.is_equal_length"><code class="docutils literal notranslate"><span class="pre">Epochs.is_equal_length</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.has_overlap"><code class="docutils literal notranslate"><span class="pre">Epochs.has_overlap</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.plot"><code class="docutils literal notranslate"><span class="pre">Epochs.plot()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_after"><code class="docutils literal notranslate"><span class="pre">Epochs.t_after</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_before"><code class="docutils literal notranslate"><span class="pre">Epochs.t_before</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.t_ref"><code class="docutils literal notranslate"><span class="pre">Epochs.t_ref</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.to_numpy"><code class="docutils literal notranslate"><span class="pre">Epochs.to_numpy()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Epochs.baseline_correction"><code class="docutils literal notranslate"><span class="pre">Epochs.baseline_correction()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.events_to_times_df"><code class="docutils literal notranslate"><span class="pre">events_to_times_df()</span></code></a></li>
