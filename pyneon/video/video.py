@@ -268,7 +268,7 @@ class Video(cv2.VideoCapture):
         """
         Generate a :class:`pyneon.Stream` object containing the
         mean intensity of each video frame.
-        
+
         Returns
         -------
         pyneon.Stream
