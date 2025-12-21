@@ -268,10 +268,16 @@ class Video(cv2.VideoCapture):
         """
         Generate a :class:`pyneon.Stream` object containing the
         mean intensity of each video frame.
+        
+        Returns
+        -------
+        pyneon.Stream
+            A ``Stream`` instance containing data indexed by ``timestamp [ns]``
+            with a single column ``intensity``
         """
         vals = []
         self.reset()
-        for _ in tqdm(range(len(self)), desc="Computing frame brightness"):
+        for _ in tqdm(range(len(self)), desc="Computing frame intensities"):
             ret, frame = self.read()
             if not ret:
                 break
