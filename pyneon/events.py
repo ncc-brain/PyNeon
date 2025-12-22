@@ -111,7 +111,7 @@ def _load_native_events_data(
     return data, files
 
 
-def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
+def _infer_events_type(data: pd.DataFrame) -> str:
     """
     Infer event type based on presence of specific columns.
     If multiple or no matches found, return "custom".
@@ -128,10 +128,14 @@ def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
     types = {col_map[c] for c in data.columns if c in col_map}
     if len(types) != 1:
         # None or more than one match → custom event type
-        return "custom", None
+        data.index = pd.RangeIndex(start=0, stop=len(data), name="event id")
+        return "custom"
     type = types.pop()
-    id_name = None if type == "events" else reverse_map[type]
-    return type, id_name
+    if type == "events":
+        data.index.name = "event id"
+    else:
+        data.set_index(reverse_map[type], inplace=True)
+    return type
 
 
 class Events(BaseTabular):
@@ -168,9 +172,6 @@ class Events(BaseTabular):
         Event data with standardized column names.
     type : {"blinks", "fixations", "saccades", "events", "custom"}
         Inferred event type based on data columns.
-    id_name : str or None
-        Column name holding event IDs (e.g., ``blink id``, ``fixation id``,
-        ``saccade id``). ``None`` for ``events`` and ``custom`` types.
 
     Examples
     --------
@@ -206,7 +207,7 @@ class Events(BaseTabular):
             data = source.copy(deep=True)
             self.file = None
         super().__init__(data)
-        self.type, self.id_name = _infer_events_type_and_id(self.data)
+        self.type = _infer_events_type(self.data)
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event series by index."""
@@ -269,10 +270,7 @@ class Events(BaseTabular):
         ValueError
             If no ID column (e.g., ``<xxx> id``) is found in the instance.
         """
-        if self.id_name in self.data.columns and self.id_name is not None:
-            return self.data[self.id_name].to_numpy()
-        else:
-            raise ValueError("No ID column (e.g., `<xxx> id`) found in the instance.")
+        return self.data.index.to_numpy()
 
     @fill_doc
     def crop(
@@ -302,8 +300,7 @@ class Events(BaseTabular):
 
         Returns
         -------
-        Events or None
-            Cropped events if ``inplace=False``, otherwise ``None``.
+        %(events_or_none)s
         """
         if tmin is None and tmax is None:
             raise ValueError("At least one of tmin or tmax must be provided")
@@ -336,8 +333,7 @@ class Events(BaseTabular):
 
         Returns
         -------
-        Events or None
-            Restricted events if ``inplace=False``, otherwise ``None``.
+        %(events_or_none)s
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -346,7 +342,7 @@ class Events(BaseTabular):
         self,
         dur_min: Optional[Number] = None,
         dur_max: Optional[Number] = None,
-        reset_id: bool = True,
+        reset_id: bool = False,
         inplace: bool = False,
     ) -> Optional["Events"]:
         """
@@ -361,16 +357,17 @@ class Events(BaseTabular):
             Maximum duration (in milliseconds) of events to keep.
             If ``None``, no maximum duration filter is applied. Defaults to ``None``.
         reset_id : bool, optional
-            Whether to reset event IDs after filtering. Also resets the DataFrame index.
-            Defaults to ``True``.
+            Whether to reset event IDs after filtering.
+            Defaults to ``False``.
 
         %(inplace)s
 
         Returns
         -------
-        Events or None
-            Filtered events if ``inplace=False``, otherwise ``None``.
+        %(events_or_none)s
         """
+        if "duration [ms]" not in self.data.columns:
+            raise ValueError("No `duration [ms]` column found in the instance.")
         if dur_min is None and dur_max is None:
             raise ValueError("At least one of dur_min or dur_max must be provided")
         dur_min = dur_min if dur_min is not None else self.durations.min()
@@ -379,14 +376,63 @@ class Events(BaseTabular):
         if not mask.any():
             raise ValueError("No data found in the specified duration range")
         print(f"Filtering out {len(self) - mask.sum()} out of {len(self)} events.")
+
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
         if reset_id:
-            if self.id_name is not None:
-                inst.data[self.id_name] = np.arange(len(inst.data)) + 1
-                inst.data.reset_index(drop=True, inplace=True)
-            else:
-                raise KeyError(
-                    "Cannot reset event IDs as no event ID column is known for this instance."
-                )
+            # Reset without losing orignal index name
+            inst.data.index = pd.RangeIndex(
+                start=0, stop=len(inst.data), name=inst.data.index.name
+            )
+        return None if inplace else inst
+
+    @fill_doc
+    def filter_by_name(
+        self,
+        names: str | list[str],
+        col_name: str = "name",
+        reset_id: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Events"]:
+        """
+        Filter events by matching values in a specified column.
+
+        This method selects only the events whose value in ``col_name`` matches
+        one or more of the provided ``names``. If no events match, a
+        ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        names : str or list of str
+            Event name or list of event names to keep. Matching is exact
+            and case-sensitive.
+        col_name : str, optional
+            Name of the column in ``self.data`` to use for filtering.
+            Must exist in the ``Events`` instance's DataFrame.
+            Defaults to ``"name"``.
+        reset_id: bool = False, optional
+            Whether to reset event IDs after filtering.
+            Defaults to ``False``.
+        %(inplace)s
+
+        Returns
+        -------
+        %(events_or_none)s
+        """
+        if col_name not in self.data.columns:
+            raise KeyError(f"No `{col_name}` column found in the instance.")
+
+        names = [names] if isinstance(names, str) else names
+        mask = self.data[col_name].isin(names)
+        if not mask.any():
+            raise ValueError(
+                f"No data found matching the specified event names {names}"
+            )
+
+        inst = self if inplace else self.copy()
+        inst.data = self.data[mask].copy()
+        if reset_id:
+            inst.data.index = pd.RangeIndex(
+                start=0, stop=len(inst.data), name=inst.data.index.name
+            )
         return None if inplace else inst
