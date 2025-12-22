@@ -398,9 +398,7 @@ class Epochs:
             return data_copy
 
 
-def _annotate_epochs(
-    source: Stream | Events, epochs_info: pd.DataFrame
-) -> dict:
+def _annotate_epochs(source: Stream | Events, epochs_info: pd.DataFrame) -> dict:
     """
     Create index-wise annotations of epoch indices for the source data.
     """
@@ -409,7 +407,7 @@ def _annotate_epochs(
     # Timestamps from the source
     ts = source.ts if isinstance(source, Stream) else source.start_ts
     source_index = source.data.index
-    annot = {i: [] for i in source_index} # Initialize empty lists for each index
+    annot = {i: [] for i in source_index}  # Initialize empty lists for each index
 
     # Iterate over each event time to create epochs
     empty_epochs = []
@@ -426,10 +424,10 @@ def _annotate_epochs(
         # Annotate the data with the epoch index
         for idx in source_index[mask]:
             annot[idx].append(i)
-    
+
     if empty_epochs:
         warnings.warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
-    
+
     return annot
 
 
