@@ -102,7 +102,7 @@ class Epochs:
             self.sf = None
 
         # Create epochs
-        self.data = _annotate_epochs(source, epochs_info)
+        self.annot = _annotate_epochs(source, epochs_info)
 
     def __len__(self):
         return self.epochs_info.shape[0]
@@ -400,17 +400,19 @@ class Epochs:
 
 def _annotate_epochs(
     source: Stream | Events, epochs_info: pd.DataFrame
-) -> list[list[int]]:
+) -> dict:
     """
-    Create timestamp-wise annotations of epoch indices for the source data.
+    Create index-wise annotations of epoch indices for the source data.
     """
     # _check_overlap(epochs_info)
 
     # Timestamps from the source
     ts = source.ts if isinstance(source, Stream) else source.start_ts
-    annot = [[] for _ in range(len(ts))]
+    source_index = source.data.index
+    annot = {i: [] for i in source_index} # Initialize empty lists for each index
 
     # Iterate over each event time to create epochs
+    empty_epochs = []
     for i, row in epochs_info.iterrows():
         t_ref_i, t_before_i, t_after_i = row[["t_ref", "t_before", "t_after"]].to_list()
 
@@ -419,13 +421,15 @@ def _annotate_epochs(
         mask = np.logical_and(ts >= start_time, ts <= end_time)
 
         if not mask.any():
-            warnings.warn(f"No data found for epoch {i}.", RuntimeWarning)
-            continue
+            empty_epochs.append(i)
 
-        # Append the epoch index to the list for each matching row
-        for sub_list in annot[mask]:
-            sub_list.append(i)
-
+        # Annotate the data with the epoch index
+        for idx in source_index[mask]:
+            annot[idx].append(i)
+    
+    if empty_epochs:
+        warnings.warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
+    
     return annot
 
 
@@ -478,7 +482,7 @@ def events_to_epochs_info(
         else:
             matching_events = events.filter_by_name(event_name)
             t_ref = matching_events.start_ts
-            description = matching_events["name"].to_numpy()
+            description = matching_events.data["name"].to_numpy()
 
     epochs_info = construct_epochs_info(
         t_ref,
