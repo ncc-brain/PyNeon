@@ -68,7 +68,7 @@ def simple_events():
             "duration [ms]": (blinks_end_ts - blinks_start_ts) / 1e6,
         }
     )
-    
+
     fixations_start_ts = np.array([0.5e9, 3e9, 7e9])
     fixations_end_ts = fixations_start_ts + 200e6  # 200 ms fixations
     fixations_df = pd.DataFrame(
@@ -81,7 +81,7 @@ def simple_events():
             "fixation y [px]": np.random.rand(len(fixations_start_ts)),
         }
     )
-    
+
     saccades_start_ts = np.array([2.5e9, 5e9, 8e9])
     saccades_end_ts = saccades_start_ts + 50e6  # 50 ms saccades
     saccades_df = pd.DataFrame(
@@ -94,7 +94,7 @@ def simple_events():
             "amplitude [deg]": np.random.rand(len(saccades_start_ts)) * 10,
         }
     )
-    
+
     events_ts = np.array([4e9, 9e9])
     events_names = ["stimulus_onset", "stimulus_offset"]
     events_df = pd.DataFrame(
@@ -104,7 +104,7 @@ def simple_events():
             "type": "recording",
         }
     )
-    
+
     custom_ts = np.array([1.5e9, 4.5e9])
     custom_names = ["custom_event_1", "custom_event_2"]
     custom_df = pd.DataFrame(
@@ -114,27 +114,27 @@ def simple_events():
         }
     )
     print(custom_df)
-    
+
     blinks = Events(blinks_df)
     assert blinks.type == "blinks"
     assert blinks.data.index.name == "blink id"
-    
+
     fixations = Events(fixations_df)
     assert fixations.type == "fixations"
     assert fixations.data.index.name == "fixation id"
-    
+
     saccades = Events(saccades_df)
     assert saccades.type == "saccades"
     assert saccades.data.index.name == "saccade id"
-    
+
     events = Events(events_df)
     assert events.type == "events"
     assert events.data.index.name == "event id"
-    
+
     with pytest.warns(UserWarning, match="Following columns not in known data types"):
         custom = Events(custom_df)
     print(custom.data)
     assert custom.type == "custom"
     assert custom.data.index.name == "event id"
-    
+
     return blinks, fixations, saccades, events, custom
