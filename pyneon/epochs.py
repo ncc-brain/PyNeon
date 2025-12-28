@@ -1,16 +1,17 @@
-from warnings import warn
+from functools import cached_property
 from numbers import Number
 from typing import Literal, Optional
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from functools import cached_property
 
 from .events import Events
 from .stream import Stream
-from .vis import plot_epochs
 from .utils.doc_decorators import fill_doc
+from .vis import plot_epochs
+
 
 class Epochs:
     """
@@ -78,19 +79,21 @@ class Epochs:
 
     def __len__(self):
         return self.epochs_info.shape[0]
-    
+
     def _check_overlap(self) -> list[tuple[int, int] | None]:
         overlap_epochs = []
         for i in range(1, self.epochs_info.shape[0]):
             # Check if the current epoch overlaps with the previous epoch
             if (
                 self.epochs_info["t_ref"].iloc[i] - self.epochs_info["t_before"].iloc[i]
-                < self.epochs_info["t_ref"].iloc[i - 1] + self.epochs_info["t_after"].iloc[i - 1]
+                < self.epochs_info["t_ref"].iloc[i - 1]
+                + self.epochs_info["t_after"].iloc[i - 1]
             ):
                 overlap_epochs.append((i - 1, i))
         if overlap_epochs:
             warn(
-                f"The following epochs overlap in time:\n{overlap_epochs}", RuntimeWarning
+                f"The following epochs overlap in time:\n{overlap_epochs}",
+                RuntimeWarning,
             )
         return overlap_epochs
 
@@ -121,9 +124,7 @@ class Epochs:
                 empty_epochs.append(int(epoch_index))
                 epochs[int(epoch_index)] = None
         if empty_epochs:
-            warn(
-                f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning
-            )
+            warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
         return epochs
 
     @property
@@ -298,13 +299,13 @@ class Epochs:
                 inplace=False,
             ).data[column_names]
             epochs_np[i, :, :] = epoch_data.to_numpy().T
-        
+
         info = {
             "epoch_times": epoch_times,
             "column_names": column_names,
             "nan_flag": np.isnan(epochs_np).any(),
         }
-        
+
         return epochs_np, info
 
     def baseline_correction(
