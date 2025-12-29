@@ -593,3 +593,31 @@ class Stream(BaseTabular):
         inst = self if inplace else self.copy()
         inst.data = pd.concat([inst.data, other_data], axis=1)
         return None if inplace else inst
+
+    def detect_events_from_derivative(
+        self,
+        column: str,
+        threshold: Number,
+        min_duration: Optional[Number] = None,
+    ) -> "Events":
+        """
+        Detect events based on velocity thresholding of a specified data column.
+
+        Parameters
+        ----------
+        column : str
+            The data column on which to compute velocity for event detection.
+        threshold : Number
+            Threshold above which an event is detected.
+            The units depend on the units of the specified column
+            and the timestamps (e.g., px/s for gaze position in pixels).
+        min_duration : float
+            Minimum duration (in seconds) for an event to be valid.
+
+
+        Returns
+        -------
+        Events
+            An Events object containing the detected events with
+            ``start timestamp [ns]`` and ``end timestamp [ns]`` columns.
+        """

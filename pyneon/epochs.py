@@ -12,24 +12,22 @@ from .stream import Stream
 from .utils.doc_decorators import fill_doc
 from .vis import plot_epochs
 
-
+@fill_doc
 class Epochs:
     """
-    Class to create and manage epochs in the data streams.
+    Class to create and analyze epochs in the data streams.
 
     Parameters
     ----------
     source : Stream or Events
-        Data to create epochs from.
-    epochs_info : pandas.DataFrame, shape (n_epochs, 4)
-        DataFrame containing epoch information with the following columns (time in ns):
-
-            ``t_ref``: Reference time of the epoch.\n
-            ``t_before``: Time before the reference time to start the epoch.\n
-            ``t_after``: Time after the reference time to end the epoch.\n
-            ``description``: Description or label associated with the epoch.
+        Data to create epochs from. Can be either a :class:`pyneon.Stream` or
+        a :class:`pyneon.Events` instance.
+    %(epochs_info)s
 
         Must not have empty values.
+
+        See :func:`pyneon.events_to_epochs_info` or :func:`pyneon.construct_epochs_info`
+        for helper functions to create this DataFrame.
 
     Notes
     -----
@@ -313,7 +311,7 @@ class Epochs:
         baseline: tuple[Number | None, Number | None] = (None, 0),
         method: str = "mean",
         inplace: bool = True,
-    ) -> dict[int, Stream | Events | None] | None:
+    ) -> dict[int, Stream] | None:
         """
         Perform baseline correction on epochs.
 
@@ -460,7 +458,7 @@ def annotate_epochs(source: Stream | Events, epochs_info: pd.DataFrame) -> dict:
 
     return annot
 
-
+@fill_doc
 def events_to_epochs_info(
     events: "Events",
     t_before: Number,
@@ -469,31 +467,62 @@ def events_to_epochs_info(
     event_name: str | list[str] = "all",
 ) -> pd.DataFrame:
     """
-    Construct a ``epochs_info`` DataFrame suitable for creating epochs from event data.
-    For "simple" ``events`` (blinks, fixations, saccades), all events are used.
-    For more complex ``events`` (e.g., from "events.csv", or concatenated events),
-    the user can specify which events to include by a ``name`` column.
+    Construct a ``epochs_info`` DataFrame suitable for creating epochs around event onsets.
+    
+    For simple event classes (`"blinks"`, `"fixations"`, `"saccades"`), all events 
+    in the input are used automatically. For more complex or combined event collections 
+    (e.g., loaded from ``events.csv``), you can either include all events 
+    (`event_name="all"`) or filter by specific names using ``event_name``.
 
     Parameters
     ----------
     events : Events
         Events instance containing the event times.
     t_before : numbers.Number
-        Time before the event start time to start the epoch. Units specified by ``t_unit``.
+        Time before each event start to begin the epoch.
+        Interpreted according to ``t_unit``.
     t_after : numbers.Number
-        Time after the event start time to end the epoch. Units specified by ``t_unit``.
+        Time after each event start to end the epoch.
+        Interpreted according to ``t_unit``.
     t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``.
-        Can be "s", "ms", "us", or "ns". Default is "s".
+        Can be "s", "ms", "us", or "ns". Defaults to "s".
     event_name : str or list of str, optional
-        Only used if ``events`` includes more than one event type.
-        If "all", all events are used. Otherwise, the ``name`` column is used to filter events
-        whose names are in the list. Default to "all".
+        Only used if ``events.type`` is not one of "blinks", "fixations", or "saccades". 
+        Otherwise, ``events.data`` must have a ``name``
+        If `"all"`, all events from ``events.data`` are included, 
+        and their ``name`` values become the epoch descriptions.
+        If a string or list is provided, only matching events are included.
+        Defaults to "all".
 
     Returns
     -------
-    pandas.DataFrame
-        DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
+    %(epochs_info)s
+    
+    Examples
+    --------
+    Create ``epochs_info`` from blink events:
+    
+    >>> epochs_info = events_to_epochs_info(blinks, t_before=1, t_after=1)
+    >>> print(epochs_info.head())
+                     t_ref    t_before     t_after description
+    0  1766068460987724691  1000000000  1000000000       blink
+    1  1766068462919464691  1000000000  1000000000       blink
+    2  1766068463785334691  1000000000  1000000000       blink
+    3  1766068464836328691  1000000000  1000000000       blink
+    4  1766068465932322691  1000000000  1000000000       blink
+    
+    Create ``epochs_info`` from "flash onset" events:
+    
+    >>> epochs_info = events_to_epochs_info(
+        events, t_before=0.5, t_after=3, event_name="flash onset")
+    >>> print(epochs_info.head())
+                     t_ref   t_before     t_after  description
+    0  1766068461745390000  500000000  3000000000  flash onset
+    1  1766068465647497000  500000000  3000000000  flash onset
+    2  1766068469642822000  500000000  3000000000  flash onset
+    3  1766068473635128000  500000000  3000000000  flash onset
+    4  1766068477629326000  500000000  3000000000  flash onset
     """
     t_ref = events.start_ts
     if events.type in ["blinks", "fixations", "saccades"]:
@@ -522,7 +551,7 @@ def events_to_epochs_info(
     )
     return epochs_info
 
-
+@fill_doc
 def construct_epochs_info(
     t_ref: np.ndarray,
     t_before: np.ndarray | Number,
@@ -566,8 +595,7 @@ def construct_epochs_info(
 
     Returns
     -------
-    pandas.DataFrame
-        DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
+    %(epochs_info)s
     """
 
     if (n_epoch := len(t_ref)) == 0:
