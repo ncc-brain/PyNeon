@@ -39,6 +39,7 @@ epochs_info : pandas.DataFrame, shape (n_epochs, 4)
         ``description``: Description or label associated with the epoch.
 """
 
+
 def fill_doc(func):
     """Fill a function docstring with common doc snippets using %-format."""
     if func.__doc__:
