@@ -260,8 +260,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Cropped stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         if tmin is None and tmax is None:
             raise ValueError("At least one of tmin or tmax must be provided")
@@ -299,8 +298,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Restricted stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -332,8 +330,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Notes
         -----
@@ -377,8 +374,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Annotated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Raises
         ------
@@ -453,8 +449,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Examples
         --------
@@ -503,8 +498,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Stream with window average applied on data if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         inst = self if inplace else self.copy()
         inst.data = window_average(new_ts, self.data, window_size)
@@ -534,8 +528,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Stream with gaze angles computed if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Raises
         ------
@@ -578,8 +571,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Concatenated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         # Interpolate other to self timestamps if needed
         if not np.array_equal(self.ts, other.ts):
@@ -601,3 +593,31 @@ class Stream(BaseTabular):
         inst = self if inplace else self.copy()
         inst.data = pd.concat([inst.data, other_data], axis=1)
         return None if inplace else inst
+
+    def detect_events_from_derivative(
+        self,
+        column: str,
+        threshold: Number,
+        min_duration: Optional[Number] = None,
+    ) -> "Events":
+        """
+        Detect events based on velocity thresholding of a specified data column.
+
+        Parameters
+        ----------
+        column : str
+            The data column on which to compute velocity for event detection.
+        threshold : Number
+            Threshold above which an event is detected.
+            The units depend on the units of the specified column
+            and the timestamps (e.g., px/s for gaze position in pixels).
+        min_duration : float
+            Minimum duration (in seconds) for an event to be valid.
+
+
+        Returns
+        -------
+        Events
+            An Events object containing the detected events with
+            ``start timestamp [ns]`` and ``end timestamp [ns]`` columns.
+        """

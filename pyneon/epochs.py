@@ -1,6 +1,7 @@
-import warnings
+from functools import cached_property
 from numbers import Number
 from typing import Literal, Optional
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,48 +9,26 @@ import pandas as pd
 
 from .events import Events
 from .stream import Stream
+from .utils.doc_decorators import fill_doc
 from .vis import plot_epochs
 
 
-def _check_overlap(times_df: pd.DataFrame) -> bool:
-    """
-    Emits warnings if any adjacent epochs overlap in time.
-    """
-    times_df = times_df.sort_values("t_ref")
-    overlap = False
-    overlap_epochs = []
-    for i in range(1, times_df.shape[0]):
-        # Check if the current epoch overlaps with the previous epoch
-        if (
-            times_df["t_ref"].iloc[i] - times_df["t_before"].iloc[i]
-            < times_df["t_ref"].iloc[i - 1] + times_df["t_after"].iloc[i - 1]
-        ):
-            overlap_epochs.append((i - 1, i))
-            overlap = True
-    if overlap:
-        warnings.warn(
-            f"The following epochs overlap in time:\n{overlap_epochs}", RuntimeWarning
-        )
-    return overlap
-
-
+@fill_doc
 class Epochs:
     """
-    Class to create and manage epochs in the data streams.
+    Class to create and analyze epochs in the data streams.
 
     Parameters
     ----------
     source : Stream or Events
-        Data to create epochs from.
-    times_df : pandas.DataFrame, shape (n_epochs, 4), optional
-        DataFrame containing epoch information with the following columns:
-
-            ``t_ref``: Reference time of the epoch, in nanoseconds.\n
-            ``t_before``: Time before the reference time to start the epoch, in nanoseconds.\n
-            ``t_after``: Time after the reference time to end the epoch, in nanoseconds.\n
-            ``description``: Description or label associated with the epoch.
+        Data to create epochs from. Can be either a :class:`pyneon.Stream` or
+        a :class:`pyneon.Events` instance.
+    %(epochs_info)s
 
         Must not have empty values.
+
+        See :func:`pyneon.events_to_epochs_info` or :func:`pyneon.construct_epochs_info`
+        for helper functions to create this DataFrame.
 
     Notes
     -----
@@ -63,76 +42,176 @@ class Epochs:
 
     Attributes
     ----------
-    epochs : pandas.DataFrame
-        DataFrame containing epoch information with the following columns:
+    epochs_info : pandas.DataFrame
+        The supplied epochs information DataFrame with additional columns:
 
-            ``t_ref`` (int64): Reference time of the epoch, in nanoseconds.\n
-            ``t_before`` (int64): Time before the reference time to start the epoch, in nanoseconds.\n
-            ``t_after`` (int64): Time after the reference time to end the epoch, in nanoseconds.\n
-            ``description`` (str): Description or label associated with the epoch.\n
-            ``data`` (object): DataFrame containing the data for each epoch.
-    data : pandas.DataFrame
-        Annotated data with epoch information. In addition to the original data columns,
-        the following columns are added:
+            ``t_start``: Start time of the epoch (``t_ref - t_before``).\n
+            ``t_end``: End time of the epoch (``t_ref + t_after``).
 
-            ``epoch index`` (Int32): ID of the epoch the data belongs to.\n
-            ``epoch time`` (Int64): Time relative to the epoch reference time, in nanoseconds.\n
-            ``epoch description`` (str): Description or label associated with the epoch.
-
-        If epochs overlap, data annotations are always overwritten by the latest epoch.
+    source : Stream or Events
+        The source data used to create epochs.
     """
 
-    def __init__(self, source: Stream | Events, times_df: pd.DataFrame):
-        if times_df.isnull().values.any():
-            raise ValueError("times_df should not have any empty values")
+    def __init__(self, source: Stream | Events, epochs_info: pd.DataFrame):
+        if epochs_info.empty or epochs_info.isnull().values.any():
+            raise ValueError("epochs_info must not be empty or contain NaN values.")
 
-        # Sort by t_ref
-        assert times_df.shape[0] > 0, "times_df must have at least one row"
-        times_df = times_df.sort_values("t_ref").reset_index(drop=True)
+        epochs_info = epochs_info.sort_values("t_ref").reset_index(drop=True)
+        epochs_info.index.name = "epoch index"
+        epochs_info["t_start"] = epochs_info["t_ref"] - epochs_info["t_before"]
+        epochs_info["t_end"] = epochs_info["t_ref"] + epochs_info["t_after"]
+
         # Set columns to appropriate data types (check if columns are present along the way)
-        times_df = times_df.astype(
+        epochs_info = epochs_info.astype(
             {
                 "t_ref": "int64",
                 "t_before": "int64",
                 "t_after": "int64",
+                "t_start": "int64",
+                "t_end": "int64",
                 "description": "str",
             }
         )
-
-        if isinstance(source, Stream):
-            self.source_class = Stream
-            self.is_uniformly_sampled = source.is_uniformly_sampled
-            self.sf = source.sampling_freq_effective
-        elif isinstance(source, Events):
-            self.source_class = Events
-            self.is_uniformly_sampled = None
-            self.sf = None
-
-        # Create epochs
-        self.epochs, self.data = _create_epochs(source, times_df)
+        self.epochs_info = epochs_info
+        self.source = source.copy()
+        self._check_overlap()
 
     def __len__(self):
-        return self.epochs.shape[0]
+        return self.epochs_info.shape[0]
+
+    def _check_overlap(self) -> list[tuple[int, int] | None]:
+        overlap_epochs = []
+        for i in range(1, self.epochs_info.shape[0]):
+            # Check if the current epoch overlaps with the previous epoch
+            if (
+                self.epochs_info["t_ref"].iloc[i] - self.epochs_info["t_before"].iloc[i]
+                < self.epochs_info["t_ref"].iloc[i - 1]
+                + self.epochs_info["t_after"].iloc[i - 1]
+            ):
+                overlap_epochs.append((i - 1, i))
+        if overlap_epochs:
+            warn(
+                f"The following epochs overlap in time:\n{overlap_epochs}",
+                RuntimeWarning,
+            )
+        return overlap_epochs
+
+    @cached_property
+    def epochs_dict(self) -> dict[int, Stream | Events | None]:
+        """
+        Dictionary of epochs indexed by epoch index. Each epoch contains
+        data cropped from the source between ``t_start`` and ``t_end``.
+        If no data is found for an epoch, its value is ``None``.
+
+        Returns
+        -------
+        dict of int to Stream or Events or None
+            Dictionary mapping epoch indices to their corresponding data.
+        """
+        epochs = {}
+        empty_epochs = []
+        for epoch_index in self.epochs_info.index:
+            t_ref = self.epochs_info.at[epoch_index, "t_ref"]
+            t_start = self.epochs_info.at[epoch_index, "t_start"]
+            t_end = self.epochs_info.at[epoch_index, "t_end"]
+            try:
+                epoch = self.source.crop(t_start, t_end, by="timestamp", inplace=False)
+                ts = epoch.ts if isinstance(epoch, Stream) else epoch.start_ts
+                epoch.data["epoch time [ns]"] = ts - t_ref
+                epochs[int(epoch_index)] = epoch
+            except ValueError:
+                empty_epochs.append(int(epoch_index))
+                epochs[int(epoch_index)] = None
+        if empty_epochs:
+            warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
+        return epochs
+
+    @cached_property
+    def epochs_flat_df(self) -> pd.DataFrame:
+        """
+        A flattened DataFrame representation of epochs concatenated together.
+        """
+        pass
+
+    @property
+    def empty_epochs(self) -> list[int]:
+        """Indices of epochs that contain no data.
+
+        Returns
+        -------
+        list of int
+            List of epoch indices that are empty.
+        """
+        return [
+            int(epoch_index)
+            for epoch_index, epoch in self.epochs_dict.items()
+            if epoch is None
+        ]
+
+    def annotate_source(self) -> pd.DataFrame:
+        """
+        Create index-wise annotations of epoch indices for the source data.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame with index matching the source data indices and a column
+            "epoch_indices" containing lists of epoch indices that include
+            each data point.
+        """
+        source = self.source
+        epochs_info = self.epochs_info
+
+        # Timestamps from the source
+        ts = source.ts if isinstance(source, Stream) else source.start_ts
+        source_index = source.data.index
+        annot = {i: [] for i in source_index}  # Initialize empty lists for each index
+
+        # Iterate over each event time to create epochs
+        empty_epochs = []
+        for i, row in epochs_info.iterrows():
+            t_ref_i, t_before_i, t_after_i = row[
+                ["t_ref", "t_before", "t_after"]
+            ].to_list()
+
+            start_time = t_ref_i - t_before_i
+            end_time = t_ref_i + t_after_i
+            mask = np.logical_and(ts >= start_time, ts <= end_time)
+
+            if not mask.any():
+                empty_epochs.append(int(i))
+
+            # Annotate the data with the epoch index
+            for idx in source_index[mask]:
+                annot[idx].append(int(i))
+
+        if empty_epochs:
+            warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
+
+        annot_df = pd.DataFrame.from_dict(
+            annot, orient="index", columns=["epoch index"]
+        )
+        return annot_df
 
     @property
     def t_ref(self) -> np.ndarray:
         """The reference time for each epoch in UTC nanoseconds."""
-        return self.epochs["t_ref"].to_numpy()
+        return self.epochs_info["t_ref"].to_numpy()
 
     @property
     def t_before(self) -> np.ndarray:
         """The time before the reference time for each epoch in nanoseconds."""
-        return self.epochs["t_before"].to_numpy()
+        return self.epochs_info["t_before"].to_numpy()
 
     @property
     def t_after(self) -> np.ndarray:
         """The time after the reference time for each epoch in nanoseconds."""
-        return self.epochs["t_after"].to_numpy()
+        return self.epochs_info["t_after"].to_numpy()
 
     @property
     def description(self) -> np.ndarray:
         """The description or label for each epoch."""
-        return self.epochs["description"].to_numpy()
+        return self.epochs_info["description"].to_numpy()
 
     @property
     def columns(self) -> pd.Index:
@@ -153,7 +232,7 @@ class Epochs:
     @property
     def has_overlap(self) -> bool:
         """Whether any adjacent epochs overlap."""
-        return _check_overlap(self.epochs)
+        return self._check_overlap() != []
 
     def plot(
         self,
@@ -195,90 +274,87 @@ class Epochs:
         )
         return fig_ax
 
+    @fill_doc
     def to_numpy(
         self,
         column_names: str | list[str] = "all",
+        sampling_rate: Optional[Number] = None,
+        float_kind: str | int = "linear",
+        other_kind: str | int = "nearest",
     ) -> tuple[np.ndarray, dict]:
         """
-        Converts epochs into a 3D array with dimensions (n_epochs, n_channels, n_times).
+        Converts epochs into a 3D arrays with dimensions (n_epochs, n_channels, n_times).
         Acts similarly as :meth:`mne.Epochs.get_data`.
-        Requires the epoch to be created from a uniformly-sampled :class:`pyneon.Stream`.
+        Requires the epoch to be created from a :class:`pyneon.Stream`.
 
         Parameters
         ----------
         column_names : str or list of str, optional
-            Column names to include in the NumPy array. If 'all', all columns are included.
-            Only columns that can be converted to int or float can be included.
-            Default is 'all'.
+            Column names to include in the NumPy array. If "all", all columns are included.
+            Only numerical columns can be included.
+            Default to "all".
+        sampling_rate : numbers.Number, optional
+            Desired sampling rate in Hz for the output NumPy array.
+            If None, the nominal sampling rate of the source Stream is used.
+            Defaults to None.
+        %(interp_kwargs)s
 
         Returns
         -------
-        numpy_epochs : numpy.ndarray
+        numpy.ndarray
             NumPy array of shape (n_epochs, n_channels, n_times).
-
         info : dict
             A dictionary containing:
 
                 "column_ids": List of provided column names.\n
                 "t_rel": The common time grid, in nanoseconds.\n
                 "nan_flag": Boolean indicating whether NaN values were found in the data.
-
-        Notes
-        -----
-        - The time grid (``t_rel``) is in nanoseconds.
-        - If `NaN` values are present after interpolation, they are noted in ``nan_flag``.
         """
-        if self.source_class != Stream or not self.is_uniformly_sampled:
-            raise ValueError(
-                "The source must be a uniformly-sampled Stream to convert to NumPy array."
-            )
+        if not isinstance(self.source, Stream):
+            raise TypeError("The source must be a Stream to convert to NumPy array.")
         if not self.is_equal_length:
-            raise ValueError("Epochs must have equal length to convert to NumPy array.")
-
-        t_before = self.t_before[0]
-        t_after = self.t_after[0]
-
-        times = np.linspace(
-            -t_before, t_after, int((t_before + t_after) * self.sf * 1e-9) + 1
+            raise ValueError(
+                "Epochs must have equal length (t_before and t_after) to convert to NumPy array."
+            )
+        sf = (
+            self.source.sampling_freq_nominal
+            if sampling_rate is None
+            else sampling_rate
         )
-        n_times = len(times)
 
+        # Check if column names (str or list) are all in the source columns
         if column_names == "all":
-            columns = self.columns.to_list()
-        else:
-            columns = [column_names] if isinstance(column_names, str) else column_names
-            for col in columns:
-                if col not in self.columns:
-                    raise ValueError(f"Column '{col}' doesn't exist in the data.")
+            column_names = self.source.columns.to_list()
+        if isinstance(column_names, str):
+            column_names = [column_names]
+        for col in column_names:
+            if col not in self.source.columns:
+                raise ValueError(f"Column '{col}' not found in source Stream.")
 
-        n_columns = len(columns)
-
-        # Initialize the NumPy array
-        # MNE convention: (n_epochs, n_channels, n_times)
-        epochs_np = np.full((len(self), n_columns, n_times - 2), np.nan)
+        epoch_times = np.arange(
+            -self.epochs_info["t_before"].iloc[0],
+            self.epochs_info["t_after"].iloc[0],
+            step=int(1e9 / sf),
+            dtype="int64",
+        )
 
         # Interpolate each epoch onto the common time grid
-        for i, epoch in self.epochs.iterrows():
-            epoch_data = epoch["data"].copy()
-            epoch_time = epoch_data["epoch time"].to_numpy()
-            for j, col in enumerate(columns):
-                y = epoch_data[col].to_numpy()
-                interp_values = np.interp(
-                    times, epoch_time, y, left=np.nan, right=np.nan
-                )
-                interp_values = interp_values[1:-1]  # Exclude the first and last values
-                epochs_np[i, j, :] = interp_values
+        epochs_np = np.full((len(self), len(column_names), len(epoch_times)), np.nan)
+        for i, row in self.epochs_info.iterrows():
+            t_ref = row["t_ref"]
+            new_ts = epoch_times + t_ref
+            epoch_data = self.source.interpolate(
+                new_ts,
+                float_kind=float_kind,
+                other_kind=other_kind,
+                inplace=False,
+            ).data[column_names]
+            epochs_np[i, :, :] = epoch_data.to_numpy().T
 
-        # check if there are any NaN values in the data
-        nan_flag = np.isnan(epochs_np).any()
-        if nan_flag:
-            warnings.warn("NaN values were found in the data.", RuntimeWarning)
-
-        # Return an object holding the column ids, times, and data
         info = {
-            "column_ids": columns,
-            "epoch_times": times[1:-1] * 1e-9,  # Convert to seconds
-            "nan_flag": nan_flag,
+            "epoch_times": epoch_times,
+            "column_names": column_names,
+            "nan_flag": np.isnan(epochs_np).any(),
         }
 
         return epochs_np, info
@@ -288,7 +364,7 @@ class Epochs:
         baseline: tuple[Number | None, Number | None] = (None, 0),
         method: str = "mean",
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> dict[int, Stream] | None:
         """
         Perform baseline correction on epochs.
 
@@ -319,10 +395,8 @@ class Epochs:
             The baseline-corrected data (same shape & dtypes as original data).
 
         """
-        if self.source_class != Stream:
-            raise ValueError(
-                "Baseline correction is only supported for epochs created from a Stream."
-            )
+        if not isinstance(self.source, Stream):
+            raise TypeError("Baseline correction requires the source to be a Stream.")
 
         def _fit_and_subtract(epoch_df: pd.DataFrame, chan_cols: list[str]) -> None:
             """In-place mean or linear detrend on *one* epoch DF."""
@@ -336,7 +410,7 @@ class Epochs:
                 mask = (t_rel_sec >= t_min) & (t_rel_sec <= t_max)
 
             if not mask.any():
-                warnings.warn(
+                warn(
                     "Baseline window is empty for at least one epoch.",
                     RuntimeWarning,
                 )
@@ -356,13 +430,13 @@ class Epochs:
                         or np.any(np.isnan(t_base))
                         or np.any(np.isnan(y))
                     ):
-                        warnings.warn(
+                        warn(
                             f"Skipping linear baseline correction for '{col}' due to insufficient or invalid data.",
                             RuntimeWarning,
                         )
                         continue
                     if np.all(t_base == t_base[0]):
-                        warnings.warn(
+                        warn(
                             f"Skipping linear baseline correction for '{col}' due to constant timestamps.",
                             RuntimeWarning,
                         )
@@ -385,10 +459,10 @@ class Epochs:
 
         # Work on a copy unless the caller wants in-place modification
         if inplace:
-            epochs_copy = self.epochs
+            epochs_copy = self.epochs_dict
             data_copy = self.data
         else:
-            epochs_copy = self.epochs.copy(deep=True)
+            epochs_copy = self.epochs_dict.copy(deep=True)
             data_copy = self.data.copy(deep=True)
 
         for idx, row in epochs_copy.iterrows():
@@ -405,59 +479,8 @@ class Epochs:
             return data_copy
 
 
-def _create_epochs(
-    source: Stream | Events, times_df: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Create epochs DataFrame and annotate the data with epoch information.
-    """
-    _check_overlap(times_df)
-
-    data = source.data.copy()
-    data["epoch index"] = pd.Series(dtype="Int32")
-    data["epoch time"] = pd.Series(dtype="Int64")
-    data["epoch description"] = pd.Series(dtype="str")
-
-    # check for source type
-    if isinstance(source, Stream):
-        ts = source.ts
-    elif isinstance(source, Events):
-        ts = source.start_ts
-    else:
-        raise ValueError("Source must be a Stream or Events.")
-
-    epochs = times_df.copy().reset_index(drop=True)
-    epochs["data"] = pd.Series(dtype="object")
-
-    # Iterate over each event time to create epochs
-    for i, row in times_df.iterrows():
-        t_ref_i, t_before_i, t_after_i, description_i = row[
-            ["t_ref", "t_before", "t_after", "description"]
-        ].to_list()
-
-        start_time = t_ref_i - t_before_i
-        end_time = t_ref_i + t_after_i
-        mask = np.logical_and(ts >= start_time, ts <= end_time)
-
-        if not mask.any():
-            warnings.warn(f"No data found for epoch {i}.", RuntimeWarning)
-            epochs.at[i, "epoch data"] = pd.DataFrame()
-            continue
-
-        data.loc[mask, "epoch index"] = i
-        data.loc[mask, "epoch description"] = str(description_i)
-        data.loc[mask, "epoch time"] = (
-            data.loc[mask].index.to_numpy() - t_ref_i
-        ).astype("int64")
-
-        local_data = data.loc[mask].copy()
-        local_data.drop(columns=["epoch index", "epoch description"], inplace=True)
-        epochs.at[i, "data"] = local_data
-
-    return epochs, data
-
-
-def events_to_times_df(
+@fill_doc
+def events_to_epochs_info(
     events: "Events",
     t_before: Number,
     t_after: Number,
@@ -465,35 +488,66 @@ def events_to_times_df(
     event_name: str | list[str] = "all",
 ) -> pd.DataFrame:
     """
-    Construct a ``times_df`` DataFrame suitable for creating epochs from event data.
-    For "simple" ``events`` (blinks, fixations, saccades), all events are used.
-    For more complex ``events`` (e.g., from "events.csv", or concatenated events),
-    the user can specify which events to include by a ``name`` column.
+    Construct a ``epochs_info`` DataFrame suitable for creating epochs around event onsets.
+
+    For simple event classes (`"blinks"`, `"fixations"`, `"saccades"`), all events
+    in the input are used automatically. For more complex or combined event collections
+    (e.g., loaded from ``events.csv``), you can either include all events
+    (`event_name="all"`) or filter by specific names using ``event_name``.
 
     Parameters
     ----------
     events : Events
         Events instance containing the event times.
     t_before : numbers.Number
-        Time before the event start time to start the epoch. Units specified by ``t_unit``.
+        Time before each event start to begin the epoch.
+        Interpreted according to ``t_unit``.
     t_after : numbers.Number
-        Time after the event start time to end the epoch. Units specified by ``t_unit``.
+        Time after each event start to end the epoch.
+        Interpreted according to ``t_unit``.
     t_unit : str, optional
         Unit of time for ``t_before`` and ``t_after``.
-        Can be "s", "ms", "us", or "ns". Default is "s".
+        Can be "s", "ms", "us", or "ns". Defaults to "s".
     event_name : str or list of str, optional
-        Only used if ``events`` includes more than one event type.
-        If "all", all events are used. Otherwise, the ``name`` column is used to filter events
-        whose names are in the list. Default to "all".
+        Only used if ``events.type`` is not one of "blinks", "fixations", or "saccades".
+        Otherwise, ``events.data`` must have a ``name``
+        If `"all"`, all events from ``events.data`` are included,
+        and their ``name`` values become the epoch descriptions.
+        If a string or list is provided, only matching events are included.
+        Defaults to "all".
 
     Returns
     -------
-    pandas.DataFrame
-        DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
+    %(epochs_info)s
+
+    Examples
+    --------
+    Create ``epochs_info`` from blink events:
+
+    >>> epochs_info = events_to_epochs_info(blinks, t_before=1, t_after=1)
+    >>> print(epochs_info.head())
+                     t_ref    t_before     t_after description
+    0  1766068460987724691  1000000000  1000000000       blink
+    1  1766068462919464691  1000000000  1000000000       blink
+    2  1766068463785334691  1000000000  1000000000       blink
+    3  1766068464836328691  1000000000  1000000000       blink
+    4  1766068465932322691  1000000000  1000000000       blink
+
+    Create ``epochs_info`` from "flash onset" events:
+
+    >>> epochs_info = events_to_epochs_info(
+        events, t_before=0.5, t_after=3, event_name="flash onset")
+    >>> print(epochs_info.head())
+                     t_ref   t_before     t_after  description
+    0  1766068461745390000  500000000  3000000000  flash onset
+    1  1766068465647497000  500000000  3000000000  flash onset
+    2  1766068469642822000  500000000  3000000000  flash onset
+    3  1766068473635128000  500000000  3000000000  flash onset
+    4  1766068477629326000  500000000  3000000000  flash onset
     """
+    t_ref = events.start_ts
     if events.type in ["blinks", "fixations", "saccades"]:
         description = events.type[:-1]  # Remove the 's' at the end
-        t_ref = events.start_ts
     else:
         if "name" not in events.data.columns:
             raise ValueError(
@@ -502,30 +556,25 @@ def events_to_times_df(
 
         names = events.data["name"].astype(str)
         if event_name == "all":
-            t_ref = events.data.index.to_numpy()
             description = names.to_numpy()
         else:
-            if isinstance(event_name, str):
-                event_name = [event_name]
-            mask = names.isin(event_name)
-            if not mask.any():
-                raise ValueError(f"No events found matching names: {event_name}")
-            filtered_data = events.data[mask]
-            t_ref = filtered_data.index.to_numpy()
-            description = filtered_data["name"].to_numpy()
+            matching_events = events.filter_by_name(event_name)
+            t_ref = matching_events.start_ts
+            description = matching_events.data["name"].to_numpy()
 
-    times_df = construct_times_df(
+    epochs_info = construct_epochs_info(
         t_ref,
         t_before,
         t_after,
         description,
-        "ns",
-        t_unit,
+        t_ref_unit="ns",
+        t_other_unit=t_unit,
     )
-    return times_df
+    return epochs_info
 
 
-def construct_times_df(
+@fill_doc
+def construct_epochs_info(
     t_ref: np.ndarray,
     t_before: np.ndarray | Number,
     t_after: np.ndarray | Number,
@@ -535,7 +584,7 @@ def construct_times_df(
     global_t_ref: int = 0,
 ) -> pd.DataFrame:
     """
-    Handles the construction of the ``times_df`` DataFrame for creating epochs. It populates
+    Handles the construction of the ``epochs_info`` DataFrame for creating epochs. It populates
     single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
     and converts all times to UTC timestamps in nanoseconds.
 
@@ -568,14 +617,11 @@ def construct_times_df(
 
     Returns
     -------
-    pandas.DataFrame
-        DataFrame with columns: ``t_ref``, ``t_before``, ``t_after``, ``description`` (all in ns).
+    %(epochs_info)s
     """
 
-    if n_epoch := len(t_ref) == 0:
+    if (n_epoch := len(t_ref)) == 0:
         raise ValueError("t_ref must not be empty")
-    else:
-        n_epoch = len(t_ref)
 
     time_factors = {"s": 1e9, "ms": 1e6, "us": 1e3, "ns": 1}
 
@@ -586,7 +632,9 @@ def construct_times_df(
         if isinstance(x, np.ndarray):
             # Ensure it's the same length as t_ref
             if len(x) != n_epoch:
-                raise ValueError(f"{name} must have the same length as t_ref")
+                raise ValueError(
+                    f"{name} must have the same length as t_ref ({n_epoch}), got {len(x)}"
+                )
         elif isinstance(x, (Number, str)):
             x = np.repeat(x, n_epoch)
         else:
@@ -594,7 +642,7 @@ def construct_times_df(
 
     # Construct the event times DataFrame
     # Do rounding as they should be timestamps already
-    times_df = pd.DataFrame(
+    epochs_info = pd.DataFrame(
         {
             "t_ref": t_ref * time_factors[t_ref_unit] + global_t_ref,
             "t_before": t_before * time_factors[t_other_unit],
@@ -602,7 +650,7 @@ def construct_times_df(
             "description": description,
         }
     )
-    times_df = times_df.astype(
+    epochs_info = epochs_info.astype(
         {
             "t_ref": "int64",
             "t_before": "int64",
@@ -610,4 +658,4 @@ def construct_times_df(
             "description": "str",
         }
     )
-    return times_df
+    return epochs_info

@@ -14,6 +14,8 @@ PyNeon supports both **native** (data stored in the companion device) and [**Pup
 
 Documentation for PyNeon is available at <https://ncc-brain.github.io/PyNeon/> which includes detailed references for classes and functions, as well as step-by-step tutorials presented as Jupyter notebooks.
 
+We also created a few sample datasets containing short Neon recordings for testing and tutorial purposes. These datasets can be found on [FigShare](https://doi.org/10.6084/m9.figshare.30921452). We also provide a utility function to download these sample datasets directly from PyNeon (see the [sample data tutorial](https://ncc-brain.github.io/PyNeon/tutorials/sample_data.html) for details).
+
 ## Key Features
 
 - [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/read_recording.html) Easy API for reading in datasets, recordings, or individual modalities of data.

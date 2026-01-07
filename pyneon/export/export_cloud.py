@@ -61,7 +61,7 @@ def _export_data(recording, attr_name, filename, target_dir):
     else:
         data.reset_index(inplace=True, drop=True)
     # Append recording ID and section ID columns
-    data["section id"] = recording.info.get("section_id", pd.NA)
+    data["section id"] = recording.info.get("section_id", None)
     data["recording id"] = recording.recording_id
     cols = data.columns.tolist()
     data = data[cols[-2:] + cols[:-2]]  # Move new columns to front
