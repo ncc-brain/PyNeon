@@ -375,7 +375,7 @@ def plot_epochs(
     else:
         fig = ax.get_figure()
 
-    num_epochs = len(epochs.epochs)
+    num_epochs = len(epochs.epochs_dict)
     cmap = cm.get_cmap(cmap_name, num_epochs)
     norm = Normalize(vmin=0, vmax=num_epochs - 1)
 
@@ -384,10 +384,10 @@ def plot_epochs(
     from pyneon import Events, Stream  # for source class check
 
     if isinstance(epochs.source, Stream):
-        _plot_stream_epochs(epochs.epochs, column_name, cmap, norm, fig, ax)
+        _plot_stream_epochs(epochs.epochs_dict, column_name, cmap, norm, fig, ax)
         ax.set_ylabel(column_name)
     elif isinstance(epochs.source, Events):
-        _plot_event_epochs(epochs.epochs, norm, ax)
+        _plot_event_epochs(epochs.epochs_dict, norm, ax)
         ax.set_ylabel("Epoch index")
     else:
         raise ValueError(

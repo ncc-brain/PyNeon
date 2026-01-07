@@ -97,7 +97,7 @@ class Epochs:
         return overlap_epochs
 
     @cached_property
-    def epochs(self) -> dict[int, Stream | Events | None]:
+    def epochs_dict(self) -> dict[int, Stream | Events | None]:
         """
         Dictionary of epochs indexed by epoch index. Each epoch contains
         data cropped from the source between ``t_start`` and ``t_end``.
@@ -126,6 +126,13 @@ class Epochs:
             warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
         return epochs
 
+    @cached_property
+    def epochs_flat_df(self) -> pd.DataFrame:
+        """
+        A flattened DataFrame representation of epochs concatenated together.
+        """
+        pass
+
     @property
     def empty_epochs(self) -> list[int]:
         """Indices of epochs that contain no data.
@@ -137,9 +144,54 @@ class Epochs:
         """
         return [
             int(epoch_index)
-            for epoch_index, epoch in self.epochs.items()
+            for epoch_index, epoch in self.epochs_dict.items()
             if epoch is None
         ]
+
+    def annotate_source(self) -> pd.DataFrame:
+        """
+        Create index-wise annotations of epoch indices for the source data.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame with index matching the source data indices and a column
+            "epoch_indices" containing lists of epoch indices that include
+            each data point.
+        """
+        source = self.source
+        epochs_info = self.epochs_info
+
+        # Timestamps from the source
+        ts = source.ts if isinstance(source, Stream) else source.start_ts
+        source_index = source.data.index
+        annot = {i: [] for i in source_index}  # Initialize empty lists for each index
+
+        # Iterate over each event time to create epochs
+        empty_epochs = []
+        for i, row in epochs_info.iterrows():
+            t_ref_i, t_before_i, t_after_i = row[
+                ["t_ref", "t_before", "t_after"]
+            ].to_list()
+
+            start_time = t_ref_i - t_before_i
+            end_time = t_ref_i + t_after_i
+            mask = np.logical_and(ts >= start_time, ts <= end_time)
+
+            if not mask.any():
+                empty_epochs.append(int(i))
+
+            # Annotate the data with the epoch index
+            for idx in source_index[mask]:
+                annot[idx].append(int(i))
+
+        if empty_epochs:
+            warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
+
+        annot_df = pd.DataFrame.from_dict(
+            annot, orient="index", columns=["epoch index"]
+        )
+        return annot_df
 
     @property
     def t_ref(self) -> np.ndarray:
@@ -231,7 +283,7 @@ class Epochs:
         other_kind: str | int = "nearest",
     ) -> tuple[np.ndarray, dict]:
         """
-        Converts epochs into a 3D array with dimensions (n_epochs, n_channels, n_times).
+        Converts epochs into a 3D arrays with dimensions (n_epochs, n_channels, n_times).
         Acts similarly as :meth:`mne.Epochs.get_data`.
         Requires the epoch to be created from a :class:`pyneon.Stream`.
 
@@ -407,10 +459,10 @@ class Epochs:
 
         # Work on a copy unless the caller wants in-place modification
         if inplace:
-            epochs_copy = self.epochs
+            epochs_copy = self.epochs_dict
             data_copy = self.data
         else:
-            epochs_copy = self.epochs.copy(deep=True)
+            epochs_copy = self.epochs_dict.copy(deep=True)
             data_copy = self.data.copy(deep=True)
 
         for idx, row in epochs_copy.iterrows():
@@ -425,39 +477,6 @@ class Epochs:
 
         if not inplace:
             return data_copy
-
-
-def annotate_epochs(source: Stream | Events, epochs_info: pd.DataFrame) -> dict:
-    """
-    Create index-wise annotations of epoch indices for the source data.
-    """
-    # _check_overlap(epochs_info)
-
-    # Timestamps from the source
-    ts = source.ts if isinstance(source, Stream) else source.start_ts
-    source_index = source.data.index
-    annot = {i: [] for i in source_index}  # Initialize empty lists for each index
-
-    # Iterate over each event time to create epochs
-    empty_epochs = []
-    for i, row in epochs_info.iterrows():
-        t_ref_i, t_before_i, t_after_i = row[["t_ref", "t_before", "t_after"]].to_list()
-
-        start_time = t_ref_i - t_before_i
-        end_time = t_ref_i + t_after_i
-        mask = np.logical_and(ts >= start_time, ts <= end_time)
-
-        if not mask.any():
-            empty_epochs.append(i)
-
-        # Annotate the data with the epoch index
-        for idx in source_index[mask]:
-            annot[idx].append(i)
-
-    if empty_epochs:
-        warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
-
-    return annot
 
 
 @fill_doc
