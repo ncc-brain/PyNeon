@@ -1,9 +1,13 @@
 name: PyNeon CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ["main"]  # to main
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  ruff-format:
+  format:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -33,8 +37,32 @@ jobs:
           git commit -m "Format code with isort and ruff" || echo "No changes to commit"
           git push
 
+  tests:
+    runs-on: ${{ matrix.os }}
+    needs: format   # waits until formatting is done
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: pip install .[dev]
+
+      - name: Run tests
+        run: pytest tests
+
   build-docs:
     runs-on: ubuntu-latest
+    needs: format   # waits until formatting is done
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
@@ -44,7 +72,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install Pandoc
-        run: sudo apt-get install pandoc
+        run: sudo apt-get install -y pandoc
 
       - name: Install docs dependencies
         run: pip install .[doc]
@@ -65,7 +93,6 @@ jobs:
 
       - name: Deploy (GitHub Pages)
         uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/html
