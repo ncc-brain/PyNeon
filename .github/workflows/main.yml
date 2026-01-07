@@ -13,6 +13,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # to be able to push changes
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -30,6 +32,7 @@ jobs:
         run: ruff format .
 
       - name: Commit changes if any
+        if: github.event_name == 'push' # only push changes on push events
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
