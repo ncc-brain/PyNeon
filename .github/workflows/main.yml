@@ -50,11 +50,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Pull latest changes from format job
-        run: git pull origin ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -73,11 +68,6 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Pull latest changes from format job
-        run: git pull origin ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
