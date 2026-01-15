@@ -510,7 +510,7 @@ def events_to_epochs_info(
         Can be "s", "ms", "us", or "ns". Defaults to "s".
     event_name : str or list of str, optional
         Only used if ``events.type`` is not one of "blinks", "fixations", or "saccades".
-        Otherwise, ``events.data`` must have a ``name``
+        Otherwise, ``events.data`` must have a ``name`` column indicating event labels.
         If `"all"`, all events from ``events.data`` are included,
         and their ``name`` values become the epoch descriptions.
         If a string or list is provided, only matching events are included.
