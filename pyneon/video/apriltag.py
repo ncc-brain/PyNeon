@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import cv2
 import numpy as np
@@ -345,6 +345,8 @@ def find_homographies(
     skip_frames: int = 1,
     undistort: bool = True,
     settings: Optional[dict] = None,
+    upsample_to: Optional[Literal["video", "gaze"]] = None,
+    gaze_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """
     Compute a homography for each frame using available AprilTag detections.
@@ -401,6 +403,12 @@ def find_homographies(
             "confidence": 0.98,
         }
         The defaults are set to a moderate RANSAC approach.
+    upsample_to : str, optional
+        If "video", the homographies will be upsampled to match the video frames
+        from the first to the last frame. If "gaze", the homographies will be
+        resampled to the timestamps of the `gaze_df`. Default is None.
+    gaze_df : pandas.DataFrame, optional
+        The gaze data to resample the homographies to if `upsample_to="gaze"`.
 
     Returns
     -------
@@ -524,9 +532,13 @@ def find_homographies(
         H, mask = cv2.findHomography(world_points, surface_points, **default_settings)
         homography_for_frame[frame] = H
 
-    if skip_frames != 1:
-        # Upsample the homographies to fill in skipped frames
-        max_frame = max(frames)
+    if skip_frames != 1 or upsample_to == "video" or upsample_to == "gaze":
+        if (upsample_to == "video" or upsample_to == "gaze") and hasattr(video, "ts"):
+            max_frame = len(video.ts) - 1
+        else:
+            max_frame = (
+                max(detection_df["frame_idx"]) if not detection_df.empty else 0
+            )
         homography_for_frame = _upsample_homographies(homography_for_frame, max_frame)
 
     # Get timestamps for each frame_idx
@@ -539,7 +551,17 @@ def find_homographies(
     ]
 
     df = pd.DataFrame.from_records(records)
-    df = df.set_index("timestamp [ns]")
+    if not df.empty:
+        df = df.set_index("timestamp [ns]")
+    else:
+        # Create an empty DataFrame with the expected columns and index
+        df = pd.DataFrame(columns=["frame_idx", "homography"])
+        df.index.name = "timestamp [ns]"
+
+    if upsample_to == "gaze":
+        if gaze_df is None:
+            raise ValueError("gaze_df must be provided when upsample_to='gaze'")
+        return _resample_homographies_to_gaze(df, gaze_df)
 
     return df
 
@@ -633,6 +655,13 @@ def _upsample_homographies(
     upsampled = {}
 
     # ------------------------------------------------------------------
+    # 2.5) Fill frames before the first known up to frame 0 (extrapolate)
+    # ------------------------------------------------------------------
+    first_frame = known_frames[0]
+    for f in range(0, first_frame):
+        upsampled[f] = homographies_fixed_keys[first_frame]
+
+    # ------------------------------------------------------------------
     # 3) Interpolate between consecutive known frames
     # ------------------------------------------------------------------
     for i in tqdm(range(len(known_frames) - 1), desc="Interpolating homographies"):
@@ -669,3 +698,62 @@ def _upsample_homographies(
     # so no further conversion is strictly needed.
 
     return upsampled
+
+
+def _resample_homographies_to_gaze(
+    homographies_df: pd.DataFrame, gaze_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Resample a DataFrame of homographies to the timestamps of a gaze DataFrame.
+
+    Parameters
+    ----------
+    homographies_df : pd.DataFrame
+        DataFrame with 'timestamp [ns]' as index and 'homography' column (3x3 np.ndarray).
+    gaze_df : pd.DataFrame
+        Gaze DataFrame whose index will be used for resampling.
+
+    Returns
+    -------
+    pd.DataFrame
+        Resampled homographies DataFrame indexed by gaze timestamps.
+    """
+    # Create a DataFrame of homography elements for interpolation
+    h_elements = []
+    for ts, row in homographies_df.iterrows():
+        H = row["homography"]
+        if H is not None:
+            record = {"timestamp [ns]": ts, "frame_idx": row["frame_idx"]}
+            for r in range(3):
+                for c in range(3):
+                    record[f"h{r}{c}"] = H[r, c]
+            h_elements.append(record)
+
+    if not h_elements:
+        # If no homographies found, return DataFrame with gaze index and NaNs
+        resampled_h = pd.DataFrame(index=gaze_df.index)
+        resampled_h.index.name = "timestamp [ns]"
+        resampled_h["frame_idx"] = np.nan
+        resampled_h["homography"] = None
+        return resampled_h
+
+    h_df = pd.DataFrame(h_elements).set_index("timestamp [ns]")
+
+    from ..preprocess import interpolate
+
+    resampled_h = interpolate(gaze_df.index, h_df)
+
+    # Reconstruct homography matrices
+    hs = [resampled_h[f"h{r}{c}"].values for r in range(3) for c in range(3)]
+    h_stack = np.stack(hs, axis=1)  # (N, 9)
+
+    # Handle NaNs: one None matrix for any row containing NaN
+    any_nan = np.any(np.isnan(h_stack), axis=1)
+    h_matrices = [None] * len(resampled_h)
+    for i in range(len(resampled_h)):
+        if not any_nan[i]:
+            h_matrices[i] = h_stack[i].reshape(3, 3)
+
+    resampled_h["homography"] = h_matrices
+    resampled_h = resampled_h[["frame_idx", "homography"]]
+    return resampled_h

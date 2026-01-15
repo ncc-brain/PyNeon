@@ -715,6 +715,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         all_detections: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        upsample_to: Optional[Literal["video", "gaze"]] = None,
         **kwargs,
     ) -> Stream:
         """
@@ -734,6 +735,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Whether to force recomputation even if saved homographies exist.
         output_path : str or pathlib.Path, optional
             Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
+        upsample_to : str, optional
+            If "video", the homographies will be upsampled to match the video frames
+            from the first to the last frame. If "gaze", the homographies will be
+            resampled to the timestamps of the recording's gaze data. Default is None.
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
                 - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
@@ -773,6 +778,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         # if all_detections.data.empty:
         #   raise ValueError("No AprilTag detections found.")
 
+        gaze_df = None
+        if upsample_to == "gaze":
+            gaze_df = self.gaze.data
+
         homographies_df = find_homographies(
             self.scene_video,
             all_detections.data,
@@ -781,6 +790,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             skip_frames=skip_frames,
             coordinate_system=coordinate_system,
             settings=settings,
+            upsample_to=upsample_to,
+            gaze_df=gaze_df,
         )
 
         homographies_df.to_pickle(pkl_file)
