@@ -29,7 +29,7 @@ class Dataset:
         └── sections.csv
 
     Individual recordings will be read into :class:`pyneon.Recording` objects
-    (based on ``sections.csv``, if available). and are accessible through the
+    (based on ``sections.csv``, if available) and are accessible through the
     ``recordings`` attribute.
 
     Parameters

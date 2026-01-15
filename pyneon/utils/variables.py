@@ -225,3 +225,9 @@ default_camera_info = {
     ],
     "serial_number": "XXXXXX",
 }
+
+default_circular_columns = [
+    "yaw [deg]",
+    "pitch [deg]",
+    "roll [deg]",
+]
