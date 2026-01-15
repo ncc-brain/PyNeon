@@ -1,65 +1,86 @@
 import numpy as np
 import pandas as pd
 import pytest
+import re
 
 from pyneon import Events, Recording, Stream
 from pyneon.utils.variables import nominal_sampling_rates
 
 
 @pytest.fixture(scope="package")
-def simple_streams():
-    gaze_ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
-    eye_states_ts = np.arange(2e9, 6e9, 1e9 / 100)  # 100 Hz
-    imu_ts = np.arange(1e9, 4e9, 1e9 / 200)  # 200 Hz
-    custom_ts = np.arange(0, 6e9, int(1e9 / 30))  # 30 Hz
-    gaze_df = pd.DataFrame(
-        np.random.rand(len(gaze_ts), 2),
-        index=gaze_ts,
+def sim_gaze():
+    ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
+    ts = np.delete(ts, 2)  # Remove one ts to make it non-uniformly sampled
+    df = pd.DataFrame(
+        np.random.rand(len(ts), 2),
+        index=ts,
         columns=["gaze x [px]", "gaze y [px]"],
     )
-    eye_states_df = pd.DataFrame(
-        np.random.rand(len(eye_states_ts), 2),
-        index=eye_states_ts,
-        columns=["pupil diameter left [mm]", "pupil diameter right [mm]"],
-    )
-    imu_df = pd.DataFrame(
-        np.random.rand(len(imu_ts), 2),
-        index=imu_ts,
-        columns=["gyro x [deg/s]", "gyro y [deg/s]"],
-    )
-    custom_df = pd.DataFrame(
-        np.random.rand(len(custom_ts), 2),
-        index=custom_ts,
-        columns=["custom x", "custom y"],
-    )
-    for df in [gaze_df, eye_states_df, imu_df, custom_df]:
-        df.index.name = "timestamp [ns]"
+    df.index.name = "timestamp [ns]"
 
-    gaze = Stream(gaze_df)
+    gaze = Stream(df)
     assert gaze.type == "gaze"
     assert gaze.sampling_freq_nominal == nominal_sampling_rates["gaze"]
-
-    eye_states = Stream(eye_states_df)
-    assert eye_states.type == "eye_states"
-    assert eye_states.sampling_freq_nominal == nominal_sampling_rates["eye_states"]
-
-    imu = Stream(imu_df)
-    assert imu.type == "imu"
-    assert imu.sampling_freq_nominal == nominal_sampling_rates["imu"]
-
-    with pytest.warns(UserWarning, match="Following columns not in known data types"):
-        custom = Stream(custom_df)
-    assert custom.type == "custom"
-    assert custom.sampling_freq_nominal is None
-
-    return gaze, eye_states, imu, custom
+    return gaze
 
 
 @pytest.fixture(scope="package")
-def simple_events():
-    blinks_start_ts = np.array([1e9, 2e9, 6e9, 10e9])
+def sim_imu():
+    ts = np.arange(1e9, 4e9, 1e9 / 200)  # 200 Hz
+    ts = np.delete(ts, 2)  # Remove one ts to make it non-uniformly sampled
+    df = pd.DataFrame(
+        np.random.rand(len(ts), 2),
+        index=ts,
+        columns=["gyro x [deg/s]", "gyro y [deg/s]"],
+    )
+    df.index.name = "timestamp [ns]"
+
+    imu = Stream(df)
+    assert imu.type == "imu"
+    assert imu.sampling_freq_nominal == nominal_sampling_rates["imu"]
+    return imu
+
+
+@pytest.fixture(scope="package")
+def sim_eye_states():
+    ts = np.arange(2e9, 6e9, 1e9 / 100)  # 100 Hz
+    ts = np.delete(ts, 2)  # Remove one ts to make it non-uniformly sampled
+    df = pd.DataFrame(
+        np.random.rand(len(ts), 2),
+        index=ts,
+        columns=["pupil diameter left [mm]", "pupil diameter right [mm]"],
+    )
+    df.index.name = "timestamp [ns]"
+
+    eye_states = Stream(df)
+    assert eye_states.type == "eye_states"
+    assert eye_states.sampling_freq_nominal == nominal_sampling_rates["eye_states"]
+    return eye_states
+
+
+@pytest.fixture(scope="package")
+def sim_custom_stream():
+    ts = np.arange(0, 6e9, int(1e9 / 30))  # 30 Hz
+    df = pd.DataFrame(
+        np.random.rand(len(ts), 2),
+        index=ts,
+        columns=["custom x", "custom y"],
+    )
+    df.index.name = "timestamp [ns]"
+
+    with pytest.warns(UserWarning, match="Following columns not in known data types"):
+        custom = Stream(df)
+    assert custom.type == "custom"
+    assert custom.sampling_freq_nominal is None
+    return custom
+
+
+@pytest.fixture(scope="package")
+def sim_blinks():
+    blinks_start_ts = np.array([1e9, 3e9, 5e9, 8e9, 10e9])
     blinks_end_ts = blinks_start_ts + 100e6  # 100 ms blinks
-    blinks_end_ts[-1] += 500e6  # last blink is 600 ms (abnormal)
+    blinks_end_ts[0] = blinks_start_ts[0] + 50e6  # first blink is 50 ms (abnormal)
+    blinks_end_ts[-1] = blinks_start_ts[-1] + 500e6  # last blink is 500 ms (abnormal)
     blinks_df = pd.DataFrame(
         {
             "blink id": np.arange(len(blinks_start_ts)),
@@ -69,6 +90,14 @@ def simple_events():
         }
     )
 
+    blinks = Events(blinks_df)
+    assert blinks.type == "blinks"
+    assert blinks.data.index.name == "blink id"
+    return blinks
+
+
+@pytest.fixture(scope="package")
+def sim_fixations():
     fixations_start_ts = np.array([0.5e9, 3e9, 7e9])
     fixations_end_ts = fixations_start_ts + 200e6  # 200 ms fixations
     fixations_df = pd.DataFrame(
@@ -82,6 +111,14 @@ def simple_events():
         }
     )
 
+    fixations = Events(fixations_df)
+    assert fixations.type == "fixations"
+    assert fixations.data.index.name == "fixation id"
+    return fixations
+
+
+@pytest.fixture(scope="package")
+def sim_saccades():
     saccades_start_ts = np.array([2.5e9, 5e9, 8e9])
     saccades_end_ts = saccades_start_ts + 50e6  # 50 ms saccades
     saccades_df = pd.DataFrame(
@@ -95,8 +132,21 @@ def simple_events():
         }
     )
 
-    events_ts = np.array([4e9, 9e9])
-    events_names = ["stimulus_onset", "stimulus_offset"]
+    saccades = Events(saccades_df)
+    assert saccades.type == "saccades"
+    assert saccades.data.index.name == "saccade id"
+    return saccades
+
+
+@pytest.fixture(scope="package")
+def sim_events():
+    events_ts = np.array([0, 4e9, 9e9, 10e9])
+    events_names = [
+        "recording.begin",
+        "stimulus_onset",
+        "stimulus_offset",
+        "recording.end",
+    ]
     events_df = pd.DataFrame(
         {
             "timestamp [ns]": events_ts,
@@ -105,6 +155,18 @@ def simple_events():
         }
     )
 
+    events = Events(events_df)
+    assert events.type == "events"
+    assert events.data.index.name == "event id"
+    with pytest.raises(
+        ValueError, match=re.escape("No `duration [ms]` column found in the instance.")
+    ):
+        _ = events.durations
+    return events
+
+
+@pytest.fixture(scope="package")
+def sim_custom_events():
     custom_ts = np.array([1.5e9, 4.5e9])
     custom_names = ["custom_event_1", "custom_event_2"]
     custom_df = pd.DataFrame(
@@ -113,28 +175,9 @@ def simple_events():
             "custom_name": custom_names,
         }
     )
-    print(custom_df)
-
-    blinks = Events(blinks_df)
-    assert blinks.type == "blinks"
-    assert blinks.data.index.name == "blink id"
-
-    fixations = Events(fixations_df)
-    assert fixations.type == "fixations"
-    assert fixations.data.index.name == "fixation id"
-
-    saccades = Events(saccades_df)
-    assert saccades.type == "saccades"
-    assert saccades.data.index.name == "saccade id"
-
-    events = Events(events_df)
-    assert events.type == "events"
-    assert events.data.index.name == "event id"
 
     with pytest.warns(UserWarning, match="Following columns not in known data types"):
         custom = Events(custom_df)
-    print(custom.data)
     assert custom.type == "custom"
     assert custom.data.index.name == "event id"
-
-    return blinks, fixations, saccades, events, custom
+    return custom

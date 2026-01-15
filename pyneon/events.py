@@ -380,7 +380,7 @@ class Events(BaseTabular):
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
         if reset_id:
-            # Reset without losing orignal index name
+            # Reset without losing original index name
             inst.data.index = pd.RangeIndex(
                 start=0, stop=len(inst.data), name=inst.data.index.name
             )
