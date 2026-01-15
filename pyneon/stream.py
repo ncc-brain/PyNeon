@@ -263,7 +263,7 @@ class Stream(BaseTabular):
         %(stream_or_none)s
         """
         if tmin is None and tmax is None:
-            raise ValueError("At least one of tmin or tmax must be provided")
+            raise ValueError("At least one of `tmin` or `tmax` must be provided")
         if by == "timestamp":
             t = self.ts
         elif by == "time":
@@ -272,6 +272,9 @@ class Stream(BaseTabular):
             t = np.arange(len(self))
         tmin = t.min() if tmin is None else tmin
         tmax = t.max() if tmax is None else tmax
+        # tmin and tmax should be positive numbers
+        if tmin < 0 or tmax < 0:
+            raise ValueError("Crop bounds must be non-negative")
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
