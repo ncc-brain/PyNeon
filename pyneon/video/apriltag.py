@@ -15,6 +15,8 @@ def detect_apriltags(
     nthreads: int = 4,
     quad_decimate: float = 1.0,
     skip_frames: int = 1,
+    detection_window: Optional[tuple[int | float, int | float]] = None,
+    window_type: str = "frame_number",
 ) -> pd.DataFrame:
     """
     Detect AprilTags in a video and report their data for every processed frame,
@@ -34,6 +36,15 @@ def detect_apriltags(
     skip_frames : int, optional
         If > 1, detect tags only in every Nth frame.
         E.g., skip_frames=5 will process frames 0, 5, 10, 15, etc.
+    detection_window : tuple, optional
+        A tuple (start, end) specifying the range to search for AprilTag detections.
+        The interpretation depends on `window_type`. Default is None (all frames).
+    window_type : str, optional
+        Specifies the type of values in `detection_window`:
+            - "frame_number": start and end are frame indices (0-based)
+            - "video_time": start and end are in seconds (relative to video start)
+            - "timestamp": start and end are absolute timestamps in nanoseconds
+        Default is "frame_number".
 
     Returns
     -------
@@ -70,6 +81,31 @@ def detect_apriltags(
         )
         random_access = False  # sequential access is faster for small skips
 
+    # -----------------------------------------------------------------
+    # Convert detection_window to frame indices
+    # -----------------------------------------------------------------
+    start_frame_idx = 0
+    end_frame_idx = len(video.ts) - 1
+
+    if detection_window is not None:
+        start, end = detection_window
+        
+        if window_type == "frame_number":
+            # Already in frame indices, use directly
+            start_frame_idx, end_frame_idx = int(start), int(end)
+        elif window_type == "video_time":
+            #use video fps from opencv
+            fps = video.get(cv2.CAP_PROP_FPS)
+            frame_duration_ns = 1e9 / fps
+            start_frame_idx = int(start * 1e9 / frame_duration_ns)
+            end_frame_idx = int(end * 1e9 / frame_duration_ns)
+        elif window_type == "timestamp":
+            # Convert from nanosecond timestamps to frame indices
+            start_frame_idx = int(np.searchsorted(video.ts, start, side="left"))
+            end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
+        else:
+            raise ValueError(f"Unknown window_type: {window_type}. Must be 'frame_number', 'video_time', or 'timestamp'.")
+
     total_frames = len(video.ts)
     all_detections = []
     processed_frame_idx = 0  # counts how many frames we've actually processed
@@ -78,7 +114,7 @@ def detect_apriltags(
     # Random-Access Approach
     # -----------------------------------------------------------------------
     if random_access:
-        frames_to_process = range(0, total_frames, skip_frames)
+        frames_to_process = range(start_frame_idx, end_frame_idx + 1, skip_frames)
         for actual_frame_idx in tqdm(
             frames_to_process, desc="Detecting AprilTags (random access)"
         ):
@@ -115,9 +151,12 @@ def detect_apriltags(
     # Sequential Approach
     # -----------------------------------------------------------------------
     else:
-        # We'll just read frames in order, skipping those we don't want
+        # Seek to the start frame first
+        video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
+        
+        # We'll read frames in order within the specified window
         for actual_frame_idx in tqdm(
-            range(total_frames), desc="Detecting AprilTags (sequential)"
+            range(start_frame_idx, end_frame_idx + 1), desc="Detecting AprilTags (sequential)"
         ):
             ret, frame = video.read()
             if not ret:
@@ -347,6 +386,8 @@ def find_homographies(
     settings: Optional[dict] = None,
     upsample_to: Optional[Literal["video", "gaze"]] = None,
     gaze_df: Optional[pd.DataFrame] = None,
+    max_gap: Optional[int] = None,
+    extrapolate: bool = True,
 ) -> pd.DataFrame:
     """
     Compute a homography for each frame using available AprilTag detections.
@@ -409,6 +450,14 @@ def find_homographies(
         resampled to the timestamps of the `gaze_df`. Default is None.
     gaze_df : pandas.DataFrame, optional
         The gaze data to resample the homographies to if `upsample_to="gaze"`.
+    max_gap : int, optional
+        Maximum number of frames to interpolate across when filling gaps without
+        detections. If a gap exceeds this threshold, it is filled with None homographies
+        instead. Default is None (unlimited interpolation).
+    extrapolate : bool, optional
+        Whether to extrapolate homographies before the first detection and after
+        the last detection. If False, these periods will have None homographies.
+        Default is True.
 
     Returns
     -------
@@ -539,7 +588,9 @@ def find_homographies(
             max_frame = (
                 max(detection_df["frame_idx"]) if not detection_df.empty else 0
             )
-        homography_for_frame = _upsample_homographies(homography_for_frame, max_frame)
+        homography_for_frame = _upsample_homographies(
+            homography_for_frame, max_frame, max_gap=max_gap, extrapolate=extrapolate
+        )
 
     # Get timestamps for each frame_idx
     frame_idx_to_ts = dict(zip(range(len(video.ts)), video.ts))
@@ -647,7 +698,9 @@ def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.Dat
 def _upsample_homographies(
     homographies_dict: dict[int | np.int64, np.ndarray],
     max_frame: int | np.int64,
-) -> dict[int, np.ndarray]:
+    max_gap: Optional[int] = None,
+    extrapolate: bool = True,
+) -> dict[int, Optional[np.ndarray]]:
     """
     Upsample/interpolate homographies for all frames from 0..max_frame, inclusive.
     Assumes homographies_dict contains partial frames (e.g., 0, 10, 20...),
@@ -661,14 +714,20 @@ def _upsample_homographies(
         Keys are frame indices (int or np.int64), values are 3x3 np.ndarray (float).
     max_frame : int
         The highest frame index you want to fill in.
+    max_gap : int, optional
+        Maximum number of frames to interpolate across. If a gap between detections
+        exceeds this, it is filled with None instead of interpolating. Default is None.
+    extrapolate : bool, optional
+        Whether to extrapolate at the beginning (before first detection) and end
+        (after last detection). If False, these periods are filled with None.
+        Default is True.
 
     Returns
     -------
-    dict[int, numpy.ndarray]
+    dict[int, Optional[numpy.ndarray]]
         A dictionary with a 3x3 homography for every frame from 0..max_frame.
-        Keys will be standard Python int.
-        If a frame is not within the known range, it will be extrapolated
-        from the closest known pair.
+        Keys will be standard Python int. Values can be 3x3 np.ndarray or None
+        for frames in gaps exceeding max_gap or before/after detections (if extrapolate=False).
     """
     # ------------------------------------------------------------------
     # 1) Convert any np.int64 keys to Python int so sorting won't break
@@ -691,8 +750,12 @@ def _upsample_homographies(
     # 2.5) Fill frames before the first known up to frame 0 (extrapolate)
     # ------------------------------------------------------------------
     first_frame = known_frames[0]
-    for f in range(0, first_frame):
-        upsampled[f] = homographies_fixed_keys[first_frame]
+    if extrapolate:
+        for f in range(0, first_frame):
+            upsampled[f] = homographies_fixed_keys[first_frame]
+    else:
+        for f in range(0, first_frame):
+            upsampled[f] = None
 
     # ------------------------------------------------------------------
     # 3) Interpolate between consecutive known frames
@@ -706,15 +769,27 @@ def _upsample_homographies(
 
         frame_diff = f2 - f1
 
-        # Fill from f1..(f2-1)
-        for offset in range(frame_diff):
-            current_frame = f1 + offset
-            if current_frame > max_frame:
-                break
+        # Check if gap exceeds max_gap threshold
+        if max_gap is not None and frame_diff > max_gap:
+            # Fill gap with None instead of interpolating
+            for offset in range(frame_diff):
+                current_frame = f1 + offset
+                if current_frame > max_frame:
+                    break
+                if offset == 0:
+                    upsampled[current_frame] = H1
+                else:
+                    upsampled[current_frame] = None
+        else:
+            # Fill from f1..(f2-1) with interpolation
+            for offset in range(frame_diff):
+                current_frame = f1 + offset
+                if current_frame > max_frame:
+                    break
 
-            alpha = offset / float(frame_diff)
-            H_interp = (1 - alpha) * H1 + alpha * H2
-            upsampled[current_frame] = H_interp
+                alpha = offset / float(frame_diff)
+                H_interp = (1 - alpha) * H1 + alpha * H2
+                upsampled[current_frame] = H_interp
 
     # Make sure we include the last known frame
     last_frame = known_frames[-1]
@@ -724,8 +799,12 @@ def _upsample_homographies(
     # ------------------------------------------------------------------
     # 4) Fill frames beyond the last known up to max_frame (extrapolate)
     # ------------------------------------------------------------------
-    for f in range(last_frame + 1, max_frame + 1):
-        upsampled[f] = homographies_fixed_keys[last_frame]
+    if extrapolate:
+        for f in range(last_frame + 1, max_frame + 1):
+            upsampled[f] = homographies_fixed_keys[last_frame]
+    else:
+        for f in range(last_frame + 1, max_frame + 1):
+            upsampled[f] = None
 
     # Now, "upsampled" is already using Python int keys,
     # so no further conversion is strictly needed.

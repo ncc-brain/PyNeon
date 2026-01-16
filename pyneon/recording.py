@@ -640,6 +640,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         tag_family: str = "tag36h11",
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
+        detection_window: Optional[tuple[int | float, int | float]] = None,
+        window_type: str = "frame_number",
         **kwargs,
     ) -> Stream:
         """
@@ -656,6 +658,15 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             If True, reruns detection even if saved results exist.
         output_path : str or pathlib.Path, optional
             Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
+        detection_window : tuple, optional
+            A tuple (start, end) specifying the range to search for AprilTag detections.
+            The interpretation depends on `window_type`. Default is None (all frames).
+        window_type : str, optional
+            Specifies the type of values in `detection_window`:
+                - "frame_number": start and end are frame indices (0-based)
+                - "video_time": start and end are in seconds (relative to video start)
+                - "timestamp": start and end are absolute timestamps in nanoseconds
+            Default is "frame_number".
         **kwargs : keyword arguments
             Additional parameters for AprilTag detection, including:
                 - 'nthreads': Number of threads to use for detection. Default is 4.
@@ -699,6 +710,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             nthreads=nthreads,
             quad_decimate=quad_decimate,
             skip_frames=skip_frames,
+            detection_window=detection_window,
+            window_type=window_type,
         )
 
         if all_detections.empty:
@@ -716,6 +729,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
         upsample_to: Optional[Literal["video", "gaze"]] = None,
+        max_gap: Optional[int] = 5,
+        extrapolate: bool = False,
         **kwargs,
     ) -> Stream:
         """
@@ -739,6 +754,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             If "video", the homographies will be upsampled to match the video frames
             from the first to the last frame. If "gaze", the homographies will be
             resampled to the timestamps of the recording's gaze data. Default is None.
+        max_gap : int, optional
+            Maximum number of frames to interpolate across when filling gaps without
+            detections. If a gap exceeds this threshold, it is filled with None homographies
+            instead. Default is None (unlimited interpolation).
+        extrapolate : bool, optional
+            Whether to extrapolate homographies before the first detection and after
+            the last detection. If False, these periods will have None homographies.
+            Default is True.
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
                 - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
@@ -792,6 +815,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             settings=settings,
             upsample_to=upsample_to,
             gaze_df=gaze_df,
+            max_gap=max_gap,
+            extrapolate=extrapolate,
         )
 
         homographies_df.to_pickle(pkl_file)
@@ -934,13 +959,13 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         # Summarize gaze points first:
         gaze_means = (
             gaze_on_surface.data.groupby("fixation id", as_index=False)[
-                ["x_trans", "y_trans"]
+                ["gaze x [surface coord]", "gaze y [surface coord]"]
             ]
             .mean()
             .rename(
                 columns={
-                    "x_trans": "gaze x [surface coord]",
-                    "y_trans": "gaze y [surface coord]",
+                    "gaze x [surface coord]": "fixation x [surface coord]",
+                    "gaze y [surface coord]": "fixation y [surface coord]",
                 }
             )
         )
