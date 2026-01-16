@@ -568,26 +568,59 @@ def find_homographies(
 
 def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.DataFrame:
     """
-    Apply per-frame homographies to gaze points to transform them into a new coordinate system.
+    Apply per-frame or per-sample homographies to gaze points.
+
+    If `gaze_df` and `homographies` have the same index, homographies are applied
+    point-wise (efficiently vectorized). Otherwise, they are applied by grouping
+    `gaze_df` by 'frame_idx'.
 
     Parameters
     ----------
     gaze_df : pandas.DataFrame
-        DataFrame containing gaze points with columns:
-        - 'frame_idx': int, the frame index
-        - 'x', 'y': float, the gaze coordinates in the original coordinate system.
-    homography_for_frame : dict
-        A dictionary mapping frame indices to 3x3 homography matrices.
+        DataFrame containing gaze points with columns 'gaze x [px]' and 'gaze y [px]'.
+    homographies : pandas.DataFrame
+        DataFrame containing homography matrices in a 'homography' column.
 
     Returns
     -------
     pandas.DataFrame
-        A copy of `gaze_df` with additional columns:
-        - 'x_trans', 'y_trans': the transformed gaze coordinates.
+        A copy of `gaze_df` with additional columns 'gaze x [surface coords]' and 'gaze y [surface coords]'.
     """
     gaze_df = gaze_df.copy()
-    gaze_df["x_trans"] = np.nan
-    gaze_df["y_trans"] = np.nan
+    gaze_df["gaze x [surface coord]"] = np.nan
+    gaze_df["gaze y [surface coord]"] = np.nan
+
+    # Case 1: DataFrames are aligned by index (e.g. gaze-sampled homographies)
+    if gaze_df.index.equals(homographies.index):
+        # Filter for rows where both have data
+        valid_mask = (
+            gaze_df[["gaze x [px]", "gaze y [px]"]].notna().all(axis=1)
+            & homographies["homography"].notna()
+        )
+
+        if not valid_mask.any():
+            return gaze_df
+
+        idx_valid = gaze_df.index[valid_mask]
+        points = gaze_df.loc[idx_valid, ["gaze x [px]", "gaze y [px]"]].values
+        # Stack 3x3 matrices into (N, 3, 3)
+        H_stack = np.stack(homographies.loc[idx_valid, "homography"].values)
+
+        # Vectorized homography application: [x', y', w']^T = H @ [x, y, 1]^T
+        points_h = np.column_stack([points, np.ones(len(points))])
+        transformed_h = np.einsum("nij,nj->ni", H_stack, points_h)
+
+        # Convert from homogeneous to normal 2D
+        transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
+        gaze_df.loc[idx_valid, "gaze x [surface coord]"] = transformed_2d[:, 0]
+        gaze_df.loc[idx_valid, "gaze y [surface coord]"] = transformed_2d[:, 1]
+        return gaze_df
+
+    # Case 2: Group by frame_idx (legacy / video-sampled homographies)
+    if "frame_idx" not in gaze_df.columns:
+        raise ValueError(
+            "gaze_df must contain 'frame_idx' if not aligned with homographies."
+        )
 
     # convert homographies to dict
     homography_for_frame = {
@@ -605,8 +638,8 @@ def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.Dat
         # transform the gaze coords
         gaze_points = gaze_df.loc[idx_sel, ["gaze x [px]", "gaze y [px]"]].values
         gaze_trans = _apply_homography(gaze_points, H)
-        gaze_df.loc[idx_sel, "x_trans"] = gaze_trans[:, 0]
-        gaze_df.loc[idx_sel, "y_trans"] = gaze_trans[:, 1]
+        gaze_df.loc[idx_sel, "gaze x [surface coord]"] = gaze_trans[:, 0]
+        gaze_df.loc[idx_sel, "gaze y [surface coord]"] = gaze_trans[:, 1]
 
     return gaze_df
 
@@ -741,7 +774,7 @@ def _resample_homographies_to_gaze(
 
     from ..preprocess import interpolate
 
-    resampled_h = interpolate(gaze_df.index, h_df)
+    resampled_h = interpolate(gaze_df.index.to_numpy(), h_df)
 
     # Reconstruct homography matrices
     hs = [resampled_h[f"h{r}{c}"].values for r in range(3) for c in range(3)]

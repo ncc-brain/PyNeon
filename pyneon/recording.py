@@ -809,9 +809,12 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """
         Project gaze coordinates from eye space to surface space using homographies.
 
-        Computes or loads frame-wise homographies and applies them to the synchronized
-        gaze data to transform it into surface coordinates. If a saved version exists
-        and `overwrite` is False, the data is loaded from disk.
+        Computes or loads frame-wise or sample-wise homographies and applies them to
+        either synchronized or raw gaze data. If homographies are already sampled to
+        the raw gaze timestamps, they are applied directly. Otherwise, synchronized
+        gaze is used.
+
+        If a saved version exists and `overwrite` is False, the data is loaded from disk.
 
         Parameters
         ----------
@@ -820,7 +823,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         tag_info : pandas.DataFrame, optional
             AprilTag marker info used to compute homographies. Required if `homographies` is None.
         synced_gaze : Stream, optional
-            Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
+            Gaze data aligned to video frames. If None, will be either `self.gaze` or
+            computed using `sync_gaze_to_video()` depending on the `homographies` frequency.
         overwrite : bool, optional
             If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.
         output_path : str or pathlib.Path, optional
@@ -832,7 +836,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             A Stream containing gaze data with surface coordinates, including:
                 - 'frame_idx': Frame index
                 - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
-                - Any additional columns from the synchronized gaze input
+                - Any additional columns from the gaze input
         """
 
         if output_path is None:
@@ -855,8 +859,11 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             homographies = self.find_homographies(tag_info=tag_info)
 
         if synced_gaze is None:
-            # Check if synced gaze already exists
-            synced_gaze = self.sync_gaze_to_video()
+            # Detect frequency / alignment
+            if homographies.data.index.equals(self.gaze.data.index):
+                synced_gaze = self.gaze
+            else:
+                synced_gaze = self.sync_gaze_to_video()
 
         data = gaze_on_surface(synced_gaze.data, homographies.data)
 
