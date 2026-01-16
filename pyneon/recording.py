@@ -710,8 +710,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             nthreads=nthreads,
             quad_decimate=quad_decimate,
             skip_frames=skip_frames,
-            detection_window=detection_window,
-            window_type=window_type,
+            range=detection_window,
+            range_type=window_type,
         )
 
         if all_detections.empty:

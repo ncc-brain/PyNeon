@@ -15,8 +15,8 @@ def detect_apriltags(
     nthreads: int = 4,
     quad_decimate: float = 1.0,
     skip_frames: int = 1,
-    detection_window: Optional[tuple[int | float, int | float]] = None,
-    window_type: str = "frame_number",
+    range: Optional[tuple[int | float, int | float]] = None,
+    range_type: Literal["frame", "time", "timestamp"] = "frame",
 ) -> pd.DataFrame:
     """
     Detect AprilTags in a video and report their data for every processed frame,
@@ -36,15 +36,15 @@ def detect_apriltags(
     skip_frames : int, optional
         If > 1, detect tags only in every Nth frame.
         E.g., skip_frames=5 will process frames 0, 5, 10, 15, etc.
-    detection_window : tuple, optional
+    range : tuple, optional
         A tuple (start, end) specifying the range to search for AprilTag detections.
-        The interpretation depends on `window_type`. Default is None (all frames).
-    window_type : str, optional
-        Specifies the type of values in `detection_window`:
-            - "frame_number": start and end are frame indices (0-based)
-            - "video_time": start and end are in seconds (relative to video start)
+        The interpretation depends on `range_type`. Defaults to ``None`` (all frames).
+    range_type : str, optional
+        Specifies the type of values in `range`:
             - "timestamp": start and end are absolute timestamps in nanoseconds
-        Default is "frame_number".
+            - "time": start and end are in seconds (relative to video start)
+            - "frame": start and end are frame indices (0-based)
+        Defaults to "frame".
 
     Returns
     -------
@@ -87,26 +87,23 @@ def detect_apriltags(
     start_frame_idx = 0
     end_frame_idx = len(video.ts) - 1
 
-    if detection_window is not None:
-        start, end = detection_window
-        
-        if window_type == "frame_number":
+    if range is not None:
+        start, end = range
+
+        if range_type == "frame":
             # Already in frame indices, use directly
             start_frame_idx, end_frame_idx = int(start), int(end)
-        elif window_type == "video_time":
-            #use video fps from opencv
+        elif range_type == "time":
+            # use video fps from opencv
             fps = video.get(cv2.CAP_PROP_FPS)
             frame_duration_ns = 1e9 / fps
             start_frame_idx = int(start * 1e9 / frame_duration_ns)
             end_frame_idx = int(end * 1e9 / frame_duration_ns)
-        elif window_type == "timestamp":
+        elif range_type == "timestamp":
             # Convert from nanosecond timestamps to frame indices
             start_frame_idx = int(np.searchsorted(video.ts, start, side="left"))
             end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
-        else:
-            raise ValueError(f"Unknown window_type: {window_type}. Must be 'frame_number', 'video_time', or 'timestamp'.")
 
-    total_frames = len(video.ts)
     all_detections = []
     processed_frame_idx = 0  # counts how many frames we've actually processed
 
@@ -153,10 +150,11 @@ def detect_apriltags(
     else:
         # Seek to the start frame first
         video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
-        
+
         # We'll read frames in order within the specified window
         for actual_frame_idx in tqdm(
-            range(start_frame_idx, end_frame_idx + 1), desc="Detecting AprilTags (sequential)"
+            range(start_frame_idx, end_frame_idx + 1),
+            desc="Detecting AprilTags (sequential)",
         ):
             ret, frame = video.read()
             if not ret:
@@ -585,9 +583,7 @@ def find_homographies(
         if (upsample_to == "video" or upsample_to == "gaze") and hasattr(video, "ts"):
             max_frame = len(video.ts) - 1
         else:
-            max_frame = (
-                max(detection_df["frame_idx"]) if not detection_df.empty else 0
-            )
+            max_frame = max(detection_df["frame_idx"]) if not detection_df.empty else 0
         homography_for_frame = _upsample_homographies(
             homography_for_frame, max_frame, max_gap=max_gap, extrapolate=extrapolate
         )

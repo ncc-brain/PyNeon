@@ -252,7 +252,7 @@ class Stream(BaseTabular):
             End timestamp/time/row to crop the data to. If ``None``,
             the maximum timestamp/time/row in the data is used. Defaults to ``None``.
         by : "timestamp" or "time" or "row", optional
-            Whether tmin and tmax are UTC timestamps in nanoseconds
+            Whether tmin and tmax are Unix timestamps in nanoseconds
             OR relative times in seconds OR row numbers of the stream data.
             Defaults to "timestamp".
 
@@ -596,31 +596,3 @@ class Stream(BaseTabular):
         inst = self if inplace else self.copy()
         inst.data = pd.concat([inst.data, other_data], axis=1)
         return None if inplace else inst
-
-    def detect_events_from_derivative(
-        self,
-        column: str,
-        threshold: Number,
-        min_duration: Optional[Number] = None,
-    ) -> "Events":
-        """
-        Detect events based on velocity thresholding of a specified data column.
-
-        Parameters
-        ----------
-        column : str
-            The data column on which to compute velocity for event detection.
-        threshold : Number
-            Threshold above which an event is detected.
-            The units depend on the units of the specified column
-            and the timestamps (e.g., px/s for gaze position in pixels).
-        min_duration : float
-            Minimum duration (in seconds) for an event to be valid.
-
-
-        Returns
-        -------
-        Events
-            An Events object containing the detected events with
-            ``start timestamp [ns]`` and ``end timestamp [ns]`` columns.
-        """

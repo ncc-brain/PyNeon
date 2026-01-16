@@ -126,13 +126,6 @@ class Epochs:
             warn(f"No data found for epoch(s): {empty_epochs}.", RuntimeWarning)
         return epochs
 
-    @cached_property
-    def epochs_flat_df(self) -> pd.DataFrame:
-        """
-        A flattened DataFrame representation of epochs concatenated together.
-        """
-        pass
-
     @property
     def empty_epochs(self) -> list[int]:
         """Indices of epochs that contain no data.
@@ -195,7 +188,7 @@ class Epochs:
 
     @property
     def t_ref(self) -> np.ndarray:
-        """The reference time for each epoch in UTC nanoseconds."""
+        """The reference time for each epoch in Unix nanoseconds."""
         return self.epochs_info["t_ref"].to_numpy()
 
     @property
@@ -279,7 +272,7 @@ class Epochs:
         self,
         column_names: str | list[str] = "all",
         sampling_rate: Optional[Number] = None,
-        float_kind: str | int = "linear",
+        float_kind: str | int = "regression",
         other_kind: str | int = "nearest",
     ) -> tuple[np.ndarray, dict]:
         """
@@ -306,8 +299,8 @@ class Epochs:
         info : dict
             A dictionary containing:
 
-                "column_ids": List of provided column names.\n
-                "t_rel": The common time grid, in nanoseconds.\n
+                "epoch_times": The common time grid, in nanoseconds.\n
+                "column_names": List of provided column names.\n
                 "nan_flag": Boolean indicating whether NaN values were found in the data.
         """
         if not isinstance(self.source, Stream):
@@ -359,46 +352,104 @@ class Epochs:
 
         return epochs_np, info
 
-    def baseline_correction(
+    def apply_baseline(
         self,
-        baseline_window: tuple[Number | None, Number | None] = (None, 0),
-        method: str = "mean",
+        baseline: tuple[Number | None, Number | None] = (None, 0),
+        method: Literal["mean", "regression"] = "mean",
         exclude_cols: list[str] = [],
         inplace: bool = True,
-    ) -> pd.DataFrame | None:
+    ) -> dict | None:
         """
-        Perform baseline correction on epochs.
+        Apply baseline correction on epochs. Only applied to columns of float type.
 
-        For linear columns, applies mean or linear detrend subtraction within the baseline window.
-        For circular columns, applies the correction on unwrapped data and wraps the result.
+        The baseline data is extracted and used to compute the correction.
+        When ``method="mean"``, the mean of the baseline window is subtracted from the entire epoch.
+        When ``method="regression"``, a linear trend is fitted to the baseline window and subtracted.
+
+        For columns containing circular data (e.g., "yaw [deg]"), the correction is applied on unwrapped
+        data (rad) and the result is wrapped back to degrees after correction.
 
         Parameters
         ----------
-        baseline_window : tuple of Number
+        baseline : tuple of Number
             Time window (relative to reference) for baseline computation in seconds.
-        method : str, default="mean"
-            Baseline correction method: "mean" or "linear".
+        method : Literal["mean", "regression"]
+            Baseline correction method: "mean" or "regression".
         exclude_cols : list of str
             Columns to exclude from baseline correction.
-        inplace : bool, default=True
-            If True, modifies epochs in place. If False, returns corrected data.
+        inplace : bool, optional
+            If ``True``, replace ``epochs_dict``. Otherwise returns a new instance of dict.
+            Defaults to ``False``.
 
         Returns
         -------
-        pandas.DataFrame or None
-            If inplace=False, returns the corrected data DataFrame. Otherwise None.
+        dict or None
+            A new dict with modified epoch data if ``inplace=False``, otherwise ``None``.
+            See :attr:`pyneon.Epochs.epochs_dict` for details.
         """
-        from pyneon.utils.variables import default_circular_columns
+
+        def _get_baseline_mask(
+            t_rel_sec: np.ndarray,
+            t_min: Number | None,
+            t_max: Number | None,
+        ) -> np.ndarray:
+            """Create boolean mask for baseline window."""
+            if t_min is None:
+                return t_rel_sec <= t_max
+            elif t_max is None:
+                return t_rel_sec >= t_min
+            else:
+                return (t_rel_sec >= t_min) & (t_rel_sec <= t_max)
+
+        def _apply_baseline_correction(
+            epoch_df: pd.DataFrame,
+            cols_to_correct: list[str],
+            circ_cols: list[str],
+            baseline_mask: np.ndarray,
+            epoch_time_s: np.ndarray,
+            method: str,
+        ) -> None:
+            """Consolidated baseline correction for linear and circular float columns."""
+            if method == "mean":
+                baseline_means = epoch_df.loc[baseline_mask, cols_to_correct].mean()
+                epoch_df.loc[:, cols_to_correct] -= baseline_means
+            elif method == "regression":
+                t_base = epoch_time_s[baseline_mask]
+                for col in cols_to_correct:
+                    y = epoch_df.loc[baseline_mask, col].to_numpy()
+
+                    if (
+                        len(t_base) < 2
+                        or np.any(np.isnan(t_base))
+                        or np.any(np.isnan(y))
+                    ):
+                        continue
+
+                    # Fit trend on baseline and subtract from the whole trial
+                    coeffs = np.polyfit(t_base, y, 1)
+                    trend = np.polyval(coeffs, epoch_time_s)
+                    epoch_df.loc[:, col] -= trend
+
+            # Wrap circular columns back to range after correction
+            for col in circ_cols:
+                vals = epoch_df[col].to_numpy()
+                vals_rad = vals * (2 * np.pi / 360)
+                valid = ~np.isnan(vals_rad)
+                vals_unwrapped_rad = np.full_like(vals_rad, np.nan)
+                vals_unwrapped_rad[valid] = np.unwrap(vals_rad[valid])
+                vals_deg_unwrapped = vals_unwrapped_rad * (360 / (2 * np.pi))
+                vals_deg_wrapped = ((vals_deg_unwrapped + 180) % 360) - 180
+                epoch_df.loc[:, col] = vals_deg_wrapped
+
+        from pyneon.utils.variables import circular_columns
 
         if not isinstance(self.source, Stream):
             raise TypeError("Baseline correction requires the source to be a Stream.")
 
-        circular_cols = set(default_circular_columns)
-
         # Parse parameters
-        t_min, t_max = baseline_window
+        t_min, t_max = baseline
         if t_min is not None and t_max is not None and (t_max < t_min):
-            raise ValueError("baseline_window[1] must be >= baseline_window[0]")
+            raise ValueError("baseline[1] must be >= baseline[0]")
 
         # Determine target streams/data
         if inplace:
@@ -413,113 +464,36 @@ class Epochs:
 
             epoch_df = epoch.data.copy()
             # Only apply to float columns and respect excludes
-            float_cols = [
+            cols_to_correct = [
                 c
                 for c in epoch_df.select_dtypes(include=[float]).columns
                 if c not in exclude_cols
             ]
 
-            if not float_cols:
+            if not cols_to_correct:
                 continue
-
+                
             # Get baseline mask
-            t_rel_sec = epoch_df["epoch time [ns]"].to_numpy() * 1e-9
-            baseline_mask = self._get_baseline_mask(t_rel_sec, t_min, t_max)
+            epoch_time_s = epoch_df["epoch time [ns]"].to_numpy() * 1e-9
+            baseline_mask = _get_baseline_mask(epoch_time_s, t_min, t_max)
 
             if not baseline_mask.any():
                 warn(f"Baseline window is empty for epoch {idx}.", RuntimeWarning)
                 continue
 
             # Identify which target float columns are circular
-            epoch_circ_cols = [c for c in float_cols if c in circular_cols]
-
-            # Step 1: Unwrap circular columns first
-            self._unwrap_circular_columns(epoch_df, epoch_circ_cols)
+            epoch_circ_cols = [c for c in cols_to_correct if c in circular_columns]
 
             # Step 2: Apply baseline correction (Linear or Mean) to all float columns
-            self._apply_baseline_correction(
-                epoch_df, float_cols, epoch_circ_cols, baseline_mask, t_rel_sec, method
+            _apply_baseline_correction(
+                epoch_df,
+                cols_to_correct,
+                epoch_circ_cols,
+                baseline_mask,
+                epoch_time_s,
+                method,
             )
-
-            # Update global data if returning a copy
-            if inplace:
-                epoch.data = epoch_df
-
         return None if inplace else epochs_to_process
-
-    def _apply_baseline_correction(
-        self,
-        epoch_df: pd.DataFrame,
-        float_cols: list[str],
-        circ_cols: list[str],
-        baseline_mask: np.ndarray,
-        t_rel_sec: np.ndarray,
-        method: str,
-    ) -> None:
-        """Consolidated baseline correction for linear and circular float columns."""
-        if method == "mean":
-            baseline_means = epoch_df.loc[baseline_mask, float_cols].mean()
-            epoch_df.loc[:, float_cols] -= baseline_means
-
-        elif method == "linear":
-            t_base = t_rel_sec[baseline_mask]
-            for col in float_cols:
-                y = epoch_df.loc[baseline_mask, col].to_numpy()
-
-                if len(t_base) < 2 or np.any(np.isnan(t_base)) or np.any(np.isnan(y)):
-                    continue
-
-                # Fit trend on baseline and subtract from the whole trial
-                coeffs = np.polyfit(t_base, y, 1)
-                trend = np.polyval(coeffs, t_rel_sec)
-                epoch_df.loc[:, col] -= trend
-        else:
-            raise ValueError("method must be 'mean' or 'linear'")
-
-        # Wrap circular columns back to range after correction
-        for col in circ_cols:
-            vals = epoch_df[col].to_numpy()
-            wrapped = ((vals + 180) % 360) - 180
-            epoch_df.loc[:, col] = wrapped
-
-    def _get_baseline_mask(
-        self,
-        t_rel_sec: np.ndarray,
-        t_min: Number | None,
-        t_max: Number | None,
-    ) -> np.ndarray:
-        """Create boolean mask for baseline window."""
-        if t_min is None:
-            return t_rel_sec <= t_max
-        elif t_max is None:
-            return t_rel_sec >= t_min
-        else:
-            return (t_rel_sec >= t_min) & (t_rel_sec <= t_max)
-
-    def _unwrap_circular_columns(
-        self,
-        epoch_df: pd.DataFrame,
-        circ_cols: list[str],
-    ) -> None:
-        """Unwrap circular columns in-place, converting to/from radians."""
-        for col in circ_cols:
-            if col not in epoch_df.columns:
-                continue
-
-            trial_values = epoch_df[col].to_numpy()
-            if np.all(np.isnan(trial_values)):
-                continue
-
-            # Convert degrees to radians
-            trial_values_rad = trial_values * (2 * np.pi / 360)
-
-            # Unwrap
-            valid = ~np.isnan(trial_values_rad)
-            trial_unwrapped_rad = np.full_like(trial_values_rad, np.nan)
-            trial_unwrapped_rad[valid] = np.unwrap(trial_values_rad[valid])
-
-            # Convert back to degrees (unwrapped)
-            epoch_df[col] = trial_unwrapped_rad * (360 / (2 * np.pi))
 
 
 @fill_doc
@@ -629,7 +603,7 @@ def construct_epochs_info(
     """
     Handles the construction of the ``epochs_info`` DataFrame for creating epochs. It populates
     single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
-    and converts all times to UTC timestamps in nanoseconds.
+    and converts all times to Unix timestamps in nanoseconds.
 
     Parameters
     ----------

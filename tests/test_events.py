@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import re
 
+
 @pytest.mark.parametrize(
     "by",
     ["timestamp", "row"],

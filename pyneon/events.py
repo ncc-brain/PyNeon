@@ -287,7 +287,7 @@ class Events(BaseTabular):
             End timestamp/row to crop the data to. If ``None``,
             the maximum timestamp/row in the data is used. Defaults to ``None``.
         by : "timestamp" or "row", optional
-            Whether tmin and tmax are UTC timestamps in nanoseconds
+            Whether tmin and tmax are Unix timestamps in nanoseconds
             or row numbers of the stream data.
             Defaults to "timestamp".
 
