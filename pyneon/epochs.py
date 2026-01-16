@@ -272,7 +272,7 @@ class Epochs:
         self,
         column_names: str | list[str] = "all",
         sampling_rate: Optional[Number] = None,
-        float_kind: str | int = "regression",
+        float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
     ) -> tuple[np.ndarray, dict]:
         """
