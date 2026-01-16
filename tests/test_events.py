@@ -1,3 +1,34 @@
+import numpy as np
+import pytest
+import re
+
+@pytest.mark.parametrize(
+    "by",
+    ["timestamp", "row"],
+)
+def test_crop(sim_blinks, by):
+    ts0 = sim_blinks.start_ts
+    if by == "timestamp":
+        t0 = ts0.copy()
+    else:
+        t0 = np.arange(len(sim_blinks))
+    tmax_index = len(t0) // 2
+    ts_first_half = ts0[: tmax_index + 1]
+
+    sim_blinks_cropped = sim_blinks.crop(tmax=t0[tmax_index], by=by)
+    assert np.array_equal(sim_blinks_cropped.start_ts, ts_first_half)
+
+    # If none of tmin and tmax is provided, should raise ValueError
+    with pytest.raises(
+        ValueError, match=re.escape("At least one of `tmin` or `tmax` must be provided")
+    ):
+        sim_blinks.crop(by=by)
+
+    # If cropping after the end time, should find no data and raise ValueError
+    with pytest.raises(ValueError, match="No data found in the specified time range"):
+        sim_blinks.crop(tmin=t0[-1] + 1e9, by=by)
+
+
 def test_filter_by_duration(sim_blinks):
     # Check that blinks have expected durations before filtering (50 ms, 100 ms, 500 ms)
     assert set(sim_blinks.durations) == {50, 100, 500}

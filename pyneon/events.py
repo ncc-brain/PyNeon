@@ -264,11 +264,6 @@ class Events(BaseTabular):
     def id(self) -> np.ndarray:
         """
         Event ID.
-
-        Raises
-        ------
-        ValueError
-            If no ID column (e.g., ``<xxx> id``) is found in the instance.
         """
         return self.data.index.to_numpy()
 
@@ -303,7 +298,7 @@ class Events(BaseTabular):
         %(events_or_none)s
         """
         if tmin is None and tmax is None:
-            raise ValueError("At least one of tmin or tmax must be provided")
+            raise ValueError("At least one of `tmin` or `tmax` must be provided")
         if by == "timestamp":
             t = self.start_ts
         else:

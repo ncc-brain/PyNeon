@@ -15,6 +15,11 @@ def test_crop(sim_gaze, by):
         t0 = sim_gaze.times
     else:
         t0 = np.arange(len(sim_gaze))
+    tmax_index = len(t0) // 2
+    ts_first_half = ts0[: tmax_index + 1]
+
+    sim_gaze_cropped = sim_gaze.crop(tmax=t0[tmax_index], by=by)
+    assert np.array_equal(sim_gaze_cropped.ts, ts_first_half)
 
     # If none of tmin and tmax is provided, should raise ValueError
     with pytest.raises(

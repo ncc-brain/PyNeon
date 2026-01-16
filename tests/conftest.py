@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 import re
 
-from pyneon import Events, Recording, Stream
+from pyneon import Events, Stream
 from pyneon.utils.variables import nominal_sampling_rates
 
 
@@ -162,6 +162,11 @@ def sim_events():
         ValueError, match=re.escape("No `duration [ms]` column found in the instance.")
     ):
         _ = events.durations
+    with pytest.raises(
+        ValueError,
+        match=re.escape("No `end timestamp [ns]` column found in the instance."),
+    ):
+        _ = events.end_ts
     return events
 
 
