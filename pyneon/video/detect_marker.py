@@ -7,56 +7,34 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
+from .utils import marker_name_to_dict
 
 if TYPE_CHECKING:
     from .video import Video
 
 
 @fill_doc
-def detect_apriltags(
+def detect_markers(
     video: "Video",
-    tag_family: str = "tag36h11",
-    nthreads: int = 4,
-    quad_decimate: float = 1.0,
-    quad_sigma: float = 0.0,
-    refine_edges: int = 1,
-    decode_sharpening: float = 0.25,
-    debug: int = 0,
+    marker_name: str,
     step: int = 1,
     detection_window: Optional[tuple[int | float, int | float]] = None,
     detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
-    **detector_kwargs,
 ) -> Stream:
     """
-    Detect AprilTags in a video and report their data for every processed frame,
+    Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame,
     optionally using random access instead of sequential reading.
 
     Parameters
     ----------
     video : SceneVideo
-        Scene video to detect AprilTags from.
-    %(detect_apriltags_params)s
-    %(detect_apriltags_return)s
+        Scene video to detect markers from.
+    %(detect_markers_params)s
+    %(detect_markers_return)s
     """
-    try:
-        from pupil_apriltags import Detector
-    except ImportError:
-        raise ImportError(
-            "To detect AprilTags, the module `pupil-apriltags` is needed. "
-            "Install via: pip install pupil-apriltags"
-        )
-
-    # Initialize the detector
-    detector = Detector(
-        families=tag_family,
-        nthreads=nthreads,
-        quad_decimate=quad_decimate,
-        quad_sigma=quad_sigma,
-        refine_edges=refine_edges,
-        decode_sharpening=decode_sharpening,
-        debug=debug,
-        **detector_kwargs,
-    )
+    marker_type, dictionary = marker_name_to_dict(marker_name)
+    detectorParams = cv2.aruco.DetectorParameters()
+    detector = cv2.aruco.ArucoDetector(dictionary, detectorParams)
 
     random_access = True
     if step < 1:
@@ -92,97 +70,65 @@ def detect_apriltags(
 
     all_detections = []
 
-    # -----------------------------------------------------------------------
-    # Random-Access Approach
-    # -----------------------------------------------------------------------
+    def _process_frame(frame_idx: int, frame: np.ndarray) -> None:
+        """Run detection on a single frame and append results."""
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        all_corners, all_ids, _ = detector.detectMarkers(gray_frame)
+        if not all_ids:
+            return
+
+        for corners, tag_id in zip(all_corners, all_ids):
+            corners = corners.reshape((4, 2))
+            center = np.mean(corners, axis=0)
+            all_detections.append(
+                {
+                    "frame id": frame_idx,
+                    "timestamp [ns]": video.ts[frame_idx],
+                    "tag id": f"{marker_name}_{tag_id[0]}",
+                    "corner 0 x [px]": corners[0, 0],
+                    "corner 0 y [px]": corners[0, 1],
+                    "corner 1 x [px]": corners[1, 0],
+                    "corner 1 y [px]": corners[1, 1],
+                    "corner 2 x [px]": corners[2, 0],
+                    "corner 2 y [px]": corners[2, 1],
+                    "corner 3 x [px]": corners[3, 0],
+                    "corner 3 y [px]": corners[3, 1],
+                    "center x [px]": center[0],
+                    "center y [px]": center[1],
+                }
+            )
+
+    def _read_frame_at(idx: int) -> Optional[np.ndarray]:
+        """Seek to a frame and return it, or None if read fails."""
+        video.set(cv2.CAP_PROP_POS_FRAMES, idx)
+        ret, frame = video.read()
+        return frame if ret else None
+
     if random_access:
         frames_to_process = range(start_frame_idx, end_frame_idx + 1, step)
         for actual_frame_idx in tqdm(
-            frames_to_process, desc="Detecting AprilTags (random access)"
+            frames_to_process, desc="Detecting markers (random access)"
         ):
-            # Seek directly to the desired frame
-            video.set(cv2.CAP_PROP_POS_FRAMES, actual_frame_idx)
-            ret, frame = video.read()
-            if not ret:
+            frame = _read_frame_at(actual_frame_idx)
+            if frame is None:
                 break
-
-            # Convert to grayscale
-            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            # Detect
-            detections = detector.detect(gray_frame)
-
-            # Save
-            for detection in detections:
-                corners = detection.corners
-                center = np.mean(corners, axis=0)
-                all_detections.append(
-                    {
-                        "frame id": actual_frame_idx,
-                        "timestamp [ns]": video.ts[actual_frame_idx],
-                        "tag id": detection.tag_id,
-                        "corner 0 x [px]": corners[0, 0],
-                        "corner 0 y [px]": corners[0, 1],
-                        "corner 1 x [px]": corners[1, 0],
-                        "corner 1 y [px]": corners[1, 1],
-                        "corner 2 x [px]": corners[2, 0],
-                        "corner 2 y [px]": corners[2, 1],
-                        "corner 3 x [px]": corners[3, 0],
-                        "corner 3 y [px]": corners[3, 1],
-                        "center x [px]": center[0],
-                        "center y [px]": center[1],
-                    }
-                )
-
-    # -----------------------------------------------------------------------
-    # Sequential Approach
-    # -----------------------------------------------------------------------
-    else:
-        # Seek to the start frame first
+            _process_frame(actual_frame_idx, frame)
+    else: # Sequential
         video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
-
-        # We'll read frames in order within the specified window
         for actual_frame_idx in tqdm(
             range(start_frame_idx, end_frame_idx + 1),
-            desc="Detecting AprilTags (sequential)",
+            desc="Detecting markers (sequential)",
         ):
             ret, frame = video.read()
             if not ret:
                 break
-
             if actual_frame_idx % step != 0:
-                continue  # skip
+                continue
+            _process_frame(actual_frame_idx, frame)
 
-            # Convert to grayscale
-            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            # Detect
-            detections = detector.detect(gray_frame)
-
-            # Save
-            for detection in detections:
-                corners = detection.corners
-                center = np.mean(corners, axis=0)
-                all_detections.append(
-                    {
-                        "frame id": actual_frame_idx,
-                        "timestamp [ns]": video.ts[actual_frame_idx],
-                        "tag id": detection.tag_id,
-                        "corner 0 x [px]": corners[0, 0],
-                        "corner 0 y [px]": corners[0, 1],
-                        "corner 1 x [px]": corners[1, 0],
-                        "corner 1 y [px]": corners[1, 1],
-                        "corner 2 x [px]": corners[2, 0],
-                        "corner 2 y [px]": corners[2, 1],
-                        "corner 3 x [px]": corners[3, 0],
-                        "corner 3 y [px]": corners[3, 1],
-                        "center x [px]": center[0],
-                        "center y [px]": center[1],
-                    }
-                )
     df = pd.DataFrame(all_detections)
     if df.empty:
-        raise ValueError("No AprilTag detections found.")
+        raise ValueError("No marker detections found.")
 
     df.set_index("timestamp [ns]", inplace=True)
     return Stream(df)
@@ -195,7 +141,7 @@ def estimate_camera_pose(
 ) -> pd.DataFrame:
     """
     Estimate the camera pose for every frame by solving a Perspective-n-Point
-    (PnP) problem based on AprilTag detections.
+    (PnP) problem based on marker detections.
 
     Parameters
     ----------
@@ -203,7 +149,7 @@ def estimate_camera_pose(
         ``SceneVideo`` instance providing the frames' timestamps and the
         intrinsic matrices ``camera_matrix`` and ``dist_coeffs``.
     tag_locations_df :
-        pandas.DataFrame describing the world-coordinates of each AprilTag.
+        pandas.DataFrame describing the world-coordinates of each marker.
         Required columns::
 
             "tag_id"   : int
@@ -211,7 +157,7 @@ def estimate_camera_pose(
             "norm_vec" : list[float] length 3, [nx, ny, nz] front-face normal
             "size"     : float, edge length in meters
     all_detections : Stream or pandas.DataFrame, optional
-        Per-frame tag detections. If *None* the function calls ``detect_apriltags(video)``.
+        Per-frame tag detections. If *None* the function calls ``detect_markers(video)``.
         Expected columns::
 
             "frame id" : int
@@ -234,9 +180,9 @@ def estimate_camera_pose(
 
     # ------------------------------------------------------------------ prepare detections
     if all_detections is None:
-        from .apriltag import detect_apriltags  # local import to avoid cycle
+        from .detect_marker import detect_markers  # local import to avoid cycle
 
-        det_stream = detect_apriltags(video)
+        det_stream = detect_markers(video)
         detections_df = det_stream.data
     else:
         detections_df = getattr(all_detections, "data", all_detections)
@@ -395,7 +341,7 @@ def find_homographies(
     extrapolate: bool = True,
 ) -> pd.DataFrame:
     """
-    Compute a homography for each frame using available AprilTag detections.
+    Compute a homography for each frame using available marker detections.
 
     This function identifies all markers detected in a given frame, looks up their
     "ideal" (reference) positions from `tag_info`, and calls OpenCV's
@@ -439,7 +385,7 @@ def find_homographies(
     skip_frames : int, optional
         If > 1, the function will compute homographies only for every Nth frame.
         E.g., skip_frames=5 will compute homographies for frames 0, 5, 10, 15, etc.
-        Must match with the `skip_frames` used in `detect_apriltags`.
+        Must match with the `skip_frames` used in `detect_markers`.
     undistort : bool, optional
         Whether to undistort marker corners using the camera intrinsics in `video`.
         Default is True.

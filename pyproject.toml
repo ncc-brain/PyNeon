@@ -37,7 +37,6 @@ dependencies = [
 license = "MIT"
 
 [project.optional-dependencies]
-apriltags = ["pupil-apriltags"]
 dev = ["pytest"]
 doc = [
     "ruff",
@@ -49,7 +48,7 @@ doc = [
     "nbsphinx",
     "myst-parser",
 ]
-full = ["pyneon[apriltags,dev,doc]"]
+full = ["pyneon[dev,doc]"]
 
 [project.urls]
 Homepage = "https://ncc-brain.github.io/PyNeon/"

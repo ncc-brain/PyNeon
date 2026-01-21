@@ -1,5 +1,5 @@
-from .apriltag import (
-    detect_apriltags,
+from .detect_marker import (
+    detect_markers,
     estimate_camera_pose,
     find_homographies,
     gaze_on_surface,
@@ -10,7 +10,7 @@ from .video import Video
 __all__ = [
     "Video",
     "estimate_scanpath",
-    "detect_apriltags",
+    "detect_markers",
     "estimate_camera_pose",
     "gaze_on_surface",
     "find_homographies",

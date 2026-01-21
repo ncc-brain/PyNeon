@@ -19,7 +19,7 @@ from .utils.doc_decorators import fill_doc
 from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
 from .video import (
     Video,
-    detect_apriltags,
+    detect_markers,
     estimate_camera_pose,
     estimate_scanpath,
     find_homographies,
@@ -637,39 +637,31 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         return Stream(scanpath_df)
 
     @fill_doc
-    def detect_apriltags(
+    def detect_markers(
         self,
-        tag_family: str = "tag36h11",
-        nthreads: int = 4,
-        quad_decimate: float = 1.0,
-        quad_sigma: float = 0.0,
-        refine_edges: int = 1,
-        decode_sharpening: float = 0.25,
-        debug: int = 0,
+        marker_name: str = "tag36h11",
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-        **detector_kwargs,
     ) -> Stream:
         """
-        Detect AprilTags in a video and return their positions per frame.
+        Detect fiducial markers (AprilTag or ArUco) in a video and return their positions per frame.
 
-        Runs AprilTag detection on video frames using the `pupil_apriltags` backend.
         Uses saved results if available unless `overwrite=True`.
 
         Parameters
         ----------
-        %(detect_apriltags_params)s
+        %(detect_markers_params)s
         overwrite : bool, optional
             If True, reruns detection even if saved results exist. Default is False.
         output_path : str or pathlib.Path, optional
-            Path to save the detection CSV file. Defaults to `<der_dir>/apriltags.csv`.
+            Path to save the detection CSV file. Defaults to `<der_dir>/markers.csv`.
 
         Returns
         -------
-        %(detect_apriltags_return)s
+        %(detect_markers_return)s
         """
 
         window_unit = detection_window_unit
@@ -680,7 +672,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             )
 
         if output_path is None:
-            csv_file = self.der_dir / "apriltags.csv"
+            csv_file = self.der_dir / "markers.csv"
         else:
             csv_file = Path(output_path)
 
@@ -689,26 +681,19 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             print(f"Loading saved detections from {csv_file}")
             all_detections = pd.read_csv(csv_file, index_col="timestamp [ns]")
             if all_detections.empty:
-                raise ValueError("AprilTag detection data is empty.")
+                raise ValueError("Marker detection data is empty.")
             return Stream(all_detections)
 
-        all_detections = detect_apriltags(
+        all_detections = detect_markers(
             video=self.scene_video,
-            tag_family=tag_family,
-            nthreads=nthreads,
-            quad_decimate=quad_decimate,
-            quad_sigma=quad_sigma,
-            refine_edges=refine_edges,
-            decode_sharpening=decode_sharpening,
-            debug=debug,
+            marker_name=marker_name,
             step=step,
             detection_window=detection_window,
             detection_window_unit=window_unit,
-            **detector_kwargs,
         )
 
         if all_detections.data.empty:
-            raise ValueError("No AprilTag detections found.")
+            raise ValueError("No marker detections found.")
 
         # Save results to CSV
         all_detections.data.to_csv(csv_file, index=True)
@@ -789,7 +774,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return homographies
 
         if all_detections is None:
-            all_detections = self.detect_apriltags()
+            all_detections = self.detect_markers()
 
         # if all_detections.data.empty:
         #   raise ValueError("No AprilTag detections found.")
@@ -987,10 +972,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Parameters
         ----------
         tag_locations_df : pandas.DataFrame
-            3-D positions, normals and size for every AprilTag (columns:
+            3-D positions, normals and size for every marker (columns:
             'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
         all_detections : Stream, optional
-            Per-frame AprilTag detections.  If ``None``, they are produced by Recording.detect_apriltags().
+            Per-frame marker detections.  If ``None``, they are produced by Recording.detect_markers().
         output_path : str or pathlib.Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
         overwrite : bool, optional
@@ -1024,10 +1009,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             raise ValueError(f"tag_locations_df is missing: {missing}")
 
         if all_detections is None:
-            all_detections = self.detect_apriltags()
+            all_detections = self.detect_markers()
 
         if all_detections.data.empty:
-            raise ValueError("No AprilTag detections found.")
+            raise ValueError("No marker detections found.")
 
         # ------------------------------------------------------------------ compute
         cam_pose_df = estimate_camera_pose(

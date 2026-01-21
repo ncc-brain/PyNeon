@@ -12,7 +12,7 @@ from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
 from ..vis import overlay_scanpath, plot_frame
-from .apriltag import detect_apriltags
+from .detect_marker import detect_markers
 
 
 class Video(cv2.VideoCapture):
@@ -146,44 +146,30 @@ class Video(cv2.VideoCapture):
         return plot_frame(self, index, ax, auto_title, show)
 
     @fill_doc
-    def detect_apriltags(
+    def detect_markers(
         self,
-        tag_family: str = "tag36h11",
-        nthreads: int = 4,
-        quad_decimate: float = 1.0,
-        quad_sigma: float = 0.0,
-        refine_edges: int = 1,
-        decode_sharpening: float = 0.25,
-        debug: int = 0,
+        marker_name: str = "36h11",
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
-        **detector_kwargs,
     ) -> Stream:
         """
-        Detect AprilTags in the video frames.
+        Detect fiducial markers (AprilTag or ArUco) in the video frames.
 
         Parameters
         ----------
-        %(detect_apriltags_params)s
+        %(detect_markers_params)s
 
         Returns
         -------
-        %(detect_apriltags_return)s
+        %(detect_markers_return)s
         """
-        return detect_apriltags(
+        return detect_markers(
             self,
-            tag_family=tag_family,
-            nthreads=nthreads,
-            quad_decimate=quad_decimate,
-            quad_sigma=quad_sigma,
-            refine_edges=refine_edges,
-            decode_sharpening=decode_sharpening,
-            debug=debug,
+            marker_name=marker_name,
             step=step,
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,
-            **detector_kwargs,
         )
 
     def overlay_scanpath(
