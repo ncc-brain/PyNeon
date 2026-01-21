@@ -113,11 +113,18 @@ data_types = {
     "name": str,
     "type": str,
     # Detections
-    "processed_frame_idx": "Int64",
-    "frame_idx": "Int64",
-    "tag_id": "Int32",
-    "corners": object,
-    "center": object,
+    "frame id": "Int64",
+    "tag id": "Int32",
+    "corner 0 x [px]": float,
+    "corner 0 y [px]": float,
+    "corner 1 x [px]": float,
+    "corner 1 y [px]": float,
+    "corner 2 x [px]": float,
+    "corner 2 y [px]": float,
+    "corner 3 x [px]": float,
+    "corner 3 y [px]": float,
+    "center x [px]": float,
+    "center y [px]": float,
     # Video mean intensity
     "intensity": float,
     # Homographies

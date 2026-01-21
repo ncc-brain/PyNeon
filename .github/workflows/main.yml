@@ -2,7 +2,7 @@ name: PyNeon CI
 
 on:
   push:
-    branches: ["main"]  # to main
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 

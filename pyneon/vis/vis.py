@@ -472,15 +472,15 @@ def overlay_detections_and_pose(
         Recording object containing the video and related metadata.
     april_detections : pandas.DataFrame
         DataFrame containing AprilTag detections for each frame, with columns:
-            - 'frame_idx': int
+            - 'frame id': int
                 The frame number.
-            - 'tag_id': int
+            - 'tag id': int
                 The ID of the detected AprilTag.
             - 'corners': np.ndarray of shape (4,2)
                 Pixel coordinates of the tag's corners.
     camera_positions : :pandas.DataFrame
         DataFrame containing the camera positions for each frame, with at least:
-            - 'frame_idx': int
+            - 'frame id': int
                 The frame number.
             - 'smoothed_camera_pos': numpy.ndarray of shape (3,)
                 The camera position [x, y, z] in world coordinates.
@@ -511,20 +511,29 @@ def overlay_detections_and_pose(
 
     # Extract camera positions into a dictionary for quick lookup
     results_dict = {
-        row["frame_idx"]: row["camera_pos"] for _, row in camera_positions.iterrows()
+        row["frame id"]: row["camera_pos"] for _, row in camera_positions.iterrows()
     }
 
     # Group detections by frame
     detections_by_frame = {}
     for _, row in april_detections.iterrows():
-        fidx = row["frame_idx"]
-        if fidx not in detections_by_frame:
-            detections_by_frame[fidx] = []
-        detections_by_frame[fidx].append((row["tag_id"], row["corners"]))
+        f_id = row["frame id"]
+        if f_id not in detections_by_frame:
+            detections_by_frame[f_id] = []
+        # Reconstruct corners array from individual columns
+        corners = np.array(
+            [
+                [row["corner 0 x [px]"], row["corner 0 y [px]"]],
+                [row["corner 1 x [px]"], row["corner 1 y [px]"]],
+                [row["corner 2 x [px]"], row["corner 2 y [px]"]],
+                [row["corner 3 x [px]"], row["corner 3 y [px]"]],
+            ]
+        )
+        detections_by_frame[f_id].append((row["tag id"], corners))
 
     cap = recording.scene_video
     cap.reset()
-    frame_idx = 0
+    frame_id = 0
 
     # Track last known detections and positions
     last_detections = None
@@ -635,8 +644,8 @@ def overlay_detections_and_pose(
             # End of video
             break
 
-        current_detections = detections_by_frame.get(frame_idx, None)
-        current_position = results_dict.get(frame_idx, None)
+        current_detections = detections_by_frame.get(frame_id, None)
+        current_position = results_dict.get(frame_id, None)
 
         if current_position is not None:
             visited_positions.append(current_position)
@@ -709,7 +718,6 @@ def overlay_detections_and_pose(
                 break
 
         out.write(frame)
-        frame_idx += 1
 
     out.release()
     cv2.destroyAllWindows()

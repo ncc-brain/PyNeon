@@ -1,7 +1,8 @@
+import re
+
 import numpy as np
 import pandas as pd
 import pytest
-import re
 
 from pyneon import Events, Stream
 from pyneon.utils.variables import nominal_sampling_rates

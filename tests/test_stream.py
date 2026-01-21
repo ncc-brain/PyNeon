@@ -1,6 +1,7 @@
+import re
+
 import numpy as np
 import pytest
-import re
 
 
 @pytest.mark.parametrize(

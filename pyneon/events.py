@@ -391,6 +391,7 @@ class Events(BaseTabular):
     ) -> Optional["Events"]:
         """
         Filter events by matching values in a specified column.
+        Designed primarily for filtering ``Recording.events`` by their names.
 
         This method selects only the events whose value in ``col_name`` matches
         one or more of the provided ``names``. If no events match, a

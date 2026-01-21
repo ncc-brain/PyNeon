@@ -15,6 +15,7 @@ from .events import Events
 from .export import export_cloud_format, export_eye_bids, export_motion_bids
 from .preprocess import concat_events, concat_streams, smooth_camera_pose
 from .stream import Stream
+from .utils.doc_decorators import fill_doc
 from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
 from .video import (
     Video,
@@ -555,7 +556,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             A Stream indexed by `"timestamp [ns]"`, containing:
                 - 'gaze x [px]': Gaze x-coordinate in pixels
                 - 'gaze y [px]': Gaze y-coordinate in pixels
-                - 'frame_idx': Index of the video frame corresponding to the gaze data
+                - 'frame id': Index of the video frame corresponding to the gaze data
         """
         if output_path is None:
             gaze_file = self.der_dir / "gaze_synced.csv"
@@ -572,7 +573,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
         synced_gaze = self.gaze.window_average(self.scene_video.ts, window_size).data
-        synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
+        synced_gaze["frame id"] = np.arange(len(synced_gaze))
 
         synced_gaze.index.name = "timestamp [ns]"
         synced_gaze.to_csv(gaze_file, index=True)
@@ -635,14 +636,22 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         return Stream(scanpath_df)
 
+    @fill_doc
     def detect_apriltags(
         self,
         tag_family: str = "tag36h11",
+        nthreads: int = 4,
+        quad_decimate: float = 1.0,
+        quad_sigma: float = 0.0,
+        refine_edges: int = 1,
+        decode_sharpening: float = 0.25,
+        debug: int = 0,
+        step: int = 1,
+        detection_window: Optional[tuple[int | float, int | float]] = None,
+        detection_window_unit: str = "frame",
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-        detection_window: Optional[tuple[int | float, int | float]] = None,
-        window_type: str = "frame_number",
-        **kwargs,
+        **detector_kwargs,
     ) -> Stream:
         """
         Detect AprilTags in a video and return their positions per frame.
@@ -652,54 +661,33 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Parameters
         ----------
-        tag_family : str, optional
-            The AprilTag family to detect (e.g., "tag36h11"). Default is "tag36h11".
+        %(detect_apriltags_params)s
         overwrite : bool, optional
-            If True, reruns detection even if saved results exist.
+            If True, reruns detection even if saved results exist. Default is False.
         output_path : str or pathlib.Path, optional
-            Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
-        detection_window : tuple, optional
-            A tuple (start, end) specifying the range to search for AprilTag detections.
-            The interpretation depends on `window_type`. Default is None (all frames).
-        window_type : str, optional
-            Specifies the type of values in `detection_window`:
-                - "frame_number": start and end are frame indices (0-based)
-                - "video_time": start and end are in seconds (relative to video start)
-                - "timestamp": start and end are absolute timestamps in nanoseconds
-            Default is "frame_number".
-        **kwargs : keyword arguments
-            Additional parameters for AprilTag detection, including:
-                - 'nthreads': Number of threads to use for detection. Default is 4.
-                - 'quad_decimate': Decimation factor for the quad detection. Default is 1.0, thus no decimation.
-                - 'skip_frames': Number of frames to skip between detections. Default is 1, thus no skipping.
+            Path to save the detection CSV file. Defaults to `<der_dir>/apriltags.csv`.
 
         Returns
         -------
-        Stream
-            Stream indexed by `"timestamp [ns]"` with one row per detected tag, including:
-                - 'frame_idx': Index in the downsampled video sequence
-                - 'orig_frame_idx': Original frame index in the full video
-                - 'tag_id': ID of the detected AprilTag
-                - 'corners': A 4x2 array of tag corner coordinates
-                - 'center': A 1x2 array of the tag center
+        %(detect_apriltags_return)s
         """
 
-        nthreads = kwargs.get("nthreads", 4)
-        quad_decimate = kwargs.get("quad_decimate", 1.0)
-        skip_frames = kwargs.get("skip_frames", 1)
+        window_unit = detection_window_unit
+        valid_units = {"frame", "time", "timestamp"}
+        if window_unit not in valid_units:
+            raise ValueError(
+                f"Invalid detection_window_unit '{detection_window_unit}'. Use one of {sorted(valid_units)}."
+            )
 
         if output_path is None:
-            json_file = self.der_dir / "apriltags.json"
+            csv_file = self.der_dir / "apriltags.csv"
         else:
-            json_file = Path(output_path)
+            csv_file = Path(output_path)
 
         # If a saved file exists and overwrite is False, just read and return it
-        if json_file.is_file() and not overwrite:
-            print(f"Loading saved detections from {json_file}")
-            all_detections = pd.read_json(json_file, orient="records", lines=True)
-            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype(
-                "int64"
-            )
+        if csv_file.is_file() and not overwrite:
+            print(f"Loading saved detections from {csv_file}")
+            all_detections = pd.read_csv(csv_file, index_col="timestamp [ns]")
             if all_detections.empty:
                 raise ValueError("AprilTag detection data is empty.")
             return Stream(all_detections)
@@ -709,18 +697,23 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             tag_family=tag_family,
             nthreads=nthreads,
             quad_decimate=quad_decimate,
-            skip_frames=skip_frames,
-            range=detection_window,
-            range_type=window_type,
+            quad_sigma=quad_sigma,
+            refine_edges=refine_edges,
+            decode_sharpening=decode_sharpening,
+            debug=debug,
+            step=step,
+            detection_window=detection_window,
+            detection_window_unit=window_unit,
+            **detector_kwargs,
         )
 
-        if all_detections.empty:
+        if all_detections.data.empty:
             raise ValueError("No AprilTag detections found.")
 
-        # Save results to JSON
-        all_detections.reset_index().to_json(json_file, orient="records", lines=True)
+        # Save results to CSV
+        all_detections.data.to_csv(csv_file, index=True)
 
-        return Stream(all_detections)
+        return all_detections
 
     def find_homographies(
         self,
@@ -773,7 +766,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         -------
         Stream
             A Stream object indexed by `"timestamp [ns]"` containing:
-                - 'frame_idx': Video frame index
+                - 'frame_id': Video frame index
                 - 'homography': 3x3 NumPy array representing the homography matrix for that frame
         """
 
@@ -859,7 +852,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         -------
         Stream
             A Stream containing gaze data with surface coordinates, including:
-                - 'frame_idx': Frame index
+                - 'frame_id': Frame index
                 - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
                 - Any additional columns from the gaze input
         """
@@ -1007,7 +1000,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         -------
         Stream
             Indexed by "timestamp [ns]" with columns
-            ``'frame_idx', 'translation_vector', 'rotation_vector', 'camera_pos'``.
+            ``'frame id', 'translation_vector', 'rotation_vector', 'camera_pos'``.
         """
 
         json_file = (
@@ -1062,7 +1055,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Parameters
         ----------
         camera_pose_raw : pandas.DataFrame, optional
-            Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
+            Raw camera-pose table with columns ``'frame id'`` and ``'camera_pos'``.
             If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
             computes it via Recording.estimate_camera_pose().
         overwrite : bool, default False

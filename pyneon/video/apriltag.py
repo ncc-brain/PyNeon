@@ -5,19 +5,28 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from ..stream import Stream
+from ..utils.doc_decorators import fill_doc
+
 if TYPE_CHECKING:
     from .video import Video
 
 
+@fill_doc
 def detect_apriltags(
     video: "Video",
     tag_family: str = "tag36h11",
     nthreads: int = 4,
     quad_decimate: float = 1.0,
-    skip_frames: int = 1,
-    range: Optional[tuple[int | float, int | float]] = None,
-    range_type: Literal["frame", "time", "timestamp"] = "frame",
-) -> pd.DataFrame:
+    quad_sigma: float = 0.0,
+    refine_edges: int = 1,
+    decode_sharpening: float = 0.25,
+    debug: int = 0,
+    step: int = 1,
+    detection_window: Optional[tuple[int | float, int | float]] = None,
+    detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    **detector_kwargs,
+) -> Stream:
     """
     Detect AprilTags in a video and report their data for every processed frame,
     optionally using random access instead of sequential reading.
@@ -26,36 +35,8 @@ def detect_apriltags(
     ----------
     video : SceneVideo
         Scene video to detect AprilTags from.
-    tag_family : str, optional
-        The AprilTag family to detect (default 'tag36h11').
-    nthreads : int, optional
-        Number of CPU threads for the detector (default 4).
-    quad_decimate : float, optional
-        Downsample input frames by this factor for detection (default 1.0).
-        Larger values = faster detection, but might miss smaller tags.
-    skip_frames : int, optional
-        If > 1, detect tags only in every Nth frame.
-        E.g., skip_frames=5 will process frames 0, 5, 10, 15, etc.
-    range : tuple, optional
-        A tuple (start, end) specifying the range to search for AprilTag detections.
-        The interpretation depends on `range_type`. Defaults to ``None`` (all frames).
-    range_type : str, optional
-        Specifies the type of values in `range`:
-            - "timestamp": start and end are absolute timestamps in nanoseconds
-            - "time": start and end are in seconds (relative to video start)
-            - "frame": start and end are frame indices (0-based)
-        Defaults to "frame".
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame containing AprilTag detections, with columns:
-        - 'timestamp [ns]' (index): The timestamp of the frame
-        - 'processed_frame_idx': The count of processed frames (0-based)
-        - 'frame_idx': The actual frame index in the video
-        - 'tag_id': The ID of the detected AprilTag
-        - 'corners': (4,2) array of tag corner coordinates
-        - 'center': (1,2) array for the tag center
+    %(detect_apriltags_params)s
+    %(detect_apriltags_return)s
     """
     try:
         from pupil_apriltags import Detector
@@ -70,14 +51,19 @@ def detect_apriltags(
         families=tag_family,
         nthreads=nthreads,
         quad_decimate=quad_decimate,
+        quad_sigma=quad_sigma,
+        refine_edges=refine_edges,
+        decode_sharpening=decode_sharpening,
+        debug=debug,
+        **detector_kwargs,
     )
 
     random_access = True
-    if skip_frames < 1:
-        raise ValueError("skip_frames must be >= 1")
-    if skip_frames < 5:
+    if step < 1:
+        raise ValueError("step must be >= 1")
+    if step < 5:
         print(
-            "Warning: skip_frames < 5 may be inefficient with random access. Switching to sequential access."
+            "Warning: step < 5 may be inefficient with random access. Switching to sequential access."
         )
         random_access = False  # sequential access is faster for small skips
 
@@ -87,31 +73,30 @@ def detect_apriltags(
     start_frame_idx = 0
     end_frame_idx = len(video.ts) - 1
 
-    if range is not None:
-        start, end = range
+    if detection_window is not None:
+        start, end = detection_window
 
-        if range_type == "frame":
+        if detection_window_unit == "frame":
             # Already in frame indices, use directly
             start_frame_idx, end_frame_idx = int(start), int(end)
-        elif range_type == "time":
+        elif detection_window_unit == "time":
             # use video fps from opencv
             fps = video.get(cv2.CAP_PROP_FPS)
             frame_duration_ns = 1e9 / fps
             start_frame_idx = int(start * 1e9 / frame_duration_ns)
             end_frame_idx = int(end * 1e9 / frame_duration_ns)
-        elif range_type == "timestamp":
+        elif detection_window_unit == "timestamp":
             # Convert from nanosecond timestamps to frame indices
             start_frame_idx = int(np.searchsorted(video.ts, start, side="left"))
             end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
 
     all_detections = []
-    processed_frame_idx = 0  # counts how many frames we've actually processed
 
     # -----------------------------------------------------------------------
     # Random-Access Approach
     # -----------------------------------------------------------------------
     if random_access:
-        frames_to_process = range(start_frame_idx, end_frame_idx + 1, skip_frames)
+        frames_to_process = range(start_frame_idx, end_frame_idx + 1, step)
         for actual_frame_idx in tqdm(
             frames_to_process, desc="Detecting AprilTags (random access)"
         ):
@@ -133,16 +118,21 @@ def detect_apriltags(
                 center = np.mean(corners, axis=0)
                 all_detections.append(
                     {
-                        "processed_frame_idx": processed_frame_idx,
-                        "frame_idx": actual_frame_idx,
+                        "frame id": actual_frame_idx,
                         "timestamp [ns]": video.ts[actual_frame_idx],
-                        "tag_id": detection.tag_id,
-                        "corners": corners,
-                        "center": center,
+                        "tag id": detection.tag_id,
+                        "corner 0 x [px]": corners[0, 0],
+                        "corner 0 y [px]": corners[0, 1],
+                        "corner 1 x [px]": corners[1, 0],
+                        "corner 1 y [px]": corners[1, 1],
+                        "corner 2 x [px]": corners[2, 0],
+                        "corner 2 y [px]": corners[2, 1],
+                        "corner 3 x [px]": corners[3, 0],
+                        "corner 3 y [px]": corners[3, 1],
+                        "center x [px]": center[0],
+                        "center y [px]": center[1],
                     }
                 )
-
-            processed_frame_idx += 1
 
     # -----------------------------------------------------------------------
     # Sequential Approach
@@ -160,7 +150,7 @@ def detect_apriltags(
             if not ret:
                 break
 
-            if actual_frame_idx % skip_frames != 0:
+            if actual_frame_idx % step != 0:
                 continue  # skip
 
             # Convert to grayscale
@@ -175,26 +165,27 @@ def detect_apriltags(
                 center = np.mean(corners, axis=0)
                 all_detections.append(
                     {
-                        "processed_frame_idx": processed_frame_idx,
-                        "frame_idx": actual_frame_idx,
+                        "frame id": actual_frame_idx,
                         "timestamp [ns]": video.ts[actual_frame_idx],
-                        "tag_id": detection.tag_id,
-                        "corners": corners,
-                        "center": center,
+                        "tag id": detection.tag_id,
+                        "corner 0 x [px]": corners[0, 0],
+                        "corner 0 y [px]": corners[0, 1],
+                        "corner 1 x [px]": corners[1, 0],
+                        "corner 1 y [px]": corners[1, 1],
+                        "corner 2 x [px]": corners[2, 0],
+                        "corner 2 y [px]": corners[2, 1],
+                        "corner 3 x [px]": corners[3, 0],
+                        "corner 3 y [px]": corners[3, 1],
+                        "center x [px]": center[0],
+                        "center y [px]": center[1],
                     }
                 )
-
-            processed_frame_idx += 1
-
-    # -----------------------------------------------------------------------
-    # Create and return the DataFrame
-    # -----------------------------------------------------------------------
     df = pd.DataFrame(all_detections)
     if df.empty:
-        return df  # no detections found
+        raise ValueError("No AprilTag detections found.")
 
     df.set_index("timestamp [ns]", inplace=True)
-    return df
+    return Stream(df)
 
 
 def estimate_camera_pose(
@@ -219,39 +210,46 @@ def estimate_camera_pose(
             "pos_vec"  : list[float] length 3, [x, y, z] position of the tag
             "norm_vec" : list[float] length 3, [nx, ny, nz] front-face normal
             "size"     : float, edge length in meters
-    all_detections :
-        pandas.DataFrame with per-frame tag detections.  If *None* the function
-        calls ``detect_apriltags(video)``.  Expected columns::
+    all_detections : Stream or pandas.DataFrame, optional
+        Per-frame tag detections. If *None* the function calls ``detect_apriltags(video)``.
+        Expected columns::
 
-            "frame_idx" : int
-            "tag_id"    : int
-            "corners"   : ndarray (4, 2) pixel coordinates (TL, TR, BR, BL)
+            "frame id" : int
+            "tag id"   : int
+            "corner 0 x [px]", "corner 0 y [px]": First corner coordinates
+            "corner 1 x [px]", "corner 1 y [px]": Second corner coordinates
+            "corner 2 x [px]", "corner 2 y [px]": Third corner coordinates
+            "corner 3 x [px]", "corner 3 y [px]": Fourth corner coordinates
 
     Returns
     -------
     pandas.DataFrame
         One row per processed frame with columns::
 
-            "frame_idx"          : int
+            "frame id"          : int
             "translation_vector" : ndarray (3,)
             "rotation_vector"    : ndarray (3,)
             "camera_pos"         : ndarray (3,) camera position in world coord.
     """
 
     # ------------------------------------------------------------------ prepare detections
-    if all_detections is None or all_detections.empty:
+    if all_detections is None:
         from .apriltag import detect_apriltags  # local import to avoid cycle
 
-        all_detections = detect_apriltags(video)
-        if all_detections.empty:
-            return pd.DataFrame(
-                columns=[
-                    "frame_idx",
-                    "translation_vector",
-                    "rotation_vector",
-                    "camera_pos",
-                ]
-            )
+        det_stream = detect_apriltags(video)
+        detections_df = det_stream.data
+    else:
+        detections_df = getattr(all_detections, "data", all_detections)
+
+    if detections_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "frame_id",
+                "translation_vector",
+                "rotation_vector",
+                "camera_pos",
+            ]
+        )
 
     # ------------------------------------------------------------------ camera intrinsics
     camera_matrix = video.camera_matrix
@@ -276,17 +274,26 @@ def estimate_camera_pose(
 
     # ------------------------------------------------------------------ iterate over frames
     results = []
-    for frame in all_detections["frame_idx"].unique():
-        det_frame = all_detections.loc[all_detections["frame_idx"] == frame]
+    for frame in detections_df["frame id"].unique():
+        det_frame = detections_df.loc[detections_df["frame id"] == frame]
         if det_frame.empty:
             continue
 
         object_pts, image_pts = [], []
 
         for _, det in det_frame.iterrows():
-            corners_2d = np.asarray(det["corners"], dtype=np.float32)
+            # Reconstruct corners array from individual columns
+            corners_2d = np.array(
+                [
+                    [det["corner 0 x [px]"], det["corner 0 y [px]"]],
+                    [det["corner 1 x [px]"], det["corner 1 y [px]"]],
+                    [det["corner 2 x [px]"], det["corner 2 y [px]"]],
+                    [det["corner 3 x [px]"], det["corner 3 y [px]"]],
+                ],
+                dtype=np.float32,
+            )
 
-            tid = int(det["tag_id"])
+            tid = int(det["tag id"])
             if tid not in tag_info:
                 continue
 
@@ -337,7 +344,7 @@ def estimate_camera_pose(
 
         results.append(
             {
-                "frame_idx": int(frame),
+                "frame id": int(frame),
                 "translation_vector": t_vec.reshape(-1),
                 "rotation_vector": r_vec.reshape(-1),
                 "camera_pos": cam_pos.reshape(-1),
@@ -346,7 +353,7 @@ def estimate_camera_pose(
 
     return pd.DataFrame(
         results,
-        columns=["frame_idx", "translation_vector", "rotation_vector", "camera_pos"],
+        columns=["frame id", "translation_vector", "rotation_vector", "camera_pos"],
     )
 
 
@@ -411,9 +418,12 @@ def find_homographies(
         If `undistort=True`, these intrinsics are used to undistort marker corners.
     detection_df : pandas.DataFrame
         Must contain:
-        - 'frame_idx': int
-        - 'tag_id': int
-        - 'corners': np.ndarray of shape (4, 2) in video or PsychoPy coordinates
+        - 'frame id': int
+        - 'tag id': int
+        - 'corner 0 x [px]', 'corner 0 y [px]': First corner coordinates
+        - 'corner 1 x [px]', 'corner 1 y [px]': Second corner coordinates
+        - 'corner 2 x [px]', 'corner 2 y [px]': Third corner coordinates
+        - 'corner 3 x [px]', 'corner 3 y [px]': Fourth corner coordinates
     tag_info : pandas.DataFrame
         Must contain:
         - 'marker_id' (or 'tag_id'): int
@@ -511,12 +521,25 @@ def find_homographies(
 
         # Undistort detection corners
         def undistort_detection_corners(row):
-            c = np.array(row["corners"])
+            c = np.array(
+                [
+                    [row["corner 0 x [px]"], row["corner 0 y [px]"]],
+                    [row["corner 1 x [px]"], row["corner 1 y [px]"]],
+                    [row["corner 2 x [px]"], row["corner 2 y [px]"]],
+                    [row["corner 3 x [px]"], row["corner 3 y [px]"]],
+                ]
+            )
             return undistort_points(c, camera_matrix, dist_coeffs)
 
-        detection_df["corners"] = detection_df.apply(
-            undistort_detection_corners, axis=1
-        )
+        # Reconstruct corners array and store back
+        undistorted_corners = detection_df.apply(undistort_detection_corners, axis=1)
+        for i in range(4):
+            detection_df[f"corner {i} x [px]"] = undistorted_corners.apply(
+                lambda c: c[i, 0]
+            )
+            detection_df[f"corner {i} y [px]"] = undistorted_corners.apply(
+                lambda c: c[i, 1]
+            )
 
     # -----------------------------------------------------------------
     # 3. Compute a homography for each frame using *all* tag detections
@@ -529,7 +552,7 @@ def find_homographies(
     if settings is not None:
         default_settings.update(settings)
 
-    frames = detection_df["frame_idx"].unique()
+    frames = detection_df["frame id"].unique()
     homography_for_frame = {}
 
     marker_dict = {}
@@ -538,11 +561,11 @@ def find_homographies(
             row["marker_corners"], dtype=np.float32
         )
 
-    frames = detection_df["frame_idx"].unique()
+    frames = detection_df["frame id"].unique()
     homography_for_frame = {}
 
     for frame in tqdm(frames, desc="Computing homographies for frames"):
-        frame_detections = detection_df.loc[detection_df["frame_idx"] == frame]
+        frame_detections = detection_df.loc[detection_df["frame id"] == frame]
         if frame_detections.empty:
             homography_for_frame[frame] = None
             continue
@@ -557,7 +580,16 @@ def find_homographies(
                 # no reference corners for this tag
                 continue
 
-            corners_detected = np.array(detection["corners"], dtype=np.float32)
+            # Reconstruct corners array from individual columns
+            corners_detected = np.array(
+                [
+                    [detection["corner 0 x [px]"], detection["corner 0 y [px]"]],
+                    [detection["corner 1 x [px]"], detection["corner 1 y [px]"]],
+                    [detection["corner 2 x [px]"], detection["corner 2 y [px]"]],
+                    [detection["corner 3 x [px]"], detection["corner 3 y [px]"]],
+                ],
+                dtype=np.float32,
+            )
             ref_corners = marker_dict[tag_id]
 
             # optional shape check:
@@ -583,18 +615,18 @@ def find_homographies(
         if (upsample_to == "video" or upsample_to == "gaze") and hasattr(video, "ts"):
             max_frame = len(video.ts) - 1
         else:
-            max_frame = max(detection_df["frame_idx"]) if not detection_df.empty else 0
+            max_frame = max(detection_df["frame id"]) if not detection_df.empty else 0
         homography_for_frame = _upsample_homographies(
             homography_for_frame, max_frame, max_gap=max_gap, extrapolate=extrapolate
         )
 
     # Get timestamps for each frame_idx
-    frame_idx_to_ts = dict(zip(range(len(video.ts)), video.ts))
+    frame_id_to_ts = dict(zip(range(len(video.ts)), video.ts))
 
     records = [
-        {"timestamp [ns]": frame_idx_to_ts[frame], "frame_idx": frame, "homography": H}
+        {"timestamp [ns]": frame_id_to_ts[frame], "frame id": frame, "homography": H}
         for frame, H in homography_for_frame.items()
-        if frame in frame_idx_to_ts
+        if frame in frame_id_to_ts
     ]
 
     df = pd.DataFrame.from_records(records)
@@ -602,7 +634,7 @@ def find_homographies(
         df = df.set_index("timestamp [ns]")
     else:
         # Create an empty DataFrame with the expected columns and index
-        df = pd.DataFrame(columns=["frame_idx", "homography"])
+        df = pd.DataFrame(columns=["frame id", "homography"])
         df.index.name = "timestamp [ns]"
 
     if upsample_to == "gaze":
@@ -663,21 +695,21 @@ def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.Dat
         gaze_df.loc[idx_valid, "gaze y [surface coord]"] = transformed_2d[:, 1]
         return gaze_df
 
-    # Case 2: Group by frame_idx (legacy / video-sampled homographies)
-    if "frame_idx" not in gaze_df.columns:
+    # Case 2: Group by frame id (legacy / video-sampled homographies)
+    if "frame id" not in gaze_df.columns:
         raise ValueError(
-            "gaze_df must contain 'frame_idx' if not aligned with homographies."
+            "gaze_df must contain 'frame id' if not aligned with homographies."
         )
 
     # convert homographies to dict
     homography_for_frame = {
-        int(row["frame_idx"]): row["homography"] for _, row in homographies.iterrows()
+        int(row["frame id"]): row["homography"] for _, row in homographies.iterrows()
     }
 
     for frame in tqdm(
-        gaze_df["frame_idx"].unique(), desc="Applying homography to gaze points"
+        gaze_df["frame id"].unique(), desc="Applying homography to gaze points"
     ):
-        idx_sel = gaze_df["frame_idx"] == frame
+        idx_sel = gaze_df["frame id"] == frame
         H = homography_for_frame.get(frame, None)
         if H is None:
             # no valid homography

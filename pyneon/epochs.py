@@ -472,7 +472,7 @@ class Epochs:
 
             if not cols_to_correct:
                 continue
-                
+
             # Get baseline mask
             epoch_time_s = epoch_df["epoch time [ns]"].to_numpy() * 1e-9
             baseline_mask = _get_baseline_mask(epoch_time_s, t_min, t_max)
