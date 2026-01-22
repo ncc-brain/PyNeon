@@ -6,13 +6,13 @@ import pandas as pd
 from tqdm import tqdm
 
 if TYPE_CHECKING:
-    from ..stream import Gaze
+    from ..stream import Stream
     from .video import Video
 
 
 def estimate_scanpath(
     video: "Video",
-    sync_gaze: "Gaze",
+    sync_gaze: "Stream",
     lk_params: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
@@ -20,9 +20,9 @@ def estimate_scanpath(
 
     Parameters
     ----------
-    video : SceneVideo
+    video : Video
         Video object containing the frames.
-    sync_gaze : NeonGaze
+    sync_gaze : Stream
         Gaze data synchronized with the video frames.
     lk_params : dict, optional
         Parameters for the Lucas-Kanade optical flow algorithm.

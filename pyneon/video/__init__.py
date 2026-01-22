@@ -1,10 +1,6 @@
-from .detect_marker import (
-    detect_markers,
-    estimate_camera_pose,
-    find_homographies,
-    gaze_on_surface,
-)
-from .mapping import estimate_scanpath
+from .estimate_pose import estimate_camera_pose
+from .marker_mapping import detect_markers, find_homographies, gaze_on_surface
+from .scanpath import estimate_scanpath
 from .video import Video
 
 __all__ = [

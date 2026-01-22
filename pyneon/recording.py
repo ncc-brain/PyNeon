@@ -959,7 +959,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         return Events(data)
 
-    def estimate_camera_pose(
+    def _estimate_camera_pose(
         self,
         tag_locations_df: pd.DataFrame,
         all_detections: Optional[Stream] = None,
@@ -1027,7 +1027,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         return Stream(cam_pose_df)
 
-    def smooth_camera_pose(
+    def _smooth_camera_pose(
         self,
         camera_pose_raw: Optional[pd.DataFrame] = None,
         overwrite: bool = False,

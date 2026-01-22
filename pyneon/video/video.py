@@ -12,7 +12,7 @@ from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
 from ..vis import overlay_scanpath, plot_frame
-from .detect_marker import detect_markers
+from .marker_mapping import detect_markers
 
 
 class Video(cv2.VideoCapture):
@@ -227,7 +227,7 @@ class Video(cv2.VideoCapture):
         cap = self
         cap.reset()
         camera_matrix = self.camera_matrix
-        dist_coeffs = self.dist_coeffs
+        dist_coeffs = self.distortion_coefficients
 
         # Get self properties
         frame_width, frame_height = self.width, self.height
