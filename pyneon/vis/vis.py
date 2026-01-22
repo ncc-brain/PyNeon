@@ -474,10 +474,10 @@ def overlay_detections_and_pose(
         DataFrame containing AprilTag detections for each frame, with columns:
             - 'frame id': int
                 The frame number.
-            - 'tag id': int
+            - 'marker id': int
                 The ID of the detected AprilTag.
             - 'corners': np.ndarray of shape (4,2)
-                Pixel coordinates of the tag's corners.
+                Pixel coordinates of the marker's corners.
     camera_positions : :pandas.DataFrame
         DataFrame containing the camera positions for each frame, with at least:
             - 'frame id': int
@@ -529,7 +529,7 @@ def overlay_detections_and_pose(
                 [row["corner 3 x [px]"], row["corner 3 y [px]"]],
             ]
         )
-        detections_by_frame[f_id].append((row["tag id"], corners))
+        detections_by_frame[f_id].append((row["marker id"], corners))
 
     cap = recording.scene_video
     cap.reset()
@@ -546,7 +546,7 @@ def overlay_detections_and_pose(
     graph_width, graph_height = graph_size
 
     def draw_detections(frame, detections, color, thickness=2):
-        for tag_id, corners in detections:
+        for marker_id, corners in detections:
             # Ensure corners are a NumPy array before converting to int
             corners_array = np.array(corners, dtype=np.float32)
             corners_int = corners_array.astype(int)
@@ -557,7 +557,7 @@ def overlay_detections_and_pose(
             corner_text_pos = (corners_int[0, 0], corners_int[0, 1] - 10)
             cv2.putText(
                 frame,
-                f"ID: {tag_id}",
+                f"ID: {marker_id}",
                 corner_text_pos,
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,

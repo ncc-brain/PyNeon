@@ -59,12 +59,12 @@ class Video(cv2.VideoCapture):
 
     @property
     def first_ts(self) -> int:
-        """First timestamp of the stream."""
+        """First timestamp of the video."""
         return int(self.ts[0])
 
     @property
     def last_ts(self) -> int:
-        """Last timestamp of the stream."""
+        """Last timestamp of the video."""
         return int(self.ts[-1])
 
     @property
@@ -79,7 +79,7 @@ class Video(cv2.VideoCapture):
 
     @property
     def duration(self) -> float:
-        """Duration of the stream in seconds."""
+        """Duration of the video in seconds."""
         return float(self.times[-1] - self.times[0])
 
     @property
@@ -111,24 +111,46 @@ class Video(cv2.VideoCapture):
             raise ValueError("Distortion coefficients not found in video info.")
         return np.array(self.info["distortion_coefficients"])
 
-    def get_frame(self, timestamp: Union[int, np.int64]) -> int:
+    def timestamp_to_frame_index(
+        self, timestamp: Union[int, np.int64, np.ndarray]
+    ) -> np.ndarray:
         """
-        Get the frame index corresponding to a given timestamp.
+        Map one or many timestamps (ns) to the corresponding frame index/indices.
 
         Parameters
         ----------
-        timestamp : int
-            Timestamp in nanoseconds.
+        timestamp : int or numpy.ndarray
+            Timestamp(s) in nanoseconds.
 
         Returns
         -------
-        int
-            Frame index corresponding to the timestamp.
+        numpy.ndarray
+            Frame index/indices corresponding to the timestamp(s).
         """
-        if timestamp < self.ts[0] or timestamp > self.ts[-1]:
+        ts_array = np.atleast_1d(np.asarray(timestamp, dtype=np.int64))
+
+        if ts_array.size > 0 and (
+            ts_array.min() < self.ts[0] or ts_array.max() > self.ts[-1]
+        ):
             raise ValueError("Timestamp is out of bounds of the video timestamps.")
 
-        return int(np.searchsorted(self.ts, timestamp))
+        indices = np.searchsorted(self.ts, ts_array).astype(int)
+        return indices
+
+    def read_gray_frame_at(self, frame_id: int) -> Optional[np.ndarray]:
+        """
+        Random-access read of a single frame converted to grayscale.
+
+        Returns None if the frame cannot be read.
+        """
+        if frame_id < 0 or frame_id >= len(self.ts):
+            raise ValueError("frame_id is out of bounds for this video.")
+
+        self.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+        ret, frame = self.read()
+        if not ret:
+            return None
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     def reset(self):
         if self.isOpened():
@@ -172,7 +194,7 @@ class Video(cv2.VideoCapture):
     @fill_doc
     def detect_markers(
         self,
-        marker_name: str = "36h11",
+        marker_family: str = "36h11",
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
@@ -190,7 +212,7 @@ class Video(cv2.VideoCapture):
         """
         return detect_markers(
             self,
-            marker_name=marker_name,
+            marker_family=marker_family,
             step=step,
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,

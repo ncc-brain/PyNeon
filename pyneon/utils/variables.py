@@ -114,7 +114,7 @@ data_types = {
     "type": str,
     # Detections
     "frame id": "Int64",
-    "tag id": str,
+    "marker id": str,
     "corner 0 x [px]": float,
     "corner 0 y [px]": float,
     "corner 1 x [px]": float,

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .utils import marker_name_to_dict
+from .utils import marker_family_to_dict
 
 if TYPE_CHECKING:
     from .video import Video
@@ -16,14 +16,14 @@ if TYPE_CHECKING:
 @fill_doc
 def detect_markers(
     video: "Video",
-    marker_name: str,
+    marker_family: str,
     step: int = 1,
     detection_window: Optional[tuple[int | float, int | float]] = None,
     detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
 ) -> Stream:
     """
-    Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame,
-    optionally using random access instead of sequential reading.
+    Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
+    Uses random access to read frames for dense sampling (step < 5), otherwise sequential streaming.
 
     Parameters
     ----------
@@ -32,59 +32,45 @@ def detect_markers(
     %(detect_markers_params)s
     %(detect_markers_return)s
     """
-    marker_type, dictionary = marker_name_to_dict(marker_name)
+    marker_type, dictionary = marker_family_to_dict(marker_family)
     detectorParams = cv2.aruco.DetectorParameters()
     detector = cv2.aruco.ArucoDetector(dictionary, detectorParams)
 
-    random_access = True
     if step < 1:
         raise ValueError("step must be >= 1")
-    if step < 5:
-        print(
-            "Warning: step < 5 may be inefficient with random access. Switching to sequential access."
-        )
-        random_access = False  # sequential access is faster for small skips
 
-    # -----------------------------------------------------------------
-    # Convert detection_window to frame indices
-    # -----------------------------------------------------------------
-    start_frame_idx = 0
-    end_frame_idx = len(video.ts) - 1
-
-    if detection_window is not None:
+    # Specify indices of frames to process
+    if detection_window is None: # full video
+        start_frame_idx = 0
+        end_frame_idx = len(video.ts) - 1
+    else:
         start, end = detection_window
-
         if detection_window_unit == "frame":
             # Already in frame indices, use directly
             start_frame_idx, end_frame_idx = int(start), int(end)
         elif detection_window_unit == "time":
-            # use video fps from opencv
-            fps = video.get(cv2.CAP_PROP_FPS)
-            frame_duration_ns = 1e9 / fps
-            start_frame_idx = int(start * 1e9 / frame_duration_ns)
-            end_frame_idx = int(end * 1e9 / frame_duration_ns)
+            start_frame_idx = int(np.searchsorted(video.times, start, side="left"))
+            end_frame_idx = int(np.searchsorted(video.times, end, side="right")) - 1
         elif detection_window_unit == "timestamp":
             # Convert from nanosecond timestamps to frame indices
             start_frame_idx = int(np.searchsorted(video.ts, start, side="left"))
             end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
 
-    all_detections = []
-
-    def _process_frame(frame_idx: int, frame: np.ndarray) -> None:
-        """Run detection on a single frame and append results."""
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    def _process_frame(frame_idx: int, gray_frame: np.ndarray) -> list[dict]:
+        """Run detection on a single grayscale frame and return detection records."""
+        records = []
         all_corners, all_ids, _ = detector.detectMarkers(gray_frame)
         if all_ids is None:
-            return
+            return records
 
-        for corners, tag_id in zip(all_corners, all_ids):
+        for corners, marker_id in zip(all_corners, all_ids):
             corners = corners.reshape((4, 2))
             center = np.mean(corners, axis=0)
-            all_detections.append(
+            records.append(
                 {
                     "frame id": frame_idx,
                     "timestamp [ns]": video.ts[frame_idx],
-                    "tag id": f"{marker_name}_{tag_id[0]}",
+                    "marker id": f"{marker_family}_{marker_id[0]}",
                     "corner 0 x [px]": corners[0, 0],
                     "corner 0 y [px]": corners[0, 1],
                     "corner 1 x [px]": corners[1, 0],
@@ -97,36 +83,37 @@ def detect_markers(
                     "center y [px]": center[1],
                 }
             )
+        return records
+    detected_markers = []
+    frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
 
-    def _read_frame_at(idx: int) -> Optional[np.ndarray]:
-        """Seek to a frame and return it, or None if read fails."""
-        video.set(cv2.CAP_PROP_POS_FRAMES, idx)
-        ret, frame = video.read()
-        return frame if ret else None
+    use_random_access = step < 5
 
-    if random_access:
-        frames_to_process = range(start_frame_idx, end_frame_idx + 1, step)
+    if use_random_access:
         for actual_frame_idx in tqdm(
-            frames_to_process, desc="Detecting markers (random access)"
+            frames_to_process, desc="Detecting markers"
         ):
-            frame = _read_frame_at(actual_frame_idx)
-            if frame is None:
+            gray_frame = video.read_gray_frame_at(actual_frame_idx)
+            if gray_frame is None:
                 break
-            _process_frame(actual_frame_idx, frame)
-    else:  # Sequential
+            records = _process_frame(actual_frame_idx, gray_frame)
+            detected_markers.extend(records)
+    else:
         video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
         for actual_frame_idx in tqdm(
             range(start_frame_idx, end_frame_idx + 1),
-            desc="Detecting markers (sequential)",
+            desc="Detecting markers",
         ):
             ret, frame = video.read()
             if not ret:
                 break
             if actual_frame_idx % step != 0:
                 continue
-            _process_frame(actual_frame_idx, frame)
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            records = _process_frame(actual_frame_idx, gray_frame)
+            detected_markers.extend(records)
 
-    df = pd.DataFrame(all_detections)
+    df = pd.DataFrame(detected_markers)
     if df.empty:
         raise ValueError("No marker detections found.")
 
@@ -159,13 +146,11 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 
 def find_homographies(
     video: "Video",
-    detection_df: pd.DataFrame,
-    tag_info: pd.DataFrame,
-    frame_size: tuple[int, int],
-    coordinate_system: str = "opencv",
+    detected_markers: Stream,
+    marker_info: pd.DataFrame,
     skip_frames: int = 1,
     undistort: bool = True,
-    settings: Optional[dict] = None,
+    settings: dict = {},
     upsample_to: Optional[Literal["video", "gaze"]] = None,
     gaze_df: Optional[pd.DataFrame] = None,
     max_gap: Optional[int] = None,
@@ -175,11 +160,11 @@ def find_homographies(
     Compute a homography for each frame using available marker detections.
 
     This function identifies all markers detected in a given frame, looks up their
-    "ideal" (reference) positions from `tag_info`, and calls OpenCV's
+    "ideal" (reference) positions from `marker_info`, and calls OpenCV's
     `cv2.findHomography` to compute a 3x3 transformation matrix mapping from
     detected corners in the video image to the reference plane (e.g., surface coordinates).
 
-    If the coordinate system is "psychopy", corners in both `tag_info` and
+    If the coordinate system is "psychopy", corners in both `marker_info` and
     `detection_df` are first converted to an OpenCV-like pixel coordinate system.
     If `undistort=True` and camera intrinsics are available in the `video` object,
     the marker corners are also undistorted.
@@ -193,26 +178,14 @@ def find_homographies(
     video : Video
         An object containing camera intrinsics (camera_matrix, dist_coeffs) and timestamps.
         If `undistort=True`, these intrinsics are used to undistort marker corners.
-    detection_df : pandas.DataFrame
+    detected_markers : Stream
+        Stream containing per-frame marker detections as returned by
+        :meth:`detect_markers`.
+    marker_info : pandas.DataFrame
         Must contain:
-        - 'frame id': int
-        - 'tag id': int
-        - 'corner 0 x [px]', 'corner 0 y [px]': First corner coordinates
-        - 'corner 1 x [px]', 'corner 1 y [px]': Second corner coordinates
-        - 'corner 2 x [px]', 'corner 2 y [px]': Third corner coordinates
-        - 'corner 3 x [px]', 'corner 3 y [px]': Fourth corner coordinates
-    tag_info : pandas.DataFrame
-        Must contain:
-        - 'marker_id' (or 'tag_id'): int
+        - 'marker_id': 
         - 'marker_corners': np.ndarray of shape (4, 2) giving the reference positions
             for each corner (e.g., on a surface plane)
-    frame_size : (width, height)
-        The pixel resolution of the video frames. Used if `coordinate_system="psychopy"`
-        to convert from PsychoPy to OpenCV-style coordinates.
-    coordinate_system : str, optional
-        One of {"opencv", "psychopy"}. If "psychopy", corners in `detection_df` and
-        `tag_info` are converted to OpenCV pixel coords before the homography is computed.
-        Default is "opencv".
     skip_frames : int, optional
         If > 1, the function will compute homographies only for every Nth frame.
         E.g., skip_frames=5 will compute homographies for frames 0, 5, 10, 15, etc.
@@ -251,39 +224,8 @@ def find_homographies(
         homography matrix (3x3 NumPy array) or None if insufficient markers or points
         were available to compute a valid homography.
     """
-
-    # -----------------------------------------------------------------
-    # 1. Convert from PsychoPy coords to OpenCV if necessary
-    # -----------------------------------------------------------------
-    if coordinate_system.lower() == "psychopy":
-        # Example transform function
-        def psychopy_coords_to_opencv(coords, frame_size):
-            w, h = frame_size
-            coords = np.array(coords)  # Convert list to ndarray
-            x_opencv = coords[:, 0] + (w / 2)
-            y_opencv = (h / 2) - coords[:, 1]
-            return np.column_stack(
-                (x_opencv, y_opencv)
-            ).tolist()  # Convert back to list
-
-        # Convert the reference corners in tag_info
-        def convert_marker_corners(c):
-            return psychopy_coords_to_opencv(c, frame_size)
-
-        tag_info["marker_corners"] = tag_info["marker_corners"].apply(
-            convert_marker_corners
-        )
-
-    # -----------------------------------------------------------------
-    # 2. Undistort corners & gaze if desired
-    # -----------------------------------------------------------------
-    camera_matrix = getattr(video, "camera_matrix", None)
-    dist_coeffs = getattr(video, "dist_coeffs", None)
-    if dist_coeffs is None:
-        dist_coeffs = np.zeros((4, 1), dtype=np.float32)
-
-    if undistort and camera_matrix is not None:
-
+    detection_df = detected_markers.data
+    if undistort:
         def undistort_points(
             points: np.ndarray, K: np.ndarray, D: np.ndarray
         ) -> np.ndarray:
@@ -306,7 +248,7 @@ def find_homographies(
                     [row["corner 3 x [px]"], row["corner 3 y [px]"]],
                 ]
             )
-            return undistort_points(c, camera_matrix, dist_coeffs)
+            return undistort_points(c, video.camera_matrix, video.distortion_coefficients)
 
         # Reconstruct corners array and store back
         undistorted_corners = detection_df.apply(undistort_detection_corners, axis=1)
@@ -318,28 +260,20 @@ def find_homographies(
                 lambda c: c[i, 1]
             )
 
-    # -----------------------------------------------------------------
-    # 3. Compute a homography for each frame using *all* tag detections
-    # -----------------------------------------------------------------
+    # compute homography for each frame using all marker detections
     default_settings = {
         "method": cv2.LMEDS  # Disable RANSAC completely
     }
-
-    # Merge user-provided settings with defaults
-    if settings is not None:
-        default_settings.update(settings)
+    default_settings.update(settings)
 
     frames = detection_df["frame id"].unique()
     homography_for_frame = {}
 
     marker_dict = {}
-    for _, row in tag_info.iterrows():
+    for _, row in marker_info.iterrows():
         marker_dict[row["marker_id"]] = np.array(
             row["marker_corners"], dtype=np.float32
         )
-
-    frames = detection_df["frame id"].unique()
-    homography_for_frame = {}
 
     for frame in tqdm(frames, desc="Computing homographies for frames"):
         frame_detections = detection_df.loc[detection_df["frame id"] == frame]
@@ -351,10 +285,10 @@ def find_homographies(
         surface_points = []  # from the reference plane or "ideal" positions
 
         for _, detection in frame_detections.iterrows():
-            tag_id = detection["tag id"]
+            marker_id = detection["marker id"]
 
-            if tag_id not in marker_dict:
-                # no reference corners for this tag
+            if marker_id not in marker_dict:
+                # no reference corners for this marker
                 continue
 
             # Reconstruct corners array from individual columns
@@ -367,7 +301,7 @@ def find_homographies(
                 ],
                 dtype=np.float32,
             )
-            ref_corners = marker_dict[tag_id]
+            ref_corners = marker_dict[marker_id]
 
             # optional shape check:
             if corners_detected.shape != (4, 2) or ref_corners.shape != (4, 2):
@@ -534,16 +468,12 @@ def _upsample_homographies(
         Keys will be standard Python int. Values can be 3x3 np.ndarray or None
         for frames in gaps exceeding max_gap or before/after detections (if extrapolate=False).
     """
-    # ------------------------------------------------------------------
-    # 1) Convert any np.int64 keys to Python int so sorting won't break
-    # ------------------------------------------------------------------
+    # convert np.int64 keys to int for sorting
     homographies_fixed_keys = {}
     for frame_idx, H in homographies_dict.items():
         homographies_fixed_keys[int(frame_idx)] = H
 
-    # ------------------------------------------------------------------
-    # 2) Sort frames that have known homographies
-    # ------------------------------------------------------------------
+    # sort frames that have known homographies
     known_frames = sorted(homographies_fixed_keys.keys())
     if not known_frames:
         # No known frames => return empty dict
@@ -551,9 +481,7 @@ def _upsample_homographies(
 
     upsampled = {}
 
-    # ------------------------------------------------------------------
-    # 2.5) Fill frames before the first known up to frame 0 (extrapolate)
-    # ------------------------------------------------------------------
+    # fill frames before the first known up to frame 0 (extrapolate)
     first_frame = known_frames[0]
     if extrapolate:
         for f in range(0, first_frame):
@@ -562,9 +490,7 @@ def _upsample_homographies(
         for f in range(0, first_frame):
             upsampled[f] = None
 
-    # ------------------------------------------------------------------
-    # 3) Interpolate between consecutive known frames
-    # ------------------------------------------------------------------
+    # interpolate between consecutive known frames
     for i in tqdm(range(len(known_frames) - 1), desc="Interpolating homographies"):
         f1 = known_frames[i]
         f2 = known_frames[i + 1]
@@ -601,18 +527,13 @@ def _upsample_homographies(
     if last_frame <= max_frame:
         upsampled[last_frame] = homographies_fixed_keys[last_frame]
 
-    # ------------------------------------------------------------------
-    # 4) Fill frames beyond the last known up to max_frame (extrapolate)
-    # ------------------------------------------------------------------
+    # Fill frames beyond the last known up to max_frame (extrapolate)
     if extrapolate:
         for f in range(last_frame + 1, max_frame + 1):
             upsampled[f] = homographies_fixed_keys[last_frame]
     else:
         for f in range(last_frame + 1, max_frame + 1):
             upsampled[f] = None
-
-    # Now, "upsampled" is already using Python int keys,
-    # so no further conversion is strictly needed.
 
     return upsampled
 

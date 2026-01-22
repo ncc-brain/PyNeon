@@ -40,9 +40,9 @@ epochs_info : pandas.DataFrame, shape (n_epochs, 4)
 """
 
 DOC["detect_markers_params"] = """
-marker_name : str, optional
-    Marker dictionary to detect (AprilTag or ArUco). Examples: '16h5', '25h9',
-    '36h10', '36h11', '4x4_50', '6x6_250'. Default 'tag36h11'.
+marker_family : str, optional
+    Marker family/dictionary to detect (AprilTag or ArUco). Examples: '16h5', '25h9',
+    '36h10', '36h11', '4x4_50', '6x6_250'. Default '36h11'.
 step : int, optional
     If > 1, detect markers only in every Nth frame (e.g., step=5 processes frames
     0, 5, 10, 15, ...). Defaults to 1.
@@ -61,7 +61,7 @@ DOC["detect_markers_return"] = """
 Stream
     Stream indexed by 'timestamp [ns]' with columns:
     - 'frame id': The frame number
-    - 'tag id': Marker ID, for example "36h11_0", "36h11_1"
+    - 'marker id': Marker ID, for example "36h11_0", "36h11_1"
     - 'corner 0 x [px]', 'corner 0 y [px]': First corner (TL)
     - 'corner 1 x [px]', 'corner 1 y [px]': Second corner (TR)
     - 'corner 2 x [px]', 'corner 2 y [px]': Third corner (BR)

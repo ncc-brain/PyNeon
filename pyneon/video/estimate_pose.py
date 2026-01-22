@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 def estimate_camera_pose(
     video: "Video",
-    tag_locations_df: pd.DataFrame,
-    all_detections: Optional[pd.DataFrame] = None,
+    marker_locations_df: pd.DataFrame,
+    detected_markers: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """
     Estimate the camera pose for every frame by solving a Perspective-n-Point
@@ -22,20 +22,20 @@ def estimate_camera_pose(
     video :
         ``SceneVideo`` instance providing the frames' timestamps and the
         intrinsic matrices ``camera_matrix`` and ``dist_coeffs``.
-    tag_locations_df :
+    marker_locations_df :
         pandas.DataFrame describing the world-coordinates of each marker.
         Required columns::
 
-            "tag_id"   : int
-            "pos_vec"  : list[float] length 3, [x, y, z] position of the tag
+            "marker_id"   : int
+            "pos_vec"  : list[float] length 3, [x, y, z] position of the marker
             "norm_vec" : list[float] length 3, [nx, ny, nz] front-face normal
             "size"     : float, edge length in meters
-    all_detections : Stream or pandas.DataFrame, optional
-        Per-frame tag detections. If *None* the function calls ``detect_markers(video)``.
+    detected_markers : Stream or pandas.DataFrame, optional
+        Per-frame marker detections. If *None* the function calls ``detect_markers(video)``.
         Expected columns::
 
             "frame id" : int
-            "tag id"   : int
+            "marker id"   : int
             "corner 0 x [px]", "corner 0 y [px]": First corner coordinates
             "corner 1 x [px]", "corner 1 y [px]": Second corner coordinates
             "corner 2 x [px]", "corner 2 y [px]": Third corner coordinates
@@ -52,14 +52,13 @@ def estimate_camera_pose(
             "camera_pos"         : ndarray (3,) camera position in world coord.
     """
 
-    # ------------------------------------------------------------------ prepare detections
-    if all_detections is None:
+    # prepare detections
+    if detected_markers is None:
         from .marker_mapping import detect_markers  # local import to avoid cycle
-
-        det_stream = detect_markers(video)
+        det_stream = detect_markers(video, marker_family="36h11")
         detections_df = det_stream.data
     else:
-        detections_df = getattr(all_detections, "data", all_detections)
+        detections_df = getattr(detected_markers, "data", detected_markers)
 
     if detections_df.empty:
         return pd.DataFrame(
@@ -71,28 +70,28 @@ def estimate_camera_pose(
             ]
         )
 
-    # ------------------------------------------------------------------ camera intrinsics
+    # camera intrinsics
     camera_matrix = video.camera_matrix
     dist_coeffs = video.dist_coeffs
     if dist_coeffs is None:
         dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
-    # ------------------------------------------------------------------ build lookup: tag_id -> (center, normal, half_size)
-    tag_info = {}
-    required = {"tag_id", "pos_vec", "norm_vec", "size"}
-    if not required.issubset(tag_locations_df.columns):
-        missing = required - set(tag_locations_df.columns)
-        raise ValueError(f"tag_locations_df is missing: {missing}")
+    # build lookup: marker_id -> (center, normal, half_size)
+    marker_info = {}
+    required = {"marker_id", "pos_vec", "norm_vec", "size"}
+    if not required.issubset(marker_locations_df.columns):
+        missing = required - set(marker_locations_df.columns)
+        raise ValueError(f"marker_locations_df is missing: {missing}")
 
-    for _, row in tag_locations_df.iterrows():
-        tag_id = int(row["tag_id"])
+    for _, row in marker_locations_df.iterrows():
+        marker_id = int(row["marker_id"])
         center = np.asarray(row["pos_vec"], dtype=np.float32)
         normal = np.asarray(row["norm_vec"], dtype=np.float32)
         normal /= np.linalg.norm(normal)  # normalize
         half = float(row["size"]) / 2.0
-        tag_info[tag_id] = (center, normal, half)
+        marker_info[marker_id] = (center, normal, half)
 
-    # ------------------------------------------------------------------ iterate over frames
+    # iterate over frames
     results = []
     for frame in detections_df["frame id"].unique():
         det_frame = detections_df.loc[detections_df["frame id"] == frame]
@@ -113,11 +112,11 @@ def estimate_camera_pose(
                 dtype=np.float32,
             )
 
-            tid = int(det["tag id"])
-            if tid not in tag_info:
+            marker_id = int(det["marker id"])
+            if marker_id not in marker_info:
                 continue
 
-            center3d, normal, half = tag_info[tid]
+            center3d, normal, half = marker_info[marker_id]
             # build orthonormal basis (X, Y, Z)
             Z = normal
             ref = np.array([0.0, 0.0, 1.0], dtype=np.float32)

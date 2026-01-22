@@ -631,7 +631,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         )
         scanpath_df.index.name = "timestamp [ns]"
 
-        # ------------------------------------------------------------------ save
+        # save
         scanpath_df.to_pickle(scanpath_path)
 
         return Stream(scanpath_df)
@@ -639,7 +639,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @fill_doc
     def detect_markers(
         self,
-        marker_name: str = "tag36h11",
+        marker_family: str = "36h11",
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
@@ -679,31 +679,31 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         # If a saved file exists and overwrite is False, just read and return it
         if csv_file.is_file() and not overwrite:
             print(f"Loading saved detections from {csv_file}")
-            all_detections = pd.read_csv(csv_file, index_col="timestamp [ns]")
-            if all_detections.empty:
+            detected_markers = pd.read_csv(csv_file, index_col="timestamp [ns]")
+            if detected_markers.empty:
                 raise ValueError("Marker detection data is empty.")
-            return Stream(all_detections)
+            return Stream(detected_markers)
 
-        all_detections = detect_markers(
+        detected_markers = detect_markers(
             video=self.scene_video,
-            marker_name=marker_name,
+            marker_family=marker_family,
             step=step,
             detection_window=detection_window,
             detection_window_unit=window_unit,
         )
 
-        if all_detections.data.empty:
+        if detected_markers.data.empty:
             raise ValueError("No marker detections found.")
 
         # Save results to CSV
-        all_detections.data.to_csv(csv_file, index=True)
+        detected_markers.data.to_csv(csv_file, index=True)
 
-        return all_detections
+        return detected_markers
 
     def find_homographies(
         self,
-        tag_info: pd.DataFrame,
-        all_detections: Optional[Stream] = None,
+        marker_info: pd.DataFrame,
+        detected_markers: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
         upsample_to: Optional[Literal["video", "gaze"]] = None,
@@ -716,13 +716,13 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Parameters
         ----------
-        tag_info : pandas.DataFrame
+        marker_info : pandas.DataFrame
             DataFrame containing AprilTag reference positions and orientations, with columns:
-                - 'tag_id': ID of the tag
-                - 'x', 'y', 'z': 3D coordinates of the tag's center
-                - 'normal_x', 'normal_y', 'normal_z': Normal vector of the tag surface
-                - 'size': Side length of the tag in meters
-        all_detections : Stream, optional
+                - 'marker_id': ID of the marker, such as 36h10_1
+                - 'x', 'y', 'z': 3D coordinates of the marker's center
+                - 'normal_x', 'normal_y', 'normal_z': Normal vector of the marker surface
+                - 'size': Side length of the marker in meters
+        detected_markers : Stream, optional
             Stream containing AprilTag detection results per frame. If None, detections are recomputed.
         overwrite : bool, optional
             Whether to force recomputation even if saved homographies exist.
@@ -742,8 +742,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Default is True.
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
-                - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
-                - 'surface_size': Size of the surface in pixels (width, height). Default is (1920, 1080).
                 - 'skip_frames': Number of frames to skip between detections. Default is 1.
                 - 'settings': Additional settings for the homography computation.
 
@@ -756,8 +754,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """
 
         # Defaults for kwargs
-        coordinate_system = kwargs.get("coordinate_system", "opencv")
-        surface_size = kwargs.get("surface_size", (1920, 1080))
         skip_frames = kwargs.get("skip_frames", 1)
         settings = kwargs.get("settings", None)
 
@@ -773,10 +769,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             homographies = Stream(df)
             return homographies
 
-        if all_detections is None:
-            all_detections = self.detect_markers()
+        if detected_markers is None:
+            detected_markers = self.detect_markers()
 
-        # if all_detections.data.empty:
+        # if detected_markers.data.empty:
         #   raise ValueError("No AprilTag detections found.")
 
         gaze_df = None
@@ -785,11 +781,9 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         homographies_df = find_homographies(
             self.scene_video,
-            all_detections.data,
-            tag_info.copy(deep=True),
-            surface_size,
+            detected_markers.data,
+            marker_info.copy(deep=True),
             skip_frames=skip_frames,
-            coordinate_system=coordinate_system,
             settings=settings,
             upsample_to=upsample_to,
             gaze_df=gaze_df,
@@ -804,7 +798,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def gaze_on_surface(
         self,
         homographies: Optional[Stream] = None,
-        tag_info: Optional[pd.DataFrame] = None,
+        marker_info: Optional[pd.DataFrame] = None,
         synced_gaze: Optional[Stream] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
@@ -822,8 +816,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Parameters
         ----------
         homographies : Stream, optional
-            Stream containing precomputed homographies. If None, they are computed from `tag_info`.
-        tag_info : pandas.DataFrame, optional
+            Stream containing precomputed homographies. If None, they are computed from `marker_info`.
+        marker_info : pandas.DataFrame, optional
             AprilTag marker info used to compute homographies. Required if `homographies` is None.
         synced_gaze : Stream, optional
             Gaze data aligned to video frames. If None, will be either `self.gaze` or
@@ -855,11 +849,11 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             return Stream(data)
 
         if homographies is None:
-            if tag_info is None:
+            if marker_info is None:
                 raise ValueError(
                     "Marker information is required for homography estimation."
                 )
-            homographies = self.find_homographies(tag_info=tag_info)
+            homographies = self.find_homographies(marker_info=marker_info)
 
         if synced_gaze is None:
             # Detect frequency / alignment
@@ -961,8 +955,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
     def _estimate_camera_pose(
         self,
-        tag_locations_df: pd.DataFrame,
-        all_detections: Optional[Stream] = None,
+        marker_locations_df: pd.DataFrame,
+        detected_markers: Optional[Stream] = None,
         output_path: Optional[str | Path] = None,
         overwrite: bool = False,
     ) -> Stream:
@@ -971,10 +965,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Parameters
         ----------
-        tag_locations_df : pandas.DataFrame
+        marker_locations_df : pandas.DataFrame
             3-D positions, normals and size for every marker (columns:
-            'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
-        all_detections : Stream, optional
+            'marker_id','x','y','z','normal_x','normal_y','normal_z','size').
+        detected_markers : Stream, optional
             Per-frame marker detections.  If ``None``, they are produced by Recording.detect_markers().
         output_path : str or pathlib.Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
@@ -992,7 +986,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Path(output_path) if output_path else self.der_dir / "camera_pose.json"
         )
 
-        # ------------------------------------------------------------------ load
+        # load
         if json_file.is_file() and not overwrite:
             print(f"Loading saved camera pose from {json_file}")
             df = pd.read_json(json_file, orient="records", lines=True)
@@ -1002,27 +996,27 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 raise ValueError("Camera pose data is empty.")
             return Stream(df)
 
-        # ------------------------------------------------------------------ prerequisites
-        req = {"tag_id", "pos_vec", "norm_vec", "size"}
-        missing = req - set(tag_locations_df.columns)
+        # prerequisites
+        req = {"marker_id", "pos_vec", "norm_vec", "size"}
+        missing = req - set(marker_locations_df.columns)
         if missing:
-            raise ValueError(f"tag_locations_df is missing: {missing}")
+            raise ValueError(f"marker_locations_df is missing: {missing}")
 
-        if all_detections is None:
-            all_detections = self.detect_markers()
+        if detected_markers is None:
+            detected_markers = self.detect_markers()
 
-        if all_detections.data.empty:
+        if detected_markers.data.empty:
             raise ValueError("No marker detections found.")
 
-        # ------------------------------------------------------------------ compute
+        # compute
         cam_pose_df = estimate_camera_pose(
             video=self.scene_video,
-            tag_locations_df=tag_locations_df,
-            all_detections=all_detections.data,
+            marker_locations_df=marker_locations_df,
+            detected_markers=detected_markers.data,
         )
         cam_pose_df.index.name = "timestamp [ns]"
 
-        # ------------------------------------------------------------------ save
+        # save
         cam_pose_df.reset_index().to_json(json_file, orient="records", lines=True)
 
         return Stream(cam_pose_df)
@@ -1069,14 +1063,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         gating_threshold = kwargs.get("gating_threshold", 2.0)
         bidirectional = kwargs.get("bidirectional", False)
 
-        # ------------------------------------------------ target path
+        # target path
         json_file = (
             Path(output_path)
             if output_path
             else self.der_dir / "smoothed_camera_pose.json"
         )
 
-        # ------------------------------------------------ fast-path load
+        # fast-path load
         if json_file.is_file() and not overwrite:
             print(f"Loading smoothed camera pose from {json_file}")
             df = pd.read_json(json_file, orient="records", lines=True)
@@ -1084,7 +1078,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             df["smoothed_camera_pos"] = df["smoothed_camera_pos"].apply(np.array)
             return df
 
-        # ------------------------------------------------ obtain raw pose
+        # obtain raw pose
         if camera_pose_raw is None:
             raw_path = self.der_dir / "camera_pose.json"
             if raw_path.is_file():
@@ -1098,7 +1092,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         if camera_pose_raw.empty:
             raise ValueError("Camera-pose table is empty; cannot smooth.")
 
-        # ------------------------------------------------ compute
+        # compute
         smoothed = smooth_camera_pose(
             camera_pose_raw,
             initial_state_noise,
@@ -1108,7 +1102,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             bidirectional,
         )
 
-        # ------------------------------------------------ save & return
+        # save and return
         smoothed.to_json(json_file, orient="records", lines=True)
         return smoothed
 
