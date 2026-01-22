@@ -520,7 +520,7 @@ def find_homographies(
         surface_points = []  # from the reference plane or "ideal" positions
 
         for _, detection in frame_detections.iterrows():
-            tag_id = detection["tag_id"]
+            tag_id = detection["tag id"]
 
             if tag_id not in marker_dict:
                 # no reference corners for this tag
