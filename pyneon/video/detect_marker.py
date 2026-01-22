@@ -74,7 +74,7 @@ def detect_markers(
         """Run detection on a single frame and append results."""
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         all_corners, all_ids, _ = detector.detectMarkers(gray_frame)
-        if not all_ids:
+        if all_ids is None:
             return
 
         for corners, tag_id in zip(all_corners, all_ids):

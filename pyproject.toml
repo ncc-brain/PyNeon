@@ -29,7 +29,7 @@ dependencies = [
     "pandas",
     "matplotlib",
     "scipy",
-    "opencv-python",
+    "opencv-python>=4.7",
     "typeguard",
     "requests",
     "tqdm",
