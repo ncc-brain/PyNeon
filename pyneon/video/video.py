@@ -58,6 +58,31 @@ class Video(cv2.VideoCapture):
         return int(len(self.ts))
 
     @property
+    def first_ts(self) -> int:
+        """First timestamp of the stream."""
+        return int(self.ts[0])
+
+    @property
+    def last_ts(self) -> int:
+        """Last timestamp of the stream."""
+        return int(self.ts[-1])
+
+    @property
+    def ts_diff(self) -> np.ndarray:
+        """Difference between consecutive timestamps."""
+        return np.diff(self.ts)
+
+    @property
+    def times(self) -> np.ndarray:
+        """Timestamps converted to seconds relative to video start."""
+        return (self.ts - self.ts[0]) / 1e9
+
+    @property
+    def duration(self) -> float:
+        """Duration of the stream in seconds."""
+        return float(self.times[-1] - self.times[0])
+
+    @property
     def fps(self) -> float:
         """Frames per second of the video."""
         return self.get(cv2.CAP_PROP_FPS)
@@ -106,7 +131,6 @@ class Video(cv2.VideoCapture):
         return int(np.searchsorted(self.ts, timestamp))
 
     def reset(self):
-        print("Resetting video...")
         if self.isOpened():
             self.release()
         super().__init__(self.video_file)
