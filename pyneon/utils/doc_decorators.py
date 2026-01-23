@@ -70,6 +70,13 @@ Stream
     - 'center y [px]': Y-coordinate of marker center in pixels
 """
 
+DOC["fig_ax_return"] = """
+fig : matplotlib.figure.Figure
+    Figure object containing the plot.
+ax : matplotlib.axes.Axes
+    Axis object containing the plot.
+"""
+
 
 def fill_doc(func):
     """Fill a function docstring with common doc snippets using %-format."""

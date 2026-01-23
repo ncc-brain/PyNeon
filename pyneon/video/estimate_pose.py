@@ -36,10 +36,10 @@ def estimate_camera_pose(
 
             "frame id" : int
             "marker id"   : int
-            "corner 0 x [px]", "corner 0 y [px]": First corner coordinates
-            "corner 1 x [px]", "corner 1 y [px]": Second corner coordinates
-            "corner 2 x [px]", "corner 2 y [px]": Third corner coordinates
-            "corner 3 x [px]", "corner 3 y [px]": Fourth corner coordinates
+            "top left x [px]", "top left y [px]": Top-left corner coordinates
+            "top right x [px]", "top right y [px]": Top-right corner coordinates
+            "bottom right x [px]", "bottom right y [px]": Bottom-right corner coordinates
+            "bottom left x [px]", "bottom left y [px]": Bottom-left corner coordinates
 
     Returns
     -------
@@ -104,10 +104,10 @@ def estimate_camera_pose(
             # Reconstruct corners array from individual columns
             corners_2d = np.array(
                 [
-                    [det["corner 0 x [px]"], det["corner 0 y [px]"]],
-                    [det["corner 1 x [px]"], det["corner 1 y [px]"]],
-                    [det["corner 2 x [px]"], det["corner 2 y [px]"]],
-                    [det["corner 3 x [px]"], det["corner 3 y [px]"]],
+                    [det["top left x [px]"], det["top left y [px]"]],
+                    [det["top right x [px]"], det["top right y [px]"]],
+                    [det["bottom right x [px]"], det["bottom right y [px]"]],
+                    [det["bottom left x [px]"], det["bottom left y [px]"]],
                 ],
                 dtype=np.float32,
             )

@@ -11,7 +11,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_frame
+from ..vis import overlay_scanpath, plot_frame, plot_detected_markers
 from .marker_mapping import detect_markers
 
 
@@ -160,11 +160,11 @@ class Video(cv2.VideoCapture):
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
 
+    @fill_doc
     def plot_frame(
         self,
-        index: int = 0,
+        frame_id: int = 0,
         ax: Optional[plt.Axes] = None,
-        auto_title: bool = True,
         show: bool = True,
     ):
         """
@@ -172,24 +172,17 @@ class Video(cv2.VideoCapture):
 
         Parameters
         ----------
-        index : int
+        frame_id : int
             Index of the frame to plot.
         ax : matplotlib.axes.Axes or None
             Axis to plot the frame on. If ``None``, a new figure is created.
             Defaults to ``None``.
-        auto_title : bool
-            Whether to automatically set the title of the axis.
-            The automatic title includes the video file name and the frame index.
-            Defaults to ``True``.
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_return)s
         """
-        return plot_frame(self, index, ax, auto_title, show)
+        return plot_frame(self, frame_id, ax, show)
 
     @fill_doc
     def detect_markers(
@@ -216,6 +209,49 @@ class Video(cv2.VideoCapture):
             step=step,
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,
+        )
+    
+    @fill_doc
+    def plot_detected_markers(
+        self,
+        detected_markers: Stream,
+        frame_id: int = 0,
+        show_marker_ids: bool = True,
+        color: str = "magenta",
+        ax: Optional[plt.Axes] = None,
+        show: bool = True,
+    ):
+        """
+        Plot detected markers on a frame from this video.
+
+        Parameters
+        ----------
+        detected_markers : Stream
+            Stream containing detected marker data. See :meth:`pyneon.video.detect_markers`.
+        frame_id : int
+            Index of the frame to plot.
+        show_marker_ids : bool
+            Display marker IDs at their centers. Defaults to True.
+        color : str
+            Matplotlib color for markers. Defaults to "magenta".
+        ax : matplotlib.axes.Axes or None
+            Axis to plot the frame on. If ``None``, a new figure is created.
+            Defaults to ``None``.
+        show : bool
+            Show the figure if ``True``. Defaults to True.
+
+        Returns
+        -------
+        %(fig_ax_return)s
+        """
+        return plot_detected_markers(
+            self,
+            detected_markers=detected_markers,
+            frame_id=frame_id,
+            show_marker_ids=show_marker_ids,
+            color=color,
+            ax=ax,
+            show=show,
         )
 
     def overlay_scanpath(

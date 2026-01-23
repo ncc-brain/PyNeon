@@ -9,18 +9,20 @@ import pandas as pd
 from matplotlib.colors import Normalize
 from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
+from ..utils.doc_decorators import fill_doc
 
 if TYPE_CHECKING:
     from ..epochs import Epochs
     from ..recording import Recording
+    from ..stream import Stream
     from ..video import Video
 
 
+@fill_doc
 def plot_frame(
     video: "Video",
-    index: int = 0,
+    frame_id: int = 0,
     ax: Optional[plt.Axes] = None,
-    auto_title: bool = True,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
     """
@@ -30,46 +32,103 @@ def plot_frame(
     ----------
     video : SceneVideo
         Video object to plot the frame from.
-    index : int
+    frame_id : int
         Index of the frame to plot.
     ax : matplotlib.axes.Axes or None
         Axis to plot the frame on. If ``None``, a new figure is created.
         Defaults to ``None``.
-    auto_title : bool
-        Whether to automatically set the title of the axis.
-        The automatic title includes the video file name and the frame index.
-        Defaults to ``True``.
     show : bool
         Show the figure if ``True``. Defaults to True.
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        Figure object containing the plot.
-    ax : matplotlib.axes.Axes
-        Axis object containing the plot.
+    %(fig_ax_return)s
     """
-    if index >= len(video.ts) or index < 0:
-        raise IndexError(f"Frame index {index} out of range")
+    if frame_id >= len(video.ts) or frame_id < 0:
+        raise IndexError(f"Frame index {frame_id} out of range")
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-    video.set(cv2.CAP_PROP_POS_FRAMES, index)
+    video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
     ret, frame = video.read()
     if ret:
         ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        if auto_title:
-            ax.set_title(f"{video.video_file.name} | Frame {index + 1}/{len(video)}")
         ax.axis("off")
     else:
-        raise RuntimeError(f"Could not read frame {index}")
+        raise RuntimeError(f"Could not read frame {frame_id}")
     if show:
         plt.show()
 
     video.reset()
     return fig, ax
 
+@fill_doc
+def plot_detected_markers(
+    video: "Video",
+    detected_markers: "Stream",
+    frame_id: int = 0,
+    show_marker_ids: bool = True,
+    color: str = "magenta",
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot detected markers on a frame from the video.
+    
+    Parameters
+    ----------
+    video : SceneVideo
+        Video object to plot the frame from.
+    detected_markers : Stream
+        Stream containing detected marker data.
+        See :meth:`pyneon.video.detect_markers` for details.
+    frame_id : int
+        Index of the frame to plot.
+    ax : matplotlib.axes.Axes or None
+        Axis to plot the frame on. If ``None``, a new figure is created.
+        Defaults to ``None``.
+    show : bool
+        Show the figure if ``True``. Defaults to True.
+    
+    Returns
+    -------
+        %(fig_ax_return)s
+    """
+    fig, ax = plot_frame(video, frame_id=frame_id, ax=ax, show=False)
+    
+    mask = detected_markers["frame id"] == frame_id
+    markers = detected_markers.data[mask]
+    
+    for _, marker in markers.iterrows():
+        if show_marker_ids:
+            ax.text(
+                marker["center x [px]"],
+                marker["center y [px]"],
+                marker["marker id"],
+                color=color,
+                ha ="center",
+                va ="center",
+                )
+        # Draw marker corners with connected lines
+        corners_x = [
+            marker["top left x [px]"],
+            marker["top right x [px]"],
+            marker["bottom right x [px]"],
+            marker["bottom left x [px]"],
+            marker["top left x [px]"],
+        ]
+        corners_y = [
+            marker["top left y [px]"],
+            marker["top right y [px]"],
+            marker["bottom right y [px]"],
+            marker["bottom left y [px]"],
+            marker["top left y [px]"],
+        ]
+        ax.plot(corners_x, corners_y, color=color)
+    if show:
+        plt.show()
+    return fig, ax
 
 def plot_distribution(
     rec: "Recording",

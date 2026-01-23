@@ -772,9 +772,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         if detected_markers is None:
             detected_markers = self.detect_markers()
 
-        # if detected_markers.data.empty:
-        #   raise ValueError("No AprilTag detections found.")
-
         gaze_df = None
         if upsample_to == "gaze":
             gaze_df = self.gaze.data

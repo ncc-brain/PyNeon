@@ -12,6 +12,27 @@ from .utils import marker_family_to_dict
 if TYPE_CHECKING:
     from .video import Video
 
+DETECTED_MARKERS_COLUMNS = {
+    "frame id",
+    "marker id",
+    "top left x [px]",
+    "top left y [px]",
+    "top right x [px]",
+    "top right y [px]",
+    "bottom right x [px]",
+    "bottom right y [px]",
+    "bottom left x [px]",
+    "bottom left y [px]",
+    "center x [px]",
+    "center y [px]",
+}
+
+MARKERS_INFO_COLUMNS = {
+    "marker id",
+    "marker size",
+    "center x",
+    "center y",
+}
 
 @fill_doc
 def detect_markers(
@@ -27,14 +48,14 @@ def detect_markers(
 
     Parameters
     ----------
-    video : SceneVideo
+    video : Video
         Scene video to detect markers from.
     %(detect_markers_params)s
     %(detect_markers_return)s
     """
-    marker_type, dictionary = marker_family_to_dict(marker_family)
+    marker_type, aruco_dict = marker_family_to_dict(marker_family)
     detectorParams = cv2.aruco.DetectorParameters()
-    detector = cv2.aruco.ArucoDetector(dictionary, detectorParams)
+    detector = cv2.aruco.ArucoDetector(aruco_dict, detectorParams)
 
     if step < 1:
         raise ValueError("step must be >= 1")
@@ -65,20 +86,25 @@ def detect_markers(
 
         for corners, marker_id in zip(all_corners, all_ids):
             corners = corners.reshape((4, 2))
+            if marker_type == "april":
+                # For AprilTags, corners start with bottom right
+                # For ArUco, corners start with top left
+                # See https://stackoverflow.com/questions/79044142
+                corners = corners[[2, 3, 0, 1], :]
             center = np.mean(corners, axis=0)
             records.append(
                 {
-                    "frame id": frame_idx,
                     "timestamp [ns]": video.ts[frame_idx],
+                    "frame id": frame_idx,
                     "marker id": f"{marker_family}_{marker_id[0]}",
-                    "corner 0 x [px]": corners[0, 0],
-                    "corner 0 y [px]": corners[0, 1],
-                    "corner 1 x [px]": corners[1, 0],
-                    "corner 1 y [px]": corners[1, 1],
-                    "corner 2 x [px]": corners[2, 0],
-                    "corner 2 y [px]": corners[2, 1],
-                    "corner 3 x [px]": corners[3, 0],
-                    "corner 3 y [px]": corners[3, 1],
+                    "top left x [px]": corners[0, 0],
+                    "top left y [px]": corners[0, 1],
+                    "top right x [px]": corners[1, 0],
+                    "top right y [px]": corners[1, 1],
+                    "bottom right x [px]": corners[2, 0],
+                    "bottom right y [px]": corners[2, 1],
+                    "bottom left x [px]": corners[3, 0],
+                    "bottom left y [px]": corners[3, 1],
                     "center x [px]": center[0],
                     "center y [px]": center[1],
                 }
@@ -164,11 +190,6 @@ def find_homographies(
     `cv2.findHomography` to compute a 3x3 transformation matrix mapping from
     detected corners in the video image to the reference plane (e.g., surface coordinates).
 
-    If the coordinate system is "psychopy", corners in both `marker_info` and
-    `detection_df` are first converted to an OpenCV-like pixel coordinate system.
-    If `undistort=True` and camera intrinsics are available in the `video` object,
-    the marker corners are also undistorted.
-
     The optional `homography_settings` dictionary allows customizing parameters like
     RANSAC thresholds and maximum iterations. The default is an OpenCV RANSAC method
     with moderate thresholds.
@@ -182,10 +203,11 @@ def find_homographies(
         Stream containing per-frame marker detections as returned by
         :meth:`detect_markers`.
     marker_info : pandas.DataFrame
-        Must contain:
-        - 'marker_id': 
-        - 'marker_corners': np.ndarray of shape (4, 2) giving the reference positions
-            for each corner (e.g., on a surface plane)
+        With the following columns:
+            - 'marker id': string identifier of the marker
+            - 'marker size': size of the marker in the reference plane units
+            - 'center x': x center of the marker in OpenCV-like coordinates
+            - 'center y': y center of the marker in OpenCV-like coordinates
     skip_frames : int, optional
         If > 1, the function will compute homographies only for every Nth frame.
         E.g., skip_frames=5 will compute homographies for frames 0, 5, 10, 15, etc.
@@ -225,40 +247,73 @@ def find_homographies(
         were available to compute a valid homography.
     """
     detection_df = detected_markers.data
-    if undistort:
-        def undistort_points(
-            points: np.ndarray, K: np.ndarray, D: np.ndarray
-        ) -> np.ndarray:
-            pts_for_cv = points.reshape((-1, 1, 2)).astype(np.float32)
-            undist = cv2.undistortPoints(pts_for_cv, K, D)
-            # undistortPoints outputs normalized coords => multiply back by K
-            ones = np.ones((undist.shape[0], 1, 1), dtype=np.float32)
-            undist_hom = np.concatenate([undist, ones], axis=2)
-            pixel = np.einsum("ij,nkj->nki", K, undist_hom)
-            pixel = pixel[:, 0, :2] / pixel[:, 0, 2:]
-            return pixel
+    if not DETECTED_MARKERS_COLUMNS.issubset(detection_df.columns):
+        raise ValueError(
+            f"detected_markers.data must contain the following columns: {', '.join(DETECTED_MARKERS_COLUMNS)}"
+        )
+    
+    # Check if marker_info has required columns
+    if not MARKERS_INFO_COLUMNS.issubset(marker_info.columns):
+        raise ValueError(
+            f"marker_info must contain the following columns: {', '.join(MARKERS_INFO_COLUMNS)}"
+        )
 
-        # Undistort detection corners
-        def undistort_detection_corners(row):
-            c = np.array(
-                [
-                    [row["corner 0 x [px]"], row["corner 0 y [px]"]],
-                    [row["corner 1 x [px]"], row["corner 1 y [px]"]],
-                    [row["corner 2 x [px]"], row["corner 2 y [px]"]],
-                    [row["corner 3 x [px]"], row["corner 3 y [px]"]],
-                ]
-            )
-            return undistort_points(c, video.camera_matrix, video.distortion_coefficients)
+    # Generate locations of corners
+    marker_info = marker_info.copy()
+    marker_info["top left x"] = marker_info["center x"] - marker_info["marker size"] / 2
+    marker_info["top left y"] = marker_info["center y"] - marker_info["marker size"] / 2
+    marker_info["top right x"] = marker_info["center x"] + marker_info["marker size"] / 2
+    marker_info["top right y"] = marker_info["center y"] - marker_info["marker size"] / 2
+    marker_info["bottom right x"] = marker_info["center x"] + marker_info["marker size"] / 2
+    marker_info["bottom right y"] = marker_info["center y"] + marker_info["marker size"] / 2
+    marker_info["bottom left x"] = marker_info["center x"] - marker_info["marker size"] / 2
+    marker_info["bottom left y"] = marker_info["center y"] + marker_info["marker size"] / 2
+    
+    # Construct (4, 2) corner arrays in surface coordinates
+    marker_info["marker_corners"] = marker_info.apply(
+        lambda row: np.array([
+            [row["top left x"], row["top left y"]],
+            [row["top right x"], row["top right y"]],
+            [row["bottom right x"], row["bottom right y"]],
+            [row["bottom left x"], row["bottom left y"]],
+        ], dtype=np.float32),
+        axis=1
+    )
+    
+    # if undistort:
+    #     def undistort_points(
+    #         points: np.ndarray, K: np.ndarray, D: np.ndarray
+    #     ) -> np.ndarray:
+    #         pts_for_cv = points.reshape((-1, 1, 2)).astype(np.float32)
+    #         undist = cv2.undistortPoints(pts_for_cv, K, D)
+    #         # undistortPoints outputs normalized coords => multiply back by K
+    #         ones = np.ones((undist.shape[0], 1, 1), dtype=np.float32)
+    #         undist_hom = np.concatenate([undist, ones], axis=2)
+    #         pixel = np.einsum("ij,nkj->nki", K, undist_hom)
+    #         pixel = pixel[:, 0, :2] / pixel[:, 0, 2:]
+    #         return pixel
 
-        # Reconstruct corners array and store back
-        undistorted_corners = detection_df.apply(undistort_detection_corners, axis=1)
-        for i in range(4):
-            detection_df[f"corner {i} x [px]"] = undistorted_corners.apply(
-                lambda c: c[i, 0]
-            )
-            detection_df[f"corner {i} y [px]"] = undistorted_corners.apply(
-                lambda c: c[i, 1]
-            )
+    #     # Undistort detection corners
+    #     def undistort_detection_corners(row):
+    #         c = np.array(
+    #             [
+    #                 [row["corner 0 x [px]"], row["corner 0 y [px]"]],
+    #                 [row["corner 1 x [px]"], row["corner 1 y [px]"]],
+    #                 [row["corner 2 x [px]"], row["corner 2 y [px]"]],
+    #                 [row["corner 3 x [px]"], row["corner 3 y [px]"]],
+    #             ]
+    #         )
+    #         return undistort_points(c, video.camera_matrix, video.distortion_coefficients)
+
+    #     # Reconstruct corners array and store back
+    #     undistorted_corners = detection_df.apply(undistort_detection_corners, axis=1)
+    #     for i in range(4):
+    #         detection_df[f"corner {i} x [px]"] = undistorted_corners.apply(
+    #             lambda c: c[i, 0]
+    #         )
+    #         detection_df[f"corner {i} y [px]"] = undistorted_corners.apply(
+    #             lambda c: c[i, 1]
+    #         )
 
     # compute homography for each frame using all marker detections
     default_settings = {
@@ -266,42 +321,31 @@ def find_homographies(
     }
     default_settings.update(settings)
 
-    frames = detection_df["frame id"].unique()
+    unique_timestamps = detection_df.index.unique()
     homography_for_frame = {}
 
-    marker_dict = {}
-    for _, row in marker_info.iterrows():
-        marker_dict[row["marker_id"]] = np.array(
-            row["marker_corners"], dtype=np.float32
-        )
-
-    for frame in tqdm(frames, desc="Computing homographies for frames"):
-        frame_detections = detection_df.loc[detection_df["frame id"] == frame]
-        if frame_detections.empty:
-            homography_for_frame[frame] = None
-            continue
+    for ts in tqdm(unique_timestamps, desc="Computing homographies"):
+        frame_detections = detection_df.loc[ts]
 
         world_points = []  # from the camera's perspective (detected corners)
         surface_points = []  # from the reference plane or "ideal" positions
 
         for _, detection in frame_detections.iterrows():
             marker_id = detection["marker id"]
-
-            if marker_id not in marker_dict:
-                # no reference corners for this marker
+            if marker_id not in marker_info["marker id"].values:
                 continue
 
             # Reconstruct corners array from individual columns
             corners_detected = np.array(
                 [
-                    [detection["corner 0 x [px]"], detection["corner 0 y [px]"]],
-                    [detection["corner 1 x [px]"], detection["corner 1 y [px]"]],
-                    [detection["corner 2 x [px]"], detection["corner 2 y [px]"]],
-                    [detection["corner 3 x [px]"], detection["corner 3 y [px]"]],
+                    [detection["top left x [px]"], detection["top left y [px]"]],
+                    [detection["top right x [px]"], detection["top right y [px]"]],
+                    [detection["bottom right x [px]"], detection["bottom right y [px]"]],
+                    [detection["bottom left x [px]"], detection["bottom left y [px]"]],
                 ],
                 dtype=np.float32,
             )
-            ref_corners = marker_dict[marker_id]
+            ref_corners = marker_info.loc[marker_info["marker id"] == marker_id, "marker_corners"].values[0]
 
             # optional shape check:
             if corners_detected.shape != (4, 2) or ref_corners.shape != (4, 2):
@@ -316,11 +360,11 @@ def find_homographies(
 
         if len(world_points) < 4:
             # Not enough corners to compute a homography
-            homography_for_frame[frame] = None
+            homography_for_frame[ts] = None
             continue
 
-        H, mask = cv2.findHomography(world_points, surface_points, **default_settings)
-        homography_for_frame[frame] = H
+        H, _ = cv2.findHomography(world_points, surface_points, **default_settings)
+        homography_for_frame[ts] = H
 
     if skip_frames != 1 or upsample_to == "video" or upsample_to == "gaze":
         if (upsample_to == "video" or upsample_to == "gaze") and hasattr(video, "ts"):
