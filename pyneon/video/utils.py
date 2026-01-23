@@ -52,3 +52,13 @@ def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary
         f"    Available sizes: {', '.join(ARUCO_SIZES)}\n"
         f"    Available numbers: {', '.join(ARUCO_NUMBERS)}"
     )
+
+
+def generate_marker(
+    marker_family: str,
+    marker_id: int,
+    marker_size_pixels: int,
+):
+    aruco_dict = marker_family_to_dict(marker_family)
+    img = cv2.aruco.generateImageMarker(aruco_dict, marker_id, marker_size_pixels)
+    return img

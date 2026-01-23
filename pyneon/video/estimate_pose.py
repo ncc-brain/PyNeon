@@ -55,6 +55,7 @@ def estimate_camera_pose(
     # prepare detections
     if detected_markers is None:
         from .marker_mapping import detect_markers  # local import to avoid cycle
+
         det_stream = detect_markers(video, marker_family="36h11")
         detections_df = det_stream.data
     else:

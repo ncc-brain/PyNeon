@@ -14,7 +14,9 @@ if TYPE_CHECKING:
 
 DETECTED_MARKERS_COLUMNS = {
     "frame id",
+    "marker family",
     "marker id",
+    "marker name",
     "top left x [px]",
     "top left y [px]",
     "top right x [px]",
@@ -27,12 +29,13 @@ DETECTED_MARKERS_COLUMNS = {
     "center y [px]",
 }
 
-MARKERS_INFO_COLUMNS = {
-    "marker id",
-    "marker size",
+MARKERS_LAYOUT_COLUMNS = {
+    "marker name",
+    "size",
     "center x",
     "center y",
 }
+
 
 @fill_doc
 def detect_markers(
@@ -61,7 +64,7 @@ def detect_markers(
         raise ValueError("step must be >= 1")
 
     # Specify indices of frames to process
-    if detection_window is None: # full video
+    if detection_window is None:  # full video
         start_frame_idx = 0
         end_frame_idx = len(video.ts) - 1
     else:
@@ -96,7 +99,9 @@ def detect_markers(
                 {
                     "timestamp [ns]": video.ts[frame_idx],
                     "frame id": frame_idx,
-                    "marker id": f"{marker_family}_{marker_id[0]}",
+                    "marker family": marker_family,
+                    "marker id": int(marker_id[0]),
+                    "marker name": f"{marker_family}_{marker_id[0]}",
                     "top left x [px]": corners[0, 0],
                     "top left y [px]": corners[0, 1],
                     "top right x [px]": corners[1, 0],
@@ -110,15 +115,14 @@ def detect_markers(
                 }
             )
         return records
+
     detected_markers = []
     frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
 
     use_random_access = step < 5
 
     if use_random_access:
-        for actual_frame_idx in tqdm(
-            frames_to_process, desc="Detecting markers"
-        ):
+        for actual_frame_idx in tqdm(frames_to_process, desc="Detecting markers"):
             gray_frame = video.read_gray_frame_at(actual_frame_idx)
             if gray_frame is None:
                 break
@@ -173,8 +177,9 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 def find_homographies(
     video: "Video",
     detected_markers: Stream,
-    marker_info: pd.DataFrame,
+    marker_layout: pd.DataFrame,
     skip_frames: int = 1,
+    valid_markers: int = 2,
     undistort: bool = True,
     settings: dict = {},
     upsample_to: Optional[Literal["video", "gaze"]] = None,
@@ -202,12 +207,12 @@ def find_homographies(
     detected_markers : Stream
         Stream containing per-frame marker detections as returned by
         :meth:`detect_markers`.
-    marker_info : pandas.DataFrame
+    marker_layout : pandas.DataFrame
         With the following columns:
-            - 'marker id': string identifier of the marker
-            - 'marker size': size of the marker in the reference plane units
-            - 'center x': x center of the marker in OpenCV-like coordinates
-            - 'center y': y center of the marker in OpenCV-like coordinates
+            - 'marker name': full marker identifier (family + id, e.g., 'tag36h11_1')
+            - 'size': size of the marker in the reference plane units
+            - 'center x': x center of the marker in OpenCV coordinates
+            - 'center y': y center of the marker in OpenCV coordinates
     skip_frames : int, optional
         If > 1, the function will compute homographies only for every Nth frame.
         E.g., skip_frames=5 will compute homographies for frames 0, 5, 10, 15, etc.
@@ -251,35 +256,40 @@ def find_homographies(
         raise ValueError(
             f"detected_markers.data must contain the following columns: {', '.join(DETECTED_MARKERS_COLUMNS)}"
         )
-    
-    # Check if marker_info has required columns
-    if not MARKERS_INFO_COLUMNS.issubset(marker_info.columns):
+
+    # Check if marker_layout has required columns
+    if not MARKERS_LAYOUT_COLUMNS.issubset(marker_layout.columns):
         raise ValueError(
-            f"marker_info must contain the following columns: {', '.join(MARKERS_INFO_COLUMNS)}"
+            f"marker_layout must contain the following columns: {', '.join(MARKERS_LAYOUT_COLUMNS)}"
         )
 
-    # Generate locations of corners
-    marker_info = marker_info.copy()
-    marker_info["top left x"] = marker_info["center x"] - marker_info["marker size"] / 2
-    marker_info["top left y"] = marker_info["center y"] - marker_info["marker size"] / 2
-    marker_info["top right x"] = marker_info["center x"] + marker_info["marker size"] / 2
-    marker_info["top right y"] = marker_info["center y"] - marker_info["marker size"] / 2
-    marker_info["bottom right x"] = marker_info["center x"] + marker_info["marker size"] / 2
-    marker_info["bottom right y"] = marker_info["center y"] + marker_info["marker size"] / 2
-    marker_info["bottom left x"] = marker_info["center x"] - marker_info["marker size"] / 2
-    marker_info["bottom left y"] = marker_info["center y"] + marker_info["marker size"] / 2
-    
     # Construct (4, 2) corner arrays in surface coordinates
-    marker_info["marker_corners"] = marker_info.apply(
-        lambda row: np.array([
-            [row["top left x"], row["top left y"]],
-            [row["top right x"], row["top right y"]],
-            [row["bottom right x"], row["bottom right y"]],
-            [row["bottom left x"], row["bottom left y"]],
-        ], dtype=np.float32),
-        axis=1
+    marker_layout = marker_layout.copy()
+    marker_layout["marker_corners"] = marker_layout.apply(
+        lambda row: np.array(
+            [
+                [
+                    row["center x"] - row["size"] / 2,
+                    row["center y"] - row["size"] / 2,
+                ],  # top left
+                [
+                    row["center x"] + row["size"] / 2,
+                    row["center y"] - row["size"] / 2,
+                ],  # top right
+                [
+                    row["center x"] + row["size"] / 2,
+                    row["center y"] + row["size"] / 2,
+                ],  # bottom right
+                [
+                    row["center x"] - row["size"] / 2,
+                    row["center y"] + row["size"] / 2,
+                ],  # bottom left
+            ],
+            dtype=np.float32,
+        ),
+        axis=1,
     )
-    
+
     # if undistort:
     #     def undistort_points(
     #         points: np.ndarray, K: np.ndarray, D: np.ndarray
@@ -331,8 +341,8 @@ def find_homographies(
         surface_points = []  # from the reference plane or "ideal" positions
 
         for _, detection in frame_detections.iterrows():
-            marker_id = detection["marker id"]
-            if marker_id not in marker_info["marker id"].values:
+            marker_name = detection["marker name"]
+            if marker_name not in marker_layout["marker name"].values:
                 continue
 
             # Reconstruct corners array from individual columns
@@ -340,16 +350,23 @@ def find_homographies(
                 [
                     [detection["top left x [px]"], detection["top left y [px]"]],
                     [detection["top right x [px]"], detection["top right y [px]"]],
-                    [detection["bottom right x [px]"], detection["bottom right y [px]"]],
+                    [
+                        detection["bottom right x [px]"],
+                        detection["bottom right y [px]"],
+                    ],
                     [detection["bottom left x [px]"], detection["bottom left y [px]"]],
                 ],
                 dtype=np.float32,
             )
-            ref_corners = marker_info.loc[marker_info["marker id"] == marker_id, "marker_corners"].values[0]
+            ref_corners = marker_layout.loc[
+                marker_layout["marker name"] == marker_name, "marker_corners"
+            ].values[0]
 
-            # optional shape check:
+            # Shape check:
             if corners_detected.shape != (4, 2) or ref_corners.shape != (4, 2):
-                continue
+                raise ValueError(
+                    f"Marker corners must have shape (4, 2), got {corners_detected.shape} and {ref_corners.shape}"
+                )
 
             # Extend our list of corner correspondences
             world_points.extend(corners_detected)  # add 4 corner coords
@@ -358,14 +375,14 @@ def find_homographies(
         world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
         surface_points = np.array(surface_points, dtype=np.float32).reshape(-1, 2)
 
-        if len(world_points) < 4:
+        if len(world_points) < valid_markers * 4:
             # Not enough corners to compute a homography
-            homography_for_frame[ts] = None
             continue
 
         H, _ = cv2.findHomography(world_points, surface_points, **default_settings)
         homography_for_frame[ts] = H
 
+    print(H.shape)
     if skip_frames != 1 or upsample_to == "video" or upsample_to == "gaze":
         if (upsample_to == "video" or upsample_to == "gaze") and hasattr(video, "ts"):
             max_frame = len(video.ts) - 1

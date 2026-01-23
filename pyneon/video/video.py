@@ -210,7 +210,7 @@ class Video(cv2.VideoCapture):
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,
         )
-    
+
     @fill_doc
     def plot_detected_markers(
         self,

@@ -5,6 +5,7 @@ from .vis import (
     plot_epochs,
     plot_frame,
     plot_detected_markers,
+    plot_marker_layout,
 )
 
 __all__ = [

@@ -112,17 +112,19 @@ data_types = {
     # Events
     "name": str,
     "type": str,
-    # Detections
+    # Marker detections
     "frame id": "Int64",
+    "marker family": str,
     "marker id": str,
-    "corner 0 x [px]": float,
-    "corner 0 y [px]": float,
-    "corner 1 x [px]": float,
-    "corner 1 y [px]": float,
-    "corner 2 x [px]": float,
-    "corner 2 y [px]": float,
-    "corner 3 x [px]": float,
-    "corner 3 y [px]": float,
+    "marker name": str,
+    "top left x [px]": float,
+    "top left y [px]": float,
+    "top right x [px]": float,
+    "top right y [px]": float,
+    "bottom left x [px]": float,
+    "bottom left y [px]": float,
+    "bottom right x [px]": float,
+    "bottom right y [px]": float,
     "center x [px]": float,
     "center y [px]": float,
     # Video mean intensity

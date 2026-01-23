@@ -88,6 +88,7 @@ def _infer_stream_type(data: pd.DataFrame) -> str:
         "gaze x [px]": "gaze",
         "pupil diameter left [mm]": "eye_states",
         "gyro x [deg/s]": "imu",
+        "marker id": "marker",
     }
     types = {col_map[c] for c in data.columns if c in col_map}
     return types.pop() if len(types) == 1 else "custom"
