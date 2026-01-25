@@ -137,16 +137,16 @@ class Video(cv2.VideoCapture):
         indices = np.searchsorted(self.ts, ts_array).astype(int)
         return indices
 
-    def read_gray_frame_at(self, frame_id: int) -> Optional[np.ndarray]:
+    def read_gray_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
         """
         Random-access read of a single frame converted to grayscale.
 
         Returns None if the frame cannot be read.
         """
-        if frame_id < 0 or frame_id >= len(self.ts):
-            raise ValueError("frame_id is out of bounds for this video.")
+        if frame_index < 0 or frame_index >= len(self.ts):
+            raise ValueError("frame_index is out of bounds for this video.")
 
-        self.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+        self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
         ret, frame = self.read()
         if not ret:
             return None
@@ -163,7 +163,7 @@ class Video(cv2.VideoCapture):
     @fill_doc
     def plot_frame(
         self,
-        frame_id: int = 0,
+        frame_index: int = 0,
         ax: Optional[plt.Axes] = None,
         show: bool = True,
     ):
@@ -172,7 +172,7 @@ class Video(cv2.VideoCapture):
 
         Parameters
         ----------
-        frame_id : int
+        frame_index : int
             Index of the frame to plot.
         ax : matplotlib.axes.Axes or None
             Axis to plot the frame on. If ``None``, a new figure is created.
@@ -182,12 +182,12 @@ class Video(cv2.VideoCapture):
         -------
         %(fig_ax_return)s
         """
-        return plot_frame(self, frame_id, ax, show)
+        return plot_frame(self, frame_index, ax, show)
 
     @fill_doc
     def detect_markers(
         self,
-        marker_family: str = "36h11",
+        marker_family: str | list[str] = "36h11",
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
@@ -215,7 +215,7 @@ class Video(cv2.VideoCapture):
     def plot_detected_markers(
         self,
         detected_markers: Stream,
-        frame_id: int = 0,
+        frame_index: int = 0,
         show_marker_ids: bool = True,
         color: str = "magenta",
         ax: Optional[plt.Axes] = None,
@@ -228,7 +228,7 @@ class Video(cv2.VideoCapture):
         ----------
         detected_markers : Stream
             Stream containing detected marker data. See :meth:`pyneon.video.detect_markers`.
-        frame_id : int
+        frame_index : int
             Index of the frame to plot.
         show_marker_ids : bool
             Display marker IDs at their centers. Defaults to True.
@@ -247,7 +247,7 @@ class Video(cv2.VideoCapture):
         return plot_detected_markers(
             self,
             detected_markers=detected_markers,
-            frame_id=frame_id,
+            frame_index=frame_index,
             show_marker_ids=show_marker_ids,
             color=color,
             ax=ax,

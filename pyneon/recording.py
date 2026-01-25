@@ -556,7 +556,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             A Stream indexed by `"timestamp [ns]"`, containing:
                 - 'gaze x [px]': Gaze x-coordinate in pixels
                 - 'gaze y [px]': Gaze y-coordinate in pixels
-                - 'frame id': Index of the video frame corresponding to the gaze data
+                - 'frame index': Index of the video frame corresponding to the gaze data
         """
         if output_path is None:
             gaze_file = self.der_dir / "gaze_synced.csv"
@@ -573,7 +573,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             raise ValueError("Gaze-video synchronization requires gaze and video data.")
 
         synced_gaze = self.gaze.window_average(self.scene_video.ts, window_size).data
-        synced_gaze["frame id"] = np.arange(len(synced_gaze))
+        synced_gaze["frame index"] = np.arange(len(synced_gaze))
 
         synced_gaze.index.name = "timestamp [ns]"
         synced_gaze.to_csv(gaze_file, index=True)
@@ -639,7 +639,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @fill_doc
     def detect_markers(
         self,
-        marker_family: str = "36h11",
+        marker_family: str | list[str] = "36h11",
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
@@ -828,7 +828,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         -------
         Stream
             A Stream containing gaze data with surface coordinates, including:
-                - 'frame_id': Frame index
+                - 'frame index': Frame index
                 - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
                 - Any additional columns from the gaze input
         """
@@ -1089,7 +1089,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         if camera_pose_raw.empty:
             raise ValueError("Camera-pose table is empty; cannot smooth.")
 
-        # compute
         smoothed = smooth_camera_pose(
             camera_pose_raw,
             initial_state_noise,

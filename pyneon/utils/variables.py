@@ -113,7 +113,7 @@ data_types = {
     "name": str,
     "type": str,
     # Marker detections
-    "frame id": "Int64",
+    "frame index": "Int64",
     "marker family": str,
     "marker id": str,
     "marker name": str,
@@ -130,7 +130,15 @@ data_types = {
     # Video mean intensity
     "intensity": float,
     # Homographies
-    "homography": object,
+    "homography (0,0)": float,
+    "homography (0,1)": float,
+    "homography (0,2)": float,
+    "homography (1,0)": float,
+    "homography (1,1)": float,
+    "homography (1,2)": float,
+    "homography (2,0)": float,
+    "homography (2,1)": float,
+    "homography (2,2)": float,
     # Gaze on surface
     "x_trans": float,
     "y_trans": float,

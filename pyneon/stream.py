@@ -138,7 +138,6 @@ class Stream(BaseTabular):
     >>> df = pd.DataFrame({"timestamp [ns]": [...], "gaze x [px]": [...]})
     >>> gaze = Stream(df)
     """
-
     def __init__(self, source: pd.DataFrame | Path | str):
         if isinstance(source, str):
             source = Path(source)
@@ -312,6 +311,7 @@ class Stream(BaseTabular):
         new_ts: Optional[np.ndarray] = None,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[int] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -329,6 +329,8 @@ class Stream(BaseTabular):
             are generated according to :attr:`sampling_freq_nominal`.
 
         %(interp_kwargs)s
+
+        %(max_gap_ms)s
 
         %(inplace)s
 
@@ -352,6 +354,25 @@ class Stream(BaseTabular):
             new_ts = np.arange(self.first_ts, self.last_ts, step_size, dtype=np.int64)
             assert new_ts[0] == self.first_ts
             assert np.allclose(np.diff(new_ts), step_size)
+
+        # Optionally filter out requested timestamps that are too far from
+        # either adjacent original sample, based on max_gap_ms (converted to ns)
+        if max_gap_ms is not None:
+            max_gap_ns = int(max_gap_ms * 1e6)
+            ts = self.ts
+            nts = np.atleast_1d(np.asarray(new_ts, dtype=np.int64))
+            idx = np.searchsorted(ts, nts, side="left")
+            # distances to nearest left and right original timestamps
+            left_dist = np.where(idx == 0, np.inf, nts - ts[np.clip(idx - 1, 0, len(ts) - 1)])
+            right_dist = np.where(idx == len(ts), np.inf, ts[np.clip(idx, 0, len(ts) - 1)] - nts)
+            # Keep only timestamps that are within the threshold to BOTH neighbors
+            mask = (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
+            new_ts_filtered = nts[mask]
+            if new_ts_filtered.size == 0:
+                raise ValueError(
+                    "All requested new_ts violate max_gap_ms relative to left or right original timestamps."
+                )
+            new_ts = new_ts_filtered
 
         inst = self if inplace else self.copy()
         inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
@@ -579,7 +600,7 @@ class Stream(BaseTabular):
         """
         # Interpolate other to self timestamps if needed
         if not np.array_equal(self.ts, other.ts):
-            other = other.interpolate(self.ts, float_kind, other_kind, inplace=False)
+            other = other.interpolate(self.ts, float_kind, other_kind, max_gap_ms=None, inplace=False)
 
         other_data = other.data.copy()
 

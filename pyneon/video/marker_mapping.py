@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .video import Video
 
 DETECTED_MARKERS_COLUMNS = {
-    "frame id",
+    "frame index",
     "marker family",
     "marker id",
     "marker name",
@@ -40,7 +40,7 @@ MARKERS_LAYOUT_COLUMNS = {
 @fill_doc
 def detect_markers(
     video: "Video",
-    marker_family: str,
+    marker_family: str | list[str],
     step: int = 1,
     detection_window: Optional[tuple[int | float, int | float]] = None,
     detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
@@ -56,9 +56,16 @@ def detect_markers(
     %(detect_markers_params)s
     %(detect_markers_return)s
     """
-    marker_type, aruco_dict = marker_family_to_dict(marker_family)
-    detectorParams = cv2.aruco.DetectorParameters()
-    detector = cv2.aruco.ArucoDetector(aruco_dict, detectorParams)
+    # Normalize marker family input to a list and create detectors for each
+    families: list[str] = (
+        marker_family if isinstance(marker_family, list) else [marker_family]
+    )
+
+    detectors: list[tuple[str, str, cv2.aruco.ArucoDetector]] = []
+    for fam in families:
+        fam_type, aruco_dict = marker_family_to_dict(fam)
+        detectorParams = cv2.aruco.DetectorParameters()
+        detectors.append((fam, fam_type, cv2.aruco.ArucoDetector(aruco_dict, detectorParams)))
 
     if step < 1:
         raise ValueError("step must be >= 1")
@@ -81,39 +88,40 @@ def detect_markers(
             end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
 
     def _process_frame(frame_idx: int, gray_frame: np.ndarray) -> list[dict]:
-        """Run detection on a single grayscale frame and return detection records."""
-        records = []
-        all_corners, all_ids, _ = detector.detectMarkers(gray_frame)
-        if all_ids is None:
-            return records
+        """Run detection on a single grayscale frame across all detectors."""
+        records: list[dict] = []
+        for fam_name, fam_type, det in detectors:
+            all_corners, all_ids, _ = det.detectMarkers(gray_frame)
+            if all_ids is None:
+                continue
 
-        for corners, marker_id in zip(all_corners, all_ids):
-            corners = corners.reshape((4, 2))
-            if marker_type == "april":
-                # For AprilTags, corners start with bottom right
-                # For ArUco, corners start with top left
-                # See https://stackoverflow.com/questions/79044142
-                corners = corners[[2, 3, 0, 1], :]
-            center = np.mean(corners, axis=0)
-            records.append(
-                {
-                    "timestamp [ns]": video.ts[frame_idx],
-                    "frame id": frame_idx,
-                    "marker family": marker_family,
-                    "marker id": int(marker_id[0]),
-                    "marker name": f"{marker_family}_{marker_id[0]}",
-                    "top left x [px]": corners[0, 0],
-                    "top left y [px]": corners[0, 1],
-                    "top right x [px]": corners[1, 0],
-                    "top right y [px]": corners[1, 1],
-                    "bottom right x [px]": corners[2, 0],
-                    "bottom right y [px]": corners[2, 1],
-                    "bottom left x [px]": corners[3, 0],
-                    "bottom left y [px]": corners[3, 1],
-                    "center x [px]": center[0],
-                    "center y [px]": center[1],
-                }
-            )
+            for corners, marker_id in zip(all_corners, all_ids):
+                corners = corners.reshape((4, 2))
+                if fam_type == "april":
+                    # For AprilTags, corners start with bottom right
+                    # For ArUco, corners start with top left
+                    # See https://stackoverflow.com/questions/79044142
+                    corners = corners[[2, 3, 0, 1], :]
+                center = np.mean(corners, axis=0)
+                records.append(
+                    {
+                        "timestamp [ns]": video.ts[frame_idx],
+                        "frame index": frame_idx,
+                        "marker family": fam_name,
+                        "marker id": int(marker_id[0]),
+                        "marker name": f"{fam_name}_{marker_id[0]}",
+                        "top left x [px]": corners[0, 0],
+                        "top left y [px]": corners[0, 1],
+                        "top right x [px]": corners[1, 0],
+                        "top right y [px]": corners[1, 1],
+                        "bottom right x [px]": corners[2, 0],
+                        "bottom right y [px]": corners[2, 1],
+                        "bottom left x [px]": corners[3, 0],
+                        "bottom left y [px]": corners[3, 1],
+                        "center x [px]": center[0],
+                        "center y [px]": center[1],
+                    }
+                )
         return records
 
     detected_markers = []
@@ -175,51 +183,33 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 
 
 def find_homographies(
-    video: "Video",
     detected_markers: Stream,
     marker_layout: pd.DataFrame,
-    skip_frames: int = 1,
     valid_markers: int = 2,
-    undistort: bool = True,
     settings: dict = {},
-    upsample_to: Optional[Literal["video", "gaze"]] = None,
-    gaze_df: Optional[pd.DataFrame] = None,
-    max_gap: Optional[int] = None,
-    extrapolate: bool = True,
-) -> pd.DataFrame:
+) -> Stream:
     """
     Compute a homography for each frame using available marker detections.
 
     This function identifies all markers detected in a given frame, looks up their
-    "ideal" (reference) positions from `marker_info`, and calls OpenCV's
-    `cv2.findHomography` to compute a 3x3 transformation matrix mapping from
-    detected corners in the video image to the reference plane (e.g., surface coordinates).
-
-    The optional `homography_settings` dictionary allows customizing parameters like
-    RANSAC thresholds and maximum iterations. The default is an OpenCV RANSAC method
-    with moderate thresholds.
+    reference positions from `marker_layout`, and calls OpenCV's `cv2.findHomography`
+    to compute a 3x3 transformation matrix mapping from detected corners in the video
+    image to the reference plane (surface coordinates). The homography matrices are
+    flattened into 9 columns for convenient storage and processing.
 
     Parameters
     ----------
-    video : Video
-        An object containing camera intrinsics (camera_matrix, dist_coeffs) and timestamps.
-        If `undistort=True`, these intrinsics are used to undistort marker corners.
     detected_markers : Stream
         Stream containing per-frame marker detections as returned by
         :meth:`detect_markers`.
     marker_layout : pandas.DataFrame
-        With the following columns:
+        DataFrame with the following columns:
             - 'marker name': full marker identifier (family + id, e.g., 'tag36h11_1')
             - 'size': size of the marker in the reference plane units
             - 'center x': x center of the marker in OpenCV coordinates
             - 'center y': y center of the marker in OpenCV coordinates
-    skip_frames : int, optional
-        If > 1, the function will compute homographies only for every Nth frame.
-        E.g., skip_frames=5 will compute homographies for frames 0, 5, 10, 15, etc.
-        Must match with the `skip_frames` used in `detect_markers`.
-    undistort : bool, optional
-        Whether to undistort marker corners using the camera intrinsics in `video`.
-        Default is True.
+    valid_markers : int, optional
+        Minimum number of markers required to compute a homography. Default is 2.
     settings : dict, optional
         A dictionary of parameters passed to `cv2.findHomography`. For example:
         {
@@ -228,28 +218,14 @@ def find_homographies(
             "maxIters": 500,
             "confidence": 0.98,
         }
-        The defaults are set to a moderate RANSAC approach.
-    upsample_to : str, optional
-        If "video", the homographies will be upsampled to match the video frames
-        from the first to the last frame. If "gaze", the homographies will be
-        resampled to the timestamps of the `gaze_df`. Default is None.
-    gaze_df : pandas.DataFrame, optional
-        The gaze data to resample the homographies to if `upsample_to="gaze"`.
-    max_gap : int, optional
-        Maximum number of frames to interpolate across when filling gaps without
-        detections. If a gap exceeds this threshold, it is filled with None homographies
-        instead. Default is None (unlimited interpolation).
-    extrapolate : bool, optional
-        Whether to extrapolate homographies before the first detection and after
-        the last detection. If False, these periods will have None homographies.
-        Default is True.
+        Defaults to cv2.LMEDS method.
 
     Returns
     -------
-    dict
-        A dictionary mapping each frame index (`frame_idx`: int) to its corresponding
-        homography matrix (3x3 NumPy array) or None if insufficient markers or points
-        were available to compute a valid homography.
+    Stream
+        A Stream indexed by 'timestamp [ns]' with columns
+        'homography (0,0)' through 'homography (2,2)': The 9 elements of the
+        flattened 3x3 homography matrix
     """
     detection_df = detected_markers.data
     if not DETECTED_MARKERS_COLUMNS.issubset(detection_df.columns):
@@ -379,42 +355,27 @@ def find_homographies(
             # Not enough corners to compute a homography
             continue
 
-        H, _ = cv2.findHomography(world_points, surface_points, **default_settings)
-        homography_for_frame[ts] = H
+        homography, _ = cv2.findHomography(world_points, surface_points, **default_settings)
+        homography_for_frame[ts] = homography
 
-    print(H.shape)
-    if skip_frames != 1 or upsample_to == "video" or upsample_to == "gaze":
-        if (upsample_to == "video" or upsample_to == "gaze") and hasattr(video, "ts"):
-            max_frame = len(video.ts) - 1
-        else:
-            max_frame = max(detection_df["frame id"]) if not detection_df.empty else 0
-        homography_for_frame = _upsample_homographies(
-            homography_for_frame, max_frame, max_gap=max_gap, extrapolate=extrapolate
-        )
-
-    # Get timestamps for each frame_idx
-    frame_id_to_ts = dict(zip(range(len(video.ts)), video.ts))
-
-    records = [
-        {"timestamp [ns]": frame_id_to_ts[frame], "frame id": frame, "homography": H}
-        for frame, H in homography_for_frame.items()
-        if frame in frame_id_to_ts
-    ]
+    # Reorganize homographies into DataFrame with 9 columns (flattened 3x3 matrix)
+    records = []
+    for ts, homography in homography_for_frame.items():
+        record = {
+            "timestamp [ns]": ts,
+            }
+        # Flatten 3x3 homography matrix into 9 columns
+        if homography is not None:
+            for i in range(3):
+                for j in range(3):
+                    record[f"homography ({i},{j})"] = homography[i, j]
+            records.append(record)
 
     df = pd.DataFrame.from_records(records)
-    if not df.empty:
-        df = df.set_index("timestamp [ns]")
-    else:
-        # Create an empty DataFrame with the expected columns and index
-        df = pd.DataFrame(columns=["frame id", "homography"])
-        df.index.name = "timestamp [ns]"
+    if df.empty:
+        raise ValueError("No homographies could be computed from the detections.")
 
-    if upsample_to == "gaze":
-        if gaze_df is None:
-            raise ValueError("gaze_df must be provided when upsample_to='gaze'")
-        return _resample_homographies_to_gaze(df, gaze_df)
-
-    return df
+    return Stream(df)
 
 
 def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.DataFrame:
@@ -423,7 +384,7 @@ def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.Dat
 
     If `gaze_df` and `homographies` have the same index, homographies are applied
     point-wise (efficiently vectorized). Otherwise, they are applied by grouping
-    `gaze_df` by 'frame_idx'.
+    `gaze_df` by 'frame index'.
 
     Parameters
     ----------
@@ -467,21 +428,15 @@ def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.Dat
         gaze_df.loc[idx_valid, "gaze y [surface coord]"] = transformed_2d[:, 1]
         return gaze_df
 
-    # Case 2: Group by frame id (legacy / video-sampled homographies)
-    if "frame id" not in gaze_df.columns:
-        raise ValueError(
-            "gaze_df must contain 'frame id' if not aligned with homographies."
-        )
-
     # convert homographies to dict
     homography_for_frame = {
-        int(row["frame id"]): row["homography"] for _, row in homographies.iterrows()
+        int(row["frame index"]): row["homography"] for _, row in homographies.iterrows()
     }
 
     for frame in tqdm(
-        gaze_df["frame id"].unique(), desc="Applying homography to gaze points"
+        gaze_df["frame index"].unique(), desc="Applying homography to gaze points"
     ):
-        idx_sel = gaze_df["frame id"] == frame
+        idx_sel = gaze_df["frame index"] == frame
         H = homography_for_frame.get(frame, None)
         if H is None:
             # no valid homography

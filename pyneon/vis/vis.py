@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 @fill_doc
 def plot_frame(
     video: "Video",
-    frame_id: int = 0,
+    frame_index: int = 0,
     ax: Optional[plt.Axes] = None,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -34,7 +34,7 @@ def plot_frame(
     ----------
     video : SceneVideo
         Video object to plot the frame from.
-    frame_id : int
+    frame_index : int
         Index of the frame to plot.
     ax : matplotlib.axes.Axes or None
         Axis to plot the frame on. If ``None``, a new figure is created.
@@ -46,19 +46,19 @@ def plot_frame(
     -------
     %(fig_ax_return)s
     """
-    if frame_id >= len(video.ts) or frame_id < 0:
-        raise IndexError(f"Frame index {frame_id} out of range")
+    if frame_index >= len(video.ts) or frame_index < 0:
+        raise IndexError(f"Frame index {frame_index} out of range")
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-    video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
     ret, frame = video.read()
     if ret:
         ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         ax.axis("off")
     else:
-        raise RuntimeError(f"Could not read frame {frame_id}")
+        raise RuntimeError(f"Could not read frame {frame_index}")
     if show:
         plt.show()
 
@@ -70,7 +70,7 @@ def plot_frame(
 def plot_detected_markers(
     video: "Video",
     detected_markers: "Stream",
-    frame_id: int = 0,
+    frame_index: int = 0,
     show_marker_ids: bool = True,
     color: str = "magenta",
     ax: Optional[plt.Axes] = None,
@@ -86,7 +86,7 @@ def plot_detected_markers(
     detected_markers : Stream
         Stream containing detected marker data.
         See :meth:`pyneon.video.detect_markers` for details.
-    frame_id : int
+    frame_index : int
         Index of the frame to plot.
     ax : matplotlib.axes.Axes or None
         Axis to plot the frame on. If ``None``, a new figure is created.
@@ -98,9 +98,9 @@ def plot_detected_markers(
     -------
         %(fig_ax_return)s
     """
-    fig, ax = plot_frame(video, frame_id=frame_id, ax=ax, show=False)
+    fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
 
-    mask = detected_markers["frame id"] == frame_id
+    mask = detected_markers["frame index"] == frame_index
     markers = detected_markers.data[mask]
 
     for _, marker in markers.iterrows():
@@ -631,13 +631,13 @@ def overlay_detections_and_pose(
 
     # Extract camera positions into a dictionary for quick lookup
     results_dict = {
-        row["frame id"]: row["camera_pos"] for _, row in camera_positions.iterrows()
+        row["frame index"]: row["camera_pos"] for _, row in camera_positions.iterrows()
     }
 
     # Group detections by frame
     detections_by_frame = {}
     for _, row in april_detections.iterrows():
-        f_id = row["frame id"]
+        f_id = row["frame index"]
         if f_id not in detections_by_frame:
             detections_by_frame[f_id] = []
         # Reconstruct corners array from individual columns
@@ -653,7 +653,7 @@ def overlay_detections_and_pose(
 
     cap = recording.scene_video
     cap.reset()
-    frame_id = 0
+    frame_index = 0
 
     # Track last known detections and positions
     last_detections = None
@@ -764,8 +764,8 @@ def overlay_detections_and_pose(
             # End of video
             break
 
-        current_detections = detections_by_frame.get(frame_id, None)
-        current_position = results_dict.get(frame_id, None)
+        current_detections = detections_by_frame.get(frame_index, None)
+        current_position = results_dict.get(frame_index, None)
 
         if current_position is not None:
             visited_positions.append(current_position)

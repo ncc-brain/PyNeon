@@ -147,6 +147,6 @@ def estimate_scanpath(
 
     scanpath.index.name = "timestamp [ns]"
 
-    scanpath["frame id"] = np.arange(scanpath.shape[0])
+    scanpath["frame index"] = np.arange(scanpath.shape[0])
 
     return scanpath

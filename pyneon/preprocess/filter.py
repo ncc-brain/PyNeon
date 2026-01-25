@@ -17,7 +17,7 @@ def smooth_camera_pose(
     Parameters
     ----------
     camera_position_raw : pandas.DataFrame
-        DataFrame containing 'frame id' and 'camera_pos' columns.
+        DataFrame containing 'frame index' and 'camera_pos' columns.
     initial_state_noise : float, optional
         Initial state covariance scaling factor. Default is 0.1.
     process_noise : float, optional
@@ -32,24 +32,24 @@ def smooth_camera_pose(
     Returns
     -------
     pd.DataFrame
-        A DataFrame with 'frame id' and 'smoothed_camera_pos'.
+        A DataFrame with 'frame index' and 'smoothed_camera_pos'.
     """
 
     state_dim = 3
     meas_dim = 3
 
-    # Ensure the DataFrame is sorted by frame id
-    camera_position_raw = camera_position_raw.sort_values("frame id")
+    # Ensure the DataFrame is sorted by frame index
+    camera_position_raw = camera_position_raw.sort_values("frame index")
 
     # Extract all frame indices and create a complete range
     all_frames = np.arange(
-        camera_position_raw["frame id"].min(),
-        camera_position_raw["frame id"].max() + 1,
+        camera_position_raw["frame index"].min(),
+        camera_position_raw["frame index"].max() + 1,
     )
 
     # Create a lookup for frame detections
     position_lookup = dict(
-        zip(camera_position_raw["frame id"], camera_position_raw["camera_pos"])
+        zip(camera_position_raw["frame index"], camera_position_raw["camera_pos"])
     )
 
     # Kalman filter matrices
@@ -90,7 +90,7 @@ def smooth_camera_pose(
     if not bidirectional:
         smoothed_positions = [x.flatten() for x in x_fwd]
         result_df = pd.DataFrame(
-            {"frame id": all_frames, "camera_pos": smoothed_positions}
+            {"frame index": all_frames, "camera_pos": smoothed_positions}
         )
         return result_df
 
@@ -110,5 +110,5 @@ def smooth_camera_pose(
     smoothed_positions = [x.flatten() for x in x_smooth]
 
     # Return results
-    result_df = pd.DataFrame({"frame id": all_frames, "camera_pos": smoothed_positions})
+    result_df = pd.DataFrame({"frame index": all_frames, "camera_pos": smoothed_positions})
     return result_df

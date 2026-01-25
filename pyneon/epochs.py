@@ -340,6 +340,7 @@ class Epochs:
                 new_ts,
                 float_kind=float_kind,
                 other_kind=other_kind,
+                max_gap_ms=None,
                 inplace=False,
             ).data[column_names]
             epochs_np[i, :, :] = epoch_data.to_numpy().T

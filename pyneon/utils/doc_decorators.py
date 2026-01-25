@@ -17,6 +17,14 @@ inplace : bool, optional
     If ``True``, replace current data. Otherwise returns a new instance.
     Defaults to ``False``."""
 
+DOC["max_gap_ms"] = """\
+max_gap_ms : int, optional
+    Maximum allowed distance (in milliseconds) to both adjacent original
+    timestamps (left and right). A requested new timestamp will be ignored
+    if its distance to the immediate left OR right original timestamp is
+    greater than or equal to ``max_gap_ms`` (no interpolation will be
+    performed at that timestamp). Defaults to 500."""
+
 DOC["stream_or_none"] = """\
 Stream or None
     A new ``Stream`` instance with modified data
@@ -40,9 +48,9 @@ epochs_info : pandas.DataFrame, shape (n_epochs, 4)
 """
 
 DOC["detect_markers_params"] = """
-marker_family : str, optional
-    Marker family/dictionary to detect (AprilTag or ArUco). Examples: '16h5', '25h9',
-    '36h10', '36h11', '4x4_50', '6x6_250'. Default '36h11'.
+marker_family : str or list[str], optional
+    AprilTag family/ArUco dictionary to detect. Accepts a single family string
+    (e.g., '36h11') or a list of families (e.g., ['36h11', '6x6_250']).
 step : int, optional
     If > 1, detect markers only in every Nth frame (e.g., step=5 processes frames
     0, 5, 10, 15, ...). Defaults to 1.
@@ -60,7 +68,7 @@ detection_window_unit : {"frame", "time", "timestamp"}, optional
 DOC["detect_markers_return"] = """
 Stream
     Stream indexed by 'timestamp [ns]' with columns:
-    - 'frame id': The frame number
+    - 'frame index': The frame number
     - 'marker id': Marker ID, for example "36h11_0", "36h11_1"
     - 'corner 0 x [px]', 'corner 0 y [px]': First corner (TL)
     - 'corner 1 x [px]', 'corner 1 y [px]': Second corner (TR)

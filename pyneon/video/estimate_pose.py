@@ -34,7 +34,7 @@ def estimate_camera_pose(
         Per-frame marker detections. If *None* the function calls ``detect_markers(video)``.
         Expected columns::
 
-            "frame id" : int
+            "frame index" : int
             "marker id"   : int
             "top left x [px]", "top left y [px]": Top-left corner coordinates
             "top right x [px]", "top right y [px]": Top-right corner coordinates
@@ -46,7 +46,7 @@ def estimate_camera_pose(
     pandas.DataFrame
         One row per processed frame with columns::
 
-            "frame id"          : int
+            "frame index"       : int
             "translation_vector" : ndarray (3,)
             "rotation_vector"    : ndarray (3,)
             "camera_pos"         : ndarray (3,) camera position in world coord.
@@ -64,7 +64,7 @@ def estimate_camera_pose(
     if detections_df.empty:
         return pd.DataFrame(
             columns=[
-                "frame_id",
+                "frame index",
                 "translation_vector",
                 "rotation_vector",
                 "camera_pos",
@@ -94,8 +94,8 @@ def estimate_camera_pose(
 
     # iterate over frames
     results = []
-    for frame in detections_df["frame id"].unique():
-        det_frame = detections_df.loc[detections_df["frame id"] == frame]
+    for frame in detections_df["frame index"].unique():
+        det_frame = detections_df.loc[detections_df["frame index"] == frame]
         if det_frame.empty:
             continue
 
@@ -164,7 +164,7 @@ def estimate_camera_pose(
 
         results.append(
             {
-                "frame id": int(frame),
+                "frame index": int(frame),
                 "translation_vector": t_vec.reshape(-1),
                 "rotation_vector": r_vec.reshape(-1),
                 "camera_pos": cam_pos.reshape(-1),
@@ -173,5 +173,5 @@ def estimate_camera_pose(
 
     return pd.DataFrame(
         results,
-        columns=["frame id", "translation_vector", "rotation_vector", "camera_pos"],
+        columns=["frame index", "translation_vector", "rotation_vector", "camera_pos"],
     )
