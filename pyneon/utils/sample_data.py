@@ -6,9 +6,9 @@ import requests
 data_dir = Path(__file__).parent.parent.parent / "data"
 
 data_url_dict = {
-    "boardView": "https://osf.io/download/t52b4/",
-    "screenFlash": "https://osf.io/download/6836d6e49bf72b3880d6a388/",
-    "Artworks": "https://osf.io/download/685036cf0675b635986df74f/",
+    "simple": "https://osf.io/download/gv46n/",
+    "PLR": "https://figshare.com/ndownloader/articles/30921452/versions/1?folder_path=PLR",
+    "markers": "https://osf.io/download/t56b2/",
 }
 
 
@@ -33,4 +33,6 @@ def get_sample_data(data_name: str, replace=False) -> Path:
 
 
 if __name__ == "__main__":
-    get_sample_data("screenFlash")
+    data_dir = get_sample_data("simple")
+    assert data_dir.exists()
+    print(f"Sample data is ready at {data_dir}")

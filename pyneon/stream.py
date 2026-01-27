@@ -88,6 +88,7 @@ def _infer_stream_type(data: pd.DataFrame) -> str:
         "gaze x [px]": "gaze",
         "pupil diameter left [mm]": "eye_states",
         "gyro x [deg/s]": "imu",
+        "marker id": "marker",
     }
     types = {col_map[c] for c in data.columns if c in col_map}
     return types.pop() if len(types) == 1 else "custom"
@@ -137,7 +138,6 @@ class Stream(BaseTabular):
     >>> df = pd.DataFrame({"timestamp [ns]": [...], "gaze x [px]": [...]})
     >>> gaze = Stream(df)
     """
-
     def __init__(self, source: pd.DataFrame | Path | str):
         if isinstance(source, str):
             source = Path(source)
@@ -252,7 +252,7 @@ class Stream(BaseTabular):
             End timestamp/time/row to crop the data to. If ``None``,
             the maximum timestamp/time/row in the data is used. Defaults to ``None``.
         by : "timestamp" or "time" or "row", optional
-            Whether tmin and tmax are UTC timestamps in nanoseconds
+            Whether tmin and tmax are Unix timestamps in nanoseconds
             OR relative times in seconds OR row numbers of the stream data.
             Defaults to "timestamp".
 
@@ -260,11 +260,10 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Cropped stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         if tmin is None and tmax is None:
-            raise ValueError("At least one of tmin or tmax must be provided")
+            raise ValueError("At least one of `tmin` or `tmax` must be provided")
         if by == "timestamp":
             t = self.ts
         elif by == "time":
@@ -273,6 +272,9 @@ class Stream(BaseTabular):
             t = np.arange(len(self))
         tmin = t.min() if tmin is None else tmin
         tmax = t.max() if tmax is None else tmax
+        # tmin and tmax should be positive numbers
+        if tmin < 0 or tmax < 0:
+            raise ValueError("Crop bounds must be non-negative")
         mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
@@ -299,8 +301,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Restricted stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -310,6 +311,7 @@ class Stream(BaseTabular):
         new_ts: Optional[np.ndarray] = None,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[int] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -328,12 +330,13 @@ class Stream(BaseTabular):
 
         %(interp_kwargs)s
 
+        %(max_gap_ms)s
+
         %(inplace)s
 
         Returns
         -------
-        Stream or None
-            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Notes
         -----
@@ -351,6 +354,25 @@ class Stream(BaseTabular):
             new_ts = np.arange(self.first_ts, self.last_ts, step_size, dtype=np.int64)
             assert new_ts[0] == self.first_ts
             assert np.allclose(np.diff(new_ts), step_size)
+
+        # Optionally filter out requested timestamps that are too far from
+        # either adjacent original sample, based on max_gap_ms (converted to ns)
+        if max_gap_ms is not None:
+            max_gap_ns = int(max_gap_ms * 1e6)
+            ts = self.ts
+            nts = np.atleast_1d(np.asarray(new_ts, dtype=np.int64))
+            idx = np.searchsorted(ts, nts, side="left")
+            # distances to nearest left and right original timestamps
+            left_dist = np.where(idx == 0, np.inf, nts - ts[np.clip(idx - 1, 0, len(ts) - 1)])
+            right_dist = np.where(idx == len(ts), np.inf, ts[np.clip(idx, 0, len(ts) - 1)] - nts)
+            # Keep only timestamps that are within the threshold to BOTH neighbors
+            mask = (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
+            new_ts_filtered = nts[mask]
+            if new_ts_filtered.size == 0:
+                raise ValueError(
+                    "All requested new_ts violate max_gap_ms relative to left or right original timestamps."
+                )
+            new_ts = new_ts_filtered
 
         inst = self if inplace else self.copy()
         inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
@@ -377,8 +399,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Annotated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Raises
         ------
@@ -453,8 +474,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Examples
         --------
@@ -503,8 +523,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Stream with window average applied on data if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         inst = self if inplace else self.copy()
         inst.data = window_average(new_ts, self.data, window_size)
@@ -534,8 +553,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Stream with gaze angles computed if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Raises
         ------
@@ -578,12 +596,11 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Concatenated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         # Interpolate other to self timestamps if needed
         if not np.array_equal(self.ts, other.ts):
-            other = other.interpolate(self.ts, float_kind, other_kind, inplace=False)
+            other = other.interpolate(self.ts, float_kind, other_kind, max_gap_ms=None, inplace=False)
 
         other_data = other.data.copy()
 
