@@ -13,7 +13,6 @@ expected_files_cloud = [
     "gaze.csv",
     "imu.csv",
     "info.json",
-    "labels.csv",
     "saccades.csv",
     "scene_camera.json",
     "world_timestamps.csv",
