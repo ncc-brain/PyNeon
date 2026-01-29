@@ -68,6 +68,26 @@ detector_parameters : cv2.aruco.DetectorParameters, optional
     DetectorParameters instance is created. Defaults to ``None``.
 """
 
+DOC["find_homographies_params"] = """
+valid_markers : int, optional
+    Minimum number of markers required to compute a homography. Defaults to 2.
+method : int, optional
+    Method used to compute a homography matrix. The following methods are possible:
+        - 0 - a regular method using all the points, i.e., the least squares method
+        - ``cv2.RANSAC`` - RANSAC-based robust method
+        - ``cv2.LMEDS`` - Least-Median robust method
+        - ``cv2.RHO`` - PROSAC-based robust method
+    Defaults to ``cv2.LMEDS``.
+ransacReprojThreshold : float, optional
+    Maximum allowed reprojection error to treat a point pair as an inlier
+    (used in the RANSAC and RHO methods only). Defaults to 3.0.
+maxIters : int, optional
+    The maximum number of RANSAC iterations. Defaults to 2000.
+confidence : float, optional
+    Confidence level, between 0 and 1, for the estimated homography.
+    Defaults to 0.995.
+"""
+
 DOC["detect_markers_return"] = """
 Stream
     Stream indexed by 'timestamp [ns]' with columns:

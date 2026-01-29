@@ -703,62 +703,45 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         return detected_markers
 
+    @fill_doc
     def find_homographies(
         self,
         marker_info: pd.DataFrame,
         detected_markers: Optional[Stream] = None,
+        valid_markers: int = 2,
+        method: int = cv2.LMEDS,
+        ransacReprojThreshold: float = 3.0,
+        maxIters: int = 2000,
+        confidence: float = 0.995,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
-        upsample_to: Optional[Literal["video", "gaze"]] = None,
-        max_gap: Optional[int] = 5,
-        extrapolate: bool = False,
-        **kwargs,
     ) -> Stream:
         """
-        Compute and return homographies for each frame using AprilTag detections and reference marker layout.
+        Compute and return homographies for each frame using marker detections and reference marker layout.
 
         Parameters
         ----------
         marker_info : pandas.DataFrame
-            DataFrame containing AprilTag reference positions and orientations, with columns:
-                - 'marker_id': ID of the marker, such as 36h10_1
-                - 'x', 'y', 'z': 3D coordinates of the marker's center
-                - 'normal_x', 'normal_y', 'normal_z': Normal vector of the marker surface
-                - 'size': Side length of the marker in meters
+            DataFrame containing marker reference positions, with columns:
+                - 'marker name': full marker identifier (family + id, e.g., 'tag36h11_1')
+                - 'size': size of the marker in the reference plane units
+                - 'center x': x center of the marker in OpenCV coordinates
+                - 'center y': y center of the marker in OpenCV coordinates
         detected_markers : Stream, optional
-            Stream containing AprilTag detection results per frame. If None, detections are recomputed.
+            Stream containing marker detection results per frame. If None, detections are recomputed.
+        %(find_homographies_params)s
         overwrite : bool, optional
-            Whether to force recomputation even if saved homographies exist.
+            Whether to force recomputation even if saved homographies exist. Defaults to False.
         output_path : str or pathlib.Path, optional
-            Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
-        upsample_to : str, optional
-            If "video", the homographies will be upsampled to match the video frames
-            from the first to the last frame. If "gaze", the homographies will be
-            resampled to the timestamps of the recording's gaze data. Defaults to None.
-        max_gap : int, optional
-            Maximum number of frames to interpolate across when filling gaps without
-            detections. If a gap exceeds this threshold, it is filled with None homographies
-            instead. Defaults to None (unlimited interpolation).
-        extrapolate : bool, optional
-            Whether to extrapolate homographies before the first detection and after
-            the last detection. If False, these periods will have None homographies.
-            Defaults to True.
-        **kwargs : keyword arguments
-            Additional parameters for homography computation, including:
-                - 'skip_frames': Number of frames to skip between detections. Defaults to 1.
-                - 'settings': Additional settings for the homography computation.
+            Optional file path for saving the homographies as pickle. If None, defaults to `<der_dir>/homographies.pkl`.
 
         Returns
         -------
         Stream
-            A Stream object indexed by `"timestamp [ns]"` containing:
-                - 'frame_id': Video frame index
-                - 'homography': 3x3 NumPy array representing the homography matrix for that frame
+            A Stream object indexed by `"timestamp [ns]"` with columns
+            'homography (0,0)' through 'homography (2,2)': The 9 elements of the
+            flattened 3x3 homography matrix.
         """
-
-        # Defaults for kwargs
-        skip_frames = kwargs.get("skip_frames", 1)
-        settings = kwargs.get("settings", None)
 
         if output_path is None:
             pkl_file = self.der_dir / "homographies.pkl"
@@ -775,25 +758,19 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         if detected_markers is None:
             detected_markers = self.detect_markers()
 
-        gaze_df = None
-        if upsample_to == "gaze":
-            gaze_df = self.gaze.data
-
-        homographies_df = find_homographies(
-            self.scene_video,
-            detected_markers.data,
-            marker_info.copy(deep=True),
-            skip_frames=skip_frames,
-            settings=settings,
-            upsample_to=upsample_to,
-            gaze_df=gaze_df,
-            max_gap=max_gap,
-            extrapolate=extrapolate,
+        homographies = find_homographies(
+            detected_markers=detected_markers,
+            marker_layout=marker_info,
+            valid_markers=valid_markers,
+            method=method,
+            ransacReprojThreshold=ransacReprojThreshold,
+            maxIters=maxIters,
+            confidence=confidence,
         )
 
-        homographies_df.to_pickle(pkl_file)
+        homographies.data.to_pickle(pkl_file)
 
-        return Stream(homographies_df)
+        return homographies
 
     def gaze_on_surface(
         self,

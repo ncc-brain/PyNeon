@@ -188,11 +188,15 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     return transformed_2d
 
 
+@fill_doc
 def find_homographies(
     detected_markers: Stream,
     marker_layout: pd.DataFrame,
     valid_markers: int = 2,
-    settings: dict = {},
+    method: int = cv2.LMEDS,
+    ransacReprojThreshold: float = 3.0,
+    maxIters: int = 2000,
+    confidence: float = 0.995,
 ) -> Stream:
     """
     Compute a homography for each frame using available marker detections.
@@ -210,28 +214,18 @@ def find_homographies(
         :meth:`detect_markers`.
     marker_layout : pandas.DataFrame
         DataFrame with the following columns:
-            - 'marker name': full marker identifier (family + id, e.g., 'tag36h11_1')
+            - 'marker name': full marker identifier (family + id, e.g., '36h11_1')
             - 'size': size of the marker in the reference plane units
             - 'center x': x center of the marker in OpenCV coordinates
             - 'center y': y center of the marker in OpenCV coordinates
-    valid_markers : int, optional
-        Minimum number of markers required to compute a homography. Defaults to 2.
-    settings : dict, optional
-        A dictionary of parameters passed to `cv2.findHomography`. For example:
-        {
-            "method": cv2.RANSAC,
-            "ransacReprojThreshold": 2.0,
-            "maxIters": 500,
-            "confidence": 0.98,
-        }
-        Defaults to cv2.LMEDS method.
+    %(find_homographies_params)s
 
     Returns
     -------
     Stream
         A Stream indexed by 'timestamp [ns]' with columns
         'homography (0,0)' through 'homography (2,2)': The 9 elements of the
-        flattened 3x3 homography matrix
+        flattened 3x3 homography matrix.
     """
     detection_df = detected_markers.data
     if not DETECTED_MARKERS_COLUMNS.issubset(detection_df.columns):
@@ -307,12 +301,6 @@ def find_homographies(
     #             lambda c: c[i, 1]
     #         )
 
-    # compute homography for each frame using all marker detections
-    default_settings = {
-        "method": cv2.LMEDS  # Disable RANSAC completely
-    }
-    default_settings.update(settings)
-
     unique_timestamps = detection_df.index.unique()
     homography_for_frame = {}
 
@@ -362,7 +350,12 @@ def find_homographies(
             continue
 
         homography, _ = cv2.findHomography(
-            world_points, surface_points, **default_settings
+            world_points,
+            surface_points,
+            method=method,
+            ransacReprojThreshold=ransacReprojThreshold,
+            maxIters=maxIters,
+            confidence=confidence,
         )
         homography_for_frame[ts] = homography
 
