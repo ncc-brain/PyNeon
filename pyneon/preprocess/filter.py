@@ -19,15 +19,15 @@ def smooth_camera_pose(
     camera_position_raw : pandas.DataFrame
         DataFrame containing 'frame index' and 'camera_pos' columns.
     initial_state_noise : float, optional
-        Initial state covariance scaling factor. Default is 0.1.
+        Initial state covariance scaling factor. Defaults to 0.1.
     process_noise : float, optional
-        Process noise covariance scaling factor. Default is 0.1.
+        Process noise covariance scaling factor. Defaults to 0.1.
     measurement_noise : float, optional
-        Measurement noise covariance scaling factor. Default is 0.01.
+        Measurement noise covariance scaling factor. Defaults to 0.01.
     gating_threshold : float, optional
-        Mahalanobis distance threshold for gating outliers. Default is 2.0.
+        Mahalanobis distance threshold for gating outliers. Defaults to 2.0.
     bidirectional : bool, optional
-        If True, applies forward-backward RTS smoothing. Default is False.
+        If True, applies forward-backward RTS smoothing. Defaults to False.
 
     Returns
     -------
@@ -110,5 +110,7 @@ def smooth_camera_pose(
     smoothed_positions = [x.flatten() for x in x_smooth]
 
     # Return results
-    result_df = pd.DataFrame({"frame index": all_frames, "camera_pos": smoothed_positions})
+    result_df = pd.DataFrame(
+        {"frame index": all_frames, "camera_pos": smoothed_positions}
+    )
     return result_df

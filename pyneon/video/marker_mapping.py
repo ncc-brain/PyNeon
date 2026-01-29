@@ -44,6 +44,7 @@ def detect_markers(
     step: int = 1,
     detection_window: Optional[tuple[int | float, int | float]] = None,
     detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
 ) -> Stream:
     """
     Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
@@ -61,11 +62,16 @@ def detect_markers(
         marker_family if isinstance(marker_family, list) else [marker_family]
     )
 
+    # Use provided detector_parameters or create a default instance
+    if detector_parameters is None:
+        detector_parameters = cv2.aruco.DetectorParameters()
+
     detectors: list[tuple[str, str, cv2.aruco.ArucoDetector]] = []
     for fam in families:
         fam_type, aruco_dict = marker_family_to_dict(fam)
-        detectorParams = cv2.aruco.DetectorParameters()
-        detectors.append((fam, fam_type, cv2.aruco.ArucoDetector(aruco_dict, detectorParams)))
+        detectors.append(
+            (fam, fam_type, cv2.aruco.ArucoDetector(aruco_dict, detector_parameters))
+        )
 
     if step < 1:
         raise ValueError("step must be >= 1")
@@ -153,7 +159,7 @@ def detect_markers(
 
     df = pd.DataFrame(detected_markers)
     if df.empty:
-        raise ValueError("No marker detections found.")
+        raise ValueError("No marker detected.")
 
     df.set_index("timestamp [ns]", inplace=True)
     return Stream(df)
@@ -209,7 +215,7 @@ def find_homographies(
             - 'center x': x center of the marker in OpenCV coordinates
             - 'center y': y center of the marker in OpenCV coordinates
     valid_markers : int, optional
-        Minimum number of markers required to compute a homography. Default is 2.
+        Minimum number of markers required to compute a homography. Defaults to 2.
     settings : dict, optional
         A dictionary of parameters passed to `cv2.findHomography`. For example:
         {
@@ -355,7 +361,9 @@ def find_homographies(
             # Not enough corners to compute a homography
             continue
 
-        homography, _ = cv2.findHomography(world_points, surface_points, **default_settings)
+        homography, _ = cv2.findHomography(
+            world_points, surface_points, **default_settings
+        )
         homography_for_frame[ts] = homography
 
     # Reorganize homographies into DataFrame with 9 columns (flattened 3x3 matrix)
@@ -363,7 +371,7 @@ def find_homographies(
     for ts, homography in homography_for_frame.items():
         record = {
             "timestamp [ns]": ts,
-            }
+        }
         # Flatten 3x3 homography matrix into 9 columns
         if homography is not None:
             for i in range(3):
@@ -471,11 +479,12 @@ def _upsample_homographies(
         The highest frame index you want to fill in.
     max_gap : int, optional
         Maximum number of frames to interpolate across. If a gap between detections
-        exceeds this, it is filled with None instead of interpolating. Default is None.
+        exceeds this, it is filled with None instead of interpolating. Defaults to None.
     extrapolate : bool, optional
         Whether to extrapolate at the beginning (before first detection) and end
         (after last detection). If False, these periods are filled with None.
-        Default is True.
+        Default behavior is to extrapolate at the beginning and end.
+        Defaults to True.
 
     Returns
     -------

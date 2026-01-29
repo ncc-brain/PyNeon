@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal, Optional
 from warnings import warn
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -217,7 +218,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_states(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
+        Return a (cached) :class:`pyneon.Stream` object containing eye states data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``3d_eye_states.csv``.
 
@@ -247,7 +248,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def fixations(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing fixations data.
+        Return a (cached) :class:`pyneon.Events` object containing fixations data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``fixations.csv``.
 
@@ -262,7 +263,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def saccades(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing saccades data.
+        Return a (cached) :class:`pyneon.Events` object containing saccades data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``saccades.csv``.
 
@@ -279,7 +280,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def events(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing events data.
+        Return a (cached) :class:`pyneon.Events` object containing events data.
 
         For **Pupil Cloud** recordings, the events data is loaded from ``events.csv``.
 
@@ -294,7 +295,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def scene_video(self) -> Video:
         """
-        Returns a (cached) :class:`pyneon.Video` object containing scene video data.
+        Return a (cached) :class:`pyneon.Video` object containing scene video data.
 
         For **Pupil Cloud** recordings, the video is loaded from the only ``*.mp4`` file
         in the recording directory.
@@ -356,7 +357,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_video(self) -> Video:
         """
-        Returns a (cached) :class:`pyneon.Video` object containing eye video data.
+        Return a (cached) :class:`pyneon.Video` object containing eye video data.
 
         Eye video is only available for **native** recordings and is loaded from the
         ``Neon Sensor Module*.mp4`` file in the recording directory.
@@ -407,7 +408,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Concatenate data from different streams under common timestamps.
         Since the streams may have different timestamps and sampling frequencies,
         resampling of all streams to a set of common timestamps is performed.
-        The latest start timestamp and earliest last timestamp of the selected sreams
+        The latest start timestamp and earliest last timestamp of the selected streams
         are used to define the common timestamps.
 
         Parameters
@@ -499,10 +500,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Show the figure if ``True``. Defaults to True.
         **kwargs : keyword arguments
             Additional parameters for the plot, including:
-                - 'step_size': Step size for the heatmap grid. Default is 10.
-                - 'sigma': Sigma value for Gaussian smoothing. Default is 2.
-                - 'width_height': Width and height of the figure in pixels. Default is (1600, 1200).
-                - 'cmap': Colormap for the heatmap. Default is 'inferno'.
+                - 'step_size': Step size for the heatmap grid. Defaults to 10.
+                - 'sigma': Sigma value for Gaussian smoothing. Defaults to 2.
+                - 'width_height': Width and height of the figure in pixels. Defaults to (1600, 1200).
+                - 'cmap': Colormap for the heatmap. Defaults to 'inferno'.
                 - 'ax': Matplotlib axis to plot on. If None, a new figure and axis are created.
 
         Returns
@@ -546,7 +547,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Size of the time window in nanoseconds used for averaging.
             If None, defaults to the median interval between video frame timestamps.
         overwrite : bool, optional
-            If True, force recomputation even if saved data exists. Default is False.
+            If True, force recomputation even if saved data exists. Defaults to False.
         output_path : str or pathlib.Path, optional
             Path to save the resulting CSV file. Defaults to `<der_dir>/gaze_synced.csv`.
 
@@ -643,6 +644,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
+        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
         overwrite: bool = False,
         output_path: Optional[str | Path] = None,
     ) -> Stream:
@@ -655,7 +657,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         ----------
         %(detect_markers_params)s
         overwrite : bool, optional
-            If True, reruns detection even if saved results exist. Default is False.
+            If True, reruns detection even if saved results exist. Defaults to False.
         output_path : str or pathlib.Path, optional
             Path to save the detection CSV file. Defaults to `<der_dir>/markers.csv`.
 
@@ -690,6 +692,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             step=step,
             detection_window=detection_window,
             detection_window_unit=window_unit,
+            detector_parameters=detector_parameters,
         )
 
         if detected_markers.data.empty:
@@ -731,18 +734,18 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         upsample_to : str, optional
             If "video", the homographies will be upsampled to match the video frames
             from the first to the last frame. If "gaze", the homographies will be
-            resampled to the timestamps of the recording's gaze data. Default is None.
+            resampled to the timestamps of the recording's gaze data. Defaults to None.
         max_gap : int, optional
             Maximum number of frames to interpolate across when filling gaps without
             detections. If a gap exceeds this threshold, it is filled with None homographies
-            instead. Default is None (unlimited interpolation).
+            instead. Defaults to None (unlimited interpolation).
         extrapolate : bool, optional
             Whether to extrapolate homographies before the first detection and after
             the last detection. If False, these periods will have None homographies.
-            Default is True.
+            Defaults to True.
         **kwargs : keyword arguments
             Additional parameters for homography computation, including:
-                - 'skip_frames': Number of frames to skip between detections. Default is 1.
+                - 'skip_frames': Number of frames to skip between detections. Defaults to 1.
                 - 'settings': Additional settings for the homography computation.
 
         Returns
@@ -820,7 +823,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Gaze data aligned to video frames. If None, will be either `self.gaze` or
             computed using `sync_gaze_to_video()` depending on the `homographies` frequency.
         overwrite : bool, optional
-            If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.
+            If True, recompute and overwrite any existing surface-transformed gaze data. Defaults to False.
         output_path : str or pathlib.Path, optional
             File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_surface.csv`.
 
@@ -888,7 +891,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Must include 'fixation id', 'x_trans', and 'y_trans' columns.
         overwrite : bool, optional
             If True, forces recomputation and overwrites any existing output file.
-            Default is False.
+            Defaults to False.
         output_path : str or pathlib.Path, optional
             Custom path to save the resulting fixation data as a CSV.
             If None, defaults to `self.der_dir / "fixations_on_surface.csv"`.
@@ -970,7 +973,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         output_path : str or pathlib.Path, optional
             Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
         overwrite : bool, optional
-            If True, forces recomputation and overwrites any existing saved result. Default is False.
+            If True, forces recomputation and overwrites any existing saved result. Defaults to False.
 
         Returns
         -------

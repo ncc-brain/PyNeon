@@ -11,7 +11,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_frame, plot_detected_markers
+from ..vis import overlay_scanpath, plot_detected_markers, plot_frame
 from .marker_mapping import detect_markers
 
 
@@ -191,6 +191,7 @@ class Video(cv2.VideoCapture):
         step: int = 1,
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
+        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
     ) -> Stream:
         """
         Detect fiducial markers (AprilTag or ArUco) in the video frames.
@@ -209,6 +210,7 @@ class Video(cv2.VideoCapture):
             step=step,
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,
+            detector_parameters=detector_parameters,
         )
 
     @fill_doc

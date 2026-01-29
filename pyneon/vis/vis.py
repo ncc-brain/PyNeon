@@ -6,10 +6,11 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from PIL import Image
 from matplotlib.colors import Normalize
+from PIL import Image
 from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
+
 from ..utils.doc_decorators import fill_doc
 from ..video.utils import marker_family_to_dict
 
@@ -139,53 +140,52 @@ def plot_marker_layout(
     ax: Optional[plt.Axes] = None,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
-    
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-    
+
     # Calculate actual bounds for each marker, then find overall canvas size
     min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
     max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
     min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
     max_y = (marker_layout["center y"] + marker_layout["size"] / 2).max()
-    
+
     canvas_width = int(max_x - min_x)
     canvas_height = int(max_y - min_y)
-    
+
     # Create white background
-    canvas = Image.new('L', (canvas_width, canvas_height), color=255)
-    
+    canvas = Image.new("L", (canvas_width, canvas_height), color=255)
+
     for _, marker in marker_layout.iterrows():
         marker_name = marker["marker name"]
         marker_family = marker_name.rsplit("_", 1)[0]
         marker_id = int(marker_name.rsplit("_", 1)[1])
-        
+
         _, aruco_dict = marker_family_to_dict(marker_family)
         # Generate marker image
         marker_img = cv2.aruco.generateImageMarker(
             aruco_dict, marker_id, int(marker["size"])
         )
-        
+
         # Convert to PIL Image
         # Rotate 180 degrees - flip both axes
         marker_img_rotated = np.rot90(marker_img, 2)
         marker_pil = Image.fromarray(marker_img_rotated)
-        
+
         # Calculate paste position (top-left corner)
         x = int(marker["center x"] - marker["size"] / 2 - min_x)
         y = int(marker["center y"] - marker["size"] / 2 - min_y)
-        
+
         # Paste marker onto canvas
         canvas.paste(marker_pil, (x, y))
-    
+
     # Display the canvas
     ax.imshow(canvas, cmap="gray", extent=[min_x, max_x, max_y, min_y])
     ax.set_xlabel("x [surface coord]")
     ax.set_ylabel("y [surface coord]")
     ax.set_aspect("equal")
-    
+
     if show:
         plt.show()
     return fig, ax

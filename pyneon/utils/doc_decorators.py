@@ -63,6 +63,9 @@ detection_window_unit : {"frame", "time", "timestamp"}, optional
         - "time": in seconds relative to video start
         - "frame": video frame indices (0-based)
     Defaults to "frame".
+detector_parameters : cv2.aruco.DetectorParameters, optional
+    Detector parameters to use for all marker families. If None, a default
+    DetectorParameters instance is created. Defaults to ``None``.
 """
 
 DOC["detect_markers_return"] = """

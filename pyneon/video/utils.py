@@ -1,5 +1,5 @@
-from numbers import Number
 import re
+from numbers import Number
 from typing import Tuple
 
 import cv2
@@ -11,17 +11,20 @@ ARUCO_NUMBERS: list[str] = ["50", "100", "250", "1000"]
 
 
 def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
-    # Check for AprilTag markers
+    # AprilTags
     if marker_family in APRILTAG_FAMILIES:
         dict_name: str = f"DICT_APRILTAG_{marker_family.upper()}"
-        aruco_dict: object = cv2.aruco.getPredefinedDictionary(
-            getattr(cv2.aruco, dict_name)
-        )
+        aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dict_name))
         return "april", aruco_dict
 
-    # Check for Aruco markers (format: {size}_{number})
-    aruco_pattern: re.Pattern = re.compile(r"^(\d+)x\1_(\d+)$")
-    pattern_match: re.Match | None = aruco_pattern.match(marker_family)
+    # ArUco Original
+    if marker_family.lower() == "aruco_original":
+        aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+        return "aruco", aruco_dict
+
+    # Other ArUco (format: {size}_{number})
+    aruco_pattern = re.compile(r"^(\d+)x\1_(\d+)$")
+    pattern_match = aruco_pattern.match(marker_family)
 
     if pattern_match:
         # Split marker name into size and number components
