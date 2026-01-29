@@ -11,7 +11,7 @@ from .events import Events
 from .recording import Recording
 from .stream import Stream
 from .utils import *
-from .video import Video
+from .video import Video, find_homographies
 
 __all__ = [
     "Dataset",
@@ -20,6 +20,7 @@ __all__ = [
     "Events",
     "Epochs",
     "Video",
+    "find_homographies",
     "construct_epochs_info",
     "events_to_epochs_info",
 ]

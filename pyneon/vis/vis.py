@@ -594,9 +594,9 @@ def overlay_detections_and_pose(
         DataFrame containing AprilTag detections for each frame, with columns:
             - 'frame id': int
                 The frame number.
-            - 'marker id': int
+            - "marker id": int
                 The ID of the detected AprilTag.
-            - 'corners': np.ndarray of shape (4,2)
+            - "corners": np.ndarray of shape (4,2)
                 Pixel coordinates of the marker's corners.
     camera_positions : :pandas.DataFrame
         DataFrame containing the camera positions for each frame, with at least:

@@ -84,7 +84,7 @@ class Recording:
         └── worn.dtype
 
     Streams, events, and scene video will be located but not loaded until
-    accessed as properties such as ``gaze``, ``imu``, and ``eye_states``.
+    accessed as properties such as :attr:`gaze`, :attr:`fixations`, and :attr:`scene_video`.
 
     Parameters
     ----------
@@ -97,7 +97,7 @@ class Recording:
         Recording ID.
     recording_dir : pathlib.Path
         Path to the recording directory.
-    format : {'cloud', 'native'}
+    format : {"cloud", "native"}
         Recording format, either "cloud" for Pupil Cloud format or "native" for
         native format.
     info : dict
@@ -133,10 +133,6 @@ class Recording:
                 warn("Cannot find wearer.json in native recording.")
         self.info = info
         self.data_format_version = info.get("data_format_version", None)
-
-        self.der_dir = recording_dir / "derivatives"
-        if not self.der_dir.is_dir():
-            self.der_dir.mkdir()
 
     def _infer_format(self):
         gaze_csv = self.recording_dir / "gaze.csv"
@@ -723,10 +719,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         ----------
         marker_info : pandas.DataFrame
             DataFrame containing marker reference positions, with columns:
-                - 'marker name': full marker identifier (family + id, e.g., 'tag36h11_1')
-                - 'size': size of the marker in the reference plane units
-                - 'center x': x center of the marker in OpenCV coordinates
-                - 'center y': y center of the marker in OpenCV coordinates
+                - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")
+                - "size": size of the marker in the reference plane units
+                - "center x": x center of the marker in OpenCV coordinates
+                - "center y": y center of the marker in OpenCV coordinates
         detected_markers : Stream, optional
             Stream containing marker detection results per frame. If None, detections are recomputed.
         %(find_homographies_params)s
@@ -878,9 +874,9 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Events
             An events object containing:
                 - All columns from the raw fixations table
-                - 'gaze x [surface coord]' : float
+                - \"gaze x [surface coord]\" : float
                     Mean surface-space x-coordinate for the fixation.
-                - 'gaze y [surface coord]' : float
+                - "gaze y [surface coord]" : float
                     Mean surface-space y-coordinate for the fixation.
         """
 

@@ -202,7 +202,7 @@ def find_homographies(
     Compute a homography for each frame using available marker detections.
 
     This function identifies all markers detected in a given frame, looks up their
-    reference positions from `marker_layout`, and calls OpenCV's `cv2.findHomography`
+    reference positions from `marker_layout`, and calls OpenCV's ``cv2.findHomography``
     to compute a 3x3 transformation matrix mapping from detected corners in the video
     image to the reference plane (surface coordinates). The homography matrices are
     flattened into 9 columns for convenient storage and processing.
@@ -211,13 +211,14 @@ def find_homographies(
     ----------
     detected_markers : Stream
         Stream containing per-frame marker detections as returned by
-        :meth:`detect_markers`.
+        :meth:`pyneon.Video.detect_markers`.
     marker_layout : pandas.DataFrame
         DataFrame with the following columns:
-            - 'marker name': full marker identifier (family + id, e.g., '36h11_1')
-            - 'size': size of the marker in the reference plane units
-            - 'center x': x center of the marker in OpenCV coordinates
-            - 'center y': y center of the marker in OpenCV coordinates
+
+        - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")
+        - "size": size of the marker in the reference plane units
+        - "center x": x center of the marker in OpenCV coordinates
+        - "center y": y center of the marker in OpenCV coordinates
     %(find_homographies_params)s
 
     Returns

@@ -58,10 +58,12 @@ detection_window : tuple, optional
     A tuple (start, end) specifying the range to search for detections.
     Interpretation depends on `detection_window_unit`. Defaults to ``None`` (all frames).
 detection_window_unit : {"frame", "time", "timestamp"}, optional
-    Unit for values in `detection_window`:
-        - "timestamp": Unix timestamps in nanoseconds
-        - "time": in seconds relative to video start
-        - "frame": video frame indices (0-based)
+    Unit for values in `detection_window`. Possible values are:
+
+    - "timestamp": Unix timestamps in nanoseconds
+    - "time": in seconds relative to video start
+    - "frame": video frame indices (0-based)
+
     Defaults to "frame".
 detector_parameters : cv2.aruco.DetectorParameters, optional
     Detector parameters to use for all marker families. If None, a default
@@ -73,10 +75,12 @@ valid_markers : int, optional
     Minimum number of markers required to compute a homography. Defaults to 2.
 method : int, optional
     Method used to compute a homography matrix. The following methods are possible:
-        - 0 - a regular method using all the points, i.e., the least squares method
-        - ``cv2.RANSAC`` - RANSAC-based robust method
-        - ``cv2.LMEDS`` - Least-Median robust method
-        - ``cv2.RHO`` - PROSAC-based robust method
+
+    - 0 - a regular method using all the points, i.e., the least squares method
+    - ``cv2.RANSAC`` - RANSAC-based robust method
+    - ``cv2.LMEDS`` - Least-Median robust method
+    - ``cv2.RHO`` - PROSAC-based robust method
+
     Defaults to ``cv2.LMEDS``.
 ransacReprojThreshold : float, optional
     Maximum allowed reprojection error to treat a point pair as an inlier
@@ -90,15 +94,16 @@ confidence : float, optional
 
 DOC["detect_markers_return"] = """
 Stream
-    Stream indexed by 'timestamp [ns]' with columns:
-    - 'frame index': The frame number
-    - 'marker id': Marker ID, for example "36h11_0", "36h11_1"
-    - 'corner 0 x [px]', 'corner 0 y [px]': First corner (TL)
-    - 'corner 1 x [px]', 'corner 1 y [px]': Second corner (TR)
-    - 'corner 2 x [px]', 'corner 2 y [px]': Third corner (BR)
-    - 'corner 3 x [px]', 'corner 3 y [px]': Fourth corner (BL)
-    - 'center x [px]': X-coordinate of marker center in pixels
-    - 'center y [px]': Y-coordinate of marker center in pixels
+    Stream indexed by "timestamp [ns]" with columns:
+
+    - "frame index": The frame number\n
+    - "marker id": Marker ID, for example "36h11_0", "36h11_1"\n
+    - "top left x [px]", "top left y [px]"\n
+    - "top right x [px]", "top right y [px]"\n
+    - "bottom right x [px]", "bottom right y [px]"\n
+    - "bottom left x [px]", "bottom left y [px]"\n
+    - "center x [px]": X-coordinate of marker center in pixels\n
+    - "center y [px]": Y-coordinate of marker center in pixels
 """
 
 DOC["fig_ax_return"] = """
