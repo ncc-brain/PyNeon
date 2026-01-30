@@ -473,8 +473,12 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         self,
         heatmap_source: Literal["gaze", "fixations", None] = "gaze",
         scatter_source: Literal["gaze", "fixations", None] = "fixations",
+        step_size: int = 10,
+        sigma: int | float = 2,
+        width_height: tuple[int, int] = (1600, 1200),
+        cmap: str = "inferno",
+        ax: Optional[plt.Axes] = None,
         show: bool = True,
-        **kwargs,
     ) -> tuple[plt.Figure, plt.Axes]:
         """
         Plot a heatmap of gaze or fixation data on a matplotlib axis.
@@ -483,8 +487,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Parameters
         ----------
-        rec : Recording
-            Recording object containing the gaze and video data.
         heatmap_source : {'gaze', 'fixations', None}
             Source of the data to plot as a heatmap. If None, no heatmap is plotted.
             Defaults to 'gaze'.
@@ -492,29 +494,23 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Source of the data to plot as a scatter plot. If None, no scatter plot is plotted.
             Defaults to 'fixations'. Gaze data is typically more dense and thus less suitable
             for scatter plots.
-        show : bool
-            Show the figure if ``True``. Defaults to True.
-        **kwargs : keyword arguments
-            Additional parameters for the plot, including:
-                - 'step_size': Step size for the heatmap grid. Defaults to 10.
-                - 'sigma': Sigma value for Gaussian smoothing. Defaults to 2.
-                - 'width_height': Width and height of the figure in pixels. Defaults to (1600, 1200).
-                - 'cmap': Colormap for the heatmap. Defaults to 'inferno'.
-                - 'ax': Matplotlib axis to plot on. If None, a new figure and axis are created.
+        step_size : int
+            Size of the grid cells in pixels. Defaults to 10.
+        sigma : int or float
+            Standard deviation of the Gaussian kernel used to smooth the heatmap.
+            If None or 0, no smoothing is applied. Defaults to 2.
+        width_height : tuple[int, int]
+            If video is not available, the width and height of the scene camera frames to
+            specify the heatmap dimensions. Defaults to (1600, 1200).
+        cmap : str
+            Colormap to use for the heatmap. Defaults to 'inferno'.
+        %(ax_param)s
+        %(show_param)s
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_return)s
         """
-        step_size = kwargs.get("step_size", 10)
-        sigma = kwargs.get("sigma", 2)
-        width_height = kwargs.get("width_height", (1600, 1200))
-        cmap = kwargs.get("cmap", "inferno")
-        ax = kwargs.get("ax", None)
-
         return plot_distribution(
             self,
             heatmap_source,

@@ -15,4 +15,5 @@ __all__ = [
     "overlay_scanpath",
     "overlay_detections_and_pose",
     "plot_detected_markers",
+    "plot_marker_layout",
 ]

@@ -212,13 +212,7 @@ def find_homographies(
     detected_markers : Stream
         Stream containing per-frame marker detections as returned by
         :meth:`pyneon.Video.detect_markers`.
-    marker_layout : pandas.DataFrame
-        DataFrame with the following columns:
-
-        - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")
-        - "size": size of the marker in the reference plane units
-        - "center x": x center of the marker in OpenCV coordinates
-        - "center y": y center of the marker in OpenCV coordinates
+    %(marker_layout)s
     %(find_homographies_params)s
 
     Returns

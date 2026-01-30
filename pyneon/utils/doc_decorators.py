@@ -92,6 +92,16 @@ confidence : float, optional
     Defaults to 0.995.
 """
 
+DOC["marker_layout"] = """
+marker_layout : pandas.DataFrame
+    DataFrame describing the layout. Must include columns:
+
+    - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")\n
+    - "size": marker size in the reference plane units\n
+    - "center x": x center of the marker in surface coordinates\n
+    - "center y": y center of the marker in surface coordinates
+"""
+
 DOC["detect_markers_return"] = """
 Stream
     Stream indexed by "timestamp [ns]" with columns:
@@ -111,6 +121,16 @@ fig : matplotlib.figure.Figure
     Figure object containing the plot.
 ax : matplotlib.axes.Axes
     Axis object containing the plot.
+"""
+
+DOC["ax_param"] = """
+ax : matplotlib.axes.Axes or None
+    Axis to plot on. If ``None``, a new figure is created. Defaults to ``None``.
+"""
+
+DOC["show_param"] = """
+show : bool
+    Show the figure if ``True``. Defaults to True.
 """
 
 

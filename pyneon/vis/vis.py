@@ -37,11 +37,8 @@ def plot_frame(
         Video object to plot the frame from.
     frame_index : int
         Index of the frame to plot.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the frame on. If ``None``, a new figure is created.
-        Defaults to ``None``.
-    show : bool
-        Show the figure if ``True``. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
@@ -89,11 +86,8 @@ def plot_detected_markers(
         See :meth:`pyneon.video.detect_markers` for details.
     frame_index : int
         Index of the frame to plot.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the frame on. If ``None``, a new figure is created.
-        Defaults to ``None``.
-    show : bool
-        Show the figure if ``True``. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
@@ -135,11 +129,31 @@ def plot_detected_markers(
     return fig, ax
 
 
+@fill_doc
 def plot_marker_layout(
     marker_layout: pd.DataFrame,
+    show_marker_names: bool = True,
     ax: Optional[plt.Axes] = None,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot a 2D marker layout on a matplotlib axis.
+
+    This renders the marker images on a white canvas using the marker metadata
+    in ``marker_layout`` and overlays marker names at their centers.
+
+    Parameters
+    ----------
+    %(marker_layout)s
+    show_marker_names : bool
+        Whether to overlay marker names at their centers. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
+
+    Returns
+    -------
+    %(fig_ax_return)s
+    """
     if ax is None:
         fig, ax = plt.subplots()
     else:
@@ -162,16 +176,19 @@ def plot_marker_layout(
         marker_family = marker_name.rsplit("_", 1)[0]
         marker_id = int(marker_name.rsplit("_", 1)[1])
 
-        _, aruco_dict = marker_family_to_dict(marker_family)
+        marker_type, aruco_dict = marker_family_to_dict(marker_family)
         # Generate marker image
         marker_img = cv2.aruco.generateImageMarker(
             aruco_dict, marker_id, int(marker["size"])
         )
+        if marker_type == "april":
+            # flip image diagonally for AprilTag markers
+            # because AprilTag has a different orientation than ArUco
+            # see https://github.com/opencv/opencv-python/issues/1195
+            marker_img = np.flipud(np.fliplr(marker_img))
 
         # Convert to PIL Image
-        # Rotate 180 degrees - flip both axes
-        marker_img_rotated = np.rot90(marker_img, 2)
-        marker_pil = Image.fromarray(marker_img_rotated)
+        marker_pil = Image.fromarray(marker_img)
 
         # Calculate paste position (top-left corner)
         x = int(marker["center x"] - marker["size"] / 2 - min_x)
@@ -179,6 +196,16 @@ def plot_marker_layout(
 
         # Paste marker onto canvas
         canvas.paste(marker_pil, (x, y))
+        
+        if show_marker_names:
+            ax.text(
+                marker["center x"],
+                marker["center y"],
+                marker_name,
+                color="red",
+                ha="center",
+                va="center",
+            )
 
     # Display the canvas
     ax.imshow(canvas, cmap="gray", extent=[min_x, max_x, max_y, min_y])
@@ -191,6 +218,7 @@ def plot_marker_layout(
     return fig, ax
 
 
+@fill_doc
 def plot_distribution(
     rec: "Recording",
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
@@ -228,18 +256,12 @@ def plot_distribution(
         specify the heatmap dimensions. Defaults to (1600, 1200).
     cmap : str
         Colormap to use for the heatmap. Defaults to 'inferno'.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the frame on. If ``None``, a new figure is created.
-        Defaults to ``None``.
-    show : bool
-        Show the figure if ``True``. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        Figure object containing the plot.
-    ax : matplotlib.axes.Axes
-        Axis object containing the plot.
+    %(fig_ax_return)s
     """
     if heatmap_source is None and scatter_source is None:
         raise ValueError(
@@ -456,6 +478,7 @@ def overlay_scanpath(
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 
+@fill_doc
 def plot_epochs(
     epochs: "Epochs",
     column_name: Optional[str] = None,
@@ -478,17 +501,12 @@ def plot_epochs(
         from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
     cmap_name : str
         Colormap to use for different epochs. Defaults to 'cool'.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the data on. If ``None``, a new figure is created.
-    show : bool
-        Show the figure if ``True``.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        Figure object containing the plot.
-    ax : matplotlib.axes.Axes
-        Axis object containing the plot.
+    %(fig_ax_return)s
     """
     if ax is None:
         fig, ax = plt.subplots()

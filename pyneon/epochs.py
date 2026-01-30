@@ -245,18 +245,12 @@ class Epochs:
             from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
         cmap_name : str
             Colormap to use for different epochs. Defaults to 'cool'.
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the data on. If ``None``, a new figure is created.
-            Defaults to ``None``.
-        show : bool
-            Show the figure if ``True``. Defaults to True.
+        %(ax_param)s
+        %(show_param)s
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_return)s
         """
         fig_ax = plot_epochs(
             self,

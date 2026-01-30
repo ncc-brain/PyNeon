@@ -174,9 +174,7 @@ class Video(cv2.VideoCapture):
         ----------
         frame_index : int
             Index of the frame to plot.
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the frame on. If ``None``, a new figure is created.
-            Defaults to ``None``.
+        %(ax_param)s
 
         Returns
         -------
@@ -236,11 +234,8 @@ class Video(cv2.VideoCapture):
             Display marker IDs at their centers. Defaults to True.
         color : str
             Matplotlib color for markers. Defaults to "magenta".
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the frame on. If ``None``, a new figure is created.
-            Defaults to ``None``.
-        show : bool
-            Show the figure if ``True``. Defaults to True.
+        %(ax_param)s
+        %(show_param)s
 
         Returns
         -------
