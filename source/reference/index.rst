@@ -13,3 +13,4 @@ PyNeon API
     events
     epochs
     video
+    utils

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Callable
 
+import numpy as np
 import pandas as pd
 
 
@@ -26,7 +27,7 @@ def _check_data(data: pd.DataFrame) -> None:
         data.index = data.index.astype("int64")
     except Exception as e:
         raise ValueError(
-            "Event index must be in UTC time in ns and thus convertible to int64. "
+            "Event index must be in Unix time in ns and thus convertible to int64. "
             f"Got error: {e}"
         )
 
@@ -47,7 +48,7 @@ def load_or_compute(
         if path.suffix == ".csv":
             df = pd.read_csv(path)
         elif path.suffix == ".json":
-            pd.read_json(path, orient="records", lines=True)
+            df = pd.read_json(path, orient="records", lines=True)
         elif path.suffix == ".pkl":
             df = pd.read_pickle(path)
         else:

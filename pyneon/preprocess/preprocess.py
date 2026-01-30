@@ -398,7 +398,7 @@ def concat_streams(
     concat_data = pd.DataFrame(index=new_ts)
     for stream in streams_info["stream"]:
         interp_data = stream.interpolate(
-            new_ts, float_kind, other_kind, inplace=inplace
+            new_ts, float_kind, other_kind, max_gap_ms=None, inplace=inplace
         ).data
         assert concat_data.shape[0] == interp_data.shape[0]
         assert concat_data.index.equals(interp_data.index)
