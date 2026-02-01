@@ -102,6 +102,13 @@ marker_layout : pandas.DataFrame
     - "center y": y center of the marker in surface coordinates
 """
 
+DOC["find_homographies_return"] = """
+Stream
+    A Stream indexed by 'timestamp [ns]' with columns
+    'homography (0,0)' through 'homography (2,2)': The 9 elements of the
+    flattened 3x3 homography matrix.
+"""
+
 DOC["detect_markers_return"] = """
 Stream
     Stream indexed by "timestamp [ns]" with columns:

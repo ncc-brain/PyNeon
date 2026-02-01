@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from numbers import Number
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
@@ -136,25 +137,25 @@ def detect_markers(
     use_random_access = step < 5
 
     if use_random_access:
-        for actual_frame_idx in tqdm(frames_to_process, desc="Detecting markers"):
-            gray_frame = video.read_gray_frame_at(actual_frame_idx)
+        for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
+            gray_frame = video.read_gray_frame_at(frame_index)
             if gray_frame is None:
                 break
-            records = _process_frame(actual_frame_idx, gray_frame)
+            records = _process_frame(frame_index, gray_frame)
             detected_markers.extend(records)
     else:
         video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
-        for actual_frame_idx in tqdm(
+        for frame_index in tqdm(
             range(start_frame_idx, end_frame_idx + 1),
             desc="Detecting markers",
         ):
             ret, frame = video.read()
             if not ret:
                 break
-            if actual_frame_idx % step != 0:
+            if frame_index % step != 0:
                 continue
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            records = _process_frame(actual_frame_idx, gray_frame)
+            records = _process_frame(frame_index, gray_frame)
             detected_markers.extend(records)
 
     df = pd.DataFrame(detected_markers)
@@ -217,10 +218,7 @@ def find_homographies(
 
     Returns
     -------
-    Stream
-        A Stream indexed by 'timestamp [ns]' with columns
-        'homography (0,0)' through 'homography (2,2)': The 9 elements of the
-        flattened 3x3 homography matrix.
+    %(find_homographies_return)s
     """
     detection_df = detected_markers.data
     if not DETECTED_MARKERS_COLUMNS.issubset(detection_df.columns):
@@ -302,6 +300,9 @@ def find_homographies(
     for ts in tqdm(unique_timestamps, desc="Computing homographies"):
         frame_detections = detection_df.loc[ts]
         
+        if isinstance(frame_detections, pd.Series):
+            frame_detections = frame_detections.to_frame().T
+        
         n_detections = frame_detections.shape[0]
         if n_detections < valid_markers:
             # Not enough corners to compute a homography
@@ -373,78 +374,6 @@ def find_homographies(
         raise ValueError("No homographies could be computed from the detections.")
 
     return Stream(df)
-
-
-def gaze_on_surface(gaze_df: pd.DataFrame, homographies: pd.DataFrame) -> pd.DataFrame:
-    """
-    Apply per-frame or per-sample homographies to gaze points.
-
-    If `gaze_df` and `homographies` have the same index, homographies are applied
-    point-wise (efficiently vectorized). Otherwise, they are applied by grouping
-    `gaze_df` by 'frame index'.
-
-    Parameters
-    ----------
-    gaze_df : pandas.DataFrame
-        DataFrame containing gaze points with columns 'gaze x [px]' and 'gaze y [px]'.
-    homographies : pandas.DataFrame
-        DataFrame containing homography matrices in a 'homography' column.
-
-    Returns
-    -------
-    pandas.DataFrame
-        A copy of `gaze_df` with additional columns 'gaze x [surface coords]' and 'gaze y [surface coords]'.
-    """
-    gaze_df = gaze_df.copy()
-    gaze_df["gaze x [surface coord]"] = np.nan
-    gaze_df["gaze y [surface coord]"] = np.nan
-
-    # Case 1: DataFrames are aligned by index (e.g. gaze-sampled homographies)
-    if gaze_df.index.equals(homographies.index):
-        # Filter for rows where both have data
-        valid_mask = (
-            gaze_df[["gaze x [px]", "gaze y [px]"]].notna().all(axis=1)
-            & homographies["homography"].notna()
-        )
-
-        if not valid_mask.any():
-            return gaze_df
-
-        idx_valid = gaze_df.index[valid_mask]
-        points = gaze_df.loc[idx_valid, ["gaze x [px]", "gaze y [px]"]].values
-        # Stack 3x3 matrices into (N, 3, 3)
-        H_stack = np.stack(homographies.loc[idx_valid, "homography"].values)
-
-        # Vectorized homography application: [x', y', w']^T = H @ [x, y, 1]^T
-        points_h = np.column_stack([points, np.ones(len(points))])
-        transformed_h = np.einsum("nij,nj->ni", H_stack, points_h)
-
-        # Convert from homogeneous to normal 2D
-        transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
-        gaze_df.loc[idx_valid, "gaze x [surface coord]"] = transformed_2d[:, 0]
-        gaze_df.loc[idx_valid, "gaze y [surface coord]"] = transformed_2d[:, 1]
-        return gaze_df
-
-    # convert homographies to dict
-    homography_for_frame = {
-        int(row["frame index"]): row["homography"] for _, row in homographies.iterrows()
-    }
-
-    for frame in tqdm(
-        gaze_df["frame index"].unique(), desc="Applying homography to gaze points"
-    ):
-        idx_sel = gaze_df["frame index"] == frame
-        H = homography_for_frame.get(frame, None)
-        if H is None:
-            # no valid homography
-            continue
-        # transform the gaze coords
-        gaze_points = gaze_df.loc[idx_sel, ["gaze x [px]", "gaze y [px]"]].values
-        gaze_trans = _apply_homography(gaze_points, H)
-        gaze_df.loc[idx_sel, "gaze x [surface coord]"] = gaze_trans[:, 0]
-        gaze_df.loc[idx_sel, "gaze y [surface coord]"] = gaze_trans[:, 1]
-
-    return gaze_df
 
 
 def _upsample_homographies(

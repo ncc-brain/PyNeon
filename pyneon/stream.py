@@ -21,6 +21,123 @@ if TYPE_CHECKING:
     from .events import Events
 
 
+def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
+    """
+    Transform 2D points by a 3x3 homography.
+
+    Parameters
+    ----------
+    points : numpy.ndarray of shape (N, 2)
+        2D points to be transformed.
+    H : numpy.ndarray of shape (3, 3)
+        Homography matrix.
+
+    Returns
+    -------
+    numpy.ndarray of shape (N, 2)
+        Transformed 2D points.
+    """
+    points_h = np.column_stack([points, np.ones(len(points))])
+    transformed_h = (H @ points_h.T).T
+    # Convert from homogeneous to normal 2D
+    transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
+    return transformed_2d
+
+
+def apply_homographies_on_gaze(
+    gaze: "Stream",
+    homographies: "Stream",
+    max_gap_ms: Number = 500,
+    overwrite: bool = False,
+) -> None:
+    """
+    Apply homographies to gaze points.
+    
+    Since homographies are estimated per video frame and might not be available
+    for every frame, they need to be resampled/interpolated to the timestamps of the
+    gaze data before application. Users can control the extent of interpolation using
+    the ``max_gap_ms`` parameter to avoid applying homographies over large gaps.
+    
+    This function operates in-place and modifies the `gaze` Stream by adding two new columns:
+    'gaze x [surface coord]' and 'gaze y [surface coord]'.
+    
+    Parameters
+    ----------
+    gaze : Stream
+        Stream containing gaze points with columns 'gaze x [px]' and 'gaze y [px]'.
+    homographies : Stream
+        Stream containing homography matrices with columns 'homography (0,0)' through
+        'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
+    max_gap_ms : Number, optional
+        Maximum allowed gap (in milliseconds) for interpolation. Defaults to 500.
+    overwrite : bool, optional
+        If True, overwrite existing surface coordinate columns. Defaults to False.
+    
+    Returns
+    -------
+    None
+        This function modifies the gaze Stream in-place.
+    """
+    from tqdm import tqdm
+    
+    gaze_data = gaze.data
+    if not overwrite and (
+        "gaze x [surface coord]" in gaze_data.columns
+        or "gaze y [surface coord]" in gaze_data.columns
+    ):
+        raise ValueError(
+            "Stream already contains gaze on surface data. "
+            "Use overwrite=True to overwrite existing columns."
+        )
+
+    required_cols = ["gaze x [px]", "gaze y [px]"]
+    if not all(col in gaze_data.columns for col in required_cols):
+        raise ValueError(
+            f"Data must contain the following columns: {required_cols}"
+        )
+
+    gaze_data["gaze x [surface coord]"] = np.nan
+    gaze_data["gaze y [surface coord]"] = np.nan
+
+    # Interpolate homographies to gaze timestamps
+    homographies_interp = homographies.interpolate(
+        gaze.ts, float_kind="linear", max_gap_ms=max_gap_ms
+    )
+    homographies_data = homographies_interp.data
+
+    # Extract homography column names in order
+    h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
+    
+    # Check if all homography columns exist
+    if not all(col in homographies_data.columns for col in h_cols):
+        raise ValueError(
+            f"Homographies data must contain columns: {h_cols}"
+        )
+
+    # Apply homographies to each gaze point
+    for ts in tqdm(gaze_data.index, desc="Applying homographies to gaze points"):
+        # Skip if homography is not available at this timestamp (NaN after interpolation)
+        if ts not in homographies_data.index or homographies_data.loc[ts, h_cols].isna().any():
+            continue
+            
+        # Get gaze point(s) at this timestamp
+        gaze_row = gaze_data.loc[ts]
+        gaze_points = gaze_row[["gaze x [px]", "gaze y [px]"]].values.reshape(1, -1)
+
+        # Skip if gaze coordinates are NaN
+        if np.any(np.isnan(gaze_points)):
+            continue
+
+        # Reconstruct homography matrix from the 9 columns
+        H_flat = homographies_data.loc[ts, h_cols].values
+        H = H_flat.reshape(3, 3)
+
+        # Apply homography transformation
+        gaze_trans = _apply_homography(gaze_points, H)
+        gaze_data.loc[ts, "gaze x [surface coord]"] = gaze_trans[:, 0]
+        gaze_data.loc[ts, "gaze y [surface coord]"] = gaze_trans[:, 1]
+
+
 def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
     """
     Directly load native Pupil Neon stream data from .raw, .time, and .dtype files.
@@ -356,31 +473,8 @@ class Stream(BaseTabular):
             assert new_ts[0] == self.first_ts
             assert np.allclose(np.diff(new_ts), step_size)
 
-        # Optionally filter out requested timestamps that are too far from
-        # either adjacent original sample, based on max_gap_ms (converted to ns)
-        if max_gap_ms is not None:
-            max_gap_ns = int(max_gap_ms * 1e6)
-            ts = self.ts
-            nts = np.atleast_1d(np.asarray(new_ts, dtype=np.int64))
-            idx = np.searchsorted(ts, nts, side="left")
-            # distances to nearest left and right original timestamps
-            left_dist = np.where(
-                idx == 0, np.inf, nts - ts[np.clip(idx - 1, 0, len(ts) - 1)]
-            )
-            right_dist = np.where(
-                idx == len(ts), np.inf, ts[np.clip(idx, 0, len(ts) - 1)] - nts
-            )
-            # Keep only timestamps that are within the threshold to BOTH neighbors
-            mask = (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
-            new_ts_filtered = nts[mask]
-            if new_ts_filtered.size == 0:
-                raise ValueError(
-                    "All requested new_ts violate max_gap_ms relative to left or right original timestamps."
-                )
-            new_ts = new_ts_filtered
-
         inst = self if inplace else self.copy()
-        inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
+        inst.data = interpolate(new_ts, self.data, float_kind, other_kind, max_gap_ms)
         return None if inplace else inst
 
     @fill_doc
@@ -544,6 +638,9 @@ class Stream(BaseTabular):
         """
         Compute gaze azimuth and elevation angles (in degrees)
         based on gaze pixel coordinates and append them to the stream data.
+        
+        The stream data must contain the required gaze columns:
+        ``gaze x [px]`` and ``gaze y [px]``.
 
         Parameters
         ----------
@@ -565,16 +662,47 @@ class Stream(BaseTabular):
         ValueError
             If required gaze columns are not present in the data.
         """
-        if not overwrite and (
-            "azimuth [deg]" in self.data.columns
-            or "elevation [deg]" in self.data.columns
-        ):
-            raise ValueError(
-                "Stream data already contains azimuth and/or elevation columns. "
-                "Use overwrite=True to overwrite existing columns."
-            )
         inst = self if inplace else self.copy()
-        compute_azimuth_and_elevation(inst.data, method=method)
+        compute_azimuth_and_elevation(inst.data, method, overwrite)
+        return None if inplace else inst
+    
+    @fill_doc
+    def apply_homographies(
+        self,
+        homographies: "Stream",
+        max_gap_ms: Number = 500,
+        overwrite: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Stream"]:
+        """
+        Compute gaze locations in surface coordinates using provided homographies
+        based on gaze pixel coordinates and append them to the stream data.
+        
+        Since homographies are estimated per video frame and might not be available
+        for every frame, they need to be resampled/interpolated to the timestamps of the
+        gaze data before application.
+        
+        The stream data must contain the required gaze columns:
+        ``gaze x [px]`` and ``gaze y [px]``.
+        
+        Parameters
+        ----------
+        homographies : Stream
+            Stream containing homography matrices with columns 'homography (0,0)' through
+            'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
+        %(max_gap_ms)s
+        overwrite : bool, optional
+            Only applicable if surface gaze columns already exist.
+            If ``True``, overwrite existing columns. If ``False``, raise an error.
+            Defaults to ``False``.
+        %(inplace)s
+        
+        Returns
+        -------
+        %(stream_or_none)s
+        """
+        inst = self if inplace else self.copy()
+        apply_homographies_on_gaze(inst, homographies, max_gap_ms, overwrite)
         return None if inplace else inst
 
     @fill_doc

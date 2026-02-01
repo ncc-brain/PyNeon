@@ -21,6 +21,7 @@ def interpolate(
     data: pd.DataFrame,
     float_kind: str | int = "linear",
     other_kind: str | int = "nearest",
+    max_gap_ms: Optional[Number] = None,
 ) -> pd.DataFrame:
     """
     Interpolate a data stream to a new set of timestamps.
@@ -53,6 +54,40 @@ def interpolate(
     """
     _check_data(data)
     new_ts = np.sort(new_ts).astype("int64")
+    
+    # Optionally filter out requested timestamps that are too far from
+    # either adjacent original sample, based on max_gap_ms (converted to ns)
+    if max_gap_ms is not None:
+        max_gap_ns = int(max_gap_ms * 1e6)
+        ts = data.index.to_numpy()
+        nts = np.atleast_1d(np.asarray(new_ts, dtype=np.int64))
+        idx = np.searchsorted(ts, nts, side="left")
+        # distances to nearest left and right original timestamps
+        left_dist = np.where(
+            idx == 0, np.inf, nts - ts[np.clip(idx - 1, 0, len(ts) - 1)]
+        )
+        right_dist = np.where(
+            idx == len(ts), np.inf, ts[np.clip(idx, 0, len(ts) - 1)] - nts
+        )
+        # Keep only timestamps that are within the threshold to BOTH neighbors
+        mask = (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
+        new_ts_filtered = nts[mask]
+        if new_ts_filtered.size == 0:
+            raise ValueError(
+                "All requested new_ts violate max_gap_ms relative to left or right original timestamps."
+            )
+        
+        # Warn if timestamps were dropped
+        n_dropped = len(nts) - len(new_ts_filtered)
+        if n_dropped > 0:
+            warn(
+                f"{n_dropped} out of {len(nts)} requested timestamps were skipped "
+                f"because they exceed max_gap_ms={max_gap_ms} relative to neighboring samples.",
+                UserWarning,
+            )
+        
+        new_ts = new_ts_filtered
+
     if new_ts[0] < data.index[0]:
         warn(
             "new_ts contains timestamps before the data start time; "
@@ -232,6 +267,7 @@ def window_average(
 def compute_azimuth_and_elevation(
     data: pd.DataFrame,
     method: Literal["linear"] = "linear",
+    overwrite: bool = False,
 ) -> None:
     """
     Append gaze azimuth and elevation angles (in degrees) to gaze data
@@ -251,6 +287,15 @@ def compute_azimuth_and_elevation(
         The function modifies the input DataFrame in-place by adding two new columns:
         ``azimuth [deg]`` and ``elevation [deg]``.
     """
+    if not overwrite and (
+        "azimuth [deg]" in data.columns
+        or "elevation [deg]" in data.columns
+    ):
+        raise ValueError(
+            "Stream data already contains azimuth and/or elevation columns. "
+            "Use overwrite=True to overwrite existing columns."
+        )
+
     required_cols = ["gaze x [px]", "gaze y [px]"]
     camera_resolution = [1600, 1200]  # Pupil Neon camera resolution in pixels
     camera_fov = [103, 77]  # Pupil Neon camera field of view in degrees

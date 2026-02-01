@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.parametrize(
     "by",
-    ["timestamp", "row"],
+    ["timestamp", "sample"],
 )
 def test_crop(sim_blinks, by):
     ts0 = sim_blinks.start_ts

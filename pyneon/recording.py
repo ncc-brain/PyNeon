@@ -24,7 +24,7 @@ from .video import (
     estimate_camera_pose,
     estimate_scanpath,
     find_homographies,
-    gaze_on_surface,
+    apply_homographies_on_gaze,
 )
 from .vis import overlay_detections_and_pose, overlay_scanpath, plot_distribution
 
@@ -729,10 +729,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Returns
         -------
-        Stream
-            A Stream object indexed by `"timestamp [ns]"` with columns
-            'homography (0,0)' through 'homography (2,2)': The 9 elements of the
-            flattened 3x3 homography matrix.
+        %(find_homographies_return)s
         """
 
         if output_path is None:
@@ -831,7 +828,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             else:
                 synced_gaze = self.sync_gaze_to_video()
 
-        data = gaze_on_surface(synced_gaze.data, homographies.data)
+        data = apply_homographies_on_gaze(synced_gaze.data, homographies.data)
 
         # Save gaze on surface data to CSV
         data.to_csv(gaze_on_surface_path, index=True)

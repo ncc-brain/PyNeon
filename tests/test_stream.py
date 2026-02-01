@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.parametrize(
     "by",
-    ["timestamp", "time", "row"],
+    ["timestamp", "time", "sample"],
 )
 def test_crop(sim_gaze, by):
     ts0 = sim_gaze.ts
