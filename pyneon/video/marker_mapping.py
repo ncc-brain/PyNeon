@@ -301,6 +301,11 @@ def find_homographies(
 
     for ts in tqdm(unique_timestamps, desc="Computing homographies"):
         frame_detections = detection_df.loc[ts]
+        
+        n_detections = frame_detections.shape[0]
+        if n_detections < valid_markers:
+            # Not enough corners to compute a homography
+            continue
 
         world_points = []  # from the camera's perspective (detected corners)
         surface_points = []  # from the reference plane or "ideal" positions
@@ -339,10 +344,6 @@ def find_homographies(
 
         world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
         surface_points = np.array(surface_points, dtype=np.float32).reshape(-1, 2)
-
-        if len(world_points) < valid_markers * 4:
-            # Not enough corners to compute a homography
-            continue
 
         homography, _ = cv2.findHomography(
             world_points,

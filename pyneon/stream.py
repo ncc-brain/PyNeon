@@ -237,24 +237,24 @@ class Stream(BaseTabular):
         self,
         tmin: Optional[Number] = None,
         tmax: Optional[Number] = None,
-        by: Literal["timestamp", "time", "row"] = "timestamp",
+        by: Literal["timestamp", "time", "sample"] = "timestamp",
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
         Crop data to a specific time range based on timestamps,
-        relative times since start, or row numbers.
+        relative times since start, or sample numbers.
 
         Parameters
         ----------
         tmin : numbers.Number, optional
-            Start timestamp/time/row to crop the data to. If ``None``,
-            the minimum timestamp/time/row in the data is used. Defaults to ``None``.
+            Start timestamp/time/sample to crop the data to (inclusive). If ``None``,
+            the minimum timestamp/time/sample in the data is used. Defaults to ``None``.
         tmax : numbers.Number, optional
-            End timestamp/time/row to crop the data to. If ``None``,
-            the maximum timestamp/time/row in the data is used. Defaults to ``None``.
-        by : "timestamp" or "time" or "row", optional
+            End timestamp/time/sample to crop the data to (exclusive). If ``None``,
+            the maximum timestamp/time/sample in the data is used. Defaults to ``None``.
+        by : "timestamp" or "time" or "sample", optional
             Whether tmin and tmax are Unix timestamps in nanoseconds
-            OR relative times in seconds OR row numbers of the stream data.
+            OR relative times in seconds OR sample numbers of the stream data.
             Defaults to "timestamp".
 
         %(inplace)s
@@ -276,7 +276,7 @@ class Stream(BaseTabular):
         # tmin and tmax should be positive numbers
         if tmin < 0 or tmax < 0:
             raise ValueError("Crop bounds must be non-negative")
-        mask = (t >= tmin) & (t <= tmax)
+        mask = (t >= tmin) & (t < tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
         inst = self if inplace else self.copy()

@@ -272,23 +272,23 @@ class Events(BaseTabular):
         self,
         tmin: Optional[Number] = None,
         tmax: Optional[Number] = None,
-        by: Literal["timestamp", "row"] = "timestamp",
+        by: Literal["timestamp", "sample"] = "timestamp",
         inplace: bool = False,
     ) -> Optional["Events"]:
         """
-        Crop data to a specific time range based on timestamps or row numbers.
+        Crop data to a specific time range based on timestamps or sample numbers.
 
         Parameters
         ----------
         tmin : number, optional
-            Start timestamp/row to crop the data to. If ``None``,
-            the minimum timestamp/row in the data is used. Defaults to ``None``.
+            Start timestamp/sample to crop the data to (inclusive). If ``None``,
+            the minimum timestamp/sample in the data is used. Defaults to ``None``.
         tmax : number, optional
-            End timestamp/row to crop the data to. If ``None``,
-            the maximum timestamp/row in the data is used. Defaults to ``None``.
-        by : "timestamp" or "row", optional
+            End timestamp/sample to crop the data to (exclusive). If ``None``,
+            the maximum timestamp/sample in the data is used. Defaults to ``None``.
+        by : "timestamp" or "sample", optional
             Whether tmin and tmax are Unix timestamps in nanoseconds
-            or row numbers of the stream data.
+            or sample numbers of the stream data.
             Defaults to "timestamp".
 
         %(inplace)s
@@ -305,7 +305,7 @@ class Events(BaseTabular):
             t = np.arange(len(self))
         tmin = t.min() if tmin is None else tmin
         tmax = t.max() if tmax is None else tmax
-        mask = (t >= tmin) & (t <= tmax)
+        mask = (t >= tmin) & (t < tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
 
