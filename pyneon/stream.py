@@ -100,10 +100,11 @@ def apply_homographies_on_gaze(
     gaze_data["gaze y [surface coord]"] = np.nan
 
     # Interpolate homographies to gaze timestamps
-    homographies_interp = homographies.interpolate(
+    homographies_data = homographies.interpolate(
         gaze.ts, float_kind="linear", max_gap_ms=max_gap_ms
-    )
-    homographies_data = homographies_interp.data
+    ).data
+    # Exclude all rows where homography is NaN after interpolation
+    homographies_data = homographies_data.dropna()
 
     # Extract homography column names in order
     h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
@@ -115,18 +116,18 @@ def apply_homographies_on_gaze(
         )
 
     # Apply homographies to each gaze point
-    for ts in tqdm(gaze_data.index, desc="Applying homographies to gaze points"):
-        # Skip if homography is not available at this timestamp (NaN after interpolation)
-        if ts not in homographies_data.index or homographies_data.loc[ts, h_cols].isna().any():
-            continue
+    for ts in tqdm(homographies_data.index, desc="Applying homographies to gaze points"):
             
         # Get gaze point(s) at this timestamp
         gaze_row = gaze_data.loc[ts]
-        gaze_points = gaze_row[["gaze x [px]", "gaze y [px]"]].values.reshape(1, -1)
+        gaze_vals = gaze_row[["gaze x [px]", "gaze y [px]"]].values
 
         # Skip if gaze coordinates are NaN
-        if np.any(np.isnan(gaze_points)):
+        if pd.isna(gaze_vals).any():
             continue
+        
+        # Convert to numpy array to ensure compatibility with _apply_homography
+        gaze_points = np.asarray(gaze_vals, dtype=np.float64).reshape(1, -1)
 
         # Reconstruct homography matrix from the 9 columns
         H_flat = homographies_data.loc[ts, h_cols].values
@@ -293,7 +294,7 @@ class Stream(BaseTabular):
     @property
     def timestamps(self) -> np.ndarray:
         """Timestamps of the stream in nanoseconds."""
-        return self.data.index.to_numpy()
+        return self.data.index.to_numpy(dtype=np.int64)
 
     @property
     def ts(self) -> np.ndarray:
@@ -429,7 +430,7 @@ class Stream(BaseTabular):
         new_ts: Optional[np.ndarray] = None,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
-        max_gap_ms: Optional[int] = 500,
+        max_gap_ms: Optional[Number] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -447,8 +448,6 @@ class Stream(BaseTabular):
             are generated according to :attr:`sampling_freq_nominal`.
 
         %(interp_kwargs)s
-
-        %(max_gap_ms)s
 
         %(inplace)s
 
@@ -549,6 +548,7 @@ class Stream(BaseTabular):
         buffer: Number | tuple[Number, Number] = 0.05,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[Number] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -588,6 +588,7 @@ class Stream(BaseTabular):
             buffer,
             float_kind=float_kind,
             other_kind=other_kind,
+            max_gap_ms=max_gap_ms,
         )
         return None if inplace else inst
 
@@ -711,6 +712,7 @@ class Stream(BaseTabular):
         other: "Stream",
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[Number] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -734,7 +736,7 @@ class Stream(BaseTabular):
         # Interpolate other to self timestamps if needed
         if not np.array_equal(self.ts, other.ts):
             other = other.interpolate(
-                self.ts, float_kind, other_kind, max_gap_ms=None, inplace=False
+                self.ts, float_kind, other_kind, max_gap_ms=max_gap_ms, inplace=False
             )
 
         other_data = other.data.copy()

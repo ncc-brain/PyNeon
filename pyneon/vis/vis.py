@@ -202,7 +202,7 @@ def plot_marker_layout(
                 marker["center x"],
                 marker["center y"],
                 marker_name,
-                color="red",
+                color="magenta",
                 ha="center",
                 va="center",
             )
@@ -217,7 +217,121 @@ def plot_marker_layout(
         plt.show()
     return fig, ax
 
+@fill_doc
+def overlay_detected_markers(
+    video: "Video",
+    detected_markers: "Stream",
+    show_marker_ids: bool = True,
+    color: tuple[int, int, int] = (255, 0, 255),
+    show_video: bool = False,
+    video_output_path: Optional[Path | str] = "detected_markers.mp4",
+) -> None:
+    """
+    Overlay detected markers on the video frames and display or save the video with overlays.
 
+    Parameters
+    ----------
+    video : SceneVideo
+        Video object to overlay the detected markers on.
+    detected_markers : Stream
+        Stream containing detected marker data.
+        See :meth:`pyneon.video.detect_markers` for details.
+    show_marker_ids : bool
+        Whether to overlay marker IDs at their centers. Defaults to True.
+    color : tuple[int, int, int]
+        BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
+    %(show_video_param)s
+    %(video_output_path_param)s
+        Defaults to 'detected_markers.mp4'.
+    """
+    # Either show video or save it
+    if video_output_path is None and not show_video:
+        raise ValueError(
+            "Either show_video=True or video_output_path must be provided."
+        )
+
+    # Reset video to the beginning
+    video.reset()
+
+    # Initialize video writer if saving
+    if video_output_path is not None:
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        video_output_path = Path(video_output_path)
+        video_output_path.parent.mkdir(parents=True, exist_ok=True)
+        out = cv2.VideoWriter(
+            str(video_output_path), fourcc, video.fps, (video.width, video.height)
+        )
+
+    # Group markers by frame index for efficient lookup
+    markers_by_frame = {}
+    for _, marker in detected_markers.data.iterrows():
+        frame_idx = marker["frame index"]
+        if frame_idx not in markers_by_frame:
+            markers_by_frame[frame_idx] = []
+        markers_by_frame[frame_idx].append(marker)
+
+    # Iterate through video frames
+    frame_index = 0
+    for frame_index in tqdm(
+        range(len(video.ts)),
+        desc="Overlaying markers on video",
+        total=len(video.ts),
+    ):
+        # Read the current frame
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        # Get markers for this frame
+        markers = markers_by_frame.get(frame_index, [])
+
+        # Draw each marker
+        for marker in markers:
+            # Draw marker corners with connected lines
+            corners = [
+                (int(marker["top left x [px]"]), int(marker["top left y [px]"])),
+                (int(marker["top right x [px]"]), int(marker["top right y [px]"])),
+                (int(marker["bottom right x [px]"]), int(marker["bottom right y [px]"])),
+                (int(marker["bottom left x [px]"]), int(marker["bottom left y [px]"])),
+            ]
+            corners_array = np.array(corners, dtype=np.int32)
+            cv2.polylines(frame, [corners_array], True, color, 2)
+
+            # Draw center point
+            center_x = int(marker["center x [px]"])
+            center_y = int(marker["center y [px]"])
+            cv2.circle(frame, (center_x, center_y), 4, color, -1)
+
+            # Optionally add marker ID text
+            if show_marker_ids:
+                marker_id = int(marker["marker id"])
+                cv2.putText(
+                    frame,
+                    f"ID: {marker_id}",
+                    (center_x + 10, center_y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    color,
+                    2,
+                )
+
+        # Display the frame if requested
+        if show_video:
+            cv2.imshow("Detected Markers Overlay", frame)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+        # Write the frame to output video if saving
+        if video_output_path is not None:
+            out.write(frame)
+
+    # Release resources
+    if video_output_path is not None:
+        out.release()
+    if show_video:
+        cv2.destroyAllWindows()
+    video.reset()
+        
 @fill_doc
 def plot_distribution(
     rec: "Recording",
@@ -525,7 +639,7 @@ def plot_epochs(
         _plot_stream_epochs(epochs.epochs_dict, column_name, cmap, norm, fig, ax)
         ax.set_ylabel(column_name)
     elif isinstance(epochs.source, Events):
-        _plot_event_epochs(epochs.epochs_dict, norm, ax)
+        _plot_event_epochs(epochs.epochs_dict, ax)
         ax.set_ylabel("Epoch index")
     else:
         raise ValueError(

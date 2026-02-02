@@ -17,7 +17,7 @@ def test_crop(sim_gaze, by):
     else:
         t0 = np.arange(len(sim_gaze))
     tmax_index = len(t0) // 2
-    ts_first_half = ts0[: tmax_index + 1]
+    ts_first_half = ts0[:tmax_index]
 
     sim_gaze_cropped = sim_gaze.crop(tmax=t0[tmax_index], by=by)
     assert np.array_equal(sim_gaze_cropped.ts, ts_first_half)
@@ -83,7 +83,7 @@ def test_simple_concat(sim_gaze, sim_eye_states, sim_imu, sim_custom_stream):
 
     # eye_states starts later than gaze, so gaze.concat(eye_states) should trigger a warning
     with pytest.warns(
-        UserWarning, match="new_ts contains timestamps before the data start time"
+        UserWarning, match="requested timestamps are outside the data time range"
     ):
         concat = sim_gaze.concat(sim_eye_states)
     assert np.array_equal(concat.ts, sim_gaze.ts)
@@ -94,7 +94,7 @@ def test_simple_concat(sim_gaze, sim_eye_states, sim_imu, sim_custom_stream):
 
     # imu ends earlier than gaze, so gaze.concat(imu) should trigger a warning
     with pytest.warns(
-        UserWarning, match="new_ts contains timestamps after the data end time"
+        UserWarning, match="requested timestamps are outside the data time range"
     ):
         concat = sim_gaze.concat(sim_imu)
     assert np.array_equal(concat.ts, sim_gaze.ts)

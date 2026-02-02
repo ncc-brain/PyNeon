@@ -9,7 +9,14 @@ other_kind : str or int, optional
     Kind of interpolation applied to columns of other types.
     See :class:`scipy.interpolate.interp1d` for details.
     Only "nearest", "nearest-up", "previous", and "next" are recommended.
-    Defaults to "nearest"."""
+    Defaults to "nearest".
+max_gap_ms : numbers.Number, optional
+    Maximum allowed gap (in milliseconds) between a new timestamp and
+    adjacent original timestamps. If a new timestamp's distance to
+    both its immediate left and right original timestamps exceeds this
+    threshold, the data at that timestamp will be set to empty.
+    If ``None``, no gap-based filtering is applied.
+    Defaults to 500."""
 
 
 DOC["inplace"] = """\
@@ -138,6 +145,18 @@ ax : matplotlib.axes.Axes or None
 DOC["show_param"] = """
 show : bool
     Show the figure if ``True``. Defaults to True.
+"""
+
+DOC["show_video_param"] = """
+show_video : bool, optional
+    Whether to display the video with overlays in real-time.
+    Press 'q' to quit early. Defaults to ``False``.
+"""
+
+DOC["video_output_path_param"] = """
+video_output_path : pathlib.Path or str or None, optional
+    Path to save the output video with overlays. If ``None``, the video is not saved.
+    Either this or ``show_video=True`` must be provided.
 """
 
 

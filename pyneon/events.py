@@ -224,9 +224,9 @@ class Events(BaseTabular):
             If no ``start timestamp [ns]`` or ``timestamp [ns]`` column is found in the instance.
         """
         if self.type == "events":
-            return self.data["timestamp [ns]"].to_numpy()
+            return self.data["timestamp [ns]"].to_numpy(np.int64)
         if "start timestamp [ns]" in self.data.columns:
-            return self.data["start timestamp [ns]"].to_numpy()
+            return self.data["start timestamp [ns]"].to_numpy(np.int64)
         else:
             raise ValueError("No `start timestamp [ns]` column found in the instance.")
 
@@ -241,7 +241,7 @@ class Events(BaseTabular):
             If no ``end timestamp [ns]`` column is found in the instance.
         """
         if "end timestamp [ns]" in self.data.columns:
-            return self.data["end timestamp [ns]"].to_numpy()
+            return self.data["end timestamp [ns]"].to_numpy(np.int64)
         else:
             raise ValueError("No `end timestamp [ns]` column found in the instance.")
 
@@ -265,7 +265,7 @@ class Events(BaseTabular):
         """
         Event ID.
         """
-        return self.data.index.to_numpy()
+        return self.data.index.to_numpy(np.int32)
 
     @fill_doc
     def crop(

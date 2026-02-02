@@ -11,7 +11,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_detected_markers, plot_frame
+from ..vis import overlay_scanpath, plot_detected_markers, plot_frame, overlay_detected_markers
 from .marker_mapping import detect_markers
 
 
@@ -286,6 +286,40 @@ class Video(cv2.VideoCapture):
             circle_radius,
             line_thickness,
             max_fixations,
+            show_video,
+            video_output_path,
+        )
+
+    @fill_doc
+    def overlay_detected_markers(
+        self,
+        detected_markers: "Stream",
+        show_marker_ids: bool = True,
+        color: tuple[int, int, int] = (255, 0, 255),
+        show_video: bool = False,
+        video_output_path: Optional[Path | str] = "detected_markers.mp4",
+    ) -> None:
+        """
+        Overlay detected markers on the video frames. The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        detected_markers : Stream
+            Stream containing detected marker data.
+            See :meth:`detect_markers` for details.
+        show_marker_ids : bool
+            Whether to overlay marker IDs at their centers. Defaults to True.
+        color : tuple[int, int, int]
+            BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
+        %(show_video_param)s
+        %(video_output_path_param)s
+            Defaults to 'detected_markers.mp4'.
+        """
+        overlay_detected_markers(
+            self,
+            detected_markers,
+            show_marker_ids,
+            color,
             show_video,
             video_output_path,
         )

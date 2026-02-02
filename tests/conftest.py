@@ -187,3 +187,24 @@ def sim_custom_events():
     assert custom.type == "custom"
     assert custom.data.index.name == "event id"
     return custom
+
+if __name__ == "__main__":
+    ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
+    ts = np.delete(ts, 2)  # Remove one ts to make it non-uniformly sampled
+    df = pd.DataFrame(
+        np.random.rand(len(ts), 2),
+        index=ts,
+        columns=["gaze x [px]", "gaze y [px]"],
+    )
+    df.index.name = "timestamp [ns]"
+
+    gaze = Stream(df)
+    assert gaze.type == "gaze"
+    assert gaze.sampling_freq_nominal == nominal_sampling_rates["gaze"]
+    
+    step_size = int(1e9 / gaze.sampling_freq_nominal)
+    new_ts = np.arange(gaze.first_ts, gaze.last_ts, step_size, dtype=np.int64)
+    print(gaze.ts[0])
+    print(new_ts[0])
+    
+    gaze.interpolate()

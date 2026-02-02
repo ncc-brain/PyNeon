@@ -24,7 +24,6 @@ from .video import (
     estimate_camera_pose,
     estimate_scanpath,
     find_homographies,
-    apply_homographies_on_gaze,
 )
 from .vis import overlay_detections_and_pose, overlay_scanpath, plot_distribution
 
@@ -828,7 +827,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             else:
                 synced_gaze = self.sync_gaze_to_video()
 
-        data = apply_homographies_on_gaze(synced_gaze.data, homographies.data)
+        # data = apply_homographies_on_gaze(synced_gaze.data, homographies.data)
 
         # Save gaze on surface data to CSV
         data.to_csv(gaze_on_surface_path, index=True)

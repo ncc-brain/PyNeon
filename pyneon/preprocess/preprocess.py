@@ -21,7 +21,7 @@ def interpolate(
     data: pd.DataFrame,
     float_kind: str | int = "linear",
     other_kind: str | int = "nearest",
-    max_gap_ms: Optional[Number] = None,
+    max_gap_ms: Optional[Number] = 500,
 ) -> pd.DataFrame:
     """
     Interpolate a data stream to a new set of timestamps.
@@ -55,51 +55,57 @@ def interpolate(
     _check_data(data)
     new_ts = np.sort(new_ts).astype("int64")
     
-    # Optionally filter out requested timestamps that are too far from
-    # either adjacent original sample, based on max_gap_ms (converted to ns)
+    # Track which timestamps are invalid
+    invalid_mask = np.zeros(len(new_ts), dtype=bool)
+    
+    # First, mark timestamps outside the data range
+    out_of_range = (new_ts < data.index[0]) | (new_ts > data.index[-1])
+    invalid_mask |= out_of_range
+    n_out_of_bounds = np.sum(out_of_range)
+    if n_out_of_bounds > 0:
+        warn(
+            f"{n_out_of_bounds} out of {len(new_ts)} requested timestamps are outside "
+            f"the data time range and will have empty data.",
+            UserWarning,
+        )
+    
+    # Then, for in-range timestamps, check max_gap_ms constraint
     if max_gap_ms is not None:
         max_gap_ns = int(max_gap_ms * 1e6)
-        ts = data.index.to_numpy()
-        nts = np.atleast_1d(np.asarray(new_ts, dtype=np.int64))
-        idx = np.searchsorted(ts, nts, side="left")
-        # distances to nearest left and right original timestamps
-        left_dist = np.where(
-            idx == 0, np.inf, nts - ts[np.clip(idx - 1, 0, len(ts) - 1)]
-        )
-        right_dist = np.where(
-            idx == len(ts), np.inf, ts[np.clip(idx, 0, len(ts) - 1)] - nts
-        )
-        # Keep only timestamps that are within the threshold to BOTH neighbors
-        mask = (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
-        new_ts_filtered = nts[mask]
-        if new_ts_filtered.size == 0:
-            raise ValueError(
-                "All requested new_ts violate max_gap_ms relative to left or right original timestamps."
-            )
+        old_ts = data.index.to_numpy()
         
-        # Warn if timestamps were dropped
-        n_dropped = len(nts) - len(new_ts_filtered)
-        if n_dropped > 0:
-            warn(
-                f"{n_dropped} out of {len(nts)} requested timestamps were skipped "
-                f"because they exceed max_gap_ms={max_gap_ms} relative to neighboring samples.",
-                UserWarning,
+        # Only check timestamps that are within the data range
+        in_range_mask = ~out_of_range
+        if np.any(in_range_mask):
+            new_ts_in_range = new_ts[in_range_mask]
+            idx = np.searchsorted(old_ts, new_ts_in_range, side="left")
+            
+            # Check for exact matches first
+            exact_match = np.isin(new_ts_in_range, old_ts)
+            
+            # For non-exact matches, compute distances to neighbors
+            left_dist = np.where(
+                idx == 0, np.inf, new_ts_in_range - old_ts[np.clip(idx - 1, 0, len(old_ts) - 1)]
             )
-        
-        new_ts = new_ts_filtered
+            right_dist = np.where(
+                idx == len(old_ts), np.inf, old_ts[np.clip(idx, 0, len(old_ts) - 1)] - new_ts_in_range
+            )
+            
+            # Valid if exact match OR both neighbors are close enough
+            valid_in_range = exact_match | ((left_dist < max_gap_ns) & (right_dist < max_gap_ns))
+            
+            # Mark invalid timestamps
+            invalid_in_range = ~valid_in_range
+            invalid_mask[in_range_mask] |= invalid_in_range
+            
+            n_gap_violations = np.sum(invalid_in_range)
+            if n_gap_violations > 0:
+                warn(
+                    f"{n_gap_violations} out of {len(new_ts)} requested timestamps exceed "
+                    f"max_gap_ms={max_gap_ms} relative to neighboring samples and will have empty data.",
+                    UserWarning,
+                )
 
-    if new_ts[0] < data.index[0]:
-        warn(
-            "new_ts contains timestamps before the data start time; "
-            "These samples will be NaN.",
-            UserWarning,
-        )
-    if new_ts[-1] > data.index[-1]:
-        warn(
-            "new_ts contains timestamps after the data end time; "
-            "These samples will be NaN.",
-            UserWarning,
-        )
     if other_kind not in ("nearest", "nearest-up", "previous", "next"):
         warn(
             f"Interpolation kind '{other_kind}' for non-float columns "
@@ -124,6 +130,10 @@ def interpolate(
                 new_data[col] = vals.astype(s.dtype, copy=False)
             except (TypeError, ValueError):  # fallback in case .astype fails
                 new_data[col] = vals
+    
+    # Set data to NaN for timestamps that are out of range
+    if np.any(invalid_mask):
+        new_data.loc[invalid_mask] = np.nan
 
     return new_data
 
@@ -135,6 +145,7 @@ def interpolate_events(
     buffer: Number | tuple[Number, Number] = 0.05,
     float_kind: str | int = "linear",
     other_kind: str | int = "nearest",
+    max_gap_ms: Optional[Number] = 500,
 ) -> pd.DataFrame:
     """
     Interpolate data in the duration of events in the stream data.
@@ -192,6 +203,7 @@ def interpolate_events(
         new_data,
         float_kind=float_kind,
         other_kind=other_kind,
+        max_gap_ms=max_gap_ms,
     )
     return new_data
 

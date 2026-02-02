@@ -15,7 +15,7 @@ def test_crop(sim_blinks, by):
     else:
         t0 = np.arange(len(sim_blinks))
     tmax_index = len(t0) // 2
-    ts_first_half = ts0[: tmax_index + 1]
+    ts_first_half = ts0[:tmax_index]
 
     sim_blinks_cropped = sim_blinks.crop(tmax=t0[tmax_index], by=by)
     assert np.array_equal(sim_blinks_cropped.start_ts, ts_first_half)
