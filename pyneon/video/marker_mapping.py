@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from numbers import Number
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc

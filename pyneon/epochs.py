@@ -11,6 +11,7 @@ from .events import Events
 from .stream import Stream
 from .utils.doc_decorators import fill_doc
 from .vis import plot_epochs
+from .utils.variables import circular_columns
 
 
 @fill_doc
@@ -436,8 +437,6 @@ class Epochs:
                 vals_deg_wrapped = ((vals_deg_unwrapped + 180) % 360) - 180
                 epoch_df.loc[:, col] = vals_deg_wrapped
 
-        from pyneon.utils.variables import circular_columns
-
         if not isinstance(self.source, Stream):
             raise TypeError("Baseline correction requires the source to be a Stream.")
 
@@ -488,6 +487,8 @@ class Epochs:
                 epoch_time_s,
                 method,
             )
+            # Assign corrected data back to the epoch
+            epoch.data = epoch_df
         return None if inplace else epochs_to_process
 
 

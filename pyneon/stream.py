@@ -548,7 +548,7 @@ class Stream(BaseTabular):
         buffer: Number | tuple[Number, Number] = 0.05,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
-        max_gap_ms: Optional[Number] = 500,
+        max_gap_ms: Optional[Number] = None,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -561,7 +561,7 @@ class Stream(BaseTabular):
             Events object containing the events to interpolate.
             The events must have ``start timestamp [ns]`` and
             ``end timestamp [ns]`` columns.
-        buffer : numbers.Number or , optional
+        buffer : numbers.Number or tuple[numbers.Number, numbers.Number], optional
             The time before and after an event (in seconds) to consider invalid.
             If a single number is provided, the same buffer is applied
             to both before and after the event.

@@ -297,7 +297,7 @@ class Video(cv2.VideoCapture):
         show_marker_ids: bool = True,
         color: tuple[int, int, int] = (255, 0, 255),
         show_video: bool = False,
-        video_output_path: Optional[Path | str] = "detected_markers.mp4",
+        video_output_path: Optional[Path | str] = None,
     ) -> None:
         """
         Overlay detected markers on the video frames. The resulting video can be displayed and/or saved.

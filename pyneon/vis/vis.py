@@ -224,7 +224,7 @@ def overlay_detected_markers(
     show_marker_ids: bool = True,
     color: tuple[int, int, int] = (255, 0, 255),
     show_video: bool = False,
-    video_output_path: Optional[Path | str] = "detected_markers.mp4",
+    video_output_path: Optional[Path | str] = None,
 ) -> None:
     """
     Overlay detected markers on the video frames and display or save the video with overlays.
@@ -300,15 +300,14 @@ def overlay_detected_markers(
             # Draw center point
             center_x = int(marker["center x [px]"])
             center_y = int(marker["center y [px]"])
-            cv2.circle(frame, (center_x, center_y), 4, color, -1)
 
             # Optionally add marker ID text
             if show_marker_ids:
                 marker_id = int(marker["marker id"])
                 cv2.putText(
                     frame,
-                    f"ID: {marker_id}",
-                    (center_x + 10, center_y - 10),
+                    f"{marker_id}",
+                    (center_x, center_y),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
                     color,
@@ -317,6 +316,8 @@ def overlay_detected_markers(
 
         # Display the frame if requested
         if show_video:
+            cv2.namedWindow("Detected Markers Overlay", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Detected Markers Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Detected Markers Overlay", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -578,6 +579,8 @@ def overlay_scanpath(
 
         # Display the frame with overlays (Optional)
         if show_video:
+            cv2.namedWindow("Fixations Overlay", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Fixations Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Fixations Overlay", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -960,11 +963,9 @@ def overlay_detections_and_pose(
                 )
 
         if show_video:
-            # Resize the frame for display
-            resized_frame = cv2.resize(
-                frame, (width // 2, height // 2)
-            )  # Adjust scaling factor as needed
-            cv2.imshow("Video with Overlays", resized_frame)
+            cv2.namedWindow("Video with Overlays", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Video with Overlays", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.imshow("Video with Overlays", frame)
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC key
                 break
