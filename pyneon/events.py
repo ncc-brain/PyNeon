@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .tabular import BaseTabular
+from .utils import _apply_homography
 from .utils.doc_decorators import fill_doc
 from .utils.variables import native_to_cloud_column_map
 
@@ -431,4 +432,98 @@ class Events(BaseTabular):
             inst.data.index = pd.RangeIndex(
                 start=0, stop=len(inst.data), name=inst.data.index.name
             )
+        return None if inplace else inst
+
+    @fill_doc
+    def apply_homographies(
+        self,
+        homographies: "Stream",
+        max_gap_ms: Number = 500,
+        overwrite: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Events"]:
+        """
+        Compute fixation locations in surface coordinates using provided homographies
+        based on fixation pixel coordinates and append them to the events data.
+
+        Since homographies are estimated per video frame and might not be available
+        for every frame, they need to be resampled/interpolated to the timestamps of the
+        fixation data before application.
+
+        The events data must contain the required fixation columns:
+        ``fixation x [px]`` and ``fixation y [px]``.
+
+        Parameters
+        ----------
+        homographies : Stream
+            Stream containing homography matrices with columns 'homography (0,0)' through
+            'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
+        %(max_gap_ms)s
+        overwrite : bool, optional
+            Only applicable if surface fixation columns already exist.
+            If ``True``, overwrite existing columns. If ``False``, raise an error.
+            Defaults to ``False``.
+        %(inplace)s
+
+        Returns
+        -------
+        %(events_or_none)s
+        """
+        inst = self if inplace else self.copy()
+        data = inst.data
+
+        if not overwrite and (
+            "fixation x [surface coord]" in data.columns
+            or "fixation y [surface coord]" in data.columns
+        ):
+            raise ValueError(
+                "Events already contain fixation surface data. "
+                "Use overwrite=True to overwrite existing columns."
+            )
+
+        required_cols = ["fixation x [px]", "fixation y [px]"]
+        if not all(col in data.columns for col in required_cols):
+            raise ValueError(
+                f"Data must contain the following columns: {required_cols}"
+            )
+
+        data["fixation x [surface coord]"] = np.nan
+        data["fixation y [surface coord]"] = np.nan
+
+        event_ts = inst.start_ts
+        homographies_data = homographies.interpolate(
+            event_ts, float_kind="linear", max_gap_ms=max_gap_ms
+        ).data
+
+        h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
+        if not all(col in homographies_data.columns for col in h_cols):
+            raise ValueError(
+                f"Homographies data must contain columns: {h_cols}"
+            )
+
+        homographies_data = homographies_data.dropna()
+
+        x_col = data.columns.get_loc("fixation x [surface coord]")
+        y_col = data.columns.get_loc("fixation y [surface coord]")
+
+        for event_idx, ts in enumerate(event_ts):
+            if ts not in homographies_data.index:
+                continue
+
+            h_row = homographies_data.loc[ts]
+            if isinstance(h_row, pd.DataFrame):
+                h_row = h_row.iloc[0]
+
+            fix_vals = data.iloc[event_idx][required_cols].values
+            if pd.isna(fix_vals).any():
+                continue
+
+            fix_points = np.asarray(fix_vals, dtype=np.float64).reshape(1, -1)
+            H_flat = h_row[h_cols].values
+            H = H_flat.reshape(3, 3)
+            fix_trans = _apply_homography(fix_points, H)
+
+            data.iat[event_idx, x_col] = fix_trans[:, 0]
+            data.iat[event_idx, y_col] = fix_trans[:, 1]
+
         return None if inplace else inst

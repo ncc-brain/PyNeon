@@ -5,6 +5,28 @@ import numpy as np
 import pandas as pd
 
 
+def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
+    """
+    Transform 2D points by a 3x3 homography.
+
+    Parameters
+    ----------
+    points : numpy.ndarray of shape (N, 2)
+        2D points to be transformed.
+    H : numpy.ndarray of shape (3, 3)
+        Homography matrix.
+
+    Returns
+    -------
+    numpy.ndarray of shape (N, 2)
+        Transformed 2D points.
+    """
+    points_h = np.column_stack([points, np.ones(len(points))])
+    transformed_h = (H @ points_h.T).T
+    transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
+    return transformed_2d
+
+
 def _check_data(data: pd.DataFrame) -> None:
     """
     Check if the data is in the correct format.

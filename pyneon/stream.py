@@ -3,6 +3,7 @@ from numbers import Number
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from warnings import warn
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ from .preprocess import (
     window_average,
 )
 from .tabular import BaseTabular
+from .utils import _apply_homography
 from .utils.doc_decorators import fill_doc
 from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
@@ -21,30 +23,7 @@ if TYPE_CHECKING:
     from .events import Events
 
 
-def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
-    """
-    Transform 2D points by a 3x3 homography.
-
-    Parameters
-    ----------
-    points : numpy.ndarray of shape (N, 2)
-        2D points to be transformed.
-    H : numpy.ndarray of shape (3, 3)
-        Homography matrix.
-
-    Returns
-    -------
-    numpy.ndarray of shape (N, 2)
-        Transformed 2D points.
-    """
-    points_h = np.column_stack([points, np.ones(len(points))])
-    transformed_h = (H @ points_h.T).T
-    # Convert from homogeneous to normal 2D
-    transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
-    return transformed_2d
-
-
-def apply_homographies_on_gaze(
+def _apply_homographies_on_gaze(
     gaze: "Stream",
     homographies: "Stream",
     max_gap_ms: Number = 500,
@@ -77,9 +56,7 @@ def apply_homographies_on_gaze(
     -------
     None
         This function modifies the gaze Stream in-place.
-    """
-    from tqdm import tqdm
-    
+    """    
     gaze_data = gaze.data
     if not overwrite and (
         "gaze x [surface coord]" in gaze_data.columns
@@ -703,7 +680,7 @@ class Stream(BaseTabular):
         %(stream_or_none)s
         """
         inst = self if inplace else self.copy()
-        apply_homographies_on_gaze(inst, homographies, max_gap_ms, overwrite)
+        _apply_homographies_on_gaze(inst, homographies, max_gap_ms, overwrite)
         return None if inplace else inst
 
     @fill_doc
