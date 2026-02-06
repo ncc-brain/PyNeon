@@ -7,20 +7,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Normalize
+from PIL import Image
 from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
+
+from ..utils.doc_decorators import fill_doc
+from ..video.utils import marker_family_to_dict
 
 if TYPE_CHECKING:
     from ..epochs import Epochs
     from ..recording import Recording
+    from ..stream import Stream
     from ..video import Video
 
 
+@fill_doc
 def plot_frame(
     video: "Video",
-    index: int = 0,
+    frame_index: int = 0,
     ax: Optional[plt.Axes] = None,
-    auto_title: bool = True,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
     """
@@ -30,40 +35,28 @@ def plot_frame(
     ----------
     video : SceneVideo
         Video object to plot the frame from.
-    index : int
+    frame_index : int
         Index of the frame to plot.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the frame on. If ``None``, a new figure is created.
-        Defaults to ``None``.
-    auto_title : bool
-        Whether to automatically set the title of the axis.
-        The automatic title includes the video file name and the frame index.
-        Defaults to ``True``.
-    show : bool
-        Show the figure if ``True``. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        Figure object containing the plot.
-    ax : matplotlib.axes.Axes
-        Axis object containing the plot.
+    %(fig_ax_return)s
     """
-    if index >= len(video.ts) or index < 0:
-        raise IndexError(f"Frame index {index} out of range")
+    if frame_index >= len(video.ts) or frame_index < 0:
+        raise IndexError(f"Frame index {frame_index} out of range")
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-    video.set(cv2.CAP_PROP_POS_FRAMES, index)
+    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
     ret, frame = video.read()
     if ret:
         ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        if auto_title:
-            ax.set_title(f"{video.video_file.name} | Frame {index + 1}/{len(video)}")
         ax.axis("off")
     else:
-        raise RuntimeError(f"Could not read frame {index}")
+        raise RuntimeError(f"Could not read frame {frame_index}")
     if show:
         plt.show()
 
@@ -71,6 +64,276 @@ def plot_frame(
     return fig, ax
 
 
+@fill_doc
+def plot_detected_markers(
+    video: "Video",
+    detected_markers: "Stream",
+    frame_index: int = 0,
+    show_marker_ids: bool = True,
+    color: str = "magenta",
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot detected markers on a frame from the video.
+
+    Parameters
+    ----------
+    video : SceneVideo
+        Video object to plot the frame from.
+    detected_markers : Stream
+        Stream containing detected marker data.
+        See :meth:`pyneon.video.detect_markers` for details.
+    frame_index : int
+        Index of the frame to plot.
+    %(ax_param)s
+    %(show_param)s
+
+    Returns
+    -------
+        %(fig_ax_return)s
+    """
+    fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
+
+    mask = detected_markers["frame index"] == frame_index
+    markers = detected_markers.data[mask]
+
+    for _, marker in markers.iterrows():
+        if show_marker_ids:
+            ax.text(
+                marker["center x [px]"],
+                marker["center y [px]"],
+                marker["marker id"],
+                color=color,
+                ha="center",
+                va="center",
+            )
+        # Draw marker corners with connected lines
+        corners_x = [
+            marker["top left x [px]"],
+            marker["top right x [px]"],
+            marker["bottom right x [px]"],
+            marker["bottom left x [px]"],
+            marker["top left x [px]"],
+        ]
+        corners_y = [
+            marker["top left y [px]"],
+            marker["top right y [px]"],
+            marker["bottom right y [px]"],
+            marker["bottom left y [px]"],
+            marker["top left y [px]"],
+        ]
+        ax.plot(corners_x, corners_y, color=color)
+    if show:
+        plt.show()
+    return fig, ax
+
+
+@fill_doc
+def plot_marker_layout(
+    marker_layout: pd.DataFrame,
+    show_marker_names: bool = True,
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot a 2D marker layout on a matplotlib axis.
+
+    This renders the marker images on a white canvas using the marker metadata
+    in ``marker_layout`` and overlays marker names at their centers.
+
+    Parameters
+    ----------
+    %(marker_layout)s
+    show_marker_names : bool
+        Whether to overlay marker names at their centers. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
+
+    Returns
+    -------
+    %(fig_ax_return)s
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    # Calculate actual bounds for each marker, then find overall canvas size
+    min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
+    max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
+    min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
+    max_y = (marker_layout["center y"] + marker_layout["size"] / 2).max()
+
+    canvas_width = int(max_x - min_x)
+    canvas_height = int(max_y - min_y)
+
+    # Create white background
+    canvas = Image.new("L", (canvas_width, canvas_height), color=255)
+
+    for _, marker in marker_layout.iterrows():
+        marker_name = marker["marker name"]
+        marker_family = marker_name.rsplit("_", 1)[0]
+        marker_id = int(marker_name.rsplit("_", 1)[1])
+
+        marker_type, aruco_dict = marker_family_to_dict(marker_family)
+        # Generate marker image
+        marker_img = cv2.aruco.generateImageMarker(
+            aruco_dict, marker_id, int(marker["size"])
+        )
+        if marker_type == "april":
+            # flip image diagonally for AprilTag markers
+            # because AprilTag has a different orientation than ArUco
+            # see https://github.com/opencv/opencv-python/issues/1195
+            marker_img = np.flipud(np.fliplr(marker_img))
+
+        # Convert to PIL Image
+        marker_pil = Image.fromarray(marker_img)
+
+        # Calculate paste position (top-left corner)
+        x = int(marker["center x"] - marker["size"] / 2 - min_x)
+        y = int(marker["center y"] - marker["size"] / 2 - min_y)
+
+        # Paste marker onto canvas
+        canvas.paste(marker_pil, (x, y))
+        
+        if show_marker_names:
+            ax.text(
+                marker["center x"],
+                marker["center y"],
+                marker_name,
+                color="magenta",
+                ha="center",
+                va="center",
+            )
+
+    # Display the canvas
+    ax.imshow(canvas, cmap="gray", extent=[min_x, max_x, max_y, min_y])
+    ax.set_xlabel("x [surface coord]")
+    ax.set_ylabel("y [surface coord]")
+    ax.set_aspect("equal")
+
+    if show:
+        plt.show()
+    return fig, ax
+
+@fill_doc
+def overlay_detected_markers(
+    video: "Video",
+    detected_markers: "Stream",
+    show_marker_ids: bool = True,
+    color: tuple[int, int, int] = (255, 0, 255),
+    show_video: bool = False,
+    video_output_path: Optional[Path | str] = None,
+) -> None:
+    """
+    Overlay detected markers on the video frames and display or save the video with overlays.
+
+    Parameters
+    ----------
+    video : SceneVideo
+        Video object to overlay the detected markers on.
+    detected_markers : Stream
+        Stream containing detected marker data.
+        See :meth:`pyneon.video.detect_markers` for details.
+    show_marker_ids : bool
+        Whether to overlay marker IDs at their centers. Defaults to True.
+    color : tuple[int, int, int]
+        BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
+    %(show_video_param)s
+    %(video_output_path_param)s
+        Defaults to 'detected_markers.mp4'.
+    """
+    # Either show video or save it
+    if video_output_path is None and not show_video:
+        raise ValueError(
+            "Either show_video=True or video_output_path must be provided."
+        )
+
+    # Reset video to the beginning
+    video.reset()
+
+    # Initialize video writer if saving
+    if video_output_path is not None:
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        video_output_path = Path(video_output_path)
+        video_output_path.parent.mkdir(parents=True, exist_ok=True)
+        out = cv2.VideoWriter(
+            str(video_output_path), fourcc, video.fps, (video.width, video.height)
+        )
+
+    # Group markers by frame index for efficient lookup
+    markers_by_frame = {}
+    for _, marker in detected_markers.data.iterrows():
+        frame_idx = marker["frame index"]
+        if frame_idx not in markers_by_frame:
+            markers_by_frame[frame_idx] = []
+        markers_by_frame[frame_idx].append(marker)
+
+    # Iterate through video frames
+    frame_index = 0
+    for frame_index in tqdm(
+        range(len(video.ts)),
+        desc="Overlaying markers on video",
+        total=len(video.ts),
+    ):
+        # Read the current frame
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        # Get markers for this frame
+        markers = markers_by_frame.get(frame_index, [])
+
+        # Draw each marker
+        for marker in markers:
+            # Draw marker corners with connected lines
+            corners = [
+                (int(marker["top left x [px]"]), int(marker["top left y [px]"])),
+                (int(marker["top right x [px]"]), int(marker["top right y [px]"])),
+                (int(marker["bottom right x [px]"]), int(marker["bottom right y [px]"])),
+                (int(marker["bottom left x [px]"]), int(marker["bottom left y [px]"])),
+            ]
+            corners_array = np.array(corners, dtype=np.int32)
+            cv2.polylines(frame, [corners_array], True, color, 2)
+
+            # Draw center point
+            center_x = int(marker["center x [px]"])
+            center_y = int(marker["center y [px]"])
+
+            # Optionally add marker ID text
+            if show_marker_ids:
+                marker_id = int(marker["marker id"])
+                cv2.putText(
+                    frame,
+                    f"{marker_id}",
+                    (center_x, center_y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    color,
+                    2,
+                )
+
+        # Display the frame if requested
+        if show_video:
+            cv2.namedWindow("Detected Markers Overlay", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Detected Markers Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.imshow("Detected Markers Overlay", frame)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+        # Write the frame to output video if saving
+        if video_output_path is not None:
+            out.write(frame)
+
+    # Release resources
+    if video_output_path is not None:
+        out.release()
+    if show_video:
+        cv2.destroyAllWindows()
+    video.reset()
+        
+@fill_doc
 def plot_distribution(
     rec: "Recording",
     heatmap_source: Literal["gaze", "fixations", None] = "gaze",
@@ -108,18 +371,12 @@ def plot_distribution(
         specify the heatmap dimensions. Defaults to (1600, 1200).
     cmap : str
         Colormap to use for the heatmap. Defaults to 'inferno'.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the frame on. If ``None``, a new figure is created.
-        Defaults to ``None``.
-    show : bool
-        Show the figure if ``True``. Defaults to True.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        Figure object containing the plot.
-    ax : matplotlib.axes.Axes
-        Axis object containing the plot.
+    %(fig_ax_return)s
     """
     if heatmap_source is None and scatter_source is None:
         raise ValueError(
@@ -322,6 +579,8 @@ def overlay_scanpath(
 
         # Display the frame with overlays (Optional)
         if show_video:
+            cv2.namedWindow("Fixations Overlay", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Fixations Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Fixations Overlay", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -336,6 +595,7 @@ def overlay_scanpath(
     video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 
+@fill_doc
 def plot_epochs(
     epochs: "Epochs",
     column_name: Optional[str] = None,
@@ -358,42 +618,31 @@ def plot_epochs(
         from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
     cmap_name : str
         Colormap to use for different epochs. Defaults to 'cool'.
-    ax : matplotlib.axes.Axes or None
-        Axis to plot the data on. If ``None``, a new figure is created.
-    show : bool
-        Show the figure if ``True``.
+    %(ax_param)s
+    %(show_param)s
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
-        Figure object containing the plot.
-    ax : matplotlib.axes.Axes
-        Axis object containing the plot.
+    %(fig_ax_return)s
     """
-    from pyneon import Events, Stream  # for source class check
-
-    if epochs.source_class == Stream:
-        if column_name is None:
-            raise ValueError("Column name must be provided for Stream-based Epochs.")
-        if column_name not in epochs.columns:
-            raise ValueError(f"Column '{column_name}' not found in epochs.")
-
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
 
-    num_epochs = len(epochs.epochs)
+    num_epochs = len(epochs.epochs_dict)
     cmap = cm.get_cmap(cmap_name, num_epochs)
     norm = Normalize(vmin=0, vmax=num_epochs - 1)
 
     ax.axvline(0, color="k", linestyle="--")
 
-    if epochs.source_class == Stream:
-        _plot_stream_epochs(fig, epochs, column_name, cmap, norm, ax)
+    from pyneon import Events, Stream  # for source class check
+
+    if isinstance(epochs.source, Stream):
+        _plot_stream_epochs(epochs.epochs_dict, column_name, cmap, norm, fig, ax)
         ax.set_ylabel(column_name)
-    elif epochs.source_class == Events:
-        _plot_event_epochs(epochs, norm, ax)
+    elif isinstance(epochs.source, Events):
+        _plot_event_epochs(epochs.epochs_dict, ax)
         ax.set_ylabel("Epoch index")
     else:
         raise ValueError(
@@ -408,38 +657,44 @@ def plot_epochs(
     return fig, ax
 
 
-def _plot_stream_epochs(fig, epochs, column_name, cmap, norm, ax):
+def _plot_stream_epochs(epochs, column_name, cmap, norm, fig, ax):
     """
     Internal helper to plot Stream-based Epochs.
     """
-    for i, row in epochs.epochs.iterrows():
-        times = row.data["epoch time"] / 1e9
-        data = row.data[column_name]
+    if column_name is None:
+        raise ValueError("Column name must be provided for Stream-based Epochs.")
+    # Iterate through keys and values of the epochs.epochs dictionary
+    for i, stream in epochs.items():
+        if stream is None or stream.data.empty:
+            continue  # Skip bad/missing data
+        if column_name not in stream.columns:
+            raise ValueError(f"Column '{column_name}' not found in epochs.")
+        times = stream["epoch time [ns]"] / 1e9
+        data = stream[column_name]
         color = cmap(norm(i))
-        ax.plot(times, data, color=color, label=f"Epoch {i}")
+        ax.plot(times, data, color=color)
 
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cbar = fig.colorbar(sm, ax=ax)
-    cbar.set_label("Epoch Index")
+    cbar.set_label("Epoch index")
 
 
-def _plot_event_epochs(epochs, norm, ax):
+def _plot_event_epochs(epochs, ax):
     """
     Internal helper to plot Events-based Epochs.
     """
-    for i, row in epochs.epochs.iterrows():
-        df = row.data
-        if not isinstance(df, pd.DataFrame) or df.empty:
-            continue  # Skip bad/missing data
-        times = df["epoch time"] / 1e9
+    for i, events in epochs.items():
+        if events is None:
+            continue
+        times = events.data["epoch time [ns]"] / 1e9
 
         # check if duration ms is in df
-        if "duration [ms]" in df.columns:
-            durations = df["duration [ms]"] / 1e3
+        if "duration [ms]" in events.data.columns:
+            durations = events.data["duration [ms]"] / 1e3
             ax.hlines([i] * len(times), times, times + durations, color="gray")
         else:
-            ax.scatter(times, [i] * len(times), label=f"Epoch {i}")
+            ax.scatter(times, [i] * len(times))
 
 
 def overlay_detections_and_pose(
@@ -472,15 +727,15 @@ def overlay_detections_and_pose(
         Recording object containing the video and related metadata.
     april_detections : pandas.DataFrame
         DataFrame containing AprilTag detections for each frame, with columns:
-            - 'frame_idx': int
+            - 'frame id': int
                 The frame number.
-            - 'tag_id': int
+            - "marker id": int
                 The ID of the detected AprilTag.
-            - 'corners': np.ndarray of shape (4,2)
-                Pixel coordinates of the tag's corners.
+            - "corners": np.ndarray of shape (4,2)
+                Pixel coordinates of the marker's corners.
     camera_positions : :pandas.DataFrame
         DataFrame containing the camera positions for each frame, with at least:
-            - 'frame_idx': int
+            - 'frame id': int
                 The frame number.
             - 'smoothed_camera_pos': numpy.ndarray of shape (3,)
                 The camera position [x, y, z] in world coordinates.
@@ -511,20 +766,29 @@ def overlay_detections_and_pose(
 
     # Extract camera positions into a dictionary for quick lookup
     results_dict = {
-        row["frame_idx"]: row["camera_pos"] for _, row in camera_positions.iterrows()
+        row["frame index"]: row["camera_pos"] for _, row in camera_positions.iterrows()
     }
 
     # Group detections by frame
     detections_by_frame = {}
     for _, row in april_detections.iterrows():
-        fidx = row["frame_idx"]
-        if fidx not in detections_by_frame:
-            detections_by_frame[fidx] = []
-        detections_by_frame[fidx].append((row["tag_id"], row["corners"]))
+        f_id = row["frame index"]
+        if f_id not in detections_by_frame:
+            detections_by_frame[f_id] = []
+        # Reconstruct corners array from individual columns
+        corners = np.array(
+            [
+                [row["corner 0 x [px]"], row["corner 0 y [px]"]],
+                [row["corner 1 x [px]"], row["corner 1 y [px]"]],
+                [row["corner 2 x [px]"], row["corner 2 y [px]"]],
+                [row["corner 3 x [px]"], row["corner 3 y [px]"]],
+            ]
+        )
+        detections_by_frame[f_id].append((row["marker id"], corners))
 
     cap = recording.scene_video
     cap.reset()
-    frame_idx = 0
+    frame_index = 0
 
     # Track last known detections and positions
     last_detections = None
@@ -537,7 +801,7 @@ def overlay_detections_and_pose(
     graph_width, graph_height = graph_size
 
     def draw_detections(frame, detections, color, thickness=2):
-        for tag_id, corners in detections:
+        for marker_id, corners in detections:
             # Ensure corners are a NumPy array before converting to int
             corners_array = np.array(corners, dtype=np.float32)
             corners_int = corners_array.astype(int)
@@ -548,7 +812,7 @@ def overlay_detections_and_pose(
             corner_text_pos = (corners_int[0, 0], corners_int[0, 1] - 10)
             cv2.putText(
                 frame,
-                f"ID: {tag_id}",
+                f"ID: {marker_id}",
                 corner_text_pos,
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
@@ -635,8 +899,8 @@ def overlay_detections_and_pose(
             # End of video
             break
 
-        current_detections = detections_by_frame.get(frame_idx, None)
-        current_position = results_dict.get(frame_idx, None)
+        current_detections = detections_by_frame.get(frame_index, None)
+        current_position = results_dict.get(frame_index, None)
 
         if current_position is not None:
             visited_positions.append(current_position)
@@ -699,17 +963,14 @@ def overlay_detections_and_pose(
                 )
 
         if show_video:
-            # Resize the frame for display
-            resized_frame = cv2.resize(
-                frame, (width // 2, height // 2)
-            )  # Adjust scaling factor as needed
-            cv2.imshow("Video with Overlays", resized_frame)
+            cv2.namedWindow("Video with Overlays", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Video with Overlays", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.imshow("Video with Overlays", frame)
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC key
                 break
 
         out.write(frame)
-        frame_idx += 1
 
     out.release()
     cv2.destroyAllWindows()

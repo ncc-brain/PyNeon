@@ -9,9 +9,10 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
+from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_frame
-from .apriltag import detect_apriltags
+from ..vis import overlay_scanpath, plot_detected_markers, plot_frame, overlay_detected_markers
+from .marker_mapping import detect_markers
 
 
 class Video(cv2.VideoCapture):
@@ -57,6 +58,31 @@ class Video(cv2.VideoCapture):
         return int(len(self.ts))
 
     @property
+    def first_ts(self) -> int:
+        """First timestamp of the video."""
+        return int(self.ts[0])
+
+    @property
+    def last_ts(self) -> int:
+        """Last timestamp of the video."""
+        return int(self.ts[-1])
+
+    @property
+    def ts_diff(self) -> np.ndarray:
+        """Difference between consecutive timestamps."""
+        return np.diff(self.ts)
+
+    @property
+    def times(self) -> np.ndarray:
+        """Timestamps converted to seconds relative to video start."""
+        return (self.ts - self.ts[0]) / 1e9
+
+    @property
+    def duration(self) -> float:
+        """Duration of the video in seconds."""
+        return float(self.times[-1] - self.times[0])
+
+    @property
     def fps(self) -> float:
         """Frames per second of the video."""
         return self.get(cv2.CAP_PROP_FPS)
@@ -85,27 +111,48 @@ class Video(cv2.VideoCapture):
             raise ValueError("Distortion coefficients not found in video info.")
         return np.array(self.info["distortion_coefficients"])
 
-    def get_frame(self, timestamp: Union[int, np.int64]) -> int:
+    def timestamp_to_frame_index(
+        self, timestamp: Union[int, np.int64, np.ndarray]
+    ) -> np.ndarray:
         """
-        Get the frame index corresponding to a given timestamp.
+        Map one or many timestamps (ns) to the corresponding frame index/indices.
 
         Parameters
         ----------
-        timestamp : int
-            Timestamp in nanoseconds.
+        timestamp : int or numpy.ndarray
+            Timestamp(s) in nanoseconds.
 
         Returns
         -------
-        int
-            Frame index corresponding to the timestamp.
+        numpy.ndarray
+            Frame index/indices corresponding to the timestamp(s).
         """
-        if timestamp < self.ts[0] or timestamp > self.ts[-1]:
+        ts_array = np.atleast_1d(np.asarray(timestamp, dtype=np.int64))
+
+        if ts_array.size > 0 and (
+            ts_array.min() < self.ts[0] or ts_array.max() > self.ts[-1]
+        ):
             raise ValueError("Timestamp is out of bounds of the video timestamps.")
 
-        return int(np.searchsorted(self.ts, timestamp))
+        indices = np.searchsorted(self.ts, ts_array).astype(int)
+        return indices
+
+    def read_gray_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
+        """
+        Random-access read of a single frame converted to grayscale.
+
+        Returns None if the frame cannot be read.
+        """
+        if frame_index < 0 or frame_index >= len(self.ts):
+            raise ValueError("frame_index is out of bounds for this video.")
+
+        self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        ret, frame = self.read()
+        if not ret:
+            return None
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     def reset(self):
-        print("Resetting video...")
         if self.isOpened():
             self.release()
         super().__init__(self.video_file)
@@ -113,11 +160,11 @@ class Video(cv2.VideoCapture):
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
 
+    @fill_doc
     def plot_frame(
         self,
-        index: int = 0,
+        frame_index: int = 0,
         ax: Optional[plt.Axes] = None,
-        auto_title: bool = True,
         show: bool = True,
     ):
         """
@@ -125,46 +172,84 @@ class Video(cv2.VideoCapture):
 
         Parameters
         ----------
-        index : int
+        frame_index : int
             Index of the frame to plot.
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the frame on. If ``None``, a new figure is created.
-            Defaults to ``None``.
-        auto_title : bool
-            Whether to automatically set the title of the axis.
-            The automatic title includes the video file name and the frame index.
-            Defaults to ``True``.
+        %(ax_param)s
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_return)s
         """
-        return plot_frame(self, index, ax, auto_title, show)
+        return plot_frame(self, frame_index, ax, show)
 
-    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+    @fill_doc
+    def detect_markers(
+        self,
+        marker_family: str | list[str] = "36h11",
+        step: int = 1,
+        detection_window: Optional[tuple[int | float, int | float]] = None,
+        detection_window_unit: str = "frame",
+        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+    ) -> Stream:
         """
-        Detect AprilTags in the video frames.
+        Detect fiducial markers (AprilTag or ArUco) in the video frames.
 
         Parameters
         ----------
-        tag_family : str, optional
-            The AprilTag family to detect (default is 'tag36h11').
+        %(detect_markers_params)s
 
         Returns
         -------
-        pd.DataFrame
-            A DataFrame containing AprilTag detections, with columns:
-            - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
-            - 'frame_idx': The frame number
-            - 'tag_id': The ID of the detected AprilTag
-            - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
-            - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
+        %(detect_markers_return)s
         """
+        return detect_markers(
+            self,
+            marker_family=marker_family,
+            step=step,
+            detection_window=detection_window,
+            detection_window_unit=detection_window_unit,
+            detector_parameters=detector_parameters,
+        )
 
-        return detect_apriltags(self, tag_family)
+    @fill_doc
+    def plot_detected_markers(
+        self,
+        detected_markers: Stream,
+        frame_index: int = 0,
+        show_marker_ids: bool = True,
+        color: str = "magenta",
+        ax: Optional[plt.Axes] = None,
+        show: bool = True,
+    ):
+        """
+        Plot detected markers on a frame from this video.
+
+        Parameters
+        ----------
+        detected_markers : Stream
+            Stream containing detected marker data. See :meth:`pyneon.video.detect_markers`.
+        frame_index : int
+            Index of the frame to plot.
+        show_marker_ids : bool
+            Display marker IDs at their centers. Defaults to True.
+        color : str
+            Matplotlib color for markers. Defaults to "magenta".
+        %(ax_param)s
+        %(show_param)s
+
+        Returns
+        -------
+        %(fig_ax_return)s
+        """
+        return plot_detected_markers(
+            self,
+            detected_markers=detected_markers,
+            frame_index=frame_index,
+            show_marker_ids=show_marker_ids,
+            color=color,
+            ax=ax,
+            show=show,
+        )
 
     def overlay_scanpath(
         self,
@@ -205,6 +290,40 @@ class Video(cv2.VideoCapture):
             video_output_path,
         )
 
+    @fill_doc
+    def overlay_detected_markers(
+        self,
+        detected_markers: "Stream",
+        show_marker_ids: bool = True,
+        color: tuple[int, int, int] = (255, 0, 255),
+        show_video: bool = False,
+        video_output_path: Optional[Path | str] = None,
+    ) -> None:
+        """
+        Overlay detected markers on the video frames. The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        detected_markers : Stream
+            Stream containing detected marker data.
+            See :meth:`detect_markers` for details.
+        show_marker_ids : bool
+            Whether to overlay marker IDs at their centers. Defaults to True.
+        color : tuple[int, int, int]
+            BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
+        %(show_video_param)s
+        %(video_output_path_param)s
+            Defaults to 'detected_markers.mp4'.
+        """
+        overlay_detected_markers(
+            self,
+            detected_markers,
+            show_marker_ids,
+            color,
+            show_video,
+            video_output_path,
+        )
+
     def undistort(
         self,
         output_video_path: Optional[Path | str] = "undistorted_video.mp4",
@@ -221,7 +340,7 @@ class Video(cv2.VideoCapture):
         cap = self
         cap.reset()
         camera_matrix = self.camera_matrix
-        dist_coeffs = self.dist_coeffs
+        dist_coeffs = self.distortion_coefficients
 
         # Get self properties
         frame_width, frame_height = self.width, self.height

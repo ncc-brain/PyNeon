@@ -9,13 +9,155 @@ other_kind : str or int, optional
     Kind of interpolation applied to columns of other types.
     See :class:`scipy.interpolate.interp1d` for details.
     Only "nearest", "nearest-up", "previous", and "next" are recommended.
-    Defaults to "nearest"."""
+    Defaults to "nearest".
+max_gap_ms : numbers.Number, optional
+    Maximum allowed gap (in milliseconds) between a new timestamp and
+    adjacent original timestamps. If a new timestamp's distance to
+    both its immediate left and right original timestamps exceeds this
+    threshold, the data at that timestamp will be set to empty.
+    If ``None``, no gap-based filtering is applied.
+    Defaults to 500."""
 
 
 DOC["inplace"] = """\
 inplace : bool, optional
     If ``True``, replace current data. Otherwise returns a new instance.
     Defaults to ``False``."""
+
+DOC["max_gap_ms"] = """\
+max_gap_ms : int, optional
+    Maximum allowed distance (in milliseconds) to both adjacent original
+    timestamps (left and right). A requested new timestamp will be ignored
+    if its distance to the immediate left OR right original timestamp is
+    greater than or equal to ``max_gap_ms`` (no interpolation will be
+    performed at that timestamp). Defaults to 500."""
+
+DOC["stream_or_none"] = """\
+Stream or None
+    A new ``Stream`` instance with modified data
+    if ``inplace=False``, otherwise ``None``.
+"""
+
+DOC["events_or_none"] = """\
+Events or None
+    A new ``Events`` instance with modified data
+    if ``inplace=False``, otherwise ``None``.
+"""
+
+DOC["epochs_info"] = """\
+epochs_info : pandas.DataFrame, shape (n_epochs, 4)
+    DataFrame containing epoch information with the following columns (time in ns):
+
+        ``t_ref``: Reference time of the epoch.\n
+        ``t_before``: Time before the reference time to start the epoch.\n
+        ``t_after``: Time after the reference time to end the epoch.\n
+        ``description``: Description or label associated with the epoch.
+"""
+
+DOC["detect_markers_params"] = """
+marker_family : str or list[str], optional
+    AprilTag family/ArUco dictionary to detect. Accepts a single family string
+    (e.g., '36h11') or a list of families (e.g., ['36h11', '6x6_250']).
+step : int, optional
+    If > 1, detect markers only in every Nth frame (e.g., step=5 processes frames
+    0, 5, 10, 15, ...). Defaults to 1.
+detection_window : tuple, optional
+    A tuple (start, end) specifying the range to search for detections.
+    Interpretation depends on `detection_window_unit`. Defaults to ``None`` (all frames).
+detection_window_unit : {"frame", "time", "timestamp"}, optional
+    Unit for values in `detection_window`. Possible values are:
+
+    - "timestamp": Unix timestamps in nanoseconds
+    - "time": in seconds relative to video start
+    - "frame": video frame indices (0-based)
+
+    Defaults to "frame".
+detector_parameters : cv2.aruco.DetectorParameters, optional
+    Detector parameters to use for all marker families. If None, a default
+    DetectorParameters instance is created. Defaults to ``None``.
+"""
+
+DOC["find_homographies_params"] = """
+valid_markers : int, optional
+    Minimum number of markers required to compute a homography. Defaults to 2.
+method : int, optional
+    Method used to compute a homography matrix. The following methods are possible:
+
+    - 0 - a regular method using all the points, i.e., the least squares method
+    - ``cv2.RANSAC`` - RANSAC-based robust method
+    - ``cv2.LMEDS`` - Least-Median robust method
+    - ``cv2.RHO`` - PROSAC-based robust method
+
+    Defaults to ``cv2.LMEDS``.
+ransacReprojThreshold : float, optional
+    Maximum allowed reprojection error to treat a point pair as an inlier
+    (used in the RANSAC and RHO methods only). Defaults to 3.0.
+maxIters : int, optional
+    The maximum number of RANSAC iterations. Defaults to 2000.
+confidence : float, optional
+    Confidence level, between 0 and 1, for the estimated homography.
+    Defaults to 0.995.
+"""
+
+DOC["marker_layout"] = """
+marker_layout : pandas.DataFrame
+    DataFrame describing the layout. Must include columns:
+
+    - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")\n
+    - "size": marker size in the reference plane units\n
+    - "center x": x center of the marker in surface coordinates\n
+    - "center y": y center of the marker in surface coordinates
+"""
+
+DOC["find_homographies_return"] = """
+Stream
+    A Stream indexed by 'timestamp [ns]' with columns
+    'homography (0,0)' through 'homography (2,2)': The 9 elements of the
+    flattened 3x3 homography matrix.
+"""
+
+DOC["detect_markers_return"] = """
+Stream
+    Stream indexed by "timestamp [ns]" with columns:
+
+    - "frame index": The frame number\n
+    - "marker id": Marker ID, for example "36h11_0", "36h11_1"\n
+    - "top left x [px]", "top left y [px]"\n
+    - "top right x [px]", "top right y [px]"\n
+    - "bottom right x [px]", "bottom right y [px]"\n
+    - "bottom left x [px]", "bottom left y [px]"\n
+    - "center x [px]": X-coordinate of marker center in pixels\n
+    - "center y [px]": Y-coordinate of marker center in pixels
+"""
+
+DOC["fig_ax_return"] = """
+fig : matplotlib.figure.Figure
+    Figure object containing the plot.
+ax : matplotlib.axes.Axes
+    Axis object containing the plot.
+"""
+
+DOC["ax_param"] = """
+ax : matplotlib.axes.Axes or None
+    Axis to plot on. If ``None``, a new figure is created. Defaults to ``None``.
+"""
+
+DOC["show_param"] = """
+show : bool
+    Show the figure if ``True``. Defaults to True.
+"""
+
+DOC["show_video_param"] = """
+show_video : bool, optional
+    Whether to display the video with overlays in real-time.
+    Press 'q' to quit early. Defaults to ``False``.
+"""
+
+DOC["video_output_path_param"] = """
+video_output_path : pathlib.Path or str or None, optional
+    Path to save the output video with overlays. If ``None``, the video is not saved.
+    Either this or ``show_video=True`` must be provided.
+"""
 
 
 def fill_doc(func):

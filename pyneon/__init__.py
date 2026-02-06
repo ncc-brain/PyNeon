@@ -6,12 +6,12 @@ from typeguard import install_import_hook
 install_import_hook("pyneon")
 
 from .dataset import Dataset
-from .epochs import Epochs, construct_times_df, events_to_times_df
+from .epochs import Epochs, construct_epochs_info, events_to_epochs_info
 from .events import Events
 from .recording import Recording
 from .stream import Stream
 from .utils import *
-from .video import Video
+from .video import Video, find_homographies
 
 __all__ = [
     "Dataset",
@@ -20,6 +20,7 @@ __all__ = [
     "Events",
     "Epochs",
     "Video",
-    "construct_times_df",
-    "events_to_times_df",
+    "find_homographies",
+    "construct_epochs_info",
+    "events_to_epochs_info",
 ]

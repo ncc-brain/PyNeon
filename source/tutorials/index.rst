@@ -10,7 +10,9 @@ started with PyNeon.
     :maxdepth: 1
 
     read_recording_cloud
+    read_recording_native
     interpolate_and_concat
     pupil_size_and_epoching
+    surface_mapping
     video
     export_to_bids
