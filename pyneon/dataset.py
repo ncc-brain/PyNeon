@@ -8,7 +8,7 @@ from .recording import Recording
 
 class Dataset:
     """
-    Holder for multiple recordings. It reads from a directory containing a multiple
+    Container for multiple recordings. Reads from a directory containing multiple
     recordings downloaded from Pupil Cloud with the **Timeseries CSV** or
     **Timeseries CSV and Scene Video** option. For example, a dataset with 2 recordings
     would have the following folder structure:
@@ -42,7 +42,7 @@ class Dataset:
     dataset_dir : pathlib.Path
         Path to the directory containing the dataset.
     recordings : list of Recording
-        List of :class:`pyneon.Recording` objects for each recording in the dataset.
+        List of :class:`pyneon.Recording` instances for each recording in the dataset.
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
 

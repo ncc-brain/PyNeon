@@ -178,7 +178,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def gaze(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` object containing gaze data.
+        Return a cached :class:`pyneon.Stream` instance containing gaze data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``gaze.csv``.
 
@@ -198,7 +198,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def imu(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` object containing IMU data.
+        Return a cached :class:`pyneon.Stream` instance containing IMU data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``imu.csv``.
 
@@ -213,7 +213,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_states(self) -> Stream:
         """
-        Return a (cached) :class:`pyneon.Stream` object containing eye states data.
+        Return a cached :class:`pyneon.Stream` instance containing eye states data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``3d_eye_states.csv``.
 
@@ -228,7 +228,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def blinks(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` object containing blink event data.
+        Return a cached :class:`pyneon.Events` instance containing blink event data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``blinks.csv``.
 
@@ -243,7 +243,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def fixations(self) -> Events:
         """
-        Return a (cached) :class:`pyneon.Events` object containing fixations data.
+        Return a cached :class:`pyneon.Events` object containing fixations data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``fixations.csv``.
 
@@ -258,7 +258,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def saccades(self) -> Events:
         """
-        Return a (cached) :class:`pyneon.Events` object containing saccades data.
+        Return a cached :class:`pyneon.Events` object containing saccades data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``saccades.csv``.
 
@@ -275,7 +275,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def events(self) -> Events:
         """
-        Return a (cached) :class:`pyneon.Events` object containing events data.
+        Return a cached :class:`pyneon.Events` object containing events data.
 
         For **Pupil Cloud** recordings, the events data is loaded from ``events.csv``.
 
@@ -290,7 +290,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def scene_video(self) -> Video:
         """
-        Return a (cached) :class:`pyneon.Video` object containing scene video data.
+        Return a cached :class:`pyneon.Video` object containing scene video data.
 
         For **Pupil Cloud** recordings, the video is loaded from the only ``*.mp4`` file
         in the recording directory.
@@ -352,7 +352,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_video(self) -> Video:
         """
-        Return a (cached) :class:`pyneon.Video` object containing eye video data.
+        Return a cached :class:`pyneon.Video` object containing eye video data.
 
         Eye video is only available for **native** recordings and is loaded from the
         ``Neon Sensor Module*.mp4`` file in the recording directory.
@@ -431,7 +431,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns
         -------
         Stream
-            Stream object containing concatenated data.
+            Stream instance containing concatenated data.
         """
         return Stream(
             concat_streams(

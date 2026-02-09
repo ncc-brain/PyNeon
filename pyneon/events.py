@@ -264,9 +264,28 @@ class Events(BaseTabular):
     @property
     def id(self) -> np.ndarray:
         """
-        Event ID.
+        Event IDs.
         """
         return self.data.index.to_numpy(np.int32)
+
+    @property
+    def id_name(self) -> Optional[str]:
+        """
+        Name of the event ID column based on event type.
+
+        Returns
+        -------
+        str or None
+            The ID column name (e.g., ``"blink id"``, ``"fixation id"``, ``"saccade id"``,
+            ``"event id"``) for known event types, or ``None`` for custom event types.
+        """
+        id_map = {
+            "blinks": "blink id",
+            "fixations": "fixation id",
+            "saccades": "saccade id",
+            "events": "event id",
+        }
+        return id_map.get(self.type, None)
 
     @fill_doc
     def crop(
@@ -317,13 +336,13 @@ class Events(BaseTabular):
     @fill_doc
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
-        Temporally crop the events to the range of timestamps a stream.
+        Temporally crop the events to the range of timestamps of a stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
         other : Stream
-            Stream to restrict to.
+            The stream whose timestamp range is used to restrict the events.
 
         %(inplace)s
 
@@ -456,8 +475,8 @@ class Events(BaseTabular):
         Parameters
         ----------
         homographies : Stream
-            Stream containing homography matrices with columns 'homography (0,0)' through
-            'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
+            Stream containing homography matrices with columns ``'homography (0,0)'`` through
+            ``'homography (2,2)'`` as returned by :func:`pyneon.video.find_homographies`.
         %(max_gap_ms)s
         overwrite : bool, optional
             Only applicable if surface fixation columns already exist.

@@ -270,42 +270,92 @@ class Stream(BaseTabular):
 
     @property
     def timestamps(self) -> np.ndarray:
-        """Timestamps of the stream in nanoseconds."""
+        """Timestamps of the stream in nanoseconds.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
         return self.data.index.to_numpy(dtype=np.int64)
 
     @property
     def ts(self) -> np.ndarray:
-        """Alias for ``timestamps``."""
+        """Alias for :attr:`timestamps`.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
         return self.timestamps
 
     @property
     def first_ts(self) -> int:
-        """First timestamp of the stream."""
+        """First timestamp of the stream in nanoseconds.
+        
+        Returns
+        -------
+        int
+            First timestamp in nanoseconds (Unix time).
+        """
         return int(self.ts[0])
 
     @property
     def last_ts(self) -> int:
-        """Last timestamp of the stream."""
+        """Last timestamp of the stream in nanoseconds.
+        
+        Returns
+        -------
+        int
+            Last timestamp in nanoseconds (Unix time).
+        """
         return int(self.ts[-1])
 
     @property
     def ts_diff(self) -> np.ndarray:
-        """Difference between consecutive timestamps."""
+        """Difference between consecutive timestamps.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of time differences in nanoseconds.
+        """
         return np.diff(self.ts)
 
     @property
     def times(self) -> np.ndarray:
-        """Timestamps converted to seconds relative to stream start."""
+        """Timestamps converted to seconds relative to stream start.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of times in seconds, starting from 0.
+        """
         return (self.ts - self.first_ts) / 1e9
 
     @property
     def duration(self) -> float:
-        """Duration of the stream in seconds."""
+        """Duration of the stream in seconds.
+        
+        Returns
+        -------
+        float
+            Total duration from first to last timestamp in seconds.
+        """
         return float(self.times[-1] - self.times[0])
 
     @property
     def sampling_freq_effective(self) -> float:
-        """Effective sampling frequency of the stream."""
+        """Effective sampling frequency of the stream in Hz.
+        
+        Calculated as the number of samples divided by duration.
+        
+        Returns
+        -------
+        float
+            Effective sampling frequency in Hz.
+        """
         return len(self.data) / self.duration
 
     @property
@@ -319,11 +369,28 @@ class Stream(BaseTabular):
 
     @property
     def is_uniformly_sampled(self) -> bool:
-        """Whether the stream is uniformly sampled."""
+        """Whether the stream is uniformly sampled.
+        
+        Returns
+        -------
+        bool
+            True if all consecutive timestamp differences are approximately equal.
+        """
         return np.allclose(self.ts_diff, self.ts_diff[0])
 
     def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
-        """Convert relative time(s) in seconds to closest timestamp(s) in nanoseconds."""
+        """Convert relative time(s) in seconds to the closest timestamp(s) in nanoseconds.
+        
+        Parameters
+        ----------
+        time : numbers.Number or numpy.ndarray
+            Time(s) in seconds relative to stream start.
+            
+        Returns
+        -------
+        numpy.ndarray
+            Corresponding timestamp(s) in nanoseconds.
+        """
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
 
@@ -385,13 +452,13 @@ class Stream(BaseTabular):
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Temporally crop the stream to the range of timestamps in another stream.
+        Temporally crop the stream to the range of timestamps of another stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
         other : Stream
-            The other stream whose timestamps are used to restrict the data.
+            The stream whose timestamp range is used to restrict the data.
 
         %(inplace)s
 
@@ -413,8 +480,8 @@ class Stream(BaseTabular):
         """
         Interpolate the stream to new timestamps.
 
-        Data columns of float type are interpolated using ``float_kind``,
-        while other columns use ``other_kind``. This distinction allows
+        Data columns of float type are interpolated using the method specified by ``float_kind``,
+        while other columns use the method specified by ``other_kind``. This distinction allows
         for appropriate interpolation methods based on data type.
 
         Parameters
@@ -463,8 +530,8 @@ class Stream(BaseTabular):
         Parameters
         ----------
         events : Events
-            Events object containing the events to annotate.
-            The events must have a valid ``id_name`` attribute,
+            Events instance containing the events to annotate.
+            The events must have a valid :attr:`id_name` attribute,
             as well as ``start timestamp [ns]`` and ``end timestamp [ns]`` columns.
         overwrite : bool, optional
             If ``True``, overwrite existing event ID annotations in the stream data.
@@ -529,13 +596,13 @@ class Stream(BaseTabular):
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Interpolate data in the duration of events in the stream data.
+        Interpolate data during the duration of events in the stream data.
         Similar to :func:`mne.preprocessing.eyetracking.interpolate_blinks`.
 
         Parameters
         ----------
         events : Events
-            Events object containing the events to interpolate.
+            Events instance containing the events to interpolate.
             The events must have ``start timestamp [ns]`` and
             ``end timestamp [ns]`` columns.
         buffer : numbers.Number or tuple[numbers.Number, numbers.Number], optional
@@ -666,8 +733,8 @@ class Stream(BaseTabular):
         Parameters
         ----------
         homographies : Stream
-            Stream containing homography matrices with columns 'homography (0,0)' through
-            'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
+            Stream containing homography matrices with columns ``'homography (0,0)'`` through
+            ``'homography (2,2)'`` as returned by :func:`pyneon.video.find_homographies`.
         %(max_gap_ms)s
         overwrite : bool, optional
             Only applicable if surface gaze columns already exist.

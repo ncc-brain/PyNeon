@@ -134,7 +134,7 @@ class Epochs:
         Returns
         -------
         list of int
-            List of epoch indices that are empty.
+            List of epoch indices for which no data was found.
         """
         return [
             int(epoch_index)
@@ -189,22 +189,46 @@ class Epochs:
 
     @property
     def t_ref(self) -> np.ndarray:
-        """The reference time for each epoch in Unix nanoseconds."""
+        """Reference time for each epoch in Unix nanoseconds.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of reference timestamps in nanoseconds.
+        """
         return self.epochs_info["t_ref"].to_numpy()
 
     @property
     def t_before(self) -> np.ndarray:
-        """The time before the reference time for each epoch in nanoseconds."""
+        """Time before the reference time for each epoch in nanoseconds.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of time durations before reference in nanoseconds.
+        """
         return self.epochs_info["t_before"].to_numpy()
 
     @property
     def t_after(self) -> np.ndarray:
-        """The time after the reference time for each epoch in nanoseconds."""
+        """Time after the reference time for each epoch in nanoseconds.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of time durations after reference in nanoseconds.
+        """
         return self.epochs_info["t_after"].to_numpy()
 
     @property
     def description(self) -> np.ndarray:
-        """The description or label for each epoch."""
+        """Description or label for each epoch.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Array of description strings.
+        """
         return self.epochs_info["description"].to_numpy()
 
     @property
@@ -213,19 +237,31 @@ class Epochs:
 
     @property
     def dtypes(self) -> pd.Series:
-        """The data types of the epoched data."""
+        """Data types of the epoched data."""
         return self.data.dtypes[:-3]
 
     @property
     def is_equal_length(self) -> bool:
-        """Whether all epochs have the same length."""
+        """Whether all epochs have the same length.
+        
+        Returns
+        -------
+        bool
+            True if all epochs have identical t_before and t_after durations.
+        """
         return np.allclose(self.t_before, self.t_before[0]) and np.allclose(
             self.t_after, self.t_after[0]
         )
 
     @property
     def has_overlap(self) -> bool:
-        """Whether any adjacent epochs overlap."""
+        """Whether any adjacent epochs overlap in time.
+        
+        Returns
+        -------
+        bool
+            True if any adjacent epochs have overlapping time intervals.
+        """
         return self._check_overlap() != []
 
     def plot(
