@@ -252,6 +252,7 @@ def overlay_detected_markers(
 
     # Reset video to the beginning
     video.reset()
+    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     # Initialize video writer if saving
     if video_output_path is not None:
@@ -266,14 +267,13 @@ def overlay_detected_markers(
     grouped = detected_markers.data.groupby("frame index")
     markers_by_frame = {frame_idx: group for frame_idx, group in grouped}
     
-    # Iterate through video frames
-    frame_index = 0
+    # Iterate through video frames sequentially
     for frame_index in tqdm(
         range(len(video.ts)),
         desc="Overlaying markers on video",
         total=len(video.ts),
     ):
-        # Read the current frame
+        # Read the next frame sequentially
         ret, frame = video.read()
         if not ret:
             print(f"frame {frame_index} is skipped")
