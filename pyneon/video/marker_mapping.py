@@ -151,7 +151,7 @@ def detect_markers(
             ret, frame = video.read()
             if not ret:
                 break
-            if frame_index % step != 0:
+            if (frame_index - start_frame_idx) % step != 0:
                 continue
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             records = _process_frame(frame_index, gray_frame)
@@ -163,30 +163,6 @@ def detect_markers(
 
     df.set_index("timestamp [ns]", inplace=True)
     return Stream(df)
-
-
-def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
-    """
-    Transform 2D points by a 3x3 homography.
-
-    Parameters
-    ----------
-    points : numpy.ndarray of shape (N, 2)
-        2D points to be transformed.
-    H : numpy.ndarray of shape (3, 3)
-        Homography matrix.
-
-    Returns
-    -------
-    numpy.ndarray of shape (N, 2)
-        Transformed 2D points.
-    """
-    points_h = np.column_stack([points, np.ones(len(points))])
-    transformed_h = (H @ points_h.T).T
-    # Convert from homogeneous to normal 2D
-    transformed_2d = transformed_h[:, :2] / transformed_h[:, 2:]
-    return transformed_2d
-
 
 @fill_doc
 def find_homographies(

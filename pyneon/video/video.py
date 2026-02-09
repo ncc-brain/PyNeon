@@ -300,7 +300,8 @@ class Video(cv2.VideoCapture):
         video_output_path: Optional[Path | str] = None,
     ) -> None:
         """
-        Overlay detected markers on the video frames. The resulting video can be displayed and/or saved.
+        Overlay detected markers on the video frames.
+        The resulting video can be displayed and/or saved.
 
         Parameters
         ----------

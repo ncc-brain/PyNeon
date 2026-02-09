@@ -262,14 +262,10 @@ def overlay_detected_markers(
             str(video_output_path), fourcc, video.fps, (video.width, video.height)
         )
 
-    # Group markers by frame index for efficient lookup
-    markers_by_frame = {}
-    for _, marker in detected_markers.data.iterrows():
-        frame_idx = marker["frame index"]
-        if frame_idx not in markers_by_frame:
-            markers_by_frame[frame_idx] = []
-        markers_by_frame[frame_idx].append(marker)
-
+    # Group markers by frame index for efficient lookup using groupby
+    grouped = detected_markers.data.groupby("frame index")
+    markers_by_frame = {frame_idx: group for frame_idx, group in grouped}
+    
     # Iterate through video frames
     frame_index = 0
     for frame_index in tqdm(
@@ -280,38 +276,70 @@ def overlay_detected_markers(
         # Read the current frame
         ret, frame = video.read()
         if not ret:
+            print(f"frame {frame_index} is skipped")
             break
 
-        # Get markers for this frame
-        markers = markers_by_frame.get(frame_index, [])
+        # Get markers for this frame (only display if markers are actually detected)
+        if frame_index not in markers_by_frame:
+            # No markers detected in this frame, skip overlay
+            if show_video:
+                cv2.namedWindow("Detected Markers Overlay", cv2.WINDOW_NORMAL)
+                cv2.setWindowProperty("Detected Markers Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.imshow("Detected Markers Overlay", frame)
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
+            if video_output_path is not None:
+                out.write(frame)
+            continue
+
+        markers = markers_by_frame[frame_index]
 
         # Draw each marker
-        for marker in markers:
+        for _, marker in markers.iterrows():
+            top_left_x = int(marker["top left x [px]"])
+            top_left_y = int(marker["top left y [px]"])
+            top_right_x = int(marker["top right x [px]"])
+            top_right_y = int(marker["top right y [px]"])
+            bottom_right_x = int(marker["bottom right x [px]"])
+            bottom_right_y = int(marker["bottom right y [px]"])
+            bottom_left_x = int(marker["bottom left x [px]"])
+            bottom_left_y = int(marker["bottom left y [px]"])
+            center_x = int(marker["center x [px]"])
+            center_y = int(marker["center y [px]"])
+            marker_id = int(marker["marker id"])
+            
             # Draw marker corners with connected lines
             corners = [
-                (int(marker["top left x [px]"]), int(marker["top left y [px]"])),
-                (int(marker["top right x [px]"]), int(marker["top right y [px]"])),
-                (int(marker["bottom right x [px]"]), int(marker["bottom right y [px]"])),
-                (int(marker["bottom left x [px]"]), int(marker["bottom left y [px]"])),
+                (top_left_x, top_left_y),
+                (top_right_x, top_right_y),
+                (bottom_right_x, bottom_right_y),
+                (bottom_left_x, bottom_left_y),
             ]
             corners_array = np.array(corners, dtype=np.int32)
             cv2.polylines(frame, [corners_array], True, color, 2)
 
-            # Draw center point
-            center_x = int(marker["center x [px]"])
-            center_y = int(marker["center y [px]"])
-
             # Optionally add marker ID text
             if show_marker_ids:
-                marker_id = int(marker["marker id"])
+                text = f"{marker_id}"
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.6
+                thickness = 2
+                
+                # Get text size to calculate centered position
+                (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+                
+                # Calculate center position (bottom-left corner of text)
+                text_x = center_x - text_width // 2
+                text_y = center_y + text_height // 2
+                
                 cv2.putText(
                     frame,
-                    f"{marker_id}",
-                    (center_x, center_y),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
+                    text,
+                    (text_x, text_y),
+                    font,
+                    font_scale,
                     color,
-                    2,
+                    thickness,
                 )
 
         # Display the frame if requested
