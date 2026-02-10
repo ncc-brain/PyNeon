@@ -132,6 +132,7 @@ def plot_detected_markers(
 @fill_doc
 def plot_marker_layout(
     marker_layout: pd.DataFrame,
+    surface_size: Optional[tuple[int, int]] = None,
     show_marker_names: bool = True,
     ax: Optional[plt.Axes] = None,
     show: bool = True,
@@ -145,6 +146,8 @@ def plot_marker_layout(
     Parameters
     ----------
     %(marker_layout)s
+    surface_size : tuple[int, int] or None
+        If provided, specifies the width and height of the surface to plot the markers on.
     show_marker_names : bool
         Whether to overlay marker names at their centers. Defaults to True.
     %(ax_param)s
@@ -160,10 +163,16 @@ def plot_marker_layout(
         fig = ax.get_figure()
 
     # Calculate actual bounds for each marker, then find overall canvas size
-    min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
-    max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
-    min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
-    max_y = (marker_layout["center y"] + marker_layout["size"] / 2).max()
+    if surface_size is not None:
+        width, height = surface_size
+        min_x, max_x = 0, width
+        min_y, max_y = 0, height
+
+    else:   
+        min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
+        max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
+        min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
+        max_y = (marker_layout["center y"] + marker_layout["size"] / 2).max()
 
     canvas_width = int(max_x - min_x)
     canvas_height = int(max_y - min_y)
