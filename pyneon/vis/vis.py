@@ -12,6 +12,7 @@ from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
 
 from ..utils.doc_decorators import fill_doc
+from ..video.marker import DETECTED_MARKERS_COLUMNS
 from ..video.utils import marker_family_to_dict
 
 if TYPE_CHECKING:
@@ -65,41 +66,22 @@ def plot_frame(
 
 
 @fill_doc
-def plot_detected_markers(
-    video: "Video",
-    detected_markers: "Stream",
-    frame_index: int = 0,
-    show_marker_ids: bool = True,
-    color: str = "magenta",
-    ax: Optional[plt.Axes] = None,
-    show: bool = True,
-) -> tuple[plt.Figure, plt.Axes]:
-    """
-    Plot detected markers on a frame from the video.
+def _resolve_frame_index_column(detections: pd.DataFrame) -> str:
+    if "frame index" in detections.columns:
+        return "frame index"
+    if "frame_idx" in detections.columns:
+        return "frame_idx"
+    raise ValueError("Detections must include a 'frame index' or 'frame_idx' column.")
 
-    Parameters
-    ----------
-    video : SceneVideo
-        Video object to plot the frame from.
-    detected_markers : Stream
-        Stream containing detected marker data.
-        See :meth:`pyneon.video.detect_markers` for details.
-    frame_index : int
-        Index of the frame to plot.
-    %(ax_param)s
-    %(show_param)s
 
-    Returns
-    -------
-        %(fig_ax_return)s
-    """
-    fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
-
-    mask = detected_markers["frame index"] == frame_index
-    markers = detected_markers.data[mask]
-
-    for _, marker in markers.iterrows():
-        if show_marker_ids:
+def _plot_marker_detections(
+    ax: plt.Axes,
+    detections: pd.DataFrame,
+    show_ids: bool,
+    color: str,
+) -> None:
+    for _, marker in detections.iterrows():
+        if show_ids:
             ax.text(
                 marker["center x [px]"],
                 marker["center y [px]"],
@@ -108,7 +90,6 @@ def plot_detected_markers(
                 ha="center",
                 va="center",
             )
-        # Draw marker corners with connected lines
         corners_x = [
             marker["top left x [px]"],
             marker["top right x [px]"],
@@ -124,6 +105,83 @@ def plot_detected_markers(
             marker["top left y [px]"],
         ]
         ax.plot(corners_x, corners_y, color=color)
+
+
+def _plot_corner_detections(
+    ax: plt.Axes,
+    detections: pd.DataFrame,
+    show_ids: bool,
+    color: str,
+) -> None:
+    for _, detection in detections.iterrows():
+        corners = np.asarray(detection["corners"], dtype=np.float32)
+        if corners.shape != (4, 2):
+            raise ValueError(
+                f"Detected corners must have shape (4, 2), got {corners.shape}"
+            )
+        corners_x = list(corners[:, 0]) + [corners[0, 0]]
+        corners_y = list(corners[:, 1]) + [corners[0, 1]]
+        ax.plot(corners_x, corners_y, color=color)
+
+        if show_ids and "tag_id" in detection:
+            if "center" in detection and detection["center"] is not None:
+                center = np.asarray(detection["center"], dtype=np.float32).reshape(-1)
+            else:
+                center = np.mean(corners, axis=0)
+            ax.text(
+                center[0],
+                center[1],
+                int(detection["tag_id"]),
+                color=color,
+                ha="center",
+                va="center",
+            )
+
+
+@fill_doc
+def plot_detections(
+    video: "Video",
+    detections: "Stream",
+    frame_index: int = 0,
+    show_ids: bool = True,
+    color: str = "magenta",
+    ax: Optional[plt.Axes] = None,
+    show: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plot detections on a frame from the video.
+
+    Parameters
+    ----------
+    video : SceneVideo
+        Video object to plot the frame from.
+    detections : Stream
+        Stream containing marker or screen-corner detections.
+    frame_index : int
+        Index of the frame to plot.
+    show_ids : bool
+        Display detection IDs at their centers when available.
+    %(ax_param)s
+    %(show_param)s
+
+    Returns
+    -------
+        %(fig_ax_return)s
+    """
+    fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
+    detections_df = detections.data
+    frame_col = _resolve_frame_index_column(detections_df)
+    frame_detections = detections_df[detections_df[frame_col] == frame_index]
+
+    if not frame_detections.empty:
+        if DETECTED_MARKERS_COLUMNS.issubset(frame_detections.columns):
+            _plot_marker_detections(ax, frame_detections, show_ids, color)
+        elif "corners" in frame_detections.columns:
+            _plot_corner_detections(ax, frame_detections, show_ids, color)
+        else:
+            raise ValueError(
+                "Detections must contain marker corner columns or a 'corners' column."
+            )
     if show:
         plt.show()
     return fig, ax
@@ -227,26 +285,25 @@ def plot_marker_layout(
     return fig, ax
 
 @fill_doc
-def overlay_detected_markers(
+def overlay_detections(
     video: "Video",
-    detected_markers: "Stream",
-    show_marker_ids: bool = True,
+    detections: "Stream",
+    show_ids: bool = True,
     color: tuple[int, int, int] = (255, 0, 255),
     show_video: bool = False,
     video_output_path: Optional[Path | str] = None,
 ) -> None:
     """
-    Overlay detected markers on the video frames and display or save the video with overlays.
+    Overlay detections on the video frames and display or save the video with overlays.
 
     Parameters
     ----------
     video : SceneVideo
         Video object to overlay the detected markers on.
-    detected_markers : Stream
-        Stream containing detected marker data.
-        See :meth:`pyneon.video.detect_markers` for details.
-    show_marker_ids : bool
-        Whether to overlay marker IDs at their centers. Defaults to True.
+    detections : Stream
+        Stream containing marker or screen-corner detections.
+    show_ids : bool
+        Whether to overlay IDs at their centers when available. Defaults to True.
     color : tuple[int, int, int]
         BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
     %(show_video_param)s
@@ -272,14 +329,22 @@ def overlay_detected_markers(
             str(video_output_path), fourcc, video.fps, (video.width, video.height)
         )
 
-    # Group markers by frame index for efficient lookup using groupby
-    grouped = detected_markers.data.groupby("frame index")
-    markers_by_frame = {frame_idx: group for frame_idx, group in grouped}
+    detections_df = detections.data
+    frame_col = _resolve_frame_index_column(detections_df)
+    is_marker = DETECTED_MARKERS_COLUMNS.issubset(detections_df.columns)
+    uses_corners = "corners" in detections_df.columns
+    if not is_marker and not uses_corners:
+        raise ValueError(
+            "Detections must contain marker corner columns or a 'corners' column."
+        )
+
+    grouped = detections_df.groupby(frame_col)
+    detections_by_frame = {frame_idx: group for frame_idx, group in grouped}
     
     # Iterate through video frames sequentially
     for frame_index in tqdm(
         range(len(video.ts)),
-        desc="Overlaying markers on video",
+        desc="Overlaying detections on video",
         total=len(video.ts),
     ):
         # Read the next frame sequentially
@@ -289,58 +354,73 @@ def overlay_detected_markers(
             break
 
         # Get markers for this frame (only display if markers are actually detected)
-        if frame_index not in markers_by_frame:
+        if frame_index not in detections_by_frame:
             # No markers detected in this frame, skip overlay
             if show_video:
-                cv2.namedWindow("Detected Markers Overlay", cv2.WINDOW_NORMAL)
-                cv2.setWindowProperty("Detected Markers Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                cv2.imshow("Detected Markers Overlay", frame)
+                cv2.namedWindow("Detections Overlay", cv2.WINDOW_NORMAL)
+                cv2.setWindowProperty("Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.imshow("Detections Overlay", frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
             if video_output_path is not None:
                 out.write(frame)
             continue
 
-        markers = markers_by_frame[frame_index]
+        frame_detections = detections_by_frame[frame_index]
 
-        # Draw each marker
-        for _, marker in markers.iterrows():
-            top_left_x = int(marker["top left x [px]"])
-            top_left_y = int(marker["top left y [px]"])
-            top_right_x = int(marker["top right x [px]"])
-            top_right_y = int(marker["top right y [px]"])
-            bottom_right_x = int(marker["bottom right x [px]"])
-            bottom_right_y = int(marker["bottom right y [px]"])
-            bottom_left_x = int(marker["bottom left x [px]"])
-            bottom_left_y = int(marker["bottom left y [px]"])
-            center_x = int(marker["center x [px]"])
-            center_y = int(marker["center y [px]"])
-            marker_id = int(marker["marker id"])
-            
-            # Draw marker corners with connected lines
-            corners = [
-                (top_left_x, top_left_y),
-                (top_right_x, top_right_y),
-                (bottom_right_x, bottom_right_y),
-                (bottom_left_x, bottom_left_y),
-            ]
-            corners_array = np.array(corners, dtype=np.int32)
-            cv2.polylines(frame, [corners_array], True, color, 2)
+        # Draw each detection
+        for _, detection in frame_detections.iterrows():
+            if is_marker:
+                corners = np.array(
+                    [
+                        [detection["top left x [px]"], detection["top left y [px]"]],
+                        [detection["top right x [px]"], detection["top right y [px]"]],
+                        [
+                            detection["bottom right x [px]"],
+                            detection["bottom right y [px]"],
+                        ],
+                        [
+                            detection["bottom left x [px]"],
+                            detection["bottom left y [px]"],
+                        ],
+                    ],
+                    dtype=np.int32,
+                )
+                center = np.array(
+                    [detection["center x [px]"], detection["center y [px]"]],
+                    dtype=np.int32,
+                ).reshape(-1)
+                label = str(int(detection["marker id"])) if show_ids else None
+            else:
+                corners = np.asarray(detection["corners"], dtype=np.float32)
+                if corners.shape != (4, 2):
+                    raise ValueError(
+                        f"Detected corners must have shape (4, 2), got {corners.shape}"
+                    )
+                corners = corners.astype(np.int32)
+                if "center" in detection and detection["center"] is not None:
+                    center = np.asarray(detection["center"], dtype=np.float32).reshape(-1)
+                else:
+                    center = np.mean(corners, axis=0)
+                label = (
+                    str(int(detection["tag_id"]))
+                    if show_ids and "tag_id" in detection
+                    else None
+                )
 
-            # Optionally add marker ID text
-            if show_marker_ids:
-                text = f"{marker_id}"
+            cv2.polylines(frame, [corners], True, color, 2)
+
+            if label is not None:
+                text = label
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 0.6
                 thickness = 2
-                
-                # Get text size to calculate centered position
-                (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
-                
-                # Calculate center position (bottom-left corner of text)
-                text_x = center_x - text_width // 2
-                text_y = center_y + text_height // 2
-                
+                (text_width, text_height), _ = cv2.getTextSize(
+                    text, font, font_scale, thickness
+                )
+                text_x = int(center[0]) - text_width // 2
+                text_y = int(center[1]) + text_height // 2
+
                 cv2.putText(
                     frame,
                     text,
@@ -353,9 +433,9 @@ def overlay_detected_markers(
 
         # Display the frame if requested
         if show_video:
-            cv2.namedWindow("Detected Markers Overlay", cv2.WINDOW_NORMAL)
-            cv2.setWindowProperty("Detected Markers Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-            cv2.imshow("Detected Markers Overlay", frame)
+            cv2.namedWindow("Detections Overlay", cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty("Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.imshow("Detections Overlay", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
@@ -369,6 +449,8 @@ def overlay_detected_markers(
     if show_video:
         cv2.destroyAllWindows()
     video.reset()
+
+
         
 @fill_doc
 def plot_distribution(

@@ -1,0 +1,151 @@
+from typing import TYPE_CHECKING, Literal, Optional
+
+import cv2
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
+from ..stream import Stream
+from ..utils.doc_decorators import fill_doc
+from .utils import marker_family_to_dict
+
+if TYPE_CHECKING:
+    from .video import Video
+
+DETECTED_MARKERS_COLUMNS = {
+    "frame index",
+    "marker family",
+    "marker id",
+    "marker name",
+    "top left x [px]",
+    "top left y [px]",
+    "top right x [px]",
+    "top right y [px]",
+    "bottom right x [px]",
+    "bottom right y [px]",
+    "bottom left x [px]",
+    "bottom left y [px]",
+    "center x [px]",
+    "center y [px]",
+}
+
+MARKERS_LAYOUT_COLUMNS = {
+    "marker name",
+    "size",
+    "center x",
+    "center y",
+}
+
+
+@fill_doc
+def detect_markers(
+    video: "Video",
+    marker_family: str | list[str],
+    step: int = 1,
+    detection_window: Optional[tuple[int | float, int | float]] = None,
+    detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+) -> Stream:
+    """
+    Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
+
+    Parameters
+    ----------
+    video : Video
+        Scene video to detect markers from.
+    %(detect_markers_params)s
+    %(detect_markers_return)s
+    """
+    # Normalize marker family input to a list and create detectors for each
+    families: list[str] = (
+        marker_family if isinstance(marker_family, list) else [marker_family]
+    )
+
+    # Use provided detector_parameters or create a default instance
+    if detector_parameters is None:
+        detector_parameters = cv2.aruco.DetectorParameters()
+
+    detectors: list[tuple[str, str, cv2.aruco.ArucoDetector]] = []
+    for fam in families:
+        fam_type, aruco_dict = marker_family_to_dict(fam)
+        detectors.append(
+            (fam, fam_type, cv2.aruco.ArucoDetector(aruco_dict, detector_parameters))
+        )
+
+    if step < 1:
+        raise ValueError("step must be >= 1")
+
+    # Specify indices of frames to process
+    if detection_window is None:  # full video
+        start_frame_idx = 0
+        end_frame_idx = len(video.ts) - 1
+    else:
+        start, end = detection_window
+        if detection_window_unit == "frame":
+            # Already in frame indices, use directly
+            start_frame_idx, end_frame_idx = int(start), int(end)
+        elif detection_window_unit == "time":
+            start_frame_idx = int(np.searchsorted(video.times, start, side="left"))
+            end_frame_idx = int(np.searchsorted(video.times, end, side="right")) - 1
+        elif detection_window_unit == "timestamp":
+            # Convert from nanosecond timestamps to frame indices
+            start_frame_idx = int(np.searchsorted(video.ts, start, side="left"))
+            end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
+
+    def _process_frame(frame_idx: int, gray_frame: np.ndarray) -> list[dict]:
+        """Run detection on a single grayscale frame across all detectors."""
+        records: list[dict] = []
+        for fam_name, fam_type, det in detectors:
+            all_corners, all_ids, _ = det.detectMarkers(gray_frame)
+            if all_ids is None:
+                continue
+
+            for corners, marker_id in zip(all_corners, all_ids):
+                corners = corners.reshape((4, 2))
+                if fam_type == "april":
+                    # For AprilTags, corners start with bottom right
+                    # For ArUco, corners start with top left
+                    # See https://stackoverflow.com/questions/79044142
+                    corners = corners[[2, 3, 0, 1], :]
+                center = np.mean(corners, axis=0)
+                records.append(
+                    {
+                        "timestamp [ns]": video.ts[frame_idx],
+                        "frame index": frame_idx,
+                        "marker family": fam_name,
+                        "marker id": int(marker_id[0]),
+                        "marker name": f"{fam_name}_{marker_id[0]}",
+                        "top left x [px]": corners[0, 0],
+                        "top left y [px]": corners[0, 1],
+                        "top right x [px]": corners[1, 0],
+                        "top right y [px]": corners[1, 1],
+                        "bottom right x [px]": corners[2, 0],
+                        "bottom right y [px]": corners[2, 1],
+                        "bottom left x [px]": corners[3, 0],
+                        "bottom left y [px]": corners[3, 1],
+                        "center x [px]": center[0],
+                        "center y [px]": center[1],
+                    }
+                )
+        return records
+
+    detected_markers = []
+    frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
+
+    # Ensure we start at the right location
+    video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
+
+    for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
+        gray_frame = video.read_gray_frame_at(frame_index)
+        if gray_frame is None:
+            break
+        records = _process_frame(frame_index, gray_frame)
+        detected_markers.extend(records)
+
+    df = pd.DataFrame(detected_markers)
+    if df.empty:
+        raise ValueError("No marker detected.")
+
+    df.set_index("timestamp [ns]", inplace=True)
+    return Stream(df)
+

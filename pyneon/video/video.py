@@ -12,9 +12,14 @@ import os
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_detected_markers, plot_frame, overlay_detected_markers
-from .marker_mapping import detect_markers
-
+from ..vis import (
+    overlay_scanpath,
+    plot_detections,
+    plot_frame,
+    overlay_detections,
+)
+from .marker import detect_markers
+from .surface import detect_surface
 
 class Video(cv2.VideoCapture):
     """
@@ -227,29 +232,85 @@ class Video(cv2.VideoCapture):
             detector_parameters=detector_parameters,
         )
 
-    @fill_doc
-    def plot_detected_markers(
+    def detect_surface(
         self,
-        detected_markers: Stream,
+        skip_frames: int = 1,
+        min_area_ratio: float = 0.01,
+        max_area_ratio: float = 0.98,
+        brightness_threshold: int = 180,
+        adaptive: bool = True,
+        morph_kernel: int = 5,
+        decimate: float = 1.0,
+        mode: str = "largest",
+    ) -> Stream:
+        """
+        Detect bright rectangular regions (e.g., projected screens or monitors)
+        in video frames using luminance-based contour detection.
+
+        Parameters
+        ----------
+        skip_frames : int, optional
+            Process every Nth frame (default 1 = process all frames).
+        min_area_ratio : float, optional
+            Minimum contour area relative to frame area. Contours smaller than this
+            ratio are ignored. Default is 0.01 (1% of frame area).
+        max_area_ratio : float, optional
+            Maximum contour area relative to frame area. Contours larger than this
+            ratio are ignored. Default is 0.98.
+        brightness_threshold : int, optional
+            Fixed threshold for binarization when `adaptive=False`. Default is 180.
+        adaptive : bool, optional
+            If True (default), use adaptive thresholding to handle varying
+            illumination across frames.
+        morph_kernel : int, optional
+            Kernel size for morphological closing (default 5). Use 0 to disable
+            morphological operations.
+        decimate : float, optional
+            Downsampling factor for faster processing (e.g., 0.5 halves resolution).
+            Detected coordinates are automatically rescaled back. Default is 1.0.
+        mode : {"largest", "best", "all"}, optional
+            Selection mode determining which contours to return per frame.
+
+        Returns
+        -------
+        Stream
+            One row per detected rectangular contour.
+        """
+        return detect_surface(
+            self,
+            skip_frames=skip_frames,
+            min_area_ratio=min_area_ratio,
+            max_area_ratio=max_area_ratio,
+            brightness_threshold=brightness_threshold,
+            adaptive=adaptive,
+            morph_kernel=morph_kernel,
+            decimate=decimate,
+            mode=mode,
+        )
+
+    @fill_doc
+    def plot_detections(
+        self,
+        detections: Stream,
         frame_index: int = 0,
-        show_marker_ids: bool = True,
+        show_ids: bool = True,
         color: str = "magenta",
         ax: Optional[plt.Axes] = None,
         show: bool = True,
     ):
         """
-        Plot detected markers on a frame from this video.
+        Plot detections on a frame from this video.
 
         Parameters
         ----------
-        detected_markers : Stream
-            Stream containing detected marker data. See :meth:`pyneon.video.detect_markers`.
+        detections : Stream
+            Stream containing marker or screen-corner detections.
         frame_index : int
             Index of the frame to plot.
-        show_marker_ids : bool
-            Display marker IDs at their centers. Defaults to True.
+        show_ids : bool
+            Display detection IDs at their centers when available. Defaults to True.
         color : str
-            Matplotlib color for markers. Defaults to "magenta".
+            Matplotlib color for detections. Defaults to "magenta".
         %(ax_param)s
         %(show_param)s
 
@@ -257,11 +318,11 @@ class Video(cv2.VideoCapture):
         -------
         %(fig_ax_return)s
         """
-        return plot_detected_markers(
+        return plot_detections(
             self,
-            detected_markers=detected_markers,
+            detections=detections,
             frame_index=frame_index,
-            show_marker_ids=show_marker_ids,
+            show_ids=show_ids,
             color=color,
             ax=ax,
             show=show,
@@ -311,27 +372,26 @@ class Video(cv2.VideoCapture):
         )
 
     @fill_doc
-    def overlay_detected_markers(
+    def overlay_detections(
         self,
-        detected_markers: "Stream",
-        show_marker_ids: bool = True,
+        detections: "Stream",
+        show_ids: bool = True,
         color: tuple[int, int, int] = (255, 0, 255),
         show_video: bool = False,
         video_output_path: Optional[Path | str] = None,
     ) -> None:
         """
-        Overlay detected markers on the video frames.
+        Overlay detections on the video frames.
         The resulting video can be displayed and/or saved.
 
         Parameters
         ----------
-        detected_markers : Stream
-            Stream containing detected marker data.
-            See :meth:`detect_markers` for details.
-        show_marker_ids : bool
-            Whether to overlay marker IDs at their centers. Defaults to True.
+        detections : Stream
+            Stream containing marker or screen-corner detections.
+        show_ids : bool
+            Whether to overlay IDs at their centers when available. Defaults to True.
         color : tuple[int, int, int]
-            BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
+            BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
         %(show_video_param)s
         %(video_output_path_param)s
             Defaults to 'derivatives/detected_markers.mp4'.
@@ -340,13 +400,13 @@ class Video(cv2.VideoCapture):
             video_output_path = self.der_dir / "detected_markers.mp4"
             os.makedirs(self.der_dir, exist_ok=True)
 
-        overlay_detected_markers(
+        overlay_detections(
             self,
-            detected_markers,
-            show_marker_ids,
-            color,
-            show_video,
-            video_output_path,
+            detections=detections,
+            show_ids=show_ids,
+            color=color,
+            show_video=show_video,
+            video_output_path=video_output_path,
         )
 
     def undistort(
