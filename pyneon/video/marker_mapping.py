@@ -48,7 +48,6 @@ def detect_markers(
 ) -> Stream:
     """
     Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
-    Uses random access to read frames for dense sampling (step < 5), otherwise sequential streaming.
 
     Parameters
     ----------
@@ -133,29 +132,15 @@ def detect_markers(
     detected_markers = []
     frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
 
-    use_random_access = step < 5
+    # Ensure we start at the right location
+    video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
 
-    if use_random_access:
-        for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
-            gray_frame = video.read_gray_frame_at(frame_index)
-            if gray_frame is None:
-                break
-            records = _process_frame(frame_index, gray_frame)
-            detected_markers.extend(records)
-    else:
-        video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
-        for frame_index in tqdm(
-            range(start_frame_idx, end_frame_idx + 1),
-            desc="Detecting markers",
-        ):
-            ret, frame = video.read()
-            if not ret:
-                break
-            if (frame_index - start_frame_idx) % step != 0:
-                continue
-            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            records = _process_frame(frame_index, gray_frame)
-            detected_markers.extend(records)
+    for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
+        gray_frame = video.read_gray_frame_at(frame_index)
+        if gray_frame is None:
+            break
+        records = _process_frame(frame_index, gray_frame)
+        detected_markers.extend(records)
 
     df = pd.DataFrame(detected_markers)
     if df.empty:

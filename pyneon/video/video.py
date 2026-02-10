@@ -143,13 +143,26 @@ class Video(cv2.VideoCapture):
     def read_gray_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
         """
         Random-access read of a single frame converted to grayscale.
+        Uses sequential grabbing for short forward jumps to maintain frame accuracy
+        in VFR videos, and fallback to seeking for large jumps.
 
         Returns None if the frame cannot be read.
         """
         if frame_index < 0 or frame_index >= len(self.ts):
-            raise ValueError("frame_index is out of bounds for this video.")
+            raise ValueError(f"frame_index {frame_index} is out of bounds.")
 
-        self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        current = int(self.get(cv2.CAP_PROP_POS_FRAMES))
+
+        # If we are slightly behind (up to 50 frames), use grab() to stay accurate.
+        # This is much faster than decoding and avoids seeker drift in VFR/MSMF.
+        if 0 <= (frame_index - current) < 50:
+            while current < frame_index:
+                if not self.grab():
+                    return None
+                current += 1
+        elif current != frame_index:
+            self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+
         ret, frame = self.read()
         if not ret:
             return None
