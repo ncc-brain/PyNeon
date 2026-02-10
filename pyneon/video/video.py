@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import os
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
@@ -44,6 +45,8 @@ class Video(cv2.VideoCapture):
         self.ts = self.timestamps
         self.info = info
 
+        self.der_dir = video_file.parent / "derivatives"
+        
         if not info:
             warn("Video info is empty and will be loaded from default values.")
             self.info = default_camera_info
@@ -258,7 +261,7 @@ class Video(cv2.VideoCapture):
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = "derivatives/scanpath.mp4",
+        video_output_path: Path | str = None,
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -278,8 +281,12 @@ class Video(cv2.VideoCapture):
             Whether to display the video with fixations overlaid. Defaults to False.
         video_output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
-            Defaults to 'scanpath.mp4'.
+            Defaults to 'derivatives/scanpath.mp4'.
         """
+        if video_output_path is None:
+            video_output_path = self.der_dir / "scanpath.mp4"
+            os.makedirs(self.der_dir, exist_ok=True)
+
         overlay_scanpath(
             self,
             scanpath,
@@ -314,8 +321,12 @@ class Video(cv2.VideoCapture):
             BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
         %(show_video_param)s
         %(video_output_path_param)s
-            Defaults to 'detected_markers.mp4'.
+            Defaults to 'derivatives/detected_markers.mp4'.
         """
+        if video_output_path is None:
+            video_output_path = self.der_dir / "detected_markers.mp4"
+            os.makedirs(self.der_dir, exist_ok=True)
+
         overlay_detected_markers(
             self,
             detected_markers,
@@ -327,7 +338,7 @@ class Video(cv2.VideoCapture):
 
     def undistort(
         self,
-        output_video_path: Optional[Path | str] = "undistorted_video.mp4",
+        output_video_path: Optional[Path | str] = None,
     ) -> None:
         """
         Undistort a video using the known camera matrix and distortion coefficients.
@@ -335,8 +346,12 @@ class Video(cv2.VideoCapture):
         Parameters
         ----------
         output_video_path : str
-            Path to save the undistorted output video.
+            Path to save the undistorted output video. Defaults to 'undistorted_video.mp4'.
         """
+        if output_video_path is None:
+            output_video_path = self.der_dir / "undistorted_video.mp4"
+            os.makedirs(self.der_dir, exist_ok=True)
+
         # Open the input video
         cap = self
         cap.reset()
