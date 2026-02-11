@@ -8,7 +8,7 @@ from .recording import Recording
 
 class Dataset:
     """
-    Holder for multiple recordings. It reads from a directory containing a multiple
+    Container for multiple recordings. Reads from a directory containing multiple
     recordings downloaded from Pupil Cloud with the **Timeseries CSV** or
     **Timeseries CSV and Scene Video** option. For example, a dataset with 2 recordings
     would have the following folder structure:
@@ -28,48 +28,41 @@ class Dataset:
         ├── enrichment_info.txt
         └── sections.csv
 
-    Individual recordings will be read into :class:`pyneon.Recording` objects based on
-    ``sections.csv``. They are accessible through the ``recordings`` attribute.
+    Individual recordings will be read into :class:`pyneon.Recording` objects
+    (based on ``sections.csv``, if available) and accessible through the
+    ``recordings`` attribute.
 
     Parameters
     ----------
     dataset_dir : str or pathlib.Path
         Path to the directory containing the dataset.
-    custom : bool, optional
-        Whether to expect a custom dataset structure. If ``False``, the dataset
-        is expected to follow the standard Pupil Cloud dataset structure with a
-        ``sections.csv`` file. If True, every directory in ``dataset_dir`` is
-        considered a recording directory, and the ``sections`` attribute is
-        constructed from the ``info`` of recordings found.
-        Defaults to ``False``.
 
     Attributes
     ----------
     dataset_dir : pathlib.Path
         Path to the directory containing the dataset.
     recordings : list of Recording
-        List of :class:`pyneon.Recording` objects for each recording in the dataset.
+        List of :class:`pyneon.Recording` instances for each recording in the dataset.
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
 
     """
 
-    def __init__(self, dataset_dir: str | Path, custom: bool = False):
+    def __init__(self, dataset_dir: str | Path):
         dataset_dir = Path(dataset_dir)
         if not dataset_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {dataset_dir}")
 
-        self.dataset_dir = dataset_dir
-        self.recordings = list()
+        self.dataset_dir: Path = dataset_dir
+        self.recordings: list[Recording] = list()
 
-        if not custom:
-            sections_path = dataset_dir.joinpath("sections.csv")
-            if not sections_path.is_file():
-                raise FileNotFoundError(f"sections.csv not found in {dataset_dir}")
+        sections_path = dataset_dir / "sections.csv"
+
+        if sections_path.is_file():
             self.sections = pd.read_csv(sections_path)
-
             recording_ids = self.sections["recording id"]
 
+            # Assert if recording IDs are correct
             for rec_id in recording_ids:
                 rec_id_start = rec_id.split("-")[0]
                 rec_dir = [
@@ -109,13 +102,14 @@ class Dataset:
             for i, rec in enumerate(self.recordings):
                 sections.append(
                     {
-                        "section id": i,
+                        "section id": None,
                         "recording id": rec.recording_id,
-                        "recording name": rec.recording_id,
-                        "wearer id": rec.info["wearer_id"],
-                        "wearer name": rec.info["wearer_name"],
+                        "recording name": None,
+                        "wearer id": rec.info.get("wearer_id", None),
+                        "wearer name": rec.info.get("wearer_name", None),
                         "section start time [ns]": rec.start_time,
-                        "section end time [ns]": rec.start_time + rec.info["duration"],
+                        "section end time [ns]": rec.start_time
+                        + rec.info.get("duration", 0),
                     }
                 )
 

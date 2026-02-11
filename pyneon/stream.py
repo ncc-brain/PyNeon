@@ -3,6 +3,7 @@ from numbers import Number
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from warnings import warn
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -14,11 +15,102 @@ from .preprocess import (
     window_average,
 )
 from .tabular import BaseTabular
+from .utils import _apply_homography
 from .utils.doc_decorators import fill_doc
 from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
 if TYPE_CHECKING:
     from .events import Events
+
+
+def _apply_homographies_on_gaze(
+    gaze: "Stream",
+    homographies: "Stream",
+    max_gap_ms: Number = 500,
+    overwrite: bool = False,
+) -> None:
+    """
+    Apply homographies to gaze points.
+
+    Since homographies are estimated per video frame and might not be available
+    for every frame, they need to be resampled/interpolated to the timestamps of the
+    gaze data before application. Users can control the extent of interpolation using
+    the ``max_gap_ms`` parameter to avoid applying homographies over large gaps.
+
+    This function operates in-place and modifies the `gaze` Stream by adding two new columns:
+    'gaze x [surface coord]' and 'gaze y [surface coord]'.
+
+    Parameters
+    ----------
+    gaze : Stream
+        Stream containing gaze points with columns 'gaze x [px]' and 'gaze y [px]'.
+    homographies : Stream
+        Stream containing homography matrices with columns 'homography (0,0)' through
+        'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
+    max_gap_ms : Number, optional
+        Maximum allowed gap (in milliseconds) for interpolation. Defaults to 500.
+    overwrite : bool, optional
+        If True, overwrite existing surface coordinate columns. Defaults to False.
+
+    Returns
+    -------
+    None
+        This function modifies the gaze Stream in-place.
+    """
+    gaze_data = gaze.data
+    if not overwrite and (
+        "gaze x [surface coord]" in gaze_data.columns
+        or "gaze y [surface coord]" in gaze_data.columns
+    ):
+        raise ValueError(
+            "Stream already contains gaze on surface data. "
+            "Use overwrite=True to overwrite existing columns."
+        )
+
+    required_cols = ["gaze x [px]", "gaze y [px]"]
+    if not all(col in gaze_data.columns for col in required_cols):
+        raise ValueError(f"Data must contain the following columns: {required_cols}")
+
+    gaze_data["gaze x [surface coord]"] = np.nan
+    gaze_data["gaze y [surface coord]"] = np.nan
+
+    # Interpolate homographies to gaze timestamps
+    homographies_data = homographies.interpolate(
+        gaze.ts, float_kind="linear", max_gap_ms=max_gap_ms
+    ).data
+    # Exclude all rows where homography is NaN after interpolation
+    homographies_data = homographies_data.dropna()
+
+    # Extract homography column names in order
+    h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
+
+    # Check if all homography columns exist
+    if not all(col in homographies_data.columns for col in h_cols):
+        raise ValueError(f"Homographies data must contain columns: {h_cols}")
+
+    # Apply homographies to each gaze point
+    for ts in tqdm(
+        homographies_data.index, desc="Applying homographies to gaze points"
+    ):
+        # Get gaze point(s) at this timestamp
+        gaze_row = gaze_data.loc[ts]
+        gaze_vals = gaze_row[["gaze x [px]", "gaze y [px]"]].values
+
+        # Skip if gaze coordinates are NaN
+        if pd.isna(gaze_vals).any():
+            continue
+
+        # Convert to numpy array to ensure compatibility with _apply_homography
+        gaze_points = np.asarray(gaze_vals, dtype=np.float64).reshape(1, -1)
+
+        # Reconstruct homography matrix from the 9 columns
+        H_flat = homographies_data.loc[ts, h_cols].values
+        H = H_flat.reshape(3, 3)
+
+        # Apply homography transformation
+        gaze_trans = _apply_homography(gaze_points, H)
+        gaze_data.loc[ts, "gaze x [surface coord]"] = gaze_trans[:, 0]
+        gaze_data.loc[ts, "gaze y [surface coord]"] = gaze_trans[:, 1]
 
 
 def _load_native_stream_data(raw_file: Path) -> tuple[pd.DataFrame, list[Path]]:
@@ -88,6 +180,7 @@ def _infer_stream_type(data: pd.DataFrame) -> str:
         "gaze x [px]": "gaze",
         "pupil diameter left [mm]": "eye_states",
         "gyro x [deg/s]": "imu",
+        "marker id": "marker",
     }
     types = {col_map[c] for c in data.columns if c in col_map}
     return types.pop() if len(types) == 1 else "custom"
@@ -174,42 +267,92 @@ class Stream(BaseTabular):
 
     @property
     def timestamps(self) -> np.ndarray:
-        """Timestamps of the stream in nanoseconds."""
-        return self.data.index.to_numpy()
+        """Timestamps of the stream in nanoseconds.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
+        return self.data.index.to_numpy(dtype=np.int64)
 
     @property
     def ts(self) -> np.ndarray:
-        """Alias for ``timestamps``."""
+        """Alias for :attr:`timestamps`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
         return self.timestamps
 
     @property
     def first_ts(self) -> int:
-        """First timestamp of the stream."""
+        """First timestamp of the stream in nanoseconds.
+
+        Returns
+        -------
+        int
+            First timestamp in nanoseconds (Unix time).
+        """
         return int(self.ts[0])
 
     @property
     def last_ts(self) -> int:
-        """Last timestamp of the stream."""
+        """Last timestamp of the stream in nanoseconds.
+
+        Returns
+        -------
+        int
+            Last timestamp in nanoseconds (Unix time).
+        """
         return int(self.ts[-1])
 
     @property
     def ts_diff(self) -> np.ndarray:
-        """Difference between consecutive timestamps."""
+        """Difference between consecutive timestamps.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of time differences in nanoseconds.
+        """
         return np.diff(self.ts)
 
     @property
     def times(self) -> np.ndarray:
-        """Timestamps converted to seconds relative to stream start."""
+        """Timestamps converted to seconds relative to stream start.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of times in seconds, starting from 0.
+        """
         return (self.ts - self.first_ts) / 1e9
 
     @property
     def duration(self) -> float:
-        """Duration of the stream in seconds."""
+        """Duration of the stream in seconds.
+
+        Returns
+        -------
+        float
+            Total duration from first to last timestamp in seconds.
+        """
         return float(self.times[-1] - self.times[0])
 
     @property
     def sampling_freq_effective(self) -> float:
-        """Effective sampling frequency of the stream."""
+        """Effective sampling frequency of the stream in Hz.
+
+        Calculated as the number of samples divided by duration.
+
+        Returns
+        -------
+        float
+            Effective sampling frequency in Hz.
+        """
         return len(self.data) / self.duration
 
     @property
@@ -223,11 +366,28 @@ class Stream(BaseTabular):
 
     @property
     def is_uniformly_sampled(self) -> bool:
-        """Whether the stream is uniformly sampled."""
+        """Whether the stream is uniformly sampled.
+
+        Returns
+        -------
+        bool
+            True if all consecutive timestamp differences are approximately equal.
+        """
         return np.allclose(self.ts_diff, self.ts_diff[0])
 
     def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
-        """Convert relative time(s) in seconds to closest timestamp(s) in nanoseconds."""
+        """Convert relative time(s) in seconds to the closest timestamp(s) in nanoseconds.
+
+        Parameters
+        ----------
+        time : numbers.Number or numpy.ndarray
+            Time(s) in seconds relative to stream start.
+
+        Returns
+        -------
+        numpy.ndarray
+            Corresponding timestamp(s) in nanoseconds.
+        """
         time = np.array([time])
         return np.array([self.ts[np.absolute(self.times - t).argmin()] for t in time])
 
@@ -236,35 +396,34 @@ class Stream(BaseTabular):
         self,
         tmin: Optional[Number] = None,
         tmax: Optional[Number] = None,
-        by: Literal["timestamp", "time", "row"] = "timestamp",
+        by: Literal["timestamp", "time", "sample"] = "timestamp",
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
         Crop data to a specific time range based on timestamps,
-        relative times since start, or row numbers.
+        relative times since start, or sample numbers.
 
         Parameters
         ----------
         tmin : numbers.Number, optional
-            Start timestamp/time/row to crop the data to. If ``None``,
-            the minimum timestamp/time/row in the data is used. Defaults to ``None``.
+            Start timestamp/time/sample to crop the data to (inclusive). If ``None``,
+            the minimum timestamp/time/sample in the data is used. Defaults to ``None``.
         tmax : numbers.Number, optional
-            End timestamp/time/row to crop the data to. If ``None``,
-            the maximum timestamp/time/row in the data is used. Defaults to ``None``.
-        by : "timestamp" or "time" or "row", optional
-            Whether tmin and tmax are UTC timestamps in nanoseconds
-            OR relative times in seconds OR row numbers of the stream data.
+            End timestamp/time/sample to crop the data to (exclusive). If ``None``,
+            the maximum timestamp/time/sample in the data is used. Defaults to ``None``.
+        by : "timestamp" or "time" or "sample", optional
+            Whether tmin and tmax are Unix timestamps in nanoseconds
+            OR relative times in seconds OR sample numbers of the stream data.
             Defaults to "timestamp".
 
         %(inplace)s
 
         Returns
         -------
-        Stream or None
-            Cropped stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         if tmin is None and tmax is None:
-            raise ValueError("At least one of tmin or tmax must be provided")
+            raise ValueError("At least one of `tmin` or `tmax` must be provided")
         if by == "timestamp":
             t = self.ts
         elif by == "time":
@@ -273,7 +432,10 @@ class Stream(BaseTabular):
             t = np.arange(len(self))
         tmin = t.min() if tmin is None else tmin
         tmax = t.max() if tmax is None else tmax
-        mask = (t >= tmin) & (t <= tmax)
+        # tmin and tmax should be positive numbers
+        if tmin < 0 or tmax < 0:
+            raise ValueError("Crop bounds must be non-negative")
+        mask = (t >= tmin) & (t < tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
         inst = self if inplace else self.copy()
@@ -287,20 +449,19 @@ class Stream(BaseTabular):
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Temporally crop the stream to the range of timestamps in another stream.
+        Temporally crop the stream to the range of timestamps of another stream.
         Equivalent to ``crop(other.first_ts, other.last_ts)``.
 
         Parameters
         ----------
         other : Stream
-            The other stream whose timestamps are used to restrict the data.
+            The stream whose timestamp range is used to restrict the data.
 
         %(inplace)s
 
         Returns
         -------
-        Stream or None
-            Restricted stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -310,13 +471,14 @@ class Stream(BaseTabular):
         new_ts: Optional[np.ndarray] = None,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[Number] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
         Interpolate the stream to new timestamps.
 
-        Data columns of float type are interpolated using ``float_kind``,
-        while other columns use ``other_kind``. This distinction allows
+        Data columns of float type are interpolated using the method specified by ``float_kind``,
+        while other columns use the method specified by ``other_kind``. This distinction allows
         for appropriate interpolation methods based on data type.
 
         Parameters
@@ -332,8 +494,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Notes
         -----
@@ -353,7 +514,7 @@ class Stream(BaseTabular):
             assert np.allclose(np.diff(new_ts), step_size)
 
         inst = self if inplace else self.copy()
-        inst.data = interpolate(new_ts, self.data, float_kind, other_kind)
+        inst.data = interpolate(new_ts, self.data, float_kind, other_kind, max_gap_ms)
         return None if inplace else inst
 
     @fill_doc
@@ -366,8 +527,8 @@ class Stream(BaseTabular):
         Parameters
         ----------
         events : Events
-            Events object containing the events to annotate.
-            The events must have a valid ``id_name`` attribute,
+            Events instance containing the events to annotate.
+            The events must have a valid :attr:`id_name` attribute,
             as well as ``start timestamp [ns]`` and ``end timestamp [ns]`` columns.
         overwrite : bool, optional
             If ``True``, overwrite existing event ID annotations in the stream data.
@@ -377,8 +538,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Annotated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Raises
         ------
@@ -429,19 +589,20 @@ class Stream(BaseTabular):
         buffer: Number | tuple[Number, Number] = 0.05,
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[Number] = None,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Interpolate data in the duration of events in the stream data.
+        Interpolate data during the duration of events in the stream data.
         Similar to :func:`mne.preprocessing.eyetracking.interpolate_blinks`.
 
         Parameters
         ----------
         events : Events
-            Events object containing the events to interpolate.
+            Events instance containing the events to interpolate.
             The events must have ``start timestamp [ns]`` and
             ``end timestamp [ns]`` columns.
-        buffer : numbers.Number or , optional
+        buffer : numbers.Number or tuple[numbers.Number, numbers.Number], optional
             The time before and after an event (in seconds) to consider invalid.
             If a single number is provided, the same buffer is applied
             to both before and after the event.
@@ -453,8 +614,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Interpolated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Examples
         --------
@@ -469,6 +629,7 @@ class Stream(BaseTabular):
             buffer,
             float_kind=float_kind,
             other_kind=other_kind,
+            max_gap_ms=max_gap_ms,
         )
         return None if inplace else inst
 
@@ -503,8 +664,7 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Stream with window average applied on data if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         inst = self if inplace else self.copy()
         inst.data = window_average(new_ts, self.data, window_size)
@@ -521,6 +681,9 @@ class Stream(BaseTabular):
         Compute gaze azimuth and elevation angles (in degrees)
         based on gaze pixel coordinates and append them to the stream data.
 
+        The stream data must contain the required gaze columns:
+        ``gaze x [px]`` and ``gaze y [px]``.
+
         Parameters
         ----------
         method : {"linear"}, optional
@@ -534,24 +697,54 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Stream with gaze angles computed if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
 
         Raises
         ------
         ValueError
             If required gaze columns are not present in the data.
         """
-        if not overwrite and (
-            "azimuth [deg]" in self.data.columns
-            or "elevation [deg]" in self.data.columns
-        ):
-            raise ValueError(
-                "Stream data already contains azimuth and/or elevation columns. "
-                "Use overwrite=True to overwrite existing columns."
-            )
         inst = self if inplace else self.copy()
-        compute_azimuth_and_elevation(inst.data, method=method)
+        compute_azimuth_and_elevation(inst.data, method, overwrite)
+        return None if inplace else inst
+
+    @fill_doc
+    def apply_homographies(
+        self,
+        homographies: "Stream",
+        max_gap_ms: Number = 500,
+        overwrite: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Stream"]:
+        """
+        Compute gaze locations in surface coordinates using provided homographies
+        based on gaze pixel coordinates and append them to the stream data.
+
+        Since homographies are estimated per video frame and might not be available
+        for every frame, they need to be resampled/interpolated to the timestamps of the
+        gaze data before application.
+
+        The stream data must contain the required gaze columns:
+        ``gaze x [px]`` and ``gaze y [px]``.
+
+        Parameters
+        ----------
+        homographies : Stream
+            Stream containing homography matrices with columns ``'homography (0,0)'`` through
+            ``'homography (2,2)'`` as returned by :func:`pyneon.video.find_homographies`.
+        %(max_gap_ms)s
+        overwrite : bool, optional
+            Only applicable if surface gaze columns already exist.
+            If ``True``, overwrite existing columns. If ``False``, raise an error.
+            Defaults to ``False``.
+        %(inplace)s
+
+        Returns
+        -------
+        %(stream_or_none)s
+        """
+        inst = self if inplace else self.copy()
+        _apply_homographies_on_gaze(inst, homographies, max_gap_ms, overwrite)
         return None if inplace else inst
 
     @fill_doc
@@ -560,6 +753,7 @@ class Stream(BaseTabular):
         other: "Stream",
         float_kind: str | int = "linear",
         other_kind: str | int = "nearest",
+        max_gap_ms: Optional[Number] = 500,
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
@@ -578,12 +772,13 @@ class Stream(BaseTabular):
 
         Returns
         -------
-        Stream or None
-            Concatenated stream if ``inplace=False``, otherwise ``None``.
+        %(stream_or_none)s
         """
         # Interpolate other to self timestamps if needed
         if not np.array_equal(self.ts, other.ts):
-            other = other.interpolate(self.ts, float_kind, other_kind, inplace=False)
+            other = other.interpolate(
+                self.ts, float_kind, other_kind, max_gap_ms=max_gap_ms, inplace=False
+            )
 
         other_data = other.data.copy()
 

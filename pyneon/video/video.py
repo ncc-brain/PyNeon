@@ -7,11 +7,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import os
 
 from ..stream import Stream
+from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_frame
-from .apriltag import detect_apriltags
+from ..vis import (
+    overlay_scanpath,
+    plot_detections,
+    plot_frame,
+    overlay_detections,
+)
+from .marker import detect_markers
+from .surface import detect_surface
+from .utils import get_undistort_maps
 
 
 class Video(cv2.VideoCapture):
@@ -42,6 +51,9 @@ class Video(cv2.VideoCapture):
         self.timestamps = timestamps
         self.ts = self.timestamps
         self.info = info
+        self._undistort_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+
+        self.der_dir = video_file.parent / "derivatives"
 
         if not info:
             warn("Video info is empty and will be loaded from default values.")
@@ -55,6 +67,31 @@ class Video(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
+
+    @property
+    def first_ts(self) -> int:
+        """First timestamp of the video."""
+        return int(self.ts[0])
+
+    @property
+    def last_ts(self) -> int:
+        """Last timestamp of the video."""
+        return int(self.ts[-1])
+
+    @property
+    def ts_diff(self) -> np.ndarray:
+        """Difference between consecutive timestamps."""
+        return np.diff(self.ts)
+
+    @property
+    def times(self) -> np.ndarray:
+        """Timestamps converted to seconds relative to video start."""
+        return (self.ts - self.ts[0]) / 1e9
+
+    @property
+    def duration(self) -> float:
+        """Duration of the video in seconds."""
+        return float(self.times[-1] - self.times[0])
 
     @property
     def fps(self) -> float:
@@ -85,39 +122,91 @@ class Video(cv2.VideoCapture):
             raise ValueError("Distortion coefficients not found in video info.")
         return np.array(self.info["distortion_coefficients"])
 
-    def get_frame(self, timestamp: Union[int, np.int64]) -> int:
+    @property
+    def undistort_cache(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return get_undistort_maps(self)
+
+    @property
+    def map1(self) -> np.ndarray:
+        return self.undistort_cache[0]
+
+    @property
+    def map2(self) -> np.ndarray:
+        return self.undistort_cache[1]
+
+    @property
+    def undistortion_matrix(self) -> np.ndarray:
+        return self.undistort_cache[2]
+
+    def timestamp_to_frame_index(
+        self, timestamp: Union[int, np.int64, np.ndarray]
+    ) -> np.ndarray:
         """
-        Get the frame index corresponding to a given timestamp.
+        Map one or many timestamps (ns) to the corresponding frame index/indices.
 
         Parameters
         ----------
-        timestamp : int
-            Timestamp in nanoseconds.
+        timestamp : int or numpy.ndarray
+            Timestamp(s) in nanoseconds.
 
         Returns
         -------
-        int
-            Frame index corresponding to the timestamp.
+        numpy.ndarray
+            Frame index/indices corresponding to the timestamp(s).
         """
-        if timestamp < self.ts[0] or timestamp > self.ts[-1]:
+        ts_array = np.atleast_1d(np.asarray(timestamp, dtype=np.int64))
+
+        if ts_array.size > 0 and (
+            ts_array.min() < self.ts[0] or ts_array.max() > self.ts[-1]
+        ):
             raise ValueError("Timestamp is out of bounds of the video timestamps.")
 
-        return int(np.searchsorted(self.ts, timestamp))
+        indices = np.searchsorted(self.ts, ts_array).astype(int)
+        return indices
+
+    def read_gray_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
+        """
+        Random-access read of a single frame converted to grayscale.
+        Uses sequential grabbing for short forward jumps to maintain frame accuracy
+        in VFR videos, and fallback to seeking for large jumps.
+
+        Returns None if the frame cannot be read.
+        """
+        if frame_index < 0 or frame_index >= len(self.ts):
+            raise ValueError(f"frame_index {frame_index} is out of bounds.")
+
+        current = int(self.get(cv2.CAP_PROP_POS_FRAMES))
+
+        # If we are slightly behind (up to 50 frames), use grab() to stay accurate.
+        # This is much faster than decoding and avoids seeker drift in VFR/MSMF.
+        if 0 <= (frame_index - current):
+            while current < frame_index:
+                if not self.grab():
+                    return None
+                current += 1
+        elif current != frame_index:
+            # only seek if we are past the target frame, otherwise we grab forward
+            self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+
+        ret, frame = self.read()
+        if not ret:
+            return None
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     def reset(self):
-        print("Resetting video...")
         if self.isOpened():
             self.release()
         super().__init__(self.video_file)
+        # setting to 0 is safe
         self.set(cv2.CAP_PROP_POS_FRAMES, 0)
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
 
+    @fill_doc
     def plot_frame(
         self,
-        index: int = 0,
+        frame_index: int = 0,
         ax: Optional[plt.Axes] = None,
-        auto_title: bool = True,
         show: bool = True,
     ):
         """
@@ -125,46 +214,161 @@ class Video(cv2.VideoCapture):
 
         Parameters
         ----------
-        index : int
+        frame_index : int
             Index of the frame to plot.
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the frame on. If ``None``, a new figure is created.
-            Defaults to ``None``.
-        auto_title : bool
-            Whether to automatically set the title of the axis.
-            The automatic title includes the video file name and the frame index.
-            Defaults to ``True``.
+        %(ax_param)s
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_return)s
         """
-        return plot_frame(self, index, ax, auto_title, show)
+        return plot_frame(self, frame_index, ax, show)
 
-    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+    @fill_doc
+    def detect_markers(
+        self,
+        marker_family: str | list[str] = "36h11",
+        step: int = 1,
+        detection_window: Optional[tuple[int | float, int | float]] = None,
+        detection_window_unit: str = "frame",
+        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+        undistort: bool = False,
+    ) -> Stream:
         """
-        Detect AprilTags in the video frames.
+        Detect fiducial markers (AprilTag or ArUco) in the video frames.
 
         Parameters
         ----------
-        tag_family : str, optional
-            The AprilTag family to detect (default is 'tag36h11').
+        %(detect_markers_params)s
 
         Returns
         -------
-        pd.DataFrame
-            A DataFrame containing AprilTag detections, with columns:
-            - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
-            - 'frame_idx': The frame number
-            - 'tag_id': The ID of the detected AprilTag
-            - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
-            - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
+        %(detect_markers_return)s
         """
+        return detect_markers(
+            self,
+            marker_family=marker_family,
+            step=step,
+            detection_window=detection_window,
+            detection_window_unit=detection_window_unit,
+            detector_parameters=detector_parameters,
+            undistort=undistort,
+        )
 
-        return detect_apriltags(self, tag_family)
+    def detect_surface(
+        self,
+        skip_frames: int = 1,
+        detection_window: tuple[int | float, int | float] | None = None,
+        detection_window_unit: str = "frame",
+        min_area_ratio: float = 0.01,
+        max_area_ratio: float = 0.98,
+        brightness_threshold: int = 180,
+        adaptive: bool = True,
+        morph_kernel: int = 5,
+        decimate: float = 1.0,
+        mode: str = "largest",
+        report_diagnostics: bool = False,
+        undistort: bool = False,
+    ) -> Stream:
+        """
+        Detect bright rectangular regions (e.g., projected screens or monitors)
+        in video frames using luminance-based contour detection.
+
+        Parameters
+        ----------
+        skip_frames : int, optional
+            Process every Nth frame (default 1 = process all frames).
+        detection_window : tuple, optional
+            A tuple (start, end) specifying the range to search for detections.
+            Interpretation depends on `detection_window_unit`. Defaults to ``None``.
+        detection_window_unit : {"frame", "time", "timestamp"}, optional
+            Unit for values in `detection_window`. Defaults to "frame".
+        min_area_ratio : float, optional
+            Minimum contour area relative to frame area. Contours smaller than this
+            ratio are ignored. Default is 0.01 (1% of frame area).
+        max_area_ratio : float, optional
+            Maximum contour area relative to frame area. Contours larger than this
+            ratio are ignored. Default is 0.98.
+        brightness_threshold : int, optional
+            Fixed threshold for binarization when `adaptive=False`. Default is 180.
+        adaptive : bool, optional
+            If True (default), use adaptive thresholding to handle varying
+            illumination across frames.
+        morph_kernel : int, optional
+            Kernel size for morphological closing (default 5). Use 0 to disable
+            morphological operations.
+        decimate : float, optional
+            Downsampling factor for faster processing (e.g., 0.5 halves resolution).
+            Detected coordinates are automatically rescaled back. Default is 1.0.
+        mode : {"largest", "best", "all"}, optional
+            Selection mode determining which contours to return per frame.
+        report_diagnostics : bool, optional
+            If True, includes "area_ratio" and "score" columns in the output.
+        undistort : bool, optional
+            If True, undistorts frames before detection and redistorts detected points.
+        undistort : bool, optional
+            If True, undistorts frames before detection and redistorts detected points.
+
+        Returns
+        -------
+        Stream
+            One row per detected rectangular contour.
+        """
+        return detect_surface(
+            self,
+            skip_frames=skip_frames,
+            detection_window=detection_window,
+            detection_window_unit=detection_window_unit,
+            min_area_ratio=min_area_ratio,
+            max_area_ratio=max_area_ratio,
+            brightness_threshold=brightness_threshold,
+            adaptive=adaptive,
+            morph_kernel=morph_kernel,
+            decimate=decimate,
+            mode=mode,
+            report_diagnostics=report_diagnostics,
+            undistort=undistort,
+        )
+
+    @fill_doc
+    def plot_detections(
+        self,
+        detections: Stream,
+        frame_index: int = 0,
+        show_ids: bool = True,
+        color: str = "magenta",
+        ax: Optional[plt.Axes] = None,
+        show: bool = True,
+    ):
+        """
+        Plot detections on a frame from this video.
+
+        Parameters
+        ----------
+        detections : Stream
+            Stream containing marker or surface-corner detections.
+        frame_index : int
+            Index of the frame to plot.
+        show_ids : bool
+            Display detection IDs at their centers when available. Defaults to True.
+        color : str
+            Matplotlib color for detections. Defaults to "magenta".
+        %(ax_param)s
+        %(show_param)s
+
+        Returns
+        -------
+        %(fig_ax_return)s
+        """
+        return plot_detections(
+            self,
+            detections=detections,
+            frame_index=frame_index,
+            show_ids=show_ids,
+            color=color,
+            ax=ax,
+            show=show,
+        )
 
     def overlay_scanpath(
         self,
@@ -173,7 +377,7 @@ class Video(cv2.VideoCapture):
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = "derivatives/scanpath.mp4",
+        video_output_path: Path | str = None,
     ) -> None:
         """
         Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -193,8 +397,12 @@ class Video(cv2.VideoCapture):
             Whether to display the video with fixations overlaid. Defaults to False.
         video_output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
-            Defaults to 'scanpath.mp4'.
+            Defaults to 'derivatives/scanpath.mp4'.
         """
+        if video_output_path is None:
+            video_output_path = self.der_dir / "scanpath.mp4"
+            os.makedirs(self.der_dir, exist_ok=True)
+
         overlay_scanpath(
             self,
             scanpath,
@@ -205,9 +413,47 @@ class Video(cv2.VideoCapture):
             video_output_path,
         )
 
-    def undistort(
+    @fill_doc
+    def overlay_detections(
         self,
-        output_video_path: Optional[Path | str] = "undistorted_video.mp4",
+        detections: "Stream",
+        show_ids: bool = True,
+        color: tuple[int, int, int] = (255, 0, 255),
+        show_video: bool = False,
+        video_output_path: Optional[Path | str] = None,
+    ) -> None:
+        """
+        Overlay detections on the video frames.
+        The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        detections : Stream
+            Stream containing marker or surface-corner detections.
+        show_ids : bool
+            Whether to overlay IDs at their centers when available. Defaults to True.
+        color : tuple[int, int, int]
+            BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
+        %(show_video_param)s
+        %(video_output_path_param)s
+            Defaults to 'derivatives/detected_markers.mp4'.
+        """
+        if video_output_path is None:
+            video_output_path = self.der_dir / "detected_markers.mp4"
+            os.makedirs(self.der_dir, exist_ok=True)
+
+        overlay_detections(
+            self,
+            detections=detections,
+            show_ids=show_ids,
+            color=color,
+            show_video=show_video,
+            video_output_path=video_output_path,
+        )
+
+    def undistort_video(
+        self,
+        output_video_path: Optional[Path | str] = None,
     ) -> None:
         """
         Undistort a video using the known camera matrix and distortion coefficients.
@@ -215,14 +461,15 @@ class Video(cv2.VideoCapture):
         Parameters
         ----------
         output_video_path : str
-            Path to save the undistorted output video.
+            Path to save the undistorted output video. Defaults to 'undistorted_video.mp4'.
         """
+        if output_video_path is None:
+            output_video_path = self.der_dir / "undistorted_video.mp4"
+            os.makedirs(self.der_dir, exist_ok=True)
+
         # Open the input video
         cap = self
         cap.reset()
-        camera_matrix = self.camera_matrix
-        dist_coeffs = self.dist_coeffs
-
         # Get self properties
         frame_width, frame_height = self.width, self.height
         fps = self.fps
@@ -234,35 +481,19 @@ class Video(cv2.VideoCapture):
             output_video_path, fourcc, fps, (frame_width, frame_height)
         )
 
-        # Precompute the optimal new camera matrix and undistortion map
-        optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
-            camera_matrix,
-            dist_coeffs,
-            (frame_width, frame_height),
-            1,
-            (frame_width, frame_height),
-        )
-        map1, map2 = cv2.initUndistortRectifyMap(
-            camera_matrix,
-            dist_coeffs,
-            None,
-            optimal_camera_matrix,
-            (frame_width, frame_height),
-            cv2.CV_16SC2,
-        )
-
         for _ in tqdm(range(frame_count), desc="Undistorting video"):
             ret, frame = self.read()
             if not ret:
                 break
 
-            undistorted_frame = cv2.remap(
-                frame, map1, map2, interpolation=cv2.INTER_LINEAR
-            )
-            out.write(undistorted_frame)
+            out.write(self.undistort_frame(frame))
 
         out.release()
         print(f"Undistorted video saved to {output_video_path}")
+
+    def undistort_frame(self, frame: np.ndarray) -> np.ndarray:
+        """Undistort a single frame (color or grayscale)."""
+        return cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
 
     def compute_intensity(self):
         """
