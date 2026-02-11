@@ -61,25 +61,28 @@ def find_homographies(
     uses_marker_columns = set(DETECTION_COLUMNS).issubset(actual_cols)
     uses_corner_column = "corners" in detection_df.columns
 
-    if marker_layout is not None and surface_layout is not None:
-        raise ValueError("Provide only one of marker_layout or surface_layout.")
-
-    if uses_marker_columns:
-        if marker_layout is None:
-            raise ValueError("marker_layout is required for marker detections.")
-        layout_df = _prepare_marker_layout(marker_layout)
-        layout_by_tag = None
-        base_corners = None
-        detection_mode = "marker"
-    elif uses_corner_column:
-        if surface_layout is None:
-            raise ValueError("surface_layout is required for corner detections.")
-        layout_df, layout_by_tag, base_corners = _prepare_corner_layout(surface_layout)
-        detection_mode = "corners"
-    else:
+    if not (uses_marker_columns or uses_corner_column):
         raise ValueError(
             "Detections must contain marker corner columns or a 'corners' column."
         )
+
+    if marker_layout is not None and surface_layout is not None:
+        raise ValueError("Provide only one of marker_layout or surface_layout.")
+
+    if marker_layout is not None:
+        if not uses_marker_columns:
+            raise ValueError(
+                "marker_layout is only supported for detections with marker corner columns."
+            )
+        detection_mode = "marker"
+        layout_df = _prepare_marker_layout(marker_layout)
+        layout_by_tag = None
+        base_corners = None
+    elif surface_layout is not None:
+        detection_mode = "surface"
+        layout_df, layout_by_tag, base_corners = _prepare_corner_layout(surface_layout)
+    else:
+        raise ValueError("Either marker_layout or surface_layout must be provided.")
 
     unique_timestamps = detection_df.index.unique()
     homography_for_frame = {}
@@ -103,24 +106,7 @@ def find_homographies(
                 if marker_name not in layout_df["marker name"].values:
                     continue
 
-                corners_detected = np.array(
-                    [
-                        [detection["top left x [px]"], detection["top left y [px]"]],
-                        [
-                            detection["top right x [px]"],
-                            detection["top right y [px]"],
-                        ],
-                        [
-                            detection["bottom right x [px]"],
-                            detection["bottom right y [px]"],
-                        ],
-                        [
-                            detection["bottom left x [px]"],
-                            detection["bottom left y [px]"],
-                        ],
-                    ],
-                    dtype=np.float32,
-                )
+                corners_detected = _extract_corners(detection)
                 ref_corners = layout_df.loc[
                     layout_df["marker name"] == marker_name, "marker_corners"
                 ].values[0]
@@ -133,19 +119,18 @@ def find_homographies(
 
                 world_points.extend(corners_detected)
                 surface_points.extend(ref_corners)
-        else:
+        else:  # surface mode
             for _, detection in frame_detections.iterrows():
-                corners_detected = np.asarray(detection["corners"], dtype=np.float32)
+                corners_detected = _extract_corners(detection)
+
                 if corners_detected.shape != (4, 2):
                     raise ValueError(
                         f"Detected corners must have shape (4, 2), got {corners_detected.shape}"
                     )
 
                 if layout_by_tag is not None:
-                    if "tag_id" not in detection:
-                        continue
-                    tag_id = int(detection["tag_id"])
-                    if tag_id not in layout_by_tag:
+                    tag_id = _get_tag_id(detection)
+                    if tag_id is None or tag_id not in layout_by_tag:
                         continue
                     ref_corners = layout_by_tag[tag_id]
                 else:
@@ -184,6 +169,28 @@ def find_homographies(
         raise ValueError("No homographies could be computed from the detections.")
 
     return Stream(df)
+
+
+def _extract_corners(detection: pd.Series) -> np.ndarray:
+    if "corners" in detection:
+        return np.asarray(detection["corners"], dtype=np.float32)
+    return np.array(
+        [
+            [detection["top left x [px]"], detection["top left y [px]"]],
+            [detection["top right x [px]"], detection["top right y [px]"]],
+            [detection["bottom right x [px]"], detection["bottom right y [px]"]],
+            [detection["bottom left x [px]"], detection["bottom left y [px]"]],
+        ],
+        dtype=np.float32,
+    )
+
+
+def _get_tag_id(detection: pd.Series) -> Optional[int]:
+    if "tag_id" in detection:
+        return int(detection["tag_id"])
+    if "marker id" in detection:
+        return int(detection["marker id"])
+    return None
 
 
 def _prepare_marker_layout(marker_layout: pd.DataFrame) -> pd.DataFrame:
