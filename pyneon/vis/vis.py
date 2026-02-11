@@ -12,7 +12,7 @@ from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
 
 from ..utils.doc_decorators import fill_doc
-from ..video.marker import DETECTED_MARKERS_COLUMNS
+from ..video.constants import DETECTION_COLUMNS
 from ..video.utils import marker_family_to_dict
 
 if TYPE_CHECKING:
@@ -174,7 +174,7 @@ def plot_detections(
     frame_detections = detections_df[detections_df[frame_col] == frame_index]
 
     if not frame_detections.empty:
-        if DETECTED_MARKERS_COLUMNS.issubset(frame_detections.columns):
+        if set(DETECTION_COLUMNS).issubset(frame_detections.columns):
             _plot_marker_detections(ax, frame_detections, show_ids, color)
         elif "corners" in frame_detections.columns:
             _plot_corner_detections(ax, frame_detections, show_ids, color)
@@ -331,7 +331,7 @@ def overlay_detections(
 
     detections_df = detections.data
     frame_col = _resolve_frame_index_column(detections_df)
-    is_marker = DETECTED_MARKERS_COLUMNS.issubset(detections_df.columns)
+    is_marker = set(DETECTION_COLUMNS).issubset(detections_df.columns)
     uses_corners = "corners" in detections_df.columns
     if not is_marker and not uses_corners:
         raise ValueError(

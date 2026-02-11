@@ -1,5 +1,4 @@
 DETECTION_COLUMNS = [
-    "timestamp [ns]",
     "frame index",
     "marker family",
     "marker id",
