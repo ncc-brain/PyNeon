@@ -179,12 +179,13 @@ class Video(cv2.VideoCapture):
 
         # If we are slightly behind (up to 50 frames), use grab() to stay accurate.
         # This is much faster than decoding and avoids seeker drift in VFR/MSMF.
-        if 0 <= (frame_index - current) < 50:
+        if 0 <= (frame_index - current):
             while current < frame_index:
                 if not self.grab():
                     return None
                 current += 1
         elif current != frame_index:
+            #only seek if we are past the target frame, otherwise we grab forward
             self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
 
         ret, frame = self.read()
@@ -196,6 +197,7 @@ class Video(cv2.VideoCapture):
         if self.isOpened():
             self.release()
         super().__init__(self.video_file)
+        #setting to 0 is safe
         self.set(cv2.CAP_PROP_POS_FRAMES, 0)
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")

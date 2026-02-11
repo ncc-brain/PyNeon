@@ -71,7 +71,7 @@ def estimate_scanpath(
     ]
 
     # reset video to the beginning
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video.reset()
     prev_image = None
     for i_frame in tqdm(range(scanpath.shape[0]), desc="Estimating scanpath"):
         # Read the current frame from the video
@@ -143,7 +143,7 @@ def estimate_scanpath(
         prev_image = curr_image
 
     # Reset video to the beginning
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video.reset()
 
     scanpath.index.name = "timestamp [ns]"
 
