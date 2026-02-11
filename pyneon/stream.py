@@ -31,15 +31,15 @@ def _apply_homographies_on_gaze(
 ) -> None:
     """
     Apply homographies to gaze points.
-    
+
     Since homographies are estimated per video frame and might not be available
     for every frame, they need to be resampled/interpolated to the timestamps of the
     gaze data before application. Users can control the extent of interpolation using
     the ``max_gap_ms`` parameter to avoid applying homographies over large gaps.
-    
+
     This function operates in-place and modifies the `gaze` Stream by adding two new columns:
     'gaze x [surface coord]' and 'gaze y [surface coord]'.
-    
+
     Parameters
     ----------
     gaze : Stream
@@ -51,12 +51,12 @@ def _apply_homographies_on_gaze(
         Maximum allowed gap (in milliseconds) for interpolation. Defaults to 500.
     overwrite : bool, optional
         If True, overwrite existing surface coordinate columns. Defaults to False.
-    
+
     Returns
     -------
     None
         This function modifies the gaze Stream in-place.
-    """    
+    """
     gaze_data = gaze.data
     if not overwrite and (
         "gaze x [surface coord]" in gaze_data.columns
@@ -69,9 +69,7 @@ def _apply_homographies_on_gaze(
 
     required_cols = ["gaze x [px]", "gaze y [px]"]
     if not all(col in gaze_data.columns for col in required_cols):
-        raise ValueError(
-            f"Data must contain the following columns: {required_cols}"
-        )
+        raise ValueError(f"Data must contain the following columns: {required_cols}")
 
     gaze_data["gaze x [surface coord]"] = np.nan
     gaze_data["gaze y [surface coord]"] = np.nan
@@ -85,16 +83,15 @@ def _apply_homographies_on_gaze(
 
     # Extract homography column names in order
     h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
-    
+
     # Check if all homography columns exist
     if not all(col in homographies_data.columns for col in h_cols):
-        raise ValueError(
-            f"Homographies data must contain columns: {h_cols}"
-        )
+        raise ValueError(f"Homographies data must contain columns: {h_cols}")
 
     # Apply homographies to each gaze point
-    for ts in tqdm(homographies_data.index, desc="Applying homographies to gaze points"):
-            
+    for ts in tqdm(
+        homographies_data.index, desc="Applying homographies to gaze points"
+    ):
         # Get gaze point(s) at this timestamp
         gaze_row = gaze_data.loc[ts]
         gaze_vals = gaze_row[["gaze x [px]", "gaze y [px]"]].values
@@ -102,7 +99,7 @@ def _apply_homographies_on_gaze(
         # Skip if gaze coordinates are NaN
         if pd.isna(gaze_vals).any():
             continue
-        
+
         # Convert to numpy array to ensure compatibility with _apply_homography
         gaze_points = np.asarray(gaze_vals, dtype=np.float64).reshape(1, -1)
 
@@ -271,7 +268,7 @@ class Stream(BaseTabular):
     @property
     def timestamps(self) -> np.ndarray:
         """Timestamps of the stream in nanoseconds.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -282,7 +279,7 @@ class Stream(BaseTabular):
     @property
     def ts(self) -> np.ndarray:
         """Alias for :attr:`timestamps`.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -293,7 +290,7 @@ class Stream(BaseTabular):
     @property
     def first_ts(self) -> int:
         """First timestamp of the stream in nanoseconds.
-        
+
         Returns
         -------
         int
@@ -304,7 +301,7 @@ class Stream(BaseTabular):
     @property
     def last_ts(self) -> int:
         """Last timestamp of the stream in nanoseconds.
-        
+
         Returns
         -------
         int
@@ -315,7 +312,7 @@ class Stream(BaseTabular):
     @property
     def ts_diff(self) -> np.ndarray:
         """Difference between consecutive timestamps.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -326,7 +323,7 @@ class Stream(BaseTabular):
     @property
     def times(self) -> np.ndarray:
         """Timestamps converted to seconds relative to stream start.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -337,7 +334,7 @@ class Stream(BaseTabular):
     @property
     def duration(self) -> float:
         """Duration of the stream in seconds.
-        
+
         Returns
         -------
         float
@@ -348,9 +345,9 @@ class Stream(BaseTabular):
     @property
     def sampling_freq_effective(self) -> float:
         """Effective sampling frequency of the stream in Hz.
-        
+
         Calculated as the number of samples divided by duration.
-        
+
         Returns
         -------
         float
@@ -370,7 +367,7 @@ class Stream(BaseTabular):
     @property
     def is_uniformly_sampled(self) -> bool:
         """Whether the stream is uniformly sampled.
-        
+
         Returns
         -------
         bool
@@ -380,12 +377,12 @@ class Stream(BaseTabular):
 
     def time_to_ts(self, time: Number | np.ndarray) -> np.ndarray:
         """Convert relative time(s) in seconds to the closest timestamp(s) in nanoseconds.
-        
+
         Parameters
         ----------
         time : numbers.Number or numpy.ndarray
             Time(s) in seconds relative to stream start.
-            
+
         Returns
         -------
         numpy.ndarray
@@ -683,7 +680,7 @@ class Stream(BaseTabular):
         """
         Compute gaze azimuth and elevation angles (in degrees)
         based on gaze pixel coordinates and append them to the stream data.
-        
+
         The stream data must contain the required gaze columns:
         ``gaze x [px]`` and ``gaze y [px]``.
 
@@ -710,7 +707,7 @@ class Stream(BaseTabular):
         inst = self if inplace else self.copy()
         compute_azimuth_and_elevation(inst.data, method, overwrite)
         return None if inplace else inst
-    
+
     @fill_doc
     def apply_homographies(
         self,
@@ -722,14 +719,14 @@ class Stream(BaseTabular):
         """
         Compute gaze locations in surface coordinates using provided homographies
         based on gaze pixel coordinates and append them to the stream data.
-        
+
         Since homographies are estimated per video frame and might not be available
         for every frame, they need to be resampled/interpolated to the timestamps of the
         gaze data before application.
-        
+
         The stream data must contain the required gaze columns:
         ``gaze x [px]`` and ``gaze y [px]``.
-        
+
         Parameters
         ----------
         homographies : Stream
@@ -741,7 +738,7 @@ class Stream(BaseTabular):
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
         %(inplace)s
-        
+
         Returns
         -------
         %(stream_or_none)s

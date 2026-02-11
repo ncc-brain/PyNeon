@@ -190,7 +190,7 @@ class Epochs:
     @property
     def t_ref(self) -> np.ndarray:
         """Reference time for each epoch in Unix nanoseconds.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -201,7 +201,7 @@ class Epochs:
     @property
     def t_before(self) -> np.ndarray:
         """Time before the reference time for each epoch in nanoseconds.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -212,7 +212,7 @@ class Epochs:
     @property
     def t_after(self) -> np.ndarray:
         """Time after the reference time for each epoch in nanoseconds.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -223,7 +223,7 @@ class Epochs:
     @property
     def description(self) -> np.ndarray:
         """Description or label for each epoch.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -243,7 +243,7 @@ class Epochs:
     @property
     def is_equal_length(self) -> bool:
         """Whether all epochs have the same length.
-        
+
         Returns
         -------
         bool
@@ -256,7 +256,7 @@ class Epochs:
     @property
     def has_overlap(self) -> bool:
         """Whether any adjacent epochs overlap in time.
-        
+
         Returns
         -------
         bool

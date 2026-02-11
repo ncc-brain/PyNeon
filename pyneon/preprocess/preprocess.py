@@ -54,10 +54,10 @@ def interpolate(
     """
     _check_data(data)
     new_ts = np.sort(new_ts).astype("int64")
-    
+
     # Track which timestamps are invalid
     invalid_mask = np.zeros(len(new_ts), dtype=bool)
-    
+
     # First, mark timestamps outside the data range
     out_of_range = (new_ts < data.index[0]) | (new_ts > data.index[-1])
     invalid_mask |= out_of_range
@@ -68,36 +68,42 @@ def interpolate(
             f"the data time range and will have empty data.",
             UserWarning,
         )
-    
+
     # Then, for in-range timestamps, check max_gap_ms constraint
     if max_gap_ms is not None:
         max_gap_ns = int(max_gap_ms * 1e6)
         old_ts = data.index.to_numpy()
-        
+
         # Only check timestamps that are within the data range
         in_range_mask = ~out_of_range
         if np.any(in_range_mask):
             new_ts_in_range = new_ts[in_range_mask]
             idx = np.searchsorted(old_ts, new_ts_in_range, side="left")
-            
+
             # Check for exact matches first
             exact_match = np.isin(new_ts_in_range, old_ts)
-            
+
             # For non-exact matches, compute distances to neighbors
             left_dist = np.where(
-                idx == 0, np.inf, new_ts_in_range - old_ts[np.clip(idx - 1, 0, len(old_ts) - 1)]
+                idx == 0,
+                np.inf,
+                new_ts_in_range - old_ts[np.clip(idx - 1, 0, len(old_ts) - 1)],
             )
             right_dist = np.where(
-                idx == len(old_ts), np.inf, old_ts[np.clip(idx, 0, len(old_ts) - 1)] - new_ts_in_range
+                idx == len(old_ts),
+                np.inf,
+                old_ts[np.clip(idx, 0, len(old_ts) - 1)] - new_ts_in_range,
             )
-            
+
             # Valid if exact match OR both neighbors are close enough
-            valid_in_range = exact_match | ((left_dist < max_gap_ns) & (right_dist < max_gap_ns))
-            
+            valid_in_range = exact_match | (
+                (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
+            )
+
             # Mark invalid timestamps
             invalid_in_range = ~valid_in_range
             invalid_mask[in_range_mask] |= invalid_in_range
-            
+
             n_gap_violations = np.sum(invalid_in_range)
             if n_gap_violations > 0:
                 warn(
@@ -130,7 +136,7 @@ def interpolate(
                 new_data[col] = vals.astype(s.dtype, copy=False)
             except (TypeError, ValueError):  # fallback in case .astype fails
                 new_data[col] = vals
-    
+
     # Set data to NaN for timestamps that are out of range
     if np.any(invalid_mask):
         new_data.loc[invalid_mask] = np.nan
@@ -300,8 +306,7 @@ def compute_azimuth_and_elevation(
         ``azimuth [deg]`` and ``elevation [deg]``.
     """
     if not overwrite and (
-        "azimuth [deg]" in data.columns
-        or "elevation [deg]" in data.columns
+        "azimuth [deg]" in data.columns or "elevation [deg]" in data.columns
     ):
         raise ValueError(
             "Stream data already contains azimuth and/or elevation columns. "

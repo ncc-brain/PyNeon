@@ -226,7 +226,7 @@ def plot_marker_layout(
         min_x, max_x = 0, width
         min_y, max_y = 0, height
 
-    else:   
+    else:
         min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
         max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
         min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
@@ -263,7 +263,7 @@ def plot_marker_layout(
 
         # Paste marker onto canvas
         canvas.paste(marker_pil, (x, y))
-        
+
         if show_marker_names:
             ax.text(
                 marker["center x"],
@@ -283,6 +283,7 @@ def plot_marker_layout(
     if show:
         plt.show()
     return fig, ax
+
 
 @fill_doc
 def overlay_detections(
@@ -340,7 +341,7 @@ def overlay_detections(
 
     grouped = detections_df.groupby(frame_col)
     detections_by_frame = {frame_idx: group for frame_idx, group in grouped}
-    
+
     # Iterate through video frames sequentially
     for frame_index in tqdm(
         range(len(video.ts)),
@@ -358,7 +359,9 @@ def overlay_detections(
             # No markers detected in this frame, skip overlay
             if show_video:
                 cv2.namedWindow("Detections Overlay", cv2.WINDOW_NORMAL)
-                cv2.setWindowProperty("Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.setWindowProperty(
+                    "Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+                )
                 cv2.imshow("Detections Overlay", frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
@@ -399,7 +402,9 @@ def overlay_detections(
                     )
                 corners = corners.astype(np.int32)
                 if "center" in detection and detection["center"] is not None:
-                    center = np.asarray(detection["center"], dtype=np.float32).reshape(-1)
+                    center = np.asarray(detection["center"], dtype=np.float32).reshape(
+                        -1
+                    )
                 else:
                     center = np.mean(corners, axis=0)
                 label = (
@@ -434,7 +439,9 @@ def overlay_detections(
         # Display the frame if requested
         if show_video:
             cv2.namedWindow("Detections Overlay", cv2.WINDOW_NORMAL)
-            cv2.setWindowProperty("Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.setWindowProperty(
+                "Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+            )
             cv2.imshow("Detections Overlay", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -451,7 +458,6 @@ def overlay_detections(
     video.reset()
 
 
-        
 @fill_doc
 def plot_distribution(
     rec: "Recording",
@@ -699,7 +705,9 @@ def overlay_scanpath(
         # Display the frame with overlays (Optional)
         if show_video:
             cv2.namedWindow("Fixations Overlay", cv2.WINDOW_NORMAL)
-            cv2.setWindowProperty("Fixations Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.setWindowProperty(
+                "Fixations Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+            )
             cv2.imshow("Fixations Overlay", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -1083,7 +1091,9 @@ def overlay_detections_and_pose(
 
         if show_video:
             cv2.namedWindow("Video with Overlays", cv2.WINDOW_NORMAL)
-            cv2.setWindowProperty("Video with Overlays", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.setWindowProperty(
+                "Video with Overlays", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+            )
             cv2.imshow("Video with Overlays", frame)
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC key

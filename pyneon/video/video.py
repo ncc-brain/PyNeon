@@ -21,6 +21,7 @@ from ..vis import (
 from .marker import detect_markers
 from .surface import detect_surface
 
+
 class Video(cv2.VideoCapture):
     """
     Loaded video file with timestamps.
@@ -51,7 +52,7 @@ class Video(cv2.VideoCapture):
         self.info = info
 
         self.der_dir = video_file.parent / "derivatives"
-        
+
         if not info:
             warn("Video info is empty and will be loaded from default values.")
             self.info = default_camera_info

@@ -13,6 +13,7 @@ from .utils import _verify_format, marker_family_to_dict
 if TYPE_CHECKING:
     from .video import Video
 
+
 @fill_doc
 def detect_markers(
     video: "Video",
@@ -125,4 +126,3 @@ def detect_markers(
     df.set_index("timestamp [ns]", inplace=True)
     _verify_format(df, DETECTION_COLUMNS)
     return Stream(df)
-

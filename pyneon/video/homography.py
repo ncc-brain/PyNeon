@@ -232,7 +232,9 @@ def _prepare_marker_layout(marker_layout: pd.DataFrame) -> pd.DataFrame:
 
 def _prepare_corner_layout(
     surface_layout: pd.DataFrame | np.ndarray,
-) -> tuple[Optional[pd.DataFrame], Optional[dict[int, np.ndarray]], Optional[np.ndarray]]:
+) -> tuple[
+    Optional[pd.DataFrame], Optional[dict[int, np.ndarray]], Optional[np.ndarray]
+]:
     if isinstance(surface_layout, np.ndarray):
         base_corners = np.asarray(surface_layout, dtype=np.float32)
         if base_corners.shape != (4, 2):
@@ -264,4 +266,3 @@ def _prepare_corner_layout(
     if base_corners.shape != (4, 2):
         raise ValueError("surface_layout 'corners' must have shape (4, 2).")
     return surface_layout, None, base_corners
-

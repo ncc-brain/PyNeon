@@ -13,6 +13,7 @@ from .utils import _verify_format
 if TYPE_CHECKING:
     from .video import Video
 
+
 @fill_doc
 def detect_surface(
     video: "Video",

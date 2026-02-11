@@ -516,9 +516,7 @@ class Events(BaseTabular):
 
         h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
         if not all(col in homographies_data.columns for col in h_cols):
-            raise ValueError(
-                f"Homographies data must contain columns: {h_cols}"
-            )
+            raise ValueError(f"Homographies data must contain columns: {h_cols}")
 
         homographies_data = homographies_data.dropna()
 

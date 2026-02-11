@@ -6,6 +6,7 @@ import pandas as pd
 
 from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES
 
+
 def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
     # AprilTags
     if marker_family in APRILTAG_FAMILIES:

@@ -53,8 +53,8 @@ class Dataset:
         if not dataset_dir.is_dir():
             raise FileNotFoundError(f"Directory not found: {dataset_dir}")
 
-        self.dataset_dir : Path = dataset_dir
-        self.recordings : list[Recording] = list()
+        self.dataset_dir: Path = dataset_dir
+        self.recordings: list[Recording] = list()
 
         sections_path = dataset_dir / "sections.csv"
 
