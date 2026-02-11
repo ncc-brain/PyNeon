@@ -8,7 +8,12 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from .constants import DETECTION_COLUMNS
-from .utils import _verify_format, distort_points, resolve_detection_window
+from .utils import (
+    _verify_format,
+    distort_points,
+    get_undistort_valid_fraction,
+    resolve_detection_window,
+)
 
 if TYPE_CHECKING:
     from .video import Video
@@ -70,6 +75,10 @@ def detect_surface(
     # Ensure video is at the beginning before processing
     video.reset()
 
+    valid_fraction = None
+    if undistort:
+        valid_fraction = get_undistort_valid_fraction(video)
+
     for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
         gray = video.read_gray_frame_at(actual_frame_idx)
         if gray is None:
@@ -107,6 +116,8 @@ def detect_surface(
             if area <= 0:
                 continue
             area_ratio = area / frame_area
+            if undistort and valid_fraction:
+                area_ratio /= valid_fraction
             if not (min_area_ratio <= area_ratio <= max_area_ratio):
                 continue
 

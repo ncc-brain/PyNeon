@@ -140,6 +140,19 @@ def distort_points(video: Any, points: np.ndarray) -> np.ndarray:
     return distorted
 
 
+def get_undistort_valid_fraction(video: Any) -> float:
+    """Return fraction of pixels that remain valid after undistortion."""
+    cache = getattr(video, "_undistort_valid_fraction", None)
+    if cache is None:
+        map1, map2, _ = get_undistort_maps(video)
+        mask = np.ones((video.height, video.width), dtype=np.uint8)
+        undistorted = cv2.remap(mask, map1, map2, interpolation=cv2.INTER_NEAREST)
+        valid_fraction = float(np.count_nonzero(undistorted) / undistorted.size)
+        setattr(video, "_undistort_valid_fraction", valid_fraction)
+        return valid_fraction
+    return float(cache)
+
+
 def resolve_detection_window(
     video: Any,
     detection_window: Optional[tuple[int | float, int | float]],
