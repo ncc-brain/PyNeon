@@ -75,6 +75,9 @@ detection_window_unit : {"frame", "time", "timestamp"}, optional
 detector_parameters : cv2.aruco.DetectorParameters, optional
     Detector parameters to use for all marker families. If None, a default
     DetectorParameters instance is created. Defaults to ``None``.
+undistort : bool, optional
+    If True, undistorts frames before detection and redistorts detected points.
+    Defaults to ``False``.
 """
 
 DOC["detect_surface_params"] = """
@@ -122,6 +125,9 @@ mode : {"largest", "best", "all"}, optional
 report_diagnostics : bool, optional
     If True, includes "area_ratio" and "score" columns in the output.
     Defaults to False.
+undistort : bool, optional
+    If True, undistorts frames before detection and redistorts detected points.
+    Defaults to ``False``.
 """
 
 DOC["find_homographies_params"] = """

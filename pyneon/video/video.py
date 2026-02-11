@@ -20,6 +20,7 @@ from ..vis import (
 )
 from .marker import detect_markers
 from .surface import detect_surface
+from .utils import get_undistort_maps
 
 
 class Video(cv2.VideoCapture):
@@ -50,7 +51,7 @@ class Video(cv2.VideoCapture):
         self.timestamps = timestamps
         self.ts = self.timestamps
         self.info = info
-        self._undistort_maps: tuple[np.ndarray, np.ndarray] | None = None
+        self._undistort_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
 
         self.der_dir = video_file.parent / "derivatives"
 
@@ -122,12 +123,20 @@ class Video(cv2.VideoCapture):
         return np.array(self.info["distortion_coefficients"])
 
     @property
+    def undistort_cache(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return get_undistort_maps(self)
+
+    @property
     def map1(self) -> np.ndarray:
-        return self._get_undistort_maps()[0]
+        return self.undistort_cache[0]
 
     @property
     def map2(self) -> np.ndarray:
-        return self._get_undistort_maps()[1]
+        return self.undistort_cache[1]
+    
+    @property
+    def undistortion_matrix(self) -> np.ndarray:
+        return self.undistort_cache[2]
 
     def timestamp_to_frame_index(
         self, timestamp: Union[int, np.int64, np.ndarray]
@@ -221,6 +230,7 @@ class Video(cv2.VideoCapture):
         detection_window: Optional[tuple[int | float, int | float]] = None,
         detection_window_unit: str = "frame",
         detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+        undistort: bool = False,
     ) -> Stream:
         """
         Detect fiducial markers (AprilTag or ArUco) in the video frames.
@@ -240,6 +250,7 @@ class Video(cv2.VideoCapture):
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,
             detector_parameters=detector_parameters,
+            undistort=undistort,
         )
 
     def detect_surface(
@@ -255,6 +266,7 @@ class Video(cv2.VideoCapture):
         decimate: float = 1.0,
         mode: str = "largest",
         report_diagnostics: bool = False,
+        undistort: bool = False,
     ) -> Stream:
         """
         Detect bright rectangular regions (e.g., projected screens or monitors)
@@ -290,6 +302,10 @@ class Video(cv2.VideoCapture):
             Selection mode determining which contours to return per frame.
         report_diagnostics : bool, optional
             If True, includes "area_ratio" and "score" columns in the output.
+        undistort : bool, optional
+            If True, undistorts frames before detection and redistorts detected points.
+        undistort : bool, optional
+            If True, undistorts frames before detection and redistorts detected points.
 
         Returns
         -------
@@ -309,6 +325,7 @@ class Video(cv2.VideoCapture):
             decimate=decimate,
             mode=mode,
             report_diagnostics=report_diagnostics,
+            undistort=undistort,
         )
 
     @fill_doc
@@ -475,29 +492,6 @@ class Video(cv2.VideoCapture):
     def undistort_frame(self, frame: np.ndarray) -> np.ndarray:
         """Undistort a single frame (color or grayscale)."""
         return cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
-
-    def _get_undistort_maps(self) -> tuple[np.ndarray, np.ndarray]:
-        if self._undistort_maps is None:
-            camera_matrix = self.camera_matrix
-            dist_coeffs = self.distortion_coefficients
-            frame_width, frame_height = self.width, self.height
-            optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
-                camera_matrix,
-                dist_coeffs,
-                (frame_width, frame_height),
-                1,
-                (frame_width, frame_height),
-            )
-            map1, map2 = cv2.initUndistortRectifyMap(
-                camera_matrix,
-                dist_coeffs,
-                None,
-                optimal_camera_matrix,
-                (frame_width, frame_height),
-                cv2.CV_16SC2,
-            )
-            self._undistort_maps = (map1, map2)
-        return self._undistort_maps
 
     def compute_intensity(self):
         """

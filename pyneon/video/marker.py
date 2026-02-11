@@ -8,7 +8,12 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from .constants import DETECTION_COLUMNS
-from .utils import _verify_format, marker_family_to_dict, resolve_detection_window
+from .utils import (
+    _verify_format,
+    distort_points,
+    marker_family_to_dict,
+    resolve_detection_window,
+)
 
 if TYPE_CHECKING:
     from .video import Video
@@ -22,6 +27,7 @@ def detect_markers(
     detection_window: Optional[tuple[int | float, int | float]] = None,
     detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+    undistort: bool = False,
 ) -> Stream:
     """
     Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
@@ -74,6 +80,9 @@ def detect_markers(
                     # See https://stackoverflow.com/questions/79044142
                     corners = corners[[2, 3, 0, 1], :]
                 center = np.mean(corners, axis=0)
+                if undistort:
+                    corners = distort_points(video, corners)
+                    center = distort_points(video, center)
                 records.append(
                     {
                         "timestamp [ns]": video.ts[frame_idx],
@@ -105,6 +114,8 @@ def detect_markers(
         gray_frame = video.read_gray_frame_at(frame_index)
         if gray_frame is None:
             break
+        if undistort:
+            gray_frame = video.undistort_frame(gray_frame)
         records = _process_frame(frame_index, gray_frame)
         detected_markers.extend(records)
 

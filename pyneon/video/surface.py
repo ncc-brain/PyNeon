@@ -8,7 +8,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from .constants import DETECTION_COLUMNS
-from .utils import _verify_format, resolve_detection_window
+from .utils import _verify_format, distort_points, resolve_detection_window
 
 if TYPE_CHECKING:
     from .video import Video
@@ -28,6 +28,7 @@ def detect_surface(
     decimate: float = 1.0,
     mode: Literal["largest", "best", "all"] = "largest",
     report_diagnostics: bool = False,
+    undistort: bool = False,
 ) -> Stream:
     """
     Detect bright rectangular regions (e.g., projected surfaces or monitors)
@@ -73,6 +74,9 @@ def detect_surface(
         gray = video.read_gray_frame_at(actual_frame_idx)
         if gray is None:
             break
+
+        if undistort:
+            gray = video.undistort_frame(gray)
 
         if decimate != 1.0:
             gray = cv2.resize(gray, None, fx=decimate, fy=decimate)
@@ -142,6 +146,9 @@ def detect_surface(
         for cid, sel in enumerate(selected):
             corners = sel["corners"]
             center = np.mean(corners, axis=0)
+            if undistort:
+                corners = distort_points(video, corners)
+                center = distort_points(video, center)
             detection_row = {
                 "frame index": actual_frame_idx,
                 "timestamp [ns]": int(video.ts[actual_frame_idx]),
