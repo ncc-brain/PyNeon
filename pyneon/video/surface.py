@@ -6,12 +6,14 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
+from ..utils.doc_decorators import fill_doc
 from .constants import DETECTION_COLUMNS
 from .utils import _verify_format
 
 if TYPE_CHECKING:
     from .video import Video
 
+@fill_doc
 def detect_surface(
     video: "Video",
     skip_frames: int = 1,
@@ -41,62 +43,11 @@ def detect_surface(
     video : Video
         Scene video object supporting OpenCV-like `set()` and `read()` methods,
         and providing frame timestamps (`video.ts`).
-    skip_frames : int, optional
-        Process every Nth frame (default 1 = process all frames).
-    min_area_ratio : float, optional
-        Minimum contour area relative to frame area. Contours smaller than this
-        ratio are ignored. Default is 0.01 (1% of frame area).
-    max_area_ratio : float, optional
-        Maximum contour area relative to frame area. Contours larger than this
-        ratio are ignored. Default is 0.98.
-    brightness_threshold : int, optional
-        Fixed threshold for binarization when `adaptive=False`. Default is 180.
-    adaptive : bool, optional
-        If True (default), use adaptive thresholding to handle varying
-        illumination across frames.
-    morph_kernel : int, optional
-        Kernel size for morphological closing (default 5). Use 0 to disable
-        morphological operations.
-    decimate : float, optional
-        Downsampling factor for faster processing (e.g., 0.5 halves resolution).
-        Detected coordinates are automatically rescaled back. Default is 1.0.
-    mode : {"largest", "best", "all"}, optional
-        Selection mode determining which contours to return per frame:
-
-        - "largest" : Return only the largest valid rectangular contour.
-          Useful when the surface is the outermost bright region. (Default)
-        - "best" : Return the contour that most closely resembles a
-          perfect rectangle (lowest corner-angle variance and balanced
-          aspect ratio).
-        - "all" : Return all valid rectangular contours (outer and inner
-          overlapping rectangles). Useful when both surface and inner
-          projected content need to be distinguished.
-    report_diagnostics : bool, optional
-        If True, includes "area_ratio" and "score" columns in the output.
-        Defaults to False.
+    %(detect_surface_params)s
 
     Returns
     -------
-    Stream
-
-    One row per detected rectangular contour with columns:
-        - "frame index"         : int
-        - "timestamp [ns]"      : int64
-        - "marker family"       : str ("surface")
-        - "marker id"           : int (sequential ID per contour in frame)
-        - "marker name"         : None
-        - "top left x [px]"     : float
-        - "top left y [px]"     : float
-        - "top right x [px]"    : float
-        - "top right y [px]"    : float
-        - "bottom right x [px]" : float
-        - "bottom right y [px]" : float
-        - "bottom left x [px]"  : float
-        - "bottom left y [px]"  : float
-        - "center x [px]"       : float
-        - "center y [px]"       : float
-        - "area_ratio"          : float (if `report_diagnostics` is True)
-        - "score"               : float (if `report_diagnostics` is True)
+    %(detect_surface_return)s
     """
 
     if skip_frames < 1:

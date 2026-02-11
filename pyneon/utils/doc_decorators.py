@@ -77,6 +77,42 @@ detector_parameters : cv2.aruco.DetectorParameters, optional
     DetectorParameters instance is created. Defaults to ``None``.
 """
 
+DOC["detect_surface_params"] = """
+skip_frames : int, optional
+    Process every Nth frame (default 1 = process all frames).
+min_area_ratio : float, optional
+    Minimum contour area relative to frame area. Contours smaller than this
+    ratio are ignored. Default is 0.01 (1% of frame area).
+max_area_ratio : float, optional
+    Maximum contour area relative to frame area. Contours larger than this
+    ratio are ignored. Default is 0.98.
+brightness_threshold : int, optional
+    Fixed threshold for binarization when `adaptive=False`. Default is 180.
+adaptive : bool, optional
+    If True (default), use adaptive thresholding to handle varying
+    illumination across frames.
+morph_kernel : int, optional
+    Kernel size for morphological closing (default 5). Use 0 to disable
+    morphological operations.
+decimate : float, optional
+    Downsampling factor for faster processing (e.g., 0.5 halves resolution).
+    Detected coordinates are automatically rescaled back. Default is 1.0.
+mode : {"largest", "best", "all"}, optional
+    Selection mode determining which contours to return per frame:
+
+    - "largest" : Return only the largest valid rectangular contour.
+      Useful when the surface is the outermost bright region. (Default)
+    - "best" : Return the contour that most closely resembles a
+      perfect rectangle (lowest corner-angle variance and balanced
+      aspect ratio).
+    - "all" : Return all valid rectangular contours (outer and inner
+      overlapping rectangles). Useful when both surface and inner
+      projected content need to be distinguished.
+report_diagnostics : bool, optional
+    If True, includes "area_ratio" and "score" columns in the output.
+    Defaults to False.
+"""
+
 DOC["find_homographies_params"] = """
 valid_markers : int, optional
     Minimum number of markers required to compute a homography. Defaults to 2.
@@ -121,13 +157,33 @@ Stream
     Stream indexed by "timestamp [ns]" with columns:
 
     - "frame index": The frame number\n
-    - "marker id": Marker ID, for example "36h11_0", "36h11_1"\n
+    - "marker family": Marker family (e.g., "36h11")\n
+    - "marker id": Marker ID, for example 0, 1\n
+    - "marker name": Marker identifier, for example "36h11_0", "36h11_1"\n
     - "top left x [px]", "top left y [px]"\n
     - "top right x [px]", "top right y [px]"\n
     - "bottom right x [px]", "bottom right y [px]"\n
     - "bottom left x [px]", "bottom left y [px]"\n
     - "center x [px]": X-coordinate of marker center in pixels\n
     - "center y [px]": Y-coordinate of marker center in pixels
+"""
+
+DOC["detect_surface_return"] = """
+Stream
+    Stream indexed by "timestamp [ns]" with columns:
+
+    - "frame index": The frame number\n
+    - "marker family": "surface"\n
+    - "marker id": sequential ID per contour in frame\n
+    - "marker name": identifier like "surface_0"\n
+    - "top left x [px]", "top left y [px]"\n
+    - "top right x [px]", "top right y [px]"\n
+    - "bottom right x [px]", "bottom right y [px]"\n
+    - "bottom left x [px]", "bottom left y [px]"\n
+    - "center x [px]": X-coordinate of center in pixels\n
+    - "center y [px]": Y-coordinate of center in pixels\n
+    - "area_ratio": float (if `report_diagnostics` is True)\n
+    - "score": float (if `report_diagnostics` is True)
 """
 
 DOC["fig_ax_return"] = """
