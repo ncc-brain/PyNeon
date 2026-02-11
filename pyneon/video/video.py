@@ -50,6 +50,7 @@ class Video(cv2.VideoCapture):
         self.timestamps = timestamps
         self.ts = self.timestamps
         self.info = info
+        self._undistort_maps: tuple[np.ndarray, np.ndarray] | None = None
 
         self.der_dir = video_file.parent / "derivatives"
 
@@ -119,6 +120,14 @@ class Video(cv2.VideoCapture):
         if "distortion_coefficients" not in self.info:
             raise ValueError("Distortion coefficients not found in video info.")
         return np.array(self.info["distortion_coefficients"])
+
+    @property
+    def map1(self) -> np.ndarray:
+        return self._get_undistort_maps()[0]
+
+    @property
+    def map2(self) -> np.ndarray:
+        return self._get_undistort_maps()[1]
 
     def timestamp_to_frame_index(
         self, timestamp: Union[int, np.int64, np.ndarray]
@@ -423,7 +432,7 @@ class Video(cv2.VideoCapture):
             video_output_path=video_output_path,
         )
 
-    def undistort(
+    def undistort_video(
         self,
         output_video_path: Optional[Path | str] = None,
     ) -> None:
@@ -442,9 +451,6 @@ class Video(cv2.VideoCapture):
         # Open the input video
         cap = self
         cap.reset()
-        camera_matrix = self.camera_matrix
-        dist_coeffs = self.distortion_coefficients
-
         # Get self properties
         frame_width, frame_height = self.width, self.height
         fps = self.fps
@@ -456,35 +462,42 @@ class Video(cv2.VideoCapture):
             output_video_path, fourcc, fps, (frame_width, frame_height)
         )
 
-        # Precompute the optimal new camera matrix and undistortion map
-        optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
-            camera_matrix,
-            dist_coeffs,
-            (frame_width, frame_height),
-            1,
-            (frame_width, frame_height),
-        )
-        map1, map2 = cv2.initUndistortRectifyMap(
-            camera_matrix,
-            dist_coeffs,
-            None,
-            optimal_camera_matrix,
-            (frame_width, frame_height),
-            cv2.CV_16SC2,
-        )
-
         for _ in tqdm(range(frame_count), desc="Undistorting video"):
             ret, frame = self.read()
             if not ret:
                 break
 
-            undistorted_frame = cv2.remap(
-                frame, map1, map2, interpolation=cv2.INTER_LINEAR
-            )
-            out.write(undistorted_frame)
+            out.write(self.undistort_frame(frame))
 
         out.release()
         print(f"Undistorted video saved to {output_video_path}")
+
+    def undistort_frame(self, frame: np.ndarray) -> np.ndarray:
+        """Undistort a single frame (color or grayscale)."""
+        return cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
+
+    def _get_undistort_maps(self) -> tuple[np.ndarray, np.ndarray]:
+        if self._undistort_maps is None:
+            camera_matrix = self.camera_matrix
+            dist_coeffs = self.distortion_coefficients
+            frame_width, frame_height = self.width, self.height
+            optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
+                camera_matrix,
+                dist_coeffs,
+                (frame_width, frame_height),
+                1,
+                (frame_width, frame_height),
+            )
+            map1, map2 = cv2.initUndistortRectifyMap(
+                camera_matrix,
+                dist_coeffs,
+                None,
+                optimal_camera_matrix,
+                (frame_width, frame_height),
+                cv2.CV_16SC2,
+            )
+            self._undistort_maps = (map1, map2)
+        return self._undistort_maps
 
     def compute_intensity(self):
         """
