@@ -7,35 +7,11 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .utils import marker_family_to_dict
+from .constants import DETECTION_COLUMNS
+from .utils import _verify_format, marker_family_to_dict
 
 if TYPE_CHECKING:
     from .video import Video
-
-DETECTED_MARKERS_COLUMNS = {
-    "frame index",
-    "marker family",
-    "marker id",
-    "marker name",
-    "top left x [px]",
-    "top left y [px]",
-    "top right x [px]",
-    "top right y [px]",
-    "bottom right x [px]",
-    "bottom right y [px]",
-    "bottom left x [px]",
-    "bottom left y [px]",
-    "center x [px]",
-    "center y [px]",
-}
-
-MARKERS_LAYOUT_COLUMNS = {
-    "marker name",
-    "size",
-    "center x",
-    "center y",
-}
-
 
 @fill_doc
 def detect_markers(
@@ -147,5 +123,6 @@ def detect_markers(
         raise ValueError("No marker detected.")
 
     df.set_index("timestamp [ns]", inplace=True)
+    _verify_format(df, DETECTION_COLUMNS)
     return Stream(df)
 

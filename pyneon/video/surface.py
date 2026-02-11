@@ -6,6 +6,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
+from .constants import DETECTION_COLUMNS
+from .utils import _verify_format
 
 if TYPE_CHECKING:
     from .video import Video
@@ -20,9 +22,10 @@ def detect_surface(
     morph_kernel: int = 5,
     decimate: float = 1.0,
     mode: Literal["largest", "best", "all"] = "largest",
+    report_diagnostics: bool = False,
 ) -> Stream:
     """
-    Detect bright rectangular regions (e.g., projected screens or monitors)
+    Detect bright rectangular regions (e.g., projected surfaces or monitors)
     in video frames using luminance-based contour detection.
 
     This function identifies one or more rectangular contours per frame based on
@@ -31,7 +34,7 @@ def detect_surface(
     rectangular one according to a geometric certainty score.
 
     The resulting DataFrame can be used directly in homography estimation
-    pipelines to map projected screen coordinates onto the camera view.
+    pipelines to map projected surface coordinates onto the camera view.
 
     Parameters
     ----------
@@ -61,30 +64,39 @@ def detect_surface(
         Selection mode determining which contours to return per frame:
 
         - "largest" : Return only the largest valid rectangular contour.
-          Useful when the screen is the outermost bright region. (Default)
+          Useful when the surface is the outermost bright region. (Default)
         - "best" : Return the contour that most closely resembles a
           perfect rectangle (lowest corner-angle variance and balanced
           aspect ratio).
         - "all" : Return all valid rectangular contours (outer and inner
-          overlapping rectangles). Useful when both screen and inner
+          overlapping rectangles). Useful when both surface and inner
           projected content need to be distinguished.
+    report_diagnostics : bool, optional
+        If True, includes "area_ratio" and "score" columns in the output.
+        Defaults to False.
 
     Returns
     -------
     Stream
 
     One row per detected rectangular contour with columns:
-        - "processed_frame_idx" : int
-        - "processed frame index" : int
-        - "frame_idx"           : int
         - "frame index"         : int
         - "timestamp [ns]"      : int64
-        - "tag_id"              : int (sequential ID per contour in frame)
-        - "corners"             : ndarray (4, 2) corner coordinates
-        - "center"              : ndarray (1, 2) center point
-        - "method"              : str ("screen")
-        - "area_ratio"          : float
-        - "score"               : float
+        - "marker family"       : str ("surface")
+        - "marker id"           : int (sequential ID per contour in frame)
+        - "marker name"         : None
+        - "top left x [px]"     : float
+        - "top left y [px]"     : float
+        - "top right x [px]"    : float
+        - "top right y [px]"    : float
+        - "bottom right x [px]" : float
+        - "bottom right y [px]" : float
+        - "bottom left x [px]"  : float
+        - "bottom left y [px]"  : float
+        - "center x [px]"       : float
+        - "center y [px]"       : float
+        - "area_ratio"          : float (if `report_diagnostics` is True)
+        - "score"               : float (if `report_diagnostics` is True)
     """
 
     if skip_frames < 1:
@@ -94,24 +106,29 @@ def detect_surface(
 
     total_frames = len(video.ts)
     detections = []
-    processed_frame_idx = 0
     frames_to_process = range(0, total_frames, skip_frames)
 
     columns = [
         "timestamp [ns]",
-        "processed_frame_idx",
-        "processed frame index",
-        "frame_idx",
         "frame index",
-        "tag_id",
-        "corners",
-        "center",
-        "method",
-        "area_ratio",
-        "score",
+        "marker family",
+        "marker id",
+        "marker name",
+        "top left x [px]",
+        "top left y [px]",
+        "top right x [px]",
+        "top right y [px]",
+        "bottom right x [px]",
+        "bottom right y [px]",
+        "bottom left x [px]",
+        "bottom left y [px]",
+        "center x [px]",
+        "center y [px]",
     ]
+    if report_diagnostics:
+        columns.extend(["area_ratio", "score"])
 
-    for actual_frame_idx in tqdm(frames_to_process, desc="Detecting screen corners"):
+    for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
         gray = video.read_gray_frame_at(actual_frame_idx)
         if gray is None:
             break
@@ -186,30 +203,35 @@ def detect_surface(
         for cid, sel in enumerate(selected):
             corners = sel["corners"]
             center = np.mean(corners, axis=0)
-            detections.append(
-                {
-                    "processed_frame_idx": processed_frame_idx,
-                    "processed frame index": processed_frame_idx,
-                    "frame_idx": actual_frame_idx,
-                    "frame index": actual_frame_idx,
-                    "timestamp [ns]": int(video.ts[actual_frame_idx]),
-                    "tag_id": cid,
-                    "corners": corners,
-                    "center": center,
-                    "method": "screen",
-                    "area_ratio": sel["area_ratio"],
-                    "score": sel["score"],
-                }
-            )
-
-        processed_frame_idx += 1
+            detection_row = {
+                "frame index": actual_frame_idx,
+                "timestamp [ns]": int(video.ts[actual_frame_idx]),
+                "marker family": "surface",
+                "marker id": cid,
+                "marker name": f"surface_{cid}",
+                "top left x [px]": corners[0, 0],
+                "top left y [px]": corners[0, 1],
+                "top right x [px]": corners[1, 0],
+                "top right y [px]": corners[1, 1],
+                "bottom right x [px]": corners[2, 0],
+                "bottom right y [px]": corners[2, 1],
+                "bottom left x [px]": corners[3, 0],
+                "bottom left y [px]": corners[3, 1],
+                "center x [px]": center[0],
+                "center y [px]": center[1],
+            }
+            if report_diagnostics:
+                detection_row["area_ratio"] = sel["area_ratio"]
+                detection_row["score"] = sel["score"]
+            detections.append(detection_row)
 
     df = pd.DataFrame(detections)
     if df.empty:
-        print("Warning: No screen contours detected.")
+        print("Warning: No surface contours detected.")
         df = pd.DataFrame(columns=columns)
 
     df.set_index("timestamp [ns]", inplace=True)
+    _verify_format(df, DETECTION_COLUMNS)
     return Stream(df)
 
 

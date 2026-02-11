@@ -304,7 +304,7 @@ class Video(cv2.VideoCapture):
         Parameters
         ----------
         detections : Stream
-            Stream containing marker or screen-corner detections.
+            Stream containing marker or surface-corner detections.
         frame_index : int
             Index of the frame to plot.
         show_ids : bool
@@ -387,7 +387,7 @@ class Video(cv2.VideoCapture):
         Parameters
         ----------
         detections : Stream
-            Stream containing marker or screen-corner detections.
+            Stream containing marker or surface-corner detections.
         show_ids : bool
             Whether to overlay IDs at their centers when available. Defaults to True.
         color : tuple[int, int, int]

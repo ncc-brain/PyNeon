@@ -1,13 +1,12 @@
 import re
 from numbers import Number
 from typing import Tuple
-
 import cv2
+import pandas as pd
+
+from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES
 
 # Valid marker configuration constants
-APRILTAG_FAMILIES: list[str] = ["16h5", "25h9", "36h10", "36h11"]
-ARUCO_SIZES: list[str] = ["4x4", "5x5", "6x6", "7x7"]
-ARUCO_NUMBERS: list[str] = ["50", "100", "250", "1000"]
 
 
 def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
@@ -65,3 +64,14 @@ def generate_marker(
     aruco_dict = marker_family_to_dict(marker_family)
     img = cv2.aruco.generateImageMarker(aruco_dict, marker_id, marker_size_pixels)
     return img
+
+
+def _verify_format(df: pd.DataFrame, expected_columns: set) -> None:
+    """Verify that the DataFrame contains all expected columns (including index)."""
+    actual_columns = set(df.columns)
+    if df.index.name:
+        actual_columns.add(df.index.name)
+
+    missing = expected_columns - actual_columns
+    if missing:
+        raise ValueError(f"Missing expected columns: {missing}")

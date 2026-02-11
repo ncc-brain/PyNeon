@@ -156,7 +156,7 @@ def plot_detections(
     video : SceneVideo
         Video object to plot the frame from.
     detections : Stream
-        Stream containing marker or screen-corner detections.
+        Stream containing marker or surface-corner detections.
     frame_index : int
         Index of the frame to plot.
     show_ids : bool
@@ -301,7 +301,7 @@ def overlay_detections(
     video : SceneVideo
         Video object to overlay the detected markers on.
     detections : Stream
-        Stream containing marker or screen-corner detections.
+        Stream containing marker or surface-corner detections.
     show_ids : bool
         Whether to overlay IDs at their centers when available. Defaults to True.
     color : tuple[int, int, int]

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .marker import DETECTED_MARKERS_COLUMNS, MARKERS_LAYOUT_COLUMNS
+from .constants import DETECTION_COLUMNS, MARKERS_LAYOUT_COLUMNS
 
 
 @fill_doc
@@ -22,11 +22,11 @@ def find_homographies(
     confidence: float = 0.995,
 ) -> Stream:
     """
-    Compute a homography for each frame using marker or screen-corner detections.
+    Compute a homography for each frame using marker or surface-corner detections.
 
     For marker detections, provide ``marker_layout`` with columns defined in
-    ``%(marker_layout)s``. For screen-corner detections (from
-    :func:`pyneon.video.detect_screen_corners`), provide ``surface_layout``
+    ``%(marker_layout)s``. For surface-corner detections (from
+    :func:`pyneon.video.detect_surface`), provide ``surface_layout``
     containing a ``corners`` column with a 4x2 array per row, or a single 4x2
     numpy array. If ``surface_layout`` contains a ``tag_id`` column, it is used
     to match detections to layout rows.
@@ -38,8 +38,8 @@ def find_homographies(
     marker_layout : pandas.DataFrame, optional
         Marker layout DataFrame (for fiducials). Required for marker detections.
     surface_layout : pandas.DataFrame or numpy.ndarray, optional
-        Screen layout with a ``corners`` column or a 4x2 numpy array. Required
-        for screen-corner detections.
+        Surface layout with a ``corners`` column or a 4x2 numpy array. Required
+        for surface-corner detections.
     %(find_homographies_params)s
 
     Returns
@@ -54,7 +54,9 @@ def find_homographies(
     if detection_df.empty:
         raise ValueError("Detections are empty.")
 
-    uses_marker_columns = DETECTED_MARKERS_COLUMNS.issubset(detection_df.columns)
+    uses_marker_columns = (DETECTION_COLUMNS).issubset(
+        detection_df.columns
+    )
     uses_corner_column = "corners" in detection_df.columns
 
     if marker_layout is not None and surface_layout is not None:
