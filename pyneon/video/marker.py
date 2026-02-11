@@ -8,7 +8,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from .constants import DETECTION_COLUMNS
-from .utils import _verify_format, marker_family_to_dict
+from .utils import _verify_format, marker_family_to_dict, resolve_detection_window
 
 if TYPE_CHECKING:
     from .video import Video
@@ -52,22 +52,11 @@ def detect_markers(
     if step < 1:
         raise ValueError("step must be >= 1")
 
-    # Specify indices of frames to process
-    if detection_window is None:  # full video
-        start_frame_idx = 0
-        end_frame_idx = len(video.ts) - 1
-    else:
-        start, end = detection_window
-        if detection_window_unit == "frame":
-            # Already in frame indices, use directly
-            start_frame_idx, end_frame_idx = int(start), int(end)
-        elif detection_window_unit == "time":
-            start_frame_idx = int(np.searchsorted(video.times, start, side="left"))
-            end_frame_idx = int(np.searchsorted(video.times, end, side="right")) - 1
-        elif detection_window_unit == "timestamp":
-            # Convert from nanosecond timestamps to frame indices
-            start_frame_idx = int(np.searchsorted(video.ts, start, side="left"))
-            end_frame_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
+    start_frame_idx, end_frame_idx = resolve_detection_window(
+        video,
+        detection_window,
+        detection_window_unit,
+    )
 
     def _process_frame(frame_idx: int, gray_frame: np.ndarray) -> list[dict]:
         """Run detection on a single grayscale frame across all detectors."""
@@ -109,8 +98,8 @@ def detect_markers(
     detected_markers = []
     frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
 
-    # Ensure we start at the right location
-    video.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
+    # Ensure video is at the beginning before processing
+    video.reset()  
 
     for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
         gray_frame = video.read_gray_frame_at(frame_index)

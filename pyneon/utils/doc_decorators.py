@@ -80,6 +80,17 @@ detector_parameters : cv2.aruco.DetectorParameters, optional
 DOC["detect_surface_params"] = """
 skip_frames : int, optional
     Process every Nth frame (default 1 = process all frames).
+detection_window : tuple, optional
+    A tuple (start, end) specifying the range to search for detections.
+    Interpretation depends on `detection_window_unit`. Defaults to ``None`` (all frames).
+detection_window_unit : {"frame", "time", "timestamp"}, optional
+    Unit for values in `detection_window`. Possible values are:
+
+    - "timestamp": Unix timestamps in nanoseconds
+    - "time": in seconds relative to video start
+    - "frame": video frame indices (0-based)
+
+    Defaults to "frame".
 min_area_ratio : float, optional
     Minimum contour area relative to frame area. Contours smaller than this
     ratio are ignored. Default is 0.01 (1% of frame area).

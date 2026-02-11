@@ -8,7 +8,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from .constants import DETECTION_COLUMNS
-from .utils import _verify_format
+from .utils import _verify_format, resolve_detection_window
 
 if TYPE_CHECKING:
     from .video import Video
@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 def detect_surface(
     video: "Video",
     skip_frames: int = 1,
+    detection_window: tuple[int | float, int | float] | None = None,
+    detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     min_area_ratio: float = 0.01,
     max_area_ratio: float = 0.98,
     brightness_threshold: int = 180,
@@ -56,9 +58,16 @@ def detect_surface(
     if decimate <= 0:
         raise ValueError("decimate must be > 0")
 
-    total_frames = len(video.ts)
+    start_frame_idx, end_frame_idx = resolve_detection_window(
+        video,
+        detection_window,
+        detection_window_unit,
+    )
     detections = []
-    frames_to_process = range(0, total_frames, skip_frames)
+    frames_to_process = range(start_frame_idx, end_frame_idx + 1, skip_frames)
+    
+    # Ensure video is at the beginning before processing
+    video.reset() 
 
     for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
         gray = video.read_gray_frame_at(actual_frame_idx)

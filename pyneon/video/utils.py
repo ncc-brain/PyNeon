@@ -1,7 +1,9 @@
 import re
 from numbers import Number
-from typing import Tuple, Iterable
+from typing import Any, Iterable, Optional, Tuple
+
 import cv2
+import numpy as np
 import pandas as pd
 
 from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES
@@ -73,3 +75,29 @@ def _verify_format(df: pd.DataFrame, expected_columns: Iterable[str]) -> None:
     missing = set(expected_columns) - actual_columns
     if missing:
         raise ValueError(f"Missing expected columns: {missing}")
+
+
+def resolve_detection_window(
+    video: Any,
+    detection_window: Optional[tuple[int | float, int | float]],
+    detection_window_unit: str,
+) -> tuple[int, int]:
+    """Resolve a detection window to inclusive frame indices."""
+    if detection_window is None:
+        return 0, len(video.ts) - 1
+
+    start, end = detection_window
+    if detection_window_unit == "frame":
+        return int(start), int(end)
+    if detection_window_unit == "time":
+        start_idx = int(np.searchsorted(video.times, start, side="left"))
+        end_idx = int(np.searchsorted(video.times, end, side="right")) - 1
+        return start_idx, end_idx
+    if detection_window_unit == "timestamp":
+        start_idx = int(np.searchsorted(video.ts, start, side="left"))
+        end_idx = int(np.searchsorted(video.ts, end, side="right")) - 1
+        return start_idx, end_idx
+
+    raise ValueError(
+        "detection_window_unit must be one of 'frame', 'time', or 'timestamp'."
+    )

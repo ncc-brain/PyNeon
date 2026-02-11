@@ -236,6 +236,8 @@ class Video(cv2.VideoCapture):
     def detect_surface(
         self,
         skip_frames: int = 1,
+        detection_window: tuple[int | float, int | float] | None = None,
+        detection_window_unit: str = "frame",
         min_area_ratio: float = 0.01,
         max_area_ratio: float = 0.98,
         brightness_threshold: int = 180,
@@ -243,6 +245,7 @@ class Video(cv2.VideoCapture):
         morph_kernel: int = 5,
         decimate: float = 1.0,
         mode: str = "largest",
+        report_diagnostics: bool = False,
     ) -> Stream:
         """
         Detect bright rectangular regions (e.g., projected screens or monitors)
@@ -252,6 +255,11 @@ class Video(cv2.VideoCapture):
         ----------
         skip_frames : int, optional
             Process every Nth frame (default 1 = process all frames).
+        detection_window : tuple, optional
+            A tuple (start, end) specifying the range to search for detections.
+            Interpretation depends on `detection_window_unit`. Defaults to ``None``.
+        detection_window_unit : {"frame", "time", "timestamp"}, optional
+            Unit for values in `detection_window`. Defaults to "frame".
         min_area_ratio : float, optional
             Minimum contour area relative to frame area. Contours smaller than this
             ratio are ignored. Default is 0.01 (1% of frame area).
@@ -271,6 +279,8 @@ class Video(cv2.VideoCapture):
             Detected coordinates are automatically rescaled back. Default is 1.0.
         mode : {"largest", "best", "all"}, optional
             Selection mode determining which contours to return per frame.
+        report_diagnostics : bool, optional
+            If True, includes "area_ratio" and "score" columns in the output.
 
         Returns
         -------
@@ -280,6 +290,8 @@ class Video(cv2.VideoCapture):
         return detect_surface(
             self,
             skip_frames=skip_frames,
+            detection_window=detection_window,
+            detection_window_unit=detection_window_unit,
             min_area_ratio=min_area_ratio,
             max_area_ratio=max_area_ratio,
             brightness_threshold=brightness_threshold,
@@ -287,6 +299,7 @@ class Video(cv2.VideoCapture):
             morph_kernel=morph_kernel,
             decimate=decimate,
             mode=mode,
+            report_diagnostics=report_diagnostics,
         )
 
     @fill_doc
