@@ -108,26 +108,6 @@ def detect_surface(
     detections = []
     frames_to_process = range(0, total_frames, skip_frames)
 
-    columns = [
-        "timestamp [ns]",
-        "frame index",
-        "marker family",
-        "marker id",
-        "marker name",
-        "top left x [px]",
-        "top left y [px]",
-        "top right x [px]",
-        "top right y [px]",
-        "bottom right x [px]",
-        "bottom right y [px]",
-        "bottom left x [px]",
-        "bottom left y [px]",
-        "center x [px]",
-        "center y [px]",
-    ]
-    if report_diagnostics:
-        columns.extend(["area_ratio", "score"])
-
     for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
         gray = video.read_gray_frame_at(actual_frame_idx)
         if gray is None:
@@ -154,7 +134,6 @@ def detect_surface(
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if not contours:
-            processed_frame_idx += 1
             continue
 
         candidates = []
@@ -186,7 +165,6 @@ def detect_surface(
             )
 
         if not candidates:
-            processed_frame_idx += 1
             continue
 
         if mode == "largest":
@@ -228,7 +206,10 @@ def detect_surface(
     df = pd.DataFrame(detections)
     if df.empty:
         print("Warning: No surface contours detected.")
-        df = pd.DataFrame(columns=columns)
+        cols = list(DETECTION_COLUMNS)
+        if report_diagnostics:
+            cols.extend(["area_ratio", "score"])
+        df = pd.DataFrame(columns=cols)
 
     df.set_index("timestamp [ns]", inplace=True)
     _verify_format(df, DETECTION_COLUMNS)

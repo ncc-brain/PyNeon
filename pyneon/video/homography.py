@@ -54,9 +54,11 @@ def find_homographies(
     if detection_df.empty:
         raise ValueError("Detections are empty.")
 
-    uses_marker_columns = (DETECTION_COLUMNS).issubset(
-        detection_df.columns
-    )
+    actual_cols = set(detection_df.columns)
+    if detection_df.index.name:
+        actual_cols.add(detection_df.index.name)
+
+    uses_marker_columns = set(DETECTION_COLUMNS).issubset(actual_cols)
     uses_corner_column = "corners" in detection_df.columns
 
     if marker_layout is not None and surface_layout is not None:
@@ -187,7 +189,7 @@ def find_homographies(
 def _prepare_marker_layout(marker_layout: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(marker_layout, pd.DataFrame):
         raise ValueError("marker_layout must be a DataFrame for marker detections.")
-    if not MARKERS_LAYOUT_COLUMNS.issubset(marker_layout.columns):
+    if not set(MARKERS_LAYOUT_COLUMNS).issubset(marker_layout.columns):
         raise ValueError(
             "marker_layout must contain the following columns: "
             f"{', '.join(MARKERS_LAYOUT_COLUMNS)}"

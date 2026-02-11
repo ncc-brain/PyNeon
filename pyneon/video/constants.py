@@ -1,4 +1,4 @@
-DETECTION_COLUMNS = {
+DETECTION_COLUMNS = [
     "timestamp [ns]",
     "frame index",
     "marker family",
@@ -14,14 +14,14 @@ DETECTION_COLUMNS = {
     "bottom left y [px]",
     "center x [px]",
     "center y [px]",
-}
+]
 
-MARKERS_LAYOUT_COLUMNS = {
+MARKERS_LAYOUT_COLUMNS = [
     "marker name",
     "size",
     "center x",
     "center y",
-}
+]
 
 APRILTAG_FAMILIES = ["16h5", "25h9", "36h10", "36h11"]
 ARUCO_SIZES = ["4x4", "5x5", "6x6", "7x7"]

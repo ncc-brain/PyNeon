@@ -1,13 +1,10 @@
 import re
 from numbers import Number
-from typing import Tuple
+from typing import Tuple, Iterable
 import cv2
 import pandas as pd
 
 from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES
-
-# Valid marker configuration constants
-
 
 def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
     # AprilTags
@@ -66,12 +63,12 @@ def generate_marker(
     return img
 
 
-def _verify_format(df: pd.DataFrame, expected_columns: set) -> None:
+def _verify_format(df: pd.DataFrame, expected_columns: Iterable[str]) -> None:
     """Verify that the DataFrame contains all expected columns (including index)."""
     actual_columns = set(df.columns)
     if df.index.name:
         actual_columns.add(df.index.name)
 
-    missing = expected_columns - actual_columns
+    missing = set(expected_columns) - actual_columns
     if missing:
         raise ValueError(f"Missing expected columns: {missing}")
