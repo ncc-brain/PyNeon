@@ -108,7 +108,7 @@ def detect_markers(
     frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
 
     # Ensure video is at the beginning before processing
-    video.reset()  
+    video.reset()
 
     for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
         gray_frame = video.read_gray_frame_at(frame_index)

@@ -133,7 +133,7 @@ class Video(cv2.VideoCapture):
     @property
     def map2(self) -> np.ndarray:
         return self.undistort_cache[1]
-    
+
     @property
     def undistortion_matrix(self) -> np.ndarray:
         return self.undistort_cache[2]
@@ -185,7 +185,7 @@ class Video(cv2.VideoCapture):
                     return None
                 current += 1
         elif current != frame_index:
-            #only seek if we are past the target frame, otherwise we grab forward
+            # only seek if we are past the target frame, otherwise we grab forward
             self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
 
         ret, frame = self.read()
@@ -197,7 +197,7 @@ class Video(cv2.VideoCapture):
         if self.isOpened():
             self.release()
         super().__init__(self.video_file)
-        #setting to 0 is safe
+        # setting to 0 is safe
         self.set(cv2.CAP_PROP_POS_FRAMES, 0)
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")

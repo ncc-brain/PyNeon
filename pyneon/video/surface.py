@@ -66,9 +66,9 @@ def detect_surface(
     )
     detections = []
     frames_to_process = range(start_frame_idx, end_frame_idx + 1, skip_frames)
-    
+
     # Ensure video is at the beginning before processing
-    video.reset() 
+    video.reset()
 
     for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
         gray = video.read_gray_frame_at(actual_frame_idx)
