@@ -243,7 +243,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def fixations(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` object containing fixations data.
+        Return a cached :class:`pyneon.Events` instance containing fixations data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``fixations.csv``.
 
@@ -258,7 +258,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def saccades(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` object containing saccades data.
+        Return a cached :class:`pyneon.Events` instance containing saccades data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``saccades.csv``.
 
@@ -275,7 +275,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def events(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` object containing events data.
+        Return a cached :class:`pyneon.Events` instance containing events data.
 
         For **Pupil Cloud** recordings, the events data is loaded from ``events.csv``.
 
@@ -290,7 +290,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def scene_video(self) -> Video:
         """
-        Return a cached :class:`pyneon.Video` object containing scene video data.
+        Return a cached :class:`pyneon.Video` instance containing scene video data.
 
         For **Pupil Cloud** recordings, the video is loaded from the only ``*.mp4`` file
         in the recording directory.
@@ -352,7 +352,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_video(self) -> Video:
         """
-        Return a cached :class:`pyneon.Video` object containing eye video data.
+        Return a cached :class:`pyneon.Video` instance containing eye video data.
 
         Eye video is only available for **native** recordings and is loaded from the
         ``Neon Sensor Module*.mp4`` file in the recording directory.
@@ -463,7 +463,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns
         -------
         Events
-            Events object containing concatenated data.
+            Events instance containing concatenated data.
         """
         new_data = concat_events(self, event_names)
         return Events(new_data)
@@ -864,7 +864,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns
         -------
         Events
-            An events object containing:
+            An Events instance containing:
                 - All columns from the raw fixations table
                 - \"gaze x [surface coord]\" : float
                     Mean surface-space x-coordinate for the fixation.

@@ -50,7 +50,7 @@ def detect_surface(
     Parameters
     ----------
     video : Video
-        Scene video object supporting OpenCV-like `set()` and `read()` methods,
+        Video instance supporting OpenCV-like `set()` and `read()` methods,
         and providing frame timestamps (`video.ts`).
     %(detect_surface_params)s
 

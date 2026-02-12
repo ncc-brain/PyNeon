@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Optional, Union
 from warnings import warn
@@ -12,7 +13,7 @@ import os
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import (
+from ..vis.video import (
     overlay_scanpath,
     plot_detections,
     plot_frame,
@@ -25,22 +26,22 @@ from .utils import get_undistort_maps
 
 class Video(cv2.VideoCapture):
     """
-    Loaded video file with timestamps.
+    OpenCV VideoCapture wrapper that pairs a video with frame timestamps.
 
     Parameters
     ----------
     video_file : pathlib.Path
-        Path to the video file.
+        Path to the video file on disk.
     timestamps : numpy.ndarray
-        Timestamps of the video frames in nanoseconds.
-        Must have the same length as the number of frames in the video.
+        Frame timestamps in nanoseconds. Must match the number of frames.
     info : dict
-        Dictionary containing video info, including camera matrix and distortion coefficients.
+        Camera metadata, typically including ``camera_matrix`` and
+        ``distortion_coefficients``.
 
     Attributes
     ----------
     timestamps : numpy.ndarray
-        Timestamps of the video frames in nanoseconds.
+        Frame timestamps in nanoseconds.
     ts : numpy.ndarray
         Alias for timestamps.
     """
@@ -122,27 +123,31 @@ class Video(cv2.VideoCapture):
             raise ValueError("Distortion coefficients not found in video info.")
         return np.array(self.info["distortion_coefficients"])
 
-    @property
+    @cached_property
     def undistort_cache(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Cached undistortion maps and the optimal new camera matrix."""
         return get_undistort_maps(self)
 
-    @property
+    @cached_property
     def map1(self) -> np.ndarray:
+        """First undistortion map for use with ``cv2.remap``."""
         return self.undistort_cache[0]
 
-    @property
+    @cached_property
     def map2(self) -> np.ndarray:
+        """Second undistortion map for use with ``cv2.remap``."""
         return self.undistort_cache[1]
 
-    @property
+    @cached_property
     def undistortion_matrix(self) -> np.ndarray:
+        """Optimal new camera matrix used for undistortion."""
         return self.undistort_cache[2]
 
     def timestamp_to_frame_index(
         self, timestamp: Union[int, np.int64, np.ndarray]
     ) -> np.ndarray:
         """
-        Map one or many timestamps (ns) to the corresponding frame index/indices.
+        Map one or many timestamps (ns) to corresponding frame index/indices.
 
         Parameters
         ----------
@@ -152,7 +157,12 @@ class Video(cv2.VideoCapture):
         Returns
         -------
         numpy.ndarray
-            Frame index/indices corresponding to the timestamp(s).
+            1D array of frame indices corresponding to the timestamp(s).
+
+        Raises
+        ------
+        ValueError
+            If any timestamp is outside the video timestamp range.
         """
         ts_array = np.atleast_1d(np.asarray(timestamp, dtype=np.int64))
 
@@ -166,11 +176,24 @@ class Video(cv2.VideoCapture):
 
     def read_gray_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
         """
-        Random-access read of a single frame converted to grayscale.
-        Uses sequential grabbing for short forward jumps to maintain frame accuracy
-        in VFR videos, and fallback to seeking for large jumps.
+        Read a single frame as grayscale using sequential access.
+        Advances by grabbing intermediate frames for forward jumps to keep
+        timestamps aligned in VFR videos, with a seek fallback when rewinding.
 
-        Returns None if the frame cannot be read.
+        Parameters
+        ----------
+        frame_index : int
+            Zero-based frame index to read.
+
+        Returns
+        -------
+        numpy.ndarray or None
+            Grayscale frame as a 2D array, or ``None`` if the frame cannot be read.
+
+        Raises
+        ------
+        ValueError
+            If ``frame_index`` is out of bounds.
         """
         if frame_index < 0 or frame_index >= len(self.ts):
             raise ValueError(f"frame_index {frame_index} is out of bounds.")
@@ -194,6 +217,7 @@ class Video(cv2.VideoCapture):
         return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     def reset(self):
+        """Reopen the video file and reset the read position to the first frame."""
         if self.isOpened():
             self.release()
         super().__init__(self.video_file)
@@ -255,6 +279,7 @@ class Video(cv2.VideoCapture):
             undistort=undistort,
         )
 
+    @fill_doc
     def detect_surface(
         self,
         skip_frames: int = 1,
@@ -271,48 +296,16 @@ class Video(cv2.VideoCapture):
         undistort: bool = False,
     ) -> Stream:
         """
-        Detect bright rectangular regions (e.g., projected screens or monitors)
+        Detect bright rectangular regions (e.g., projected surfaces or monitors)
         in video frames using luminance-based contour detection.
 
         Parameters
         ----------
-        skip_frames : int, optional
-            Process every Nth frame (default 1 = process all frames).
-        detection_window : tuple, optional
-            A tuple (start, end) specifying the range to search for detections.
-            Interpretation depends on `detection_window_unit`. Defaults to ``None``.
-        detection_window_unit : {"frame", "time", "timestamp"}, optional
-            Unit for values in `detection_window`. Defaults to "frame".
-        min_area_ratio : float, optional
-            Minimum contour area relative to frame area. Contours smaller than this
-            ratio are ignored. Default is 0.01 (1% of frame area).
-        max_area_ratio : float, optional
-            Maximum contour area relative to frame area. Contours larger than this
-            ratio are ignored. Default is 0.98.
-        brightness_threshold : int, optional
-            Fixed threshold for binarization when `adaptive=False`. Default is 180.
-        adaptive : bool, optional
-            If True (default), use adaptive thresholding to handle varying
-            illumination across frames.
-        morph_kernel : int, optional
-            Kernel size for morphological closing (default 5). Use 0 to disable
-            morphological operations.
-        decimate : float, optional
-            Downsampling factor for faster processing (e.g., 0.5 halves resolution).
-            Detected coordinates are automatically rescaled back. Default is 1.0.
-        mode : {"largest", "best", "all"}, optional
-            Selection mode determining which contours to return per frame.
-        report_diagnostics : bool, optional
-            If True, includes "area_ratio" and "score" columns in the output.
-        undistort : bool, optional
-            If True, undistorts frames before detection and redistorts detected points.
-        undistort : bool, optional
-            If True, undistorts frames before detection and redistorts detected points.
+        %(detect_surface_params)s
 
         Returns
         -------
-        Stream
-            One row per detected rectangular contour.
+        %(detect_surface_return)s
         """
         return detect_surface(
             self,
@@ -380,7 +373,9 @@ class Video(cv2.VideoCapture):
         video_output_path: Path | str = None,
     ) -> None:
         """
-        Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
+        Overlay scanpath fixations on the video frames.
+
+        The resulting video can be displayed and/or saved.
 
         Parameters
         ----------
@@ -398,6 +393,10 @@ class Video(cv2.VideoCapture):
         video_output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'derivatives/scanpath.mp4'.
+
+        Returns
+        -------
+        None
         """
         if video_output_path is None:
             video_output_path = self.der_dir / "scanpath.mp4"
@@ -437,6 +436,10 @@ class Video(cv2.VideoCapture):
         %(show_video_param)s
         %(video_output_path_param)s
             Defaults to 'derivatives/detected_markers.mp4'.
+
+        Returns
+        -------
+        None
         """
         if video_output_path is None:
             video_output_path = self.der_dir / "detected_markers.mp4"
@@ -460,8 +463,13 @@ class Video(cv2.VideoCapture):
 
         Parameters
         ----------
-        output_video_path : str
-            Path to save the undistorted output video. Defaults to 'undistorted_video.mp4'.
+        output_video_path : pathlib.Path or str or None
+            Path to save the undistorted output video.
+            Defaults to 'derivatives/undistorted_video.mp4'.
+
+        Returns
+        -------
+        None
         """
         if output_video_path is None:
             output_video_path = self.der_dir / "undistorted_video.mp4"
@@ -492,19 +500,30 @@ class Video(cv2.VideoCapture):
         print(f"Undistorted video saved to {output_video_path}")
 
     def undistort_frame(self, frame: np.ndarray) -> np.ndarray:
-        """Undistort a single frame (color or grayscale)."""
+        """
+        Undistort a single frame (color or grayscale).
+
+        Parameters
+        ----------
+        frame : numpy.ndarray
+            Input frame as a 2D (grayscale) or 3D (color) array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Undistorted frame with the same shape as the input.
+        """
         return cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
 
     def compute_intensity(self):
         """
-        Generate a :class:`pyneon.Stream` object containing the
-        mean intensity of each video frame.
+        Compute mean grayscale intensity for each frame.
 
         Returns
         -------
-        pyneon.Stream
-            A ``Stream`` instance containing data indexed by ``timestamp [ns]``
-            with a single column ``intensity``
+        Stream
+            Stream indexed by ``timestamp [ns]`` with a single column
+            ``intensity`` containing the per-frame mean brightness.
         """
         vals = []
         self.reset()

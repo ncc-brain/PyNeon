@@ -63,12 +63,12 @@ step : int, optional
     0, 5, 10, 15, ...). Defaults to 1.
 detection_window : tuple, optional
     A tuple (start, end) specifying the range to search for detections.
-    Interpretation depends on `detection_window_unit`. Defaults to ``None`` (all frames).
+    Interpretation depends on ``detection_window_unit``. Defaults to ``None`` (all frames).
 detection_window_unit : {"frame", "time", "timestamp"}, optional
-    Unit for values in `detection_window`. Possible values are:
+    Unit for values in ``detection_window``. Possible values are:
 
     - "timestamp": Unix timestamps in nanoseconds
-    - "time": in seconds relative to video start
+    - "time": Seconds relative to video start
     - "frame": video frame indices (0-based)
 
     Defaults to "frame".
@@ -76,8 +76,9 @@ detector_parameters : cv2.aruco.DetectorParameters, optional
     Detector parameters to use for all marker families. If None, a default
     DetectorParameters instance is created. Defaults to ``None``.
 undistort : bool, optional
-    If True, undistorts frames before detection and redistorts detected points.
-    Defaults to ``False``.
+    If True, undistorts frames before detection, which can improve detection
+    performance, then redistorts detected points. Returned coordinates remain
+    in the original (distorted) video frame. Defaults to ``False``.
 """
 
 DOC["detect_surface_params"] = """
@@ -85,12 +86,12 @@ skip_frames : int, optional
     Process every Nth frame (default 1 = process all frames).
 detection_window : tuple, optional
     A tuple (start, end) specifying the range to search for detections.
-    Interpretation depends on `detection_window_unit`. Defaults to ``None`` (all frames).
+    Interpretation depends on ``detection_window_unit``. Defaults to ``None`` (all frames).
 detection_window_unit : {"frame", "time", "timestamp"}, optional
-    Unit for values in `detection_window`. Possible values are:
+    Unit for values in ``detection_window``. Possible values are:
 
     - "timestamp": Unix timestamps in nanoseconds
-    - "time": in seconds relative to video start
+    - "time": Seconds relative to video start
     - "frame": video frame indices (0-based)
 
     Defaults to "frame".
@@ -126,8 +127,9 @@ report_diagnostics : bool, optional
     If True, includes "area_ratio" and "score" columns in the output.
     Defaults to False.
 undistort : bool, optional
-    If True, undistorts frames before detection and redistorts detected points.
-    Defaults to ``False``.
+    If True, undistorts frames before detection, which can improve detection
+    performance, then redistorts detected points. Returned coordinates remain
+    in the original (distorted) video frame. Defaults to ``False``.
 """
 
 DOC["find_homographies_params"] = """
@@ -205,9 +207,9 @@ Stream
 
 DOC["fig_ax_return"] = """
 fig : matplotlib.figure.Figure
-    Figure object containing the plot.
+    Figure instance containing the plot.
 ax : matplotlib.axes.Axes
-    Axis object containing the plot.
+    Axis instance containing the plot.
 """
 
 DOC["ax_param"] = """

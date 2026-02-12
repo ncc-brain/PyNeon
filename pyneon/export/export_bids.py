@@ -27,7 +27,7 @@ def export_motion_bids(
     Parameters
     ----------
     rec : Recording
-        Recording object containing the IMU data.
+        Recording instance containing the IMU data.
     motion_dir : str or pathlib.Path
         Output directory to save the Motion-BIDS formatted data.
     prefix : str, optional

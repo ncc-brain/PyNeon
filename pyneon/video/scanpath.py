@@ -21,7 +21,7 @@ def estimate_scanpath(
     Parameters
     ----------
     video : Video
-        Video object containing the frames.
+        Video instance containing the frames.
     sync_gaze : Stream
         Gaze data synchronized with the video frames.
     lk_params : dict, optional

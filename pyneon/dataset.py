@@ -28,7 +28,7 @@ class Dataset:
         ├── enrichment_info.txt
         └── sections.csv
 
-    Individual recordings will be read into :class:`pyneon.Recording` objects
+    Individual recordings will be read into :class:`pyneon.Recording` instances
     (based on ``sections.csv``, if available) and accessible through the
     ``recordings`` attribute.
 
@@ -97,7 +97,7 @@ class Dataset:
                         RuntimeWarning,
                     )
 
-            # Rebuild a `sections` DataFrame from the Recording objects
+            # Rebuild a `sections` DataFrame from the Recording instances
             sections = []
             for i, rec in enumerate(self.recordings):
                 sections.append(
@@ -129,7 +129,7 @@ class Dataset:
         """
         Load enrichment information from an enrichment directory. The directory must
         contain an enrichment_info.txt file. Enrichment data will be parsed for each
-        recording ID and added to Recording object in the dataset.
+        recording ID and added to Recording instance in the dataset.
 
         The method is currently being developed and is not yet implemented.
 

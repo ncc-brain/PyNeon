@@ -163,7 +163,7 @@ def interpolate_events(
         Data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
     events : Events
-        Events object containing the events to interpolate.
+        Events instance containing the events to interpolate.
         The events must have ``start timestamp [ns]`` and
         ``end timestamp [ns]`` columns.
     buffer : numbers.Number or , optional
@@ -358,7 +358,7 @@ def concat_streams(
     Parameters
     ----------
     rec : Recording
-        Recording object containing the streams to concatenate.
+        Recording instance containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
@@ -497,7 +497,7 @@ def concat_events(
     Parameters
     ----------
     rec : Recording
-        Recording object containing the events to concatenate.
+        Recording instance containing the events to concatenate.
     event_names : list of str
         List of event names to concatenate. Event names must be in
         ``{"blinks", "fixations", "saccades", "events"}``

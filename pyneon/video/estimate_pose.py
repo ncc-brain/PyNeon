@@ -20,8 +20,8 @@ def estimate_camera_pose(
     Parameters
     ----------
     video :
-        ``SceneVideo`` instance providing the frames' timestamps and the
-        intrinsic matrices ``camera_matrix`` and ``dist_coeffs``.
+        ``Video`` instance providing the frames' timestamps and the
+        intrinsic matrices ``camera_matrix`` and ``distortion_coefficients``.
     marker_locations_df :
         pandas.DataFrame describing the world-coordinates of each marker.
         Required columns::
