@@ -228,8 +228,8 @@ show_video : bool, optional
     Press 'q' to quit early. Defaults to ``False``.
 """
 
-DOC["video_output_path_param"] = """
-video_output_path : pathlib.Path or str or None, optional
+DOC["output_path_param"] = """
+output_path : pathlib.Path or str or None, optional
     Path to save the output video with overlays. If ``None``, the video is not saved.
     Either this or ``show_video=True`` must be provided.
 """

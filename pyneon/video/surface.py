@@ -80,26 +80,27 @@ def detect_surface(
         valid_fraction = get_undistort_valid_fraction(video)
 
     for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
-        gray = video.read_gray_frame_at(actual_frame_idx)
-        if gray is None:
+        frame = video.read_frame_at(actual_frame_idx)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if gray_frame is None:
             break
 
         if undistort:
-            gray = video.undistort_frame(gray)
+            gray_frame = video.undistort_frame(gray_frame)
 
         if decimate != 1.0:
-            gray = cv2.resize(gray, None, fx=decimate, fy=decimate)
+            gray_frame = cv2.resize(gray_frame, None, fx=decimate, fy=decimate)
 
-        h, w = gray.shape[:2]
+        h, w = gray_frame.shape[:2]
         frame_area = w * h
 
         if adaptive:
             thresh = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 35, -10
+                gray_frame, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 35, -10
             )
         else:
             _, thresh = cv2.threshold(
-                gray, brightness_threshold, 255, cv2.THRESH_BINARY
+                gray_frame, brightness_threshold, 255, cv2.THRESH_BINARY
             )
 
         if morph_kernel > 0:

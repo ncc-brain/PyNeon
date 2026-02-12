@@ -111,7 +111,8 @@ def detect_markers(
     video.reset()
 
     for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
-        gray_frame = video.read_gray_frame_at(frame_index)
+        frame = video.read_frame_at(frame_index)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if gray_frame is None:
             break
         if undistort:

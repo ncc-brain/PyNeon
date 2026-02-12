@@ -21,11 +21,10 @@ if TYPE_CHECKING:
 @fill_doc
 def plot_marker_layout(
     marker_layout: pd.DataFrame,
-    surface_size: Optional[tuple[int, int]] = None,
     show_marker_names: bool = True,
     ax: Optional[plt.Axes] = None,
     show: bool = True,
-) -> tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes, np.ndarray]:
     """
     Plot a 2D marker layout on a matplotlib axis.
 
@@ -35,8 +34,6 @@ def plot_marker_layout(
     Parameters
     ----------
     %(marker_layout)s
-    surface_size : tuple[int, int] or None
-        If provided, specifies the width and height of the surface to plot the markers on.
     show_marker_names : bool
         Whether to overlay marker names at their centers. Defaults to True.
     %(ax_param)s
@@ -45,6 +42,8 @@ def plot_marker_layout(
     Returns
     -------
     %(fig_ax_return)s
+    layout: np.ndarray
+        The rendered marker layout as a 2D numpy array (grayscale image).
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -52,22 +51,16 @@ def plot_marker_layout(
         fig = ax.get_figure()
 
     # Calculate actual bounds for each marker, then find overall canvas size
-    if surface_size is not None:
-        width, height = surface_size
-        min_x, max_x = 0, width
-        min_y, max_y = 0, height
+    min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
+    max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
+    min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
+    max_y = (marker_layout["center y"] + marker_layout["size"] / 2).max()
 
-    else:
-        min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
-        max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
-        min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
-        max_y = (marker_layout["center y"] + marker_layout["size"] / 2).max()
-
-    canvas_width = int(max_x - min_x)
-    canvas_height = int(max_y - min_y)
+    layout_width = int(max_x - min_x)
+    layout_height = int(max_y - min_y)
 
     # Create white background
-    canvas = Image.new("L", (canvas_width, canvas_height), color=255)
+    layout = Image.new("L", (layout_width, layout_height), color=255)
 
     for _, marker in marker_layout.iterrows():
         marker_name = marker["marker name"]
@@ -93,7 +86,7 @@ def plot_marker_layout(
         y = int(marker["center y"] - marker["size"] / 2 - min_y)
 
         # Paste marker onto canvas
-        canvas.paste(marker_pil, (x, y))
+        layout.paste(marker_pil, (x, y))
 
         if show_marker_names:
             ax.text(
@@ -106,14 +99,14 @@ def plot_marker_layout(
             )
 
     # Display the canvas
-    ax.imshow(canvas, cmap="gray", extent=[min_x, max_x, max_y, min_y])
+    ax.imshow(layout, cmap="gray", extent=[min_x, max_x, max_y, min_y])
     ax.set_xlabel("x [surface coord]")
     ax.set_ylabel("y [surface coord]")
     ax.set_aspect("equal")
 
     if show:
         plt.show()
-    return fig, ax
+    return fig, ax, np.array(layout)
 
 
 @fill_doc

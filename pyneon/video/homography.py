@@ -28,7 +28,7 @@ def find_homographies(
     ``%(marker_layout)s``. For surface-corner detections (from
     :func:`pyneon.video.detect_surface`), provide ``surface_layout``
     containing a ``corners`` column with a 4x2 array per row, or a single 4x2
-    numpy array. If ``surface_layout`` contains a ``tag_id`` column, it is used
+    numpy array. If ``surface_layout`` contains a ``marker id`` column, it is used
     to match detections to layout rows.
 
     Parameters
@@ -76,11 +76,11 @@ def find_homographies(
             )
         detection_mode = "marker"
         layout_df = _prepare_marker_layout(marker_layout)
-        layout_by_tag = None
+        layout_by_marker = None
         base_corners = None
     elif surface_layout is not None:
         detection_mode = "surface"
-        layout_df, layout_by_tag, base_corners = _prepare_corner_layout(surface_layout)
+        layout_df, layout_by_marker, base_corners = _prepare_corner_layout(surface_layout)
     else:
         raise ValueError("Either marker_layout or surface_layout must be provided.")
 
@@ -128,11 +128,11 @@ def find_homographies(
                         f"Detected corners must have shape (4, 2), got {corners_detected.shape}"
                     )
 
-                if layout_by_tag is not None:
-                    tag_id = _get_tag_id(detection)
-                    if tag_id is None or tag_id not in layout_by_tag:
+                if layout_by_marker is not None:
+                    marker_id = _get_id(detection)
+                    if marker_id is None or marker_id not in layout_by_marker:
                         continue
-                    ref_corners = layout_by_tag[tag_id]
+                    ref_corners = layout_by_marker[marker_id]
                 else:
                     ref_corners = base_corners
 
@@ -185,9 +185,7 @@ def _extract_corners(detection: pd.Series) -> np.ndarray:
     )
 
 
-def _get_tag_id(detection: pd.Series) -> Optional[int]:
-    if "tag_id" in detection:
-        return int(detection["tag_id"])
+def _get_id(detection: pd.Series) -> Optional[int]:
     if "marker id" in detection:
         return int(detection["marker id"])
     return None
@@ -247,19 +245,19 @@ def _prepare_corner_layout(
     if "corners" not in surface_layout.columns:
         raise ValueError("surface_layout must contain a 'corners' column.")
 
-    if "tag_id" in surface_layout.columns:
-        layout_by_tag = {}
+    if "marker id" in surface_layout.columns:
+        layout_by_marker = {}
         for _, row in surface_layout.iterrows():
-            tag_id = int(row["tag_id"])
+            marker_id = int(row["marker id"])
             corners = np.asarray(row["corners"], dtype=np.float32)
             if corners.shape != (4, 2):
                 raise ValueError("Each layout 'corners' entry must be shape (4, 2).")
-            layout_by_tag[tag_id] = corners
-        return surface_layout, layout_by_tag, None
+            layout_by_marker[marker_id] = corners
+        return surface_layout, layout_by_marker, None
 
     if len(surface_layout) != 1:
         raise ValueError(
-            "surface_layout must have one row or include a 'tag_id' column when using corner detections."
+            "surface_layout must have one row or include a 'marker id' column when using corner detections."
         )
 
     base_corners = np.asarray(surface_layout["corners"].iloc[0], dtype=np.float32)

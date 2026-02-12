@@ -174,9 +174,9 @@ class Video(cv2.VideoCapture):
         indices = np.searchsorted(self.ts, ts_array).astype(int)
         return indices
 
-    def read_gray_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
+    def read_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
         """
-        Read a single frame as grayscale using sequential access.
+        Read a single frame using sequential access.
         Advances by grabbing intermediate frames for forward jumps to keep
         timestamps aligned in VFR videos, with a seek fallback when rewinding.
 
@@ -188,7 +188,7 @@ class Video(cv2.VideoCapture):
         Returns
         -------
         numpy.ndarray or None
-            Grayscale frame as a 2D array, or ``None`` if the frame cannot be read.
+            Frame as a 3D array (BGR), or ``None`` if the frame cannot be read.
 
         Raises
         ------
@@ -214,7 +214,7 @@ class Video(cv2.VideoCapture):
         ret, frame = self.read()
         if not ret:
             return None
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        return frame
 
     def reset(self):
         """Reopen the video file and reset the read position to the first frame."""
@@ -327,7 +327,7 @@ class Video(cv2.VideoCapture):
     def plot_detections(
         self,
         detections: Stream,
-        frame_index: int = 0,
+        frame_index: int,
         show_ids: bool = True,
         color: str = "magenta",
         ax: Optional[plt.Axes] = None,
@@ -370,7 +370,7 @@ class Video(cv2.VideoCapture):
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = None,
+        output_path: Path | str = None,
     ) -> None:
         """
         Overlay scanpath fixations on the video frames.
@@ -390,7 +390,7 @@ class Video(cv2.VideoCapture):
             Maximum number of fixations to plot per frame. Defaults to 10.
         show_video : bool
             Whether to display the video with fixations overlaid. Defaults to False.
-        video_output_path : pathlib.Path or str or None
+        output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
             Defaults to 'derivatives/scanpath.mp4'.
 
@@ -398,8 +398,8 @@ class Video(cv2.VideoCapture):
         -------
         None
         """
-        if video_output_path is None:
-            video_output_path = self.der_dir / "scanpath.mp4"
+        if output_path is None:
+            output_path = self.der_dir / "scanpath.mp4"
             os.makedirs(self.der_dir, exist_ok=True)
 
         overlay_scanpath(
@@ -409,7 +409,7 @@ class Video(cv2.VideoCapture):
             line_thickness,
             max_fixations,
             show_video,
-            video_output_path,
+            output_path,
         )
 
     @fill_doc
@@ -419,7 +419,7 @@ class Video(cv2.VideoCapture):
         show_ids: bool = True,
         color: tuple[int, int, int] = (255, 0, 255),
         show_video: bool = False,
-        video_output_path: Optional[Path | str] = None,
+        output_path: Optional[Path | str] = None,
     ) -> None:
         """
         Overlay detections on the video frames.
@@ -434,15 +434,15 @@ class Video(cv2.VideoCapture):
         color : tuple[int, int, int]
             BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
         %(show_video_param)s
-        %(video_output_path_param)s
+        %(output_path_param)s
             Defaults to 'derivatives/detected_markers.mp4'.
 
         Returns
         -------
         None
         """
-        if video_output_path is None:
-            video_output_path = self.der_dir / "detected_markers.mp4"
+        if output_path is None:
+            output_path = self.der_dir / "detected_markers.mp4"
             os.makedirs(self.der_dir, exist_ok=True)
 
         overlay_detections(
@@ -451,7 +451,7 @@ class Video(cv2.VideoCapture):
             show_ids=show_ids,
             color=color,
             show_video=show_video,
-            video_output_path=video_output_path,
+            output_path=output_path,
         )
 
     def undistort_video(

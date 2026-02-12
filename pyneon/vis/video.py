@@ -45,27 +45,15 @@ def plot_frame(
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-    ret, frame = video.read()
-    if ret:
-        ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        ax.axis("off")
-    else:
+    frame = video.read_frame_at(frame_index)
+    if frame is None:
         raise RuntimeError(f"Could not read frame {frame_index}")
+    ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    ax.axis("off")
     if show:
         plt.show()
 
-    video.reset()
     return fig, ax
-
-
-@fill_doc
-def _resolve_frame_index_column(detections: pd.DataFrame) -> str:
-    if "frame index" in detections.columns:
-        return "frame index"
-    if "frame_idx" in detections.columns:
-        return "frame_idx"
-    raise ValueError("Detections must include a 'frame index' or 'frame_idx' column.")
 
 
 def _plot_marker_detections(
@@ -117,7 +105,7 @@ def _plot_corner_detections(
         corners_y = list(corners[:, 1]) + [corners[0, 1]]
         ax.plot(corners_x, corners_y, color=color)
 
-        if show_ids and "tag_id" in detection:
+        if show_ids and "marker id" in detection:
             if "center" in detection and detection["center"] is not None:
                 center = np.asarray(detection["center"], dtype=np.float32).reshape(-1)
             else:
@@ -125,7 +113,7 @@ def _plot_corner_detections(
             ax.text(
                 center[0],
                 center[1],
-                int(detection["tag_id"]),
+                int(detection["marker id"]),
                 color=color,
                 ha="center",
                 va="center",
@@ -136,7 +124,7 @@ def _plot_corner_detections(
 def plot_detections(
     video: "Video",
     detections: "Stream",
-    frame_index: int = 0,
+    frame_index: int,
     show_ids: bool = True,
     color: str = "magenta",
     ax: Optional[plt.Axes] = None,
@@ -164,8 +152,9 @@ def plot_detections(
     """
     fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
     detections_df = detections.data
-    frame_col = _resolve_frame_index_column(detections_df)
-    frame_detections = detections_df[detections_df[frame_col] == frame_index]
+    if "frame index" not in detections_df.columns:
+        raise ValueError("Detections must include a 'frame index' column.")
+    frame_detections = detections_df[detections_df["frame index"] == frame_index]
 
     if not frame_detections.empty:
         if set(DETECTION_COLUMNS).issubset(frame_detections.columns):
@@ -188,7 +177,7 @@ def overlay_detections(
     show_ids: bool = True,
     color: tuple[int, int, int] = (255, 0, 255),
     show_video: bool = False,
-    video_output_path: Optional[Path | str] = None,
+    output_path: Optional[Path | str] = None,
 ) -> None:
     """
     Overlay detections on the video frames and display or save the video with overlays.
@@ -204,30 +193,30 @@ def overlay_detections(
     color : tuple[int, int, int]
         BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
     %(show_video_param)s
-    %(video_output_path_param)s
+    %(output_path_param)s
         Defaults to 'detected_markers.mp4'.
     """
     # Either show video or save it
-    if video_output_path is None and not show_video:
+    if output_path is None and not show_video:
         raise ValueError(
-            "Either show_video=True or video_output_path must be provided."
+            "Either show_video=True or output_path must be provided."
         )
 
     # Reset video to the beginning
     video.reset()
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     # Initialize video writer if saving
-    if video_output_path is not None:
+    if output_path is not None:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        video_output_path = Path(video_output_path)
-        video_output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         out = cv2.VideoWriter(
-            str(video_output_path), fourcc, video.fps, (video.width, video.height)
+            str(output_path), fourcc, video.fps, (video.width, video.height)
         )
 
     detections_df = detections.data
-    frame_col = _resolve_frame_index_column(detections_df)
+    if "frame index" not in detections_df.columns:
+        raise ValueError("Detections must include a 'frame index' column.")
     is_marker = set(DETECTION_COLUMNS).issubset(detections_df.columns)
     uses_corners = "corners" in detections_df.columns
     if not is_marker and not uses_corners:
@@ -235,7 +224,7 @@ def overlay_detections(
             "Detections must contain marker corner columns or a 'corners' column."
         )
 
-    grouped = detections_df.groupby(frame_col)
+    grouped = detections_df.groupby("frame index")
     detections_by_frame = {frame_idx: group for frame_idx, group in grouped}
 
     # Iterate through video frames sequentially
@@ -261,7 +250,7 @@ def overlay_detections(
                 cv2.imshow("Detections Overlay", frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
-            if video_output_path is not None:
+            if output_path is not None:
                 out.write(frame)
             continue
 
@@ -307,8 +296,8 @@ def overlay_detections(
                 else:
                     center = np.mean(corners, axis=0)
                 label = (
-                    str(int(detection["tag_id"]))
-                    if show_ids and "tag_id" in detection
+                    str(int(detection["marker id"]))
+                    if show_ids and "marker id" in detection
                     else None
                 )
 
@@ -346,11 +335,11 @@ def overlay_detections(
                 break
 
         # Write the frame to output video if saving
-        if video_output_path is not None:
+        if output_path is not None:
             out.write(frame)
 
     # Release resources
-    if video_output_path is not None:
+    if output_path is not None:
         out.release()
     if show_video:
         cv2.destroyAllWindows()
@@ -365,7 +354,7 @@ def overlay_scanpath(
     text_size: Optional[int] = None,
     max_fixations: int = 10,
     show_video: bool = False,
-    video_output_path: Optional[Path | str] = "scanpath.mp4",
+    output_path: Optional[Path | str] = "scanpath.mp4",
 ) -> None:
     """
     Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -388,14 +377,14 @@ def overlay_scanpath(
         Maximum number of fixations to plot per frame. Defaults to 10.
     show_video : bool
         Whether to display the video with fixations overlaid. Defaults to False.
-    video_output_path : pathlib.Path or str or None
+    output_path : pathlib.Path or str or None
         Path to save the video with fixations overlaid. If None, the video is not saved.
         Defaults to 'scanpath.mp4'.
     """
     # Either show video or save it
-    if video_output_path is None and not show_video:
+    if output_path is None and not show_video:
         raise ValueError(
-            "Either show_video=True or video_output_path must be provided."
+            "Either show_video=True or output_path must be provided."
         )
 
     # Check scanpath DataFrame
@@ -408,12 +397,12 @@ def overlay_scanpath(
     video.reset()
 
     # Initialize video capture and writer
-    if video_output_path is not None:
+    if output_path is not None:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        video_output_path = Path(video_output_path)
-        video_output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         out = cv2.VideoWriter(
-            video_output_path, fourcc, video.fps, (video.width, video.height)
+            output_path, fourcc, video.fps, (video.width, video.height)
         )
 
     # Iterate through each row in the tracked fixations DataFrame
@@ -503,13 +492,13 @@ def overlay_scanpath(
                 break
 
         # Write the frame with overlays to the output video
-        if video_output_path is not None:
+        if output_path is not None:
             out.write(frame)
 
     # Release resources
     out.release()
     cv2.destroyAllWindows()
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video.reset()
 
 
 def overlay_detections_and_pose(
@@ -517,7 +506,7 @@ def overlay_detections_and_pose(
     april_detections: pd.DataFrame,
     camera_positions: pd.DataFrame,
     room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-    video_output_path: Path | str = "detection_and_pose.mp4",
+    output_path: Path | str = "detection_and_pose.mp4",
     graph_size: np.ndarray = np.array([300, 300]),
     show_video: bool = True,
 ):
@@ -557,7 +546,7 @@ def overlay_detections_and_pose(
     room_corners : numpy.ndarray of shape (N, 2), optional
         Array defining the polygon corners of the room in world coordinates.
         Defaults to a simple unit square: [[0,0],[0,1],[1,1],[1,0]].
-    video_output_path : str or pathlib.Path, optional
+    output_path : str or pathlib.Path, optional
         Path to save the output video with overlays. Defaults to 'output_with_overlays.mp4'.
     graph_size : numpy.ndarray of shape (2,), optional
         The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].
@@ -705,8 +694,8 @@ def overlay_detections_and_pose(
 
     # Initialize VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    video_output_path = Path(video_output_path)
-    out = cv2.VideoWriter(str(video_output_path), fourcc, fps, (width, height))
+    output_path = Path(output_path)
+    out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
 
     while True:
         ret, frame = cap.read()

@@ -1074,7 +1074,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         self,
         scanpath: Optional[Stream] = None,
         show_video: bool = False,
-        video_output_path: Optional[str | Path] = None,
+        output_path: Optional[str | Path] = None,
         overwrite: bool = False,
         **kwargs,
     ) -> None:
@@ -1088,7 +1088,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             If *None*, it is loaded or computed automatically.
         show_video : bool
             Display the video live while rendering.
-        video_output_path : str or pathlib.Path, optional
+        output_path : str or pathlib.Path, optional
             Target MP4 path. Defaults to `<der_dir>/scanpath.mp4`.
             If *None*, no file is written.
         overwrite : bool, default False
@@ -1111,17 +1111,17 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         text_size = kwargs.get("text_size", 1)
         max_fixations = kwargs.get("max_fixations", 10)
 
-        if video_output_path is None:
-            video_output_path = self.der_dir / "scanpath.mp4"
+        if output_path is None:
+            output_path = self.der_dir / "scanpath.mp4"
         else:
-            video_output_path = Path(video_output_path)
+            output_path = Path(output_path)
 
         if scanpath is None:
             scanpath = self.estimate_scanpath()
 
-        if video_output_path.is_file() and not overwrite:
+        if output_path.is_file() and not overwrite:
             print(
-                f"Overlay video already exists at {video_output_path}; skipping render."
+                f"Overlay video already exists at {output_path}; skipping render."
             )
             if show_video:
                 print("`show_video=True` has no effect because rendering was skipped.")
@@ -1138,7 +1138,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             text_size,
             max_fixations,
             show_video,
-            video_output_path,
+            output_path,
         )
 
     def overlay_detections_and_pose(
@@ -1146,7 +1146,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         april_detections: pd.DataFrame,
         camera_positions: pd.DataFrame,
         room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-        video_output_path: Path | str | None = None,
+        output_path: Path | str | None = None,
         graph_size: np.ndarray = np.array([300, 300]),
         show_video: bool = True,
     ):
@@ -1161,7 +1161,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             DataFrame containing the camera positions.
         room_corners : numpy.ndarray
             Array containing the room corners coordinates. Defaults to a unit square.
-        video_output_path pathlib.Path or str
+        output_path pathlib.Path or str
             Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
         graph_size : numpy.ndarray
             Size of the graph to overlay on the video. Defaults to [300, 300].
@@ -1173,15 +1173,15 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 "Overlaying detections and pose on video requires video data."
             )
 
-        if video_output_path is None:
-            video_output_path = self.der_dir / "detection_and_pose.mp4"
+        if output_path is None:
+            output_path = self.der_dir / "detection_and_pose.mp4"
 
         overlay_detections_and_pose(
             self,
             april_detections,
             camera_positions,
             room_corners,
-            video_output_path,
+            output_path,
             graph_size,
             show_video,
         )
