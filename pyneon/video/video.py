@@ -209,7 +209,8 @@ class Video(cv2.VideoCapture):
                 current += 1
         elif current != frame_index:
             # only seek if we are past the target frame, otherwise we grab forward
-            self.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+            self.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.read_frame_at(frame_index)
 
         ret, frame = self.read()
         if not ret:
