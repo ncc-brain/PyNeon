@@ -56,6 +56,67 @@ def plot_frame(
     return fig, ax
 
 
+def _overlay_marker_detections_on_frame(
+    frame: np.ndarray,
+    frame_detections: pd.DataFrame,
+    show_ids: bool,
+    color: tuple[int, int, int] = (255, 0, 255),
+) -> np.ndarray:
+        
+    for _, detection in frame_detections.iterrows():
+        corners = np.array(
+            [
+                [
+                    detection["top left x [px]"], 
+                    detection["top left y [px]"]
+                ],
+                [
+                    detection["top right x [px]"],
+                    detection["top right y [px]"],
+                ],
+                [
+                    detection["bottom right x [px]"],
+                    detection["bottom right y [px]"],
+                ],
+                [
+                    detection["bottom left x [px]"],
+                    detection["bottom left y [px]"],
+                ],
+            ],
+            dtype=np.int32,
+        )
+        center = np.array(
+            [detection["center x [px]"], detection["center y [px]"]],
+            dtype=np.int32,
+        ).reshape(-1)
+        label = str(int(detection["marker id"])) if show_ids else None
+        
+        cv2.polylines(frame, [corners], True, color, 2)
+
+        if label is not None:
+            text = label
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness = 2
+            (text_width, text_height), _ = cv2.getTextSize(
+                text, font, font_scale, thickness
+            )
+            text_x = int(center[0]) - text_width // 2
+            text_y = int(center[1]) + text_height // 2
+
+            cv2.putText(
+                frame,
+                text,
+                (text_x, text_y),
+                font,
+                font_scale,
+                color,
+                thickness,
+            )
+
+    return frame
+        
+
 def _plot_marker_detections(
     ax: plt.Axes,
     detections: pd.DataFrame,
@@ -87,38 +148,6 @@ def _plot_marker_detections(
             marker["top left y [px]"],
         ]
         ax.plot(corners_x, corners_y, color=color)
-
-
-def _plot_corner_detections(
-    ax: plt.Axes,
-    detections: pd.DataFrame,
-    show_ids: bool,
-    color: str,
-) -> None:
-    for _, detection in detections.iterrows():
-        corners = np.asarray(detection["corners"], dtype=np.float32)
-        if corners.shape != (4, 2):
-            raise ValueError(
-                f"Detected corners must have shape (4, 2), got {corners.shape}"
-            )
-        corners_x = list(corners[:, 0]) + [corners[0, 0]]
-        corners_y = list(corners[:, 1]) + [corners[0, 1]]
-        ax.plot(corners_x, corners_y, color=color)
-
-        if show_ids and "marker id" in detection:
-            if "center" in detection and detection["center"] is not None:
-                center = np.asarray(detection["center"], dtype=np.float32).reshape(-1)
-            else:
-                center = np.mean(corners, axis=0)
-            ax.text(
-                center[0],
-                center[1],
-                int(detection["marker id"]),
-                color=color,
-                ha="center",
-                va="center",
-            )
-
 
 @fill_doc
 def plot_detections(
@@ -159,8 +188,6 @@ def plot_detections(
     if not frame_detections.empty:
         if set(DETECTION_COLUMNS).issubset(frame_detections.columns):
             _plot_marker_detections(ax, frame_detections, show_ids, color)
-        elif "corners" in frame_detections.columns:
-            _plot_corner_detections(ax, frame_detections, show_ids, color)
         else:
             raise ValueError(
                 "Detections must contain marker corner columns or a 'corners' column."
@@ -215,13 +242,9 @@ def overlay_detections(
         )
 
     detections_df = detections.data
-    if "frame index" not in detections_df.columns:
-        raise ValueError("Detections must include a 'frame index' column.")
-    is_marker = set(DETECTION_COLUMNS).issubset(detections_df.columns)
-    uses_corners = "corners" in detections_df.columns
-    if not is_marker and not uses_corners:
+    if not set(DETECTION_COLUMNS).issubset(detections_df.columns):
         raise ValueError(
-            "Detections must contain marker corner columns or a 'corners' column."
+            "Detections does not abide by the expected format."
         )
 
     grouped = detections_df.groupby("frame index")
@@ -239,90 +262,10 @@ def overlay_detections(
             print(f"frame {frame_index} is skipped")
             break
 
-        # Get markers for this frame (only display if markers are actually detected)
-        if frame_index not in detections_by_frame:
-            # No markers detected in this frame, skip overlay
-            if show_video:
-                cv2.namedWindow("Detections Overlay", cv2.WINDOW_NORMAL)
-                cv2.setWindowProperty(
-                    "Detections Overlay", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
-                )
-                cv2.imshow("Detections Overlay", frame)
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
-            if output_path is not None:
-                out.write(frame)
-            continue
-
-        frame_detections = detections_by_frame[frame_index]
-
-        # Draw each detection
-        for _, detection in frame_detections.iterrows():
-            if is_marker:
-                corners = np.array(
-                    [
-                        [detection["top left x [px]"], detection["top left y [px]"]],
-                        [
-                            detection["top right x [px]"],
-                            detection["top right y [px]"],
-                        ],
-                        [
-                            detection["bottom right x [px]"],
-                            detection["bottom right y [px]"],
-                        ],
-                        [
-                            detection["bottom left x [px]"],
-                            detection["bottom left y [px]"],
-                        ],
-                    ],
-                    dtype=np.int32,
-                )
-                center = np.array(
-                    [detection["center x [px]"], detection["center y [px]"]],
-                    dtype=np.int32,
-                ).reshape(-1)
-                label = str(int(detection["marker id"])) if show_ids else None
-            else:
-                corners = np.asarray(detection["corners"], dtype=np.float32)
-                if corners.shape != (4, 2):
-                    raise ValueError(
-                        f"Detected corners must have shape (4, 2), got {corners.shape}"
-                    )
-                corners = corners.astype(np.int32)
-                if "center" in detection and detection["center"] is not None:
-                    center = np.asarray(detection["center"], dtype=np.float32).reshape(
-                        -1
-                    )
-                else:
-                    center = np.mean(corners, axis=0)
-                label = (
-                    str(int(detection["marker id"]))
-                    if show_ids and "marker id" in detection
-                    else None
-                )
-
-            cv2.polylines(frame, [corners], True, color, 2)
-
-            if label is not None:
-                text = label
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                font_scale = 0.6
-                thickness = 2
-                (text_width, text_height), _ = cv2.getTextSize(
-                    text, font, font_scale, thickness
-                )
-                text_x = int(center[0]) - text_width // 2
-                text_y = int(center[1]) + text_height // 2
-
-                cv2.putText(
-                    frame,
-                    text,
-                    (text_x, text_y),
-                    font,
-                    font_scale,
-                    color,
-                    thickness,
-                )
+        if frame_index in detections_by_frame:
+            frame_detections = detections_by_frame[frame_index]
+            # Draw each detection on the frame
+            frame = _overlay_marker_detections_on_frame(frame, frame_detections, show_ids, color)
 
         # Display the frame if requested
         if show_video:

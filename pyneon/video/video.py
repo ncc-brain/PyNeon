@@ -178,7 +178,7 @@ class Video(cv2.VideoCapture):
         """
         Read a single frame using sequential access.
         Advances by grabbing intermediate frames for forward jumps to keep
-        timestamps aligned in VFR videos, with a seek fallback when rewinding.
+        timestamps aligned in VFR videos, rewinding to start if .
 
         Parameters
         ----------
@@ -200,15 +200,14 @@ class Video(cv2.VideoCapture):
 
         current = int(self.get(cv2.CAP_PROP_POS_FRAMES))
 
-        # If we are slightly behind (up to 50 frames), use grab() to stay accurate.
-        # This is much faster than decoding and avoids seeker drift in VFR/MSMF.
+        # Use grab to advance frame-by-frame when seeking forward to maintain timestamp alignment in VFR videos.
         if 0 <= (frame_index - current):
             while current < frame_index:
                 if not self.grab():
                     return None
                 current += 1
         elif current != frame_index:
-            # only seek if we are past the target frame, otherwise we grab forward
+            # reset to start and grab forward if seeking backward to maintain timestamp alignment in VFR videos.
             self.set(cv2.CAP_PROP_POS_FRAMES, 0)
             self.read_frame_at(frame_index)
 
