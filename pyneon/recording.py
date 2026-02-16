@@ -1089,8 +1089,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         show_video : bool
             Display the video live while rendering.
         output_path : str or pathlib.Path, optional
-            Target MP4 path. Defaults to `<der_dir>/scanpath.mp4`.
-            If *None*, no file is written.
+            Target MP4 path. If "default", saves scanpath.mp4 to the derivatives
+            folder under the recording directory. If *None*, no file is written.
         overwrite : bool, default False
             Regenerate the overlay even if the MP4 already exists.
         kwargs : dict, optional
@@ -1111,22 +1111,24 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         text_size = kwargs.get("text_size", 1)
         max_fixations = kwargs.get("max_fixations", 10)
 
-        if output_path is None:
-            output_path = self.der_dir / "scanpath.mp4"
-        else:
-            output_path = Path(output_path)
-
         if scanpath is None:
             scanpath = self.estimate_scanpath()
 
-        if output_path.is_file() and not overwrite:
+        if self.scene_video is None:
+            raise ValueError("A loaded video is required to draw the overlay.")
+
+        if output_path == "default":
+            output_path = (
+                self.scene_video.video_file.parent / "derivatives" / "scanpath.mp4"
+            )
+        elif output_path is not None:
+            output_path = Path(output_path)
+
+        if output_path is not None and output_path.is_file() and not overwrite:
             print(f"Overlay video already exists at {output_path}; skipping render.")
             if show_video:
                 print("`show_video=True` has no effect because rendering was skipped.")
             return
-
-        if self.scene_video is None:
-            raise ValueError("A loaded video is required to draw the overlay.")
 
         overlay_scanpath(
             self.scene_video,
@@ -1146,7 +1148,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
         output_path: Path | str | None = None,
         graph_size: np.ndarray = np.array([300, 300]),
-        show_video: bool = True,
+        show_video: bool = False,
     ):
         """
         Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.
@@ -1160,19 +1162,27 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         room_corners : numpy.ndarray
             Array containing the room corners coordinates. Defaults to a unit square.
         output_path pathlib.Path or str
-            Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
+            Path to save the video with detections and poses overlaid. If "default",
+            saves detection_and_pose.mp4 to the derivatives folder under the
+            recording directory. If None, no output video is written.
         graph_size : numpy.ndarray
             Size of the graph to overlay on the video. Defaults to [300, 300].
         show_video : bool
-            Whether to display the video with detections and poses overlaid. Defaults to True.
+            Whether to display the video with detections and poses overlaid. Defaults to False.
         """
         if self.scene_video is None:
             raise ValueError(
                 "Overlaying detections and pose on video requires video data."
             )
 
-        if output_path is None:
-            output_path = self.der_dir / "detection_and_pose.mp4"
+        if output_path == "default":
+            output_path = (
+                self.scene_video.video_file.parent
+                / "derivatives"
+                / "detection_and_pose.mp4"
+            )
+        elif output_path is not None:
+            output_path = Path(output_path)
 
         overlay_detections_and_pose(
             self,

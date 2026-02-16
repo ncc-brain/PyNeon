@@ -218,11 +218,13 @@ def overlay_detections(
         BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
     %(show_video_param)s
     %(output_path_param)s
-        Defaults to 'detected_markers.mp4'.
+        If "default", saves detections.mp4 to the derivatives folder under the
+        recording directory. If None, no output video is written.
     """
-    # Either show video or save it
     if output_path is None and not show_video:
         raise ValueError("Either show_video=True or output_path must be provided.")
+    if output_path == "default":
+        output_path = video.video_file.parent / "derivatives" / "detections.mp4"
 
     # Reset video to the beginning
     video.reset()
@@ -250,10 +252,7 @@ def overlay_detections(
         total=len(video.ts),
     ):
         # Read the next frame sequentially
-        ret, frame = video.read()
-        if not ret:
-            print(f"frame {frame_index} is skipped")
-            break
+        frame = video.read_frame_at(frame_index)
 
         if frame_index in detections_by_frame:
             frame_detections = detections_by_frame[frame_index]
@@ -292,7 +291,7 @@ def overlay_scanpath(
     text_size: Optional[int] = None,
     max_fixations: int = 10,
     show_video: bool = False,
-    output_path: Optional[Path | str] = "scanpath.mp4",
+    output_path: Optional[Path | str] = None,
 ) -> None:
     """
     Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
@@ -317,11 +316,13 @@ def overlay_scanpath(
         Whether to display the video with fixations overlaid. Defaults to False.
     output_path : pathlib.Path or str or None
         Path to save the video with fixations overlaid. If None, the video is not saved.
-        Defaults to 'scanpath.mp4'.
+        If "default", saves scanpath.mp4 to the derivatives folder under the
+        recording directory.
     """
-    # Either show video or save it
     if output_path is None and not show_video:
         raise ValueError("Either show_video=True or output_path must be provided.")
+    if output_path == "default":
+        output_path = video.video_file.parent / "derivatives" / "scanpath.mp4"
 
     # Check scanpath DataFrame
     if "fixations" not in scanpath.columns:
@@ -333,6 +334,7 @@ def overlay_scanpath(
     video.reset()
 
     # Initialize video capture and writer
+    out = None
     if output_path is not None:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         output_path = Path(output_path)
@@ -428,12 +430,14 @@ def overlay_scanpath(
                 break
 
         # Write the frame with overlays to the output video
-        if output_path is not None:
+        if out is not None:
             out.write(frame)
 
     # Release resources
-    out.release()
-    cv2.destroyAllWindows()
+    if out is not None:
+        out.release()
+    if show_video:
+        cv2.destroyAllWindows()
     video.reset()
 
 
@@ -442,9 +446,9 @@ def overlay_detections_and_pose(
     april_detections: pd.DataFrame,
     camera_positions: pd.DataFrame,
     room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-    output_path: Path | str = "detection_and_pose.mp4",
+    output_path: Optional[Path | str] = None,
     graph_size: np.ndarray = np.array([300, 300]),
-    show_video: bool = True,
+    show_video: bool = False,
 ):
     """
     Overlay AprilTag detections and camera positions on top of the recording's video frames.
@@ -483,12 +487,14 @@ def overlay_detections_and_pose(
         Array defining the polygon corners of the room in world coordinates.
         Defaults to a simple unit square: [[0,0],[0,1],[1,1],[1,0]].
     output_path : str or pathlib.Path, optional
-        Path to save the output video with overlays. Defaults to 'output_with_overlays.mp4'.
+        Path to save the output video with overlays. If "default", saves
+        detection_and_pose.mp4 to the derivatives folder under the recording
+        directory. If None, no output video is written.
     graph_size : numpy.ndarray of shape (2,), optional
         The width and height (in pixels) of the inset mini-map. Defaults to [300, 300].
     show_video : bool, optional
         Whether to display the video with overlays as it is processed. Press 'ESC' to stop early.
-        Defaults to True.
+        Defaults to False.
 
     Notes
     -----
@@ -497,6 +503,14 @@ def overlay_detections_and_pose(
     - Press 'ESC' to stop playback if show_video is True.
 
     """
+    if output_path is None and not show_video:
+        raise ValueError("Either show_video=True or output_path must be provided.")
+    if output_path == "default":
+        output_path = (
+            recording.scene_video.video_file.parent
+            / "derivatives"
+            / "detection_and_pose.mp4"
+        )
 
     # Compute the room boundaries from the provided corners
     room_min_x = np.min(room_corners[:, 0])
@@ -629,9 +643,12 @@ def overlay_detections_and_pose(
     fps = cap.fps or 30
 
     # Initialize VideoWriter
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    output_path = Path(output_path)
-    out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+    out = None
+    if output_path is not None:
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
 
     while True:
         ret, frame = cap.read()
@@ -712,7 +729,10 @@ def overlay_detections_and_pose(
             if key == 27:  # ESC key
                 break
 
-        out.write(frame)
+        if out is not None:
+            out.write(frame)
 
-    out.release()
-    cv2.destroyAllWindows()
+    if out is not None:
+        out.release()
+    if show_video:
+        cv2.destroyAllWindows()

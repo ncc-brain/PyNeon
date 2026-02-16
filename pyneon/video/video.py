@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import os
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
@@ -411,16 +410,13 @@ Effective FPS: {self.fps:.2f}
             Whether to display the video with fixations overlaid. Defaults to False.
         output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
-            Defaults to 'derivatives/scanpath.mp4'.
+            If "default", saves scanpath.mp4 to the derivatives folder under the
+            recording directory.
 
         Returns
         -------
         None
         """
-        if output_path is None:
-            output_path = self.der_dir / "scanpath.mp4"
-            os.makedirs(self.der_dir, exist_ok=True)
-
         overlay_scanpath(
             self,
             scanpath,
@@ -454,16 +450,13 @@ Effective FPS: {self.fps:.2f}
             BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
         %(show_video_param)s
         %(output_path_param)s
-            Defaults to 'derivatives/detected_markers.mp4'.
+            If "default", saves detections.mp4 to the derivatives folder under the
+            recording directory. If None, no output video is written.
 
         Returns
         -------
         None
         """
-        if output_path is None:
-            output_path = self.der_dir / "detected_markers.mp4"
-            os.makedirs(self.der_dir, exist_ok=True)
-
         overlay_detections(
             self,
             detections=detections,
@@ -475,48 +468,68 @@ Effective FPS: {self.fps:.2f}
 
     def undistort_video(
         self,
-        output_video_path: Optional[Path | str] = None,
+        show: bool = False,
+        output_path: Optional[Path | str] = None,
     ) -> None:
         """
         Undistort a video using the known camera matrix and distortion coefficients.
 
         Parameters
         ----------
-        output_video_path : pathlib.Path or str or None
+        output_path : pathlib.Path or str or None
             Path to save the undistorted output video.
-            Defaults to 'derivatives/undistorted_video.mp4'.
+            If "default", saves undistorted_video.mp4 to the derivatives folder under
+            the recording directory. If None, no output video is written.
 
         Returns
         -------
         None
         """
-        if output_video_path is None:
-            output_video_path = self.der_dir / "undistorted_video.mp4"
-            os.makedirs(self.der_dir, exist_ok=True)
+        if output_path is None and not show:
+            raise ValueError("Either show=True or output_path must be provided.")
+        if output_path == "default":
+            output_path = self.video_file.parent / "derivatives" / "undistorted_video.mp4"
 
         # Open the input video
-        cap = self
-        cap.reset()
+        self.reset()
         # Get self properties
         frame_width, frame_height = self.width, self.height
         fps = self.fps
         frame_count = len(self)
 
         # Prepare output video writer
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Adjust codec as needed
-        out = cv2.VideoWriter(
-            output_video_path, fourcc, fps, (frame_width, frame_height)
-        )
+        out = None
+        if output_path is not None:
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Adjust codec as needed
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            out = cv2.VideoWriter(
+                str(output_path), fourcc, fps, (frame_width, frame_height)
+            )
 
-        for _ in tqdm(range(frame_count), desc="Undistorting video"):
-            ret, frame = self.read()
-            if not ret:
+        for frame_index in tqdm(range(frame_count), desc="Undistorting video"):
+            frame = self.read_frame_at(frame_index)
+            if frame is None:
                 break
+            undistorted = self.undistort_frame(frame)
 
-            out.write(self.undistort_frame(frame))
+            if show:
+                cv2.namedWindow("Undistorted Video", cv2.WINDOW_NORMAL)
+                cv2.setWindowProperty(
+                    "Undistorted Video", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+                )
+                cv2.imshow("Undistorted Video", undistorted)
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
 
-        out.release()
-        print(f"Undistorted video saved to {output_video_path}")
+            if out is not None:
+                out.write(undistorted)
+
+        if out is not None:
+            out.release()
+        if show:
+            cv2.destroyAllWindows()
+        self.reset()
 
     def undistort_frame(self, frame: np.ndarray) -> np.ndarray:
         """
