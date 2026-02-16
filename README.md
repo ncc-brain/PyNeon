@@ -1,5 +1,6 @@
 ![GitHub License](https://img.shields.io/github/license/ncc-brain/PyNeon?style=plastic)
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fncc-brain.github.io%2FPyNeon%2F&up_message=online&style=plastic&label=Documentation)
+[![PyNeon CI](https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml/badge.svg)](https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml)
 
 # PyNeon
 
