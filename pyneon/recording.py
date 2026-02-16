@@ -373,7 +373,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 f"Missing .time file {ts_file.name} in {self.recording_dir}"
             )
         ts = np.fromfile(ts_file, dtype=np.int64)
-        return Video(video_file, ts, {})
+        return Video(video_file, ts, None)
 
     @property
     def start_time(self) -> int:
@@ -1120,9 +1120,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             scanpath = self.estimate_scanpath()
 
         if output_path.is_file() and not overwrite:
-            print(
-                f"Overlay video already exists at {output_path}; skipping render."
-            )
+            print(f"Overlay video already exists at {output_path}; skipping render.")
             if show_video:
                 print("`show_video=True` has no effect because rendering was skipped.")
             return

@@ -62,14 +62,10 @@ def _overlay_marker_detections_on_frame(
     show_ids: bool,
     color: tuple[int, int, int] = (255, 0, 255),
 ) -> np.ndarray:
-        
     for _, detection in frame_detections.iterrows():
         corners = np.array(
             [
-                [
-                    detection["top left x [px]"], 
-                    detection["top left y [px]"]
-                ],
+                [detection["top left x [px]"], detection["top left y [px]"]],
                 [
                     detection["top right x [px]"],
                     detection["top right y [px]"],
@@ -90,7 +86,7 @@ def _overlay_marker_detections_on_frame(
             dtype=np.int32,
         ).reshape(-1)
         label = str(int(detection["marker id"])) if show_ids else None
-        
+
         cv2.polylines(frame, [corners], True, color, 2)
 
         if label is not None:
@@ -115,7 +111,7 @@ def _overlay_marker_detections_on_frame(
             )
 
     return frame
-        
+
 
 def _plot_marker_detections(
     ax: plt.Axes,
@@ -148,6 +144,7 @@ def _plot_marker_detections(
             marker["top left y [px]"],
         ]
         ax.plot(corners_x, corners_y, color=color)
+
 
 @fill_doc
 def plot_detections(
@@ -225,9 +222,7 @@ def overlay_detections(
     """
     # Either show video or save it
     if output_path is None and not show_video:
-        raise ValueError(
-            "Either show_video=True or output_path must be provided."
-        )
+        raise ValueError("Either show_video=True or output_path must be provided.")
 
     # Reset video to the beginning
     video.reset()
@@ -243,9 +238,7 @@ def overlay_detections(
 
     detections_df = detections.data
     if not set(DETECTION_COLUMNS).issubset(detections_df.columns):
-        raise ValueError(
-            "Detections does not abide by the expected format."
-        )
+        raise ValueError("Detections does not abide by the expected format.")
 
     grouped = detections_df.groupby("frame index")
     detections_by_frame = {frame_idx: group for frame_idx, group in grouped}
@@ -265,7 +258,9 @@ def overlay_detections(
         if frame_index in detections_by_frame:
             frame_detections = detections_by_frame[frame_index]
             # Draw each detection on the frame
-            frame = _overlay_marker_detections_on_frame(frame, frame_detections, show_ids, color)
+            frame = _overlay_marker_detections_on_frame(
+                frame, frame_detections, show_ids, color
+            )
 
         # Display the frame if requested
         if show_video:
@@ -326,9 +321,7 @@ def overlay_scanpath(
     """
     # Either show video or save it
     if output_path is None and not show_video:
-        raise ValueError(
-            "Either show_video=True or output_path must be provided."
-        )
+        raise ValueError("Either show_video=True or output_path must be provided.")
 
     # Check scanpath DataFrame
     if "fixations" not in scanpath.columns:

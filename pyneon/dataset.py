@@ -99,7 +99,7 @@ class Dataset:
 
             # Rebuild a `sections` DataFrame from the Recording instances
             sections = []
-            for i, rec in enumerate(self.recordings):
+            for rec in self.recordings:
                 sections.append(
                     {
                         "section id": None,

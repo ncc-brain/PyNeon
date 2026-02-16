@@ -80,7 +80,9 @@ def find_homographies(
         base_corners = None
     elif surface_layout is not None:
         detection_mode = "surface"
-        layout_df, layout_by_marker, base_corners = _prepare_corner_layout(surface_layout)
+        layout_df, layout_by_marker, base_corners = _prepare_corner_layout(
+            surface_layout
+        )
     else:
         raise ValueError("Either marker_layout or surface_layout must be provided.")
 

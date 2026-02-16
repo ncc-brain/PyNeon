@@ -34,7 +34,7 @@ class Video(cv2.VideoCapture):
         Path to the video file on disk.
     timestamps : numpy.ndarray
         Frame timestamps in nanoseconds. Must match the number of frames.
-    info : dict
+    info : dict or None
         Camera metadata, typically including ``camera_matrix`` and
         ``distortion_coefficients``.
 
@@ -46,7 +46,7 @@ class Video(cv2.VideoCapture):
         Alias for timestamps.
     """
 
-    def __init__(self, video_file: Path, timestamps: np.ndarray, info: dict):
+    def __init__(self, video_file: Path, timestamps: np.ndarray, info: Optional[dict] = None):
         super().__init__(video_file)
         self.video_file = video_file
         self.timestamps = timestamps
@@ -56,9 +56,11 @@ class Video(cv2.VideoCapture):
 
         self.der_dir = video_file.parent / "derivatives"
 
-        if not info:
+        if info == {}:
             warn("Video info is empty and will be loaded from default values.")
             self.info = default_camera_info
+        elif info is None: # Eye video
+            self.info = {}
 
         if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
             raise ValueError(
@@ -68,6 +70,17 @@ class Video(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
+    
+    def __repr__(self) -> str:
+        return f"""Video name: {self.video_file.name}
+Video height: {self.height} px
+Video width: {self.width} px
+Number of frames: {len(self)}
+First timestamp: {self.first_ts}
+Last timestamp: {self.last_ts}
+Duration: {self.duration:.2f} seconds
+Effective FPS: {self.fps:.2f}
+"""
 
     @property
     def first_ts(self) -> int:
@@ -142,12 +155,17 @@ class Video(cv2.VideoCapture):
     def undistortion_matrix(self) -> np.ndarray:
         """Optimal new camera matrix used for undistortion."""
         return self.undistort_cache[2]
+    
+    @property
+    def current_frame_index(self) -> int:
+        """Current frame index based on the video position."""
+        return int(self.get(cv2.CAP_PROP_POS_FRAMES))
 
     def timestamp_to_frame_index(
         self, timestamp: Union[int, np.int64, np.ndarray]
     ) -> np.ndarray:
         """
-        Map one or many timestamps (ns) to corresponding frame index/indices.
+        Map one or many timestamps (ns) to nearest frame index/indices.
 
         Parameters
         ----------
@@ -198,7 +216,7 @@ class Video(cv2.VideoCapture):
         if frame_index < 0 or frame_index >= len(self.ts):
             raise ValueError(f"frame_index {frame_index} is out of bounds.")
 
-        current = int(self.get(cv2.CAP_PROP_POS_FRAMES))
+        current = self.current_frame_index
 
         # Use grab to advance frame-by-frame when seeking forward to maintain timestamp alignment in VFR videos.
         if 0 <= (frame_index - current):
@@ -210,8 +228,9 @@ class Video(cv2.VideoCapture):
             # reset to start and grab forward if seeking backward to maintain timestamp alignment in VFR videos.
             self.set(cv2.CAP_PROP_POS_FRAMES, 0)
             self.read_frame_at(frame_index)
-
-        ret, frame = self.read()
+        
+        assert self.current_frame_index == frame_index
+        ret, frame = self.retrieve()
         if not ret:
             return None
         return frame

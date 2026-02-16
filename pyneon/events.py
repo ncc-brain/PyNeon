@@ -214,6 +214,12 @@ class Events(BaseTabular):
         """Get an event series by index."""
         return self.data.iloc[index]
 
+    def __repr__(self) -> str:
+        return f"""Events type: {self.type}
+Number of samples: {len(self)}
+Columns: {list(self.data.columns)}
+"""
+
     @property
     def start_ts(self) -> np.ndarray:
         """

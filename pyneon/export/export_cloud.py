@@ -51,15 +51,18 @@ def export_cloud_format(recording: "Recording", target_dir: str | Path):
 def _export_data(recording, attr_name, filename, target_dir):
     try:
         attr = getattr(recording, attr_name)
+        data = attr.data.copy()
     except FileNotFoundError:
         warn(f"Warning: '{attr_name}' data file not found in recording.")
-        return
-    data = attr.data.copy()
+        return # Do not export
+    except ValueError:
+        warn(f"Warning: '{attr_name}' data is empty.")
+        return # Do not export
+    
     # Make timestamp index a column again
     if data.index.name == "timestamp [ns]":
         data.reset_index(inplace=True, drop=False)
-    else:
-        data.reset_index(inplace=True, drop=True)
+
     # Append recording ID and section ID columns
     data["section id"] = recording.info.get("section_id", None)
     data["recording id"] = recording.recording_id

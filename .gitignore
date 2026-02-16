@@ -1,6 +1,7 @@
 # Test data
 data/
 tests/outputs/
+source/tutorials/export/
 
 # Ruff
 .ruff_cache/

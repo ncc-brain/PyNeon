@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyneon import Events, Stream
+from pyneon import Events, Stream, Dataset, get_sample_data
+from pyneon.recording import Recording
 from pyneon.utils.variables import nominal_sampling_rates
 
 
@@ -188,6 +189,7 @@ def sim_custom_events():
     assert custom.data.index.name == "event id"
     return custom
 
+
 if __name__ == "__main__":
     ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
     ts = np.delete(ts, 2)  # Remove one ts to make it non-uniformly sampled
@@ -201,10 +203,46 @@ if __name__ == "__main__":
     gaze = Stream(df)
     assert gaze.type == "gaze"
     assert gaze.sampling_freq_nominal == nominal_sampling_rates["gaze"]
-    
+
     step_size = int(1e9 / gaze.sampling_freq_nominal)
     new_ts = np.arange(gaze.first_ts, gaze.last_ts, step_size, dtype=np.int64)
     print(gaze.ts[0])
     print(new_ts[0])
-    
+
     gaze.interpolate()
+
+
+@pytest.fixture(scope="package")
+def simple_dataset_native():
+    dataset_dir = get_sample_data("simple", format="native")
+    dataset = Dataset(dataset_dir)
+    assert len(dataset) == dataset.sections.shape[0] == 2
+    for recording in dataset.recordings:
+        try:
+            _ = recording.blinks
+            recording.export_cloud_format("data/export", rebase=False)
+        except ValueError:
+            with pytest.warns(UserWarning, match=r"'blinks' data is empty"):
+                recording.export_cloud_format("data/export", rebase=False)
+    return dataset
+
+
+@pytest.fixture(scope="package")
+def simple_dataset_cloud():
+    dataset_dir = get_sample_data("simple", format="cloud")
+    dataset = Dataset(dataset_dir)
+    assert len(dataset) == dataset.sections.shape[0] == 2
+    for recording in dataset.recordings:
+        with pytest.raises(ValueError, match="Recording is already in Cloud format"):
+            recording.export_cloud_format("data/export", rebase=False)
+    return dataset
+
+
+@pytest.fixture(scope="package")
+def cloud_gaze(simple_dataset_cloud):
+    return simple_dataset_cloud.recordings[0].gaze
+
+
+@pytest.fixture(scope="package")
+def native_gaze(simple_dataset_native):
+    return simple_dataset_native.recordings[0].gaze

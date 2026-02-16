@@ -180,7 +180,8 @@ def _infer_stream_type(data: pd.DataFrame) -> str:
         "gaze x [px]": "gaze",
         "pupil diameter left [mm]": "eye_states",
         "gyro x [deg/s]": "imu",
-        "marker id": "marker",
+        "marker id": "marker detections",
+        "homography (0,0)": "homographies",
     }
     types = {col_map[c] for c in data.columns if c in col_map}
     return types.pop() if len(types) == 1 else "custom"
@@ -264,6 +265,19 @@ class Stream(BaseTabular):
         if index not in self.data.columns:
             raise KeyError(f"Column '{index}' not found in the stream data.")
         return self.data[index]
+
+    def __repr__(self) -> str:
+        return f"""Stream type: {self.type}
+Number of samples: {len(self)}
+First timestamp: {self.first_ts}
+Last timestamp: {self.last_ts}
+Uniformly sampled: {self.is_uniformly_sampled}
+Duration: {self.duration:.2f} seconds
+Effective sampling frequency: {self.sampling_freq_effective:.2f} Hz
+Nominal sampling frequency: {self.sampling_freq_nominal} Hz
+Columns: {list(self.data.columns)}
+"""
+
 
     @property
     def timestamps(self) -> np.ndarray:
@@ -353,7 +367,7 @@ class Stream(BaseTabular):
         float
             Effective sampling frequency in Hz.
         """
-        return len(self.data) / self.duration
+        return float(1e9 / self.ts_diff.mean())
 
     @property
     def sampling_freq_nominal(self) -> Optional[int]:
