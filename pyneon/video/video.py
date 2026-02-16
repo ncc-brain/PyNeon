@@ -536,7 +536,8 @@ Effective FPS: {self.fps:.2f}
 
     def compute_intensity(self):
         """
-        Compute mean grayscale intensity for each frame.
+        Generate a :class:`pyneon.Stream` object containing the
+        mean intensity of each video frame.
 
         Returns
         -------
