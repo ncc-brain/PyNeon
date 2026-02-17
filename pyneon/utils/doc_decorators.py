@@ -82,7 +82,7 @@ undistort : bool, optional
 """
 
 DOC["detect_surface_params"] = """
-skip_frames : int, optional
+step : int, optional
     Process every Nth frame (default 1 = process all frames).
 detection_window : tuple, optional
     A tuple (start, end) specifying the range to search for detections.

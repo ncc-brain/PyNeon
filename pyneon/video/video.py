@@ -300,7 +300,7 @@ Effective FPS: {self.fps:.2f}
     @fill_doc
     def detect_surface(
         self,
-        skip_frames: int = 1,
+        step: int = 1,
         detection_window: tuple[int | float, int | float] | None = None,
         detection_window_unit: str = "frame",
         min_area_ratio: float = 0.01,
@@ -327,7 +327,7 @@ Effective FPS: {self.fps:.2f}
         """
         return detect_surface(
             self,
-            skip_frames=skip_frames,
+            step=step,
             detection_window=detection_window,
             detection_window_unit=detection_window_unit,
             min_area_ratio=min_area_ratio,

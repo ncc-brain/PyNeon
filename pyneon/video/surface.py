@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 @fill_doc
 def detect_surface(
     video: "Video",
-    skip_frames: int = 1,
+    step: int = 1,
     detection_window: tuple[int | float, int | float] | None = None,
     detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     min_area_ratio: float = 0.01,
@@ -59,8 +59,8 @@ def detect_surface(
     %(detect_surface_return)s
     """
 
-    if skip_frames < 1:
-        raise ValueError("skip_frames must be >= 1")
+    if step < 1:
+        raise ValueError("step must be >= 1")
     if decimate <= 0:
         raise ValueError("decimate must be > 0")
 
@@ -70,7 +70,7 @@ def detect_surface(
         detection_window_unit,
     )
     detections = []
-    frames_to_process = range(start_frame_idx, end_frame_idx + 1, skip_frames)
+    frames_to_process = range(start_frame_idx, end_frame_idx + 1, step)
 
     # Ensure video is at the beginning before processing
     video.reset()
