@@ -608,7 +608,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def export_eye_bids(
         self,
         output_dir: str | Path,
-        prefix: str = "",
+        prefix: Optional[str] = None,
         extra_metadata: dict = {},
     ):
         """

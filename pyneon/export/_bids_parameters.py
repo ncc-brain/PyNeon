@@ -27,10 +27,8 @@ EYE_META_DEFAULT = {
         "timestamp",
         "x_coordinate",
         "y_coordinate",
-        "azimuth",
-        "elevation",
-        "pupil_size_left",
-        "pupil_size_right",
+        "left_pupil_diameter",
+        "right_pupil_diameter",
     ],
     "DeviceSerialNumber": "",
     "Manufacturer": "Pupil Labs",
@@ -39,23 +37,61 @@ EYE_META_DEFAULT = {
     "PhysioType": "eyetrack",
     "EnvironmentCoorinates": "top-left",
     "RecordedEye": "cyclopean",
-    "SampleCoordinateUnits": "pixels",
     "SampleCoordinateSystem": "gaze-in-world",
     "EyeTrackingMethod": "real-time neural network",
-    "azimuth": {
-        "Description": "Azimuth of the gaze ray in relation to the scene camera",
-        "Units": "degrees",
+    "timestamp": {
+        "Description": "UTC timestamp in nanoseconds of the sample",
+        "Units": "ns",
     },
-    "elevation": {
-        "Description": "Elevation of the gaze ray in relation to the scene camera",
-        "Units": "degrees",
+    "x_coordinate": {
+        "LongName": "Gaze position (x)",
+        "Description": "Horizontal gaze position x-coordinate in the scene camera frame, measured from the top-left corner",
+        "Units": "pixel",
+    },
+    "y_coordinate": {
+        "LongName": "Gaze position (y)",
+        "Description": "Vertical gaze position y-coordinate in the scene camera frame, measured from the top-left corner",
+        "Units": "pixel",
     },
     "pupil_size_left": {
-        "Description": "Physical diameter of the pupil of the left eye",
+        "Description": "Physical diameter of the left eye pupil, measured in millimeters",
         "Units": "mm",
     },
     "pupil_size_right": {
-        "Description": "Physical diameter of the pupil of the right eye",
+        "Description": "Physical diameter of the right eye pupil, measured in millimeters",
         "Units": "mm",
+    },
+}
+
+EYE_EVENTS_META_DEFAULT = {
+    "Columns": [
+        "onset",
+        "duration",
+        "trial_type",
+        "message",
+    ],
+    "Description": "Eye events and messages logged by Neon",
+    "OnsetSource": "timestamp",
+    "onset": {
+        "Description": "UTC timestamp in nanoseconds of the start of the event",
+        "Units": "ns",
+    },
+    "duration": {
+        "Description": "Event duration in seconds",
+        "Units": "s",
+    },
+    "trial_type": {
+        "Description": "Type of trial event",
+        "Levels": {
+            "fixation": {
+                "Description": "Fixation event",
+            },
+            "saccade": {
+                "Description": "Saccade event",
+            },
+            "blink": {
+                "Description": "Blink event",
+            },
+        },
     },
 }

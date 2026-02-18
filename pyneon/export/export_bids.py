@@ -3,10 +3,15 @@ import json
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+from warnings import warn
 
 import pandas as pd
 
-from ._bids_parameters import MOTION_META_DEFAULT
+from ._bids_parameters import (
+    EYE_EVENTS_META_DEFAULT,
+    EYE_META_DEFAULT,
+    MOTION_META_DEFAULT,
+)
 
 if TYPE_CHECKING:
     from ..recording import Recording
@@ -49,6 +54,13 @@ def export_motion_bids(
     ----------
     .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
     """
+    # First check if IMU data is present in the recording
+    try:
+        imu = rec.imu
+    except Exception as e:
+        raise ValueError(
+            "No IMU data found in the recording. Cannot export motion data."
+        ) from e
 
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():
@@ -58,17 +70,18 @@ def export_motion_bids(
             f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS"
         )
     if prefix is None:
-        prefix = f"sub-{rec.info['wearer_name']}_task-XXX_tracksys-NeonIMU"
+        prefix = f"sub-{rec.info['wearer_name']}_task-TaskName_tracksys-NeonIMU"
+    for field in ["sub-", "task-", "tracksys-"]:
+        if field not in prefix:
+            raise ValueError(f"Prefix must contain '{field}<label>' field.")
 
+    # Define file paths
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
     motion_json_path = motion_dir / f"{prefix}_motion.json"
     channels_tsv_path = motion_dir / f"{prefix}_channels.tsv"
     channels_json_path = motion_dir / f"{prefix}_channels.json"
 
-    imu = rec.imu
-    if imu is None:
-        raise ValueError("No IMU data found in the recording.")
-    imu = imu.interpolate()
+    # Export IMU data
     motion_acq_time = datetime.datetime.fromtimestamp(imu.first_ts / 1e9).strftime(
         "%Y-%m-%dT%H:%M:%S.%f"
     )
@@ -105,7 +118,7 @@ def export_motion_bids(
         json.dump(ch_meta, f, indent=4)
 
     info = rec.info
-    metadata = MOTION_META_DEFAULT
+    metadata = MOTION_META_DEFAULT.copy()
     metadata.update(
         {
             "DeviceSerialNumber": info["module_serial_number"],
@@ -148,11 +161,123 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def export_eye_bids(rec: "Recording", output_dir: str | Path):
-    """
-    Under development. Export eye tracking data to Eye-BIDS format.
-    """
-    gaze = rec.gaze
-    eye_states = rec.eye_states
+def export_eye_bids(
+    rec: "Recording",
+    output_dir: str | Path,
+    prefix: Optional[str] = None,
+    extra_metadata: dict = {},
+):
+    """ """
+    try:
+        gaze = rec.gaze
+    except Exception as e:
+        raise ValueError(
+            "Gaze data cannot be loaded and thus cannot be exported to Eye-Tracking BIDS."
+        ) from e
+    try:
+        eye_states = rec.eye_states
+        eye_states = eye_states.interpolate(gaze.ts)
+    except Exception:
+        warn(
+            "Eye states data cannot be loaded. Will export gaze data without pupil diameter information."
+        )
+        eye_states = None
+    info = rec.info
+
     output_dir = Path(output_dir)
-    pass
+    if not output_dir.is_dir():
+        output_dir.mkdir(parents=True)
+
+    if prefix is None:
+        prefix = f"sub-{rec.info['wearer_name']}_task-TaskName"
+    if "sub-" not in prefix:
+        raise ValueError("Prefix must contain 'sub-<label>' field.")
+
+    physio_tsv_path = output_dir / f"{prefix}_physio.tsv.gz"
+    physio_json_path = output_dir / f"{prefix}_physio.json"
+    physioevents_tsv_path = output_dir / f"{prefix}_physioevents.tsv.gz"
+    physioevents_json_path = output_dir / f"{prefix}_physioevents.json"
+
+    physio_col_names = EYE_META_DEFAULT["Columns"]
+    if eye_states is None:
+        physio_col_names = [
+            col for col in physio_col_names if "pupil_diameter" not in col
+        ]
+    physio_data = pd.DataFrame(columns=physio_col_names)
+
+    physio_data["timestamp"] = gaze.ts
+    physio_data["x_coordinate"] = gaze["gaze x [px]"].values
+    physio_data["y_coordinate"] = gaze["gaze y [px]"].values
+    if eye_states is not None:
+        physio_data["left_pupil_diameter"] = eye_states[
+            "pupil diameter left [mm]"
+        ].values
+        physio_data["right_pupil_diameter"] = eye_states[
+            "pupil diameter right [mm]"
+        ].values
+    physio_data.to_csv(
+        physio_tsv_path,
+        sep="\t",
+        index=False,
+        header=False,
+        na_rep="n/a",
+        compression="gzip",
+    )
+
+    physio_metadata = EYE_META_DEFAULT.copy()
+    physio_metadata.update(
+        {
+            "SamplingFrequency": gaze.sampling_freq_effective,
+            "DeviceSerialNumber": info["module_serial_number"],
+            "SoftwareVersions": (
+                f"App version: {info['app_version']}; "
+                f"Pipeline version: {info['pipeline_version']}"
+            ),
+        }
+    )
+    physio_metadata.update(extra_metadata)
+    with open(physio_json_path, "w") as f:
+        json.dump(physio_metadata, f, indent=4)
+
+    physioevents_col_names = EYE_EVENTS_META_DEFAULT["Columns"]
+    physioevents_data = pd.DataFrame(columns=physioevents_col_names)
+    for attr_name in ["blinks", "saccades", "fixations"]:
+        try:
+            events_data = getattr(rec, attr_name).data
+            # Rename "start timestamp [ns]" to "onset"
+            events_data = events_data.rename(columns={"start timestamp [ns]": "onset"})
+            # Re-compute duration in seconds
+            events_data["duration"] = events_data["duration [ms]"] / 1000.0
+            # Add trial_type column with value "blink", "saccade", or "fixation"
+            events_data = events_data[["onset", "duration"]]
+            events_data["trial_type"] = attr_name[:-1]  # remove "s" at the end
+            physioevents_data = pd.concat(
+                [physioevents_data, events_data], ignore_index=True
+            )
+        except Exception:
+            warn(
+                f"Could not process events for {attr_name}, skipping exporting events for this attribute."
+            )
+
+    # Try to process messages if available, and add them to the physioevents data
+    try:
+        events = rec.events.data
+        events = events.rename(columns={"timestamp [ns]": "onset", "name": "message"})
+        events = events[["onset", "message"]]
+        physioevents_data = pd.concat([physioevents_data, events], ignore_index=True)
+    except Exception:
+        warn("Could not process messages, skipping exporting messages.")
+
+    physioevents_data = physioevents_data.sort_values(by="onset")
+    physioevents_data.to_csv(
+        physioevents_tsv_path,
+        sep="\t",
+        index=False,
+        header=True,
+        na_rep="n/a",
+        compression="gzip",
+    )
+
+    physioevents_metadata = EYE_EVENTS_META_DEFAULT.copy()
+    with open(physioevents_json_path, "w") as f:
+        json.dump(physioevents_metadata, f, indent=4)

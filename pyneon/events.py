@@ -338,8 +338,8 @@ Columns: {list(self.data.columns)}
         --------
         Crop fixations to the first 5 seconds:
 
-        >>> fixations_5s = fixations.crop(tmin=rec.gaze.first_ts, 
-        ...                                tmax=rec.gaze.first_ts + 5e9, 
+        >>> fixations_5s = fixations.crop(tmin=rec.gaze.first_ts,
+        ...                                tmax=rec.gaze.first_ts + 5e9,
         ...                                by="timestamp")
 
         Extract the first 100 blinks:
