@@ -22,7 +22,8 @@ def test_crop(request, gaze_fixture, by):
     else:
         t0 = np.arange(len(gaze))
     tmax_index = len(t0) // 2
-    ts_first_half = ts0[:tmax_index]
+    # Cropping is inclusive of tmax, so we need to include the tmax_index in the expected result
+    ts_first_half = ts0[: tmax_index + 1]
 
     gaze_cropped = gaze.crop(tmax=t0[tmax_index], by=by)
     assert np.array_equal(gaze_cropped.ts, ts_first_half)

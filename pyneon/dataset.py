@@ -9,8 +9,9 @@ from .recording import Recording
 class Dataset:
     """
     Container for multiple recordings. Reads from a directory containing multiple
-    recordings downloaded from Pupil Cloud with the **Timeseries CSV** or
-    **Timeseries CSV and Scene Video** option. For example, a dataset with 2 recordings
+    recordings.
+
+    For example, a dataset with 2 recordings downloaded from Pupil Cloud
     would have the following folder structure:
 
     .. code-block:: text
@@ -27,6 +28,24 @@ class Dataset:
         ├── ...
         ├── enrichment_info.txt
         └── sections.csv
+
+    Or a dataset with multiple native recordings:
+
+    .. code-block:: text
+
+        dataset_dir/
+        ├── recording_dir_1/
+        │   ├── info.json
+        │   ├── blinks ps1.raw
+        |   ├── blinks ps1.time
+        |   ├── blinks.dtype
+        |   └── ...
+        └── recording_dir_2/
+            ├── info.json
+            ├── blinks ps1.raw
+            ├── blinks ps1.time
+            ├── blinks.dtype
+            └── ...
 
     Individual recordings will be read into :class:`pyneon.Recording` instances
     (based on ``sections.csv``, if available) and accessible through the
@@ -46,6 +65,23 @@ class Dataset:
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
 
+    Examples
+    --------
+    >>> from pyneon import Dataset
+    >>> dataset = Dataset("path/to/dataset")
+    >>> print(dataset)
+
+    Dataset | 2 recordings
+
+    >>> rec = dataset.recordings[0]
+    >>> print(rec)
+
+    Data format: cloud
+    Recording ID: 56fcec49-d660-4d67-b5ed-ba8a083a448a
+    Wearer ID: 028e4c69-f333-4751-af8c-84a09af079f5
+    Wearer name: Pilot
+    Recording start time: 2025-12-18 17:13:49.460000
+    Recording duration: 8235000000 ns (8.235 s)
     """
 
     def __init__(self, dataset_dir: str | Path):
@@ -124,18 +160,3 @@ class Dataset:
     def __getitem__(self, index: int) -> Recording:
         """Get a Recording by index."""
         return self.recordings[index]
-
-    def load_enrichment(self, enrichment_dir: str | Path):
-        """
-        Load enrichment information from an enrichment directory. The directory must
-        contain an enrichment_info.txt file. Enrichment data will be parsed for each
-        recording ID and added to Recording instance in the dataset.
-
-        The method is currently being developed and is not yet implemented.
-
-        Parameters
-        ----------
-        enrichment_dir : str or pathlib.Path
-            Path to the directory containing the enrichment information.
-        """
-        raise NotImplementedError("Enrichment loading is not yet implemented.")

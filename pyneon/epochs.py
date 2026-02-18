@@ -10,8 +10,8 @@ import pandas as pd
 from .events import Events
 from .stream import Stream
 from .utils.doc_decorators import fill_doc
-from .vis import plot_epochs
 from .utils.variables import circular_columns
+from .vis import plot_epochs
 
 
 @fill_doc
@@ -22,13 +22,13 @@ class Epochs:
     Parameters
     ----------
     source : Stream or Events
-        Data to create epochs from. Can be either a :class:`pyneon.Stream` or
-        a :class:`pyneon.Events` instance.
+        Data to create epochs from. Can be either a :class:`Stream` or
+        a :class:`Events` instance.
     %(epochs_info)s
 
         Must not have empty values.
 
-        See :func:`pyneon.events_to_epochs_info` or :func:`pyneon.construct_epochs_info`
+        See :func:`events_to_epochs_info` or :func:`construct_epochs_info`
         for helper functions to create this DataFrame.
 
     Notes
@@ -46,8 +46,12 @@ class Epochs:
     epochs_info : pandas.DataFrame
         The supplied epochs information DataFrame with additional columns:
 
-            ``t_start``: Start time of the epoch (``t_ref - t_before``).\n
-            ``t_end``: End time of the epoch (``t_ref + t_after``).
+        ================ ================================
+        Column           Description
+        ================ ================================
+        ``t_start``      Start time of the epoch (``t_ref - t_before``).
+        ``t_end``        End time of the epoch (``t_ref + t_after``).
+        ================ ================================
 
     source : Stream or Events
         The source data used to create epochs.
@@ -264,6 +268,7 @@ class Epochs:
         """
         return self._check_overlap() != []
 
+    @fill_doc
     def plot(
         self,
         column_name: Optional[str] = None,
@@ -277,9 +282,9 @@ class Epochs:
         Parameters
         ----------
         column_name : str
-            Name of the column to plot for :class:`pyneon.Epochs` constructed
-            from a :class:`pyneon.Stream`. If :class:`pyneon.Epochs` was constructed
-            from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
+            Name of the column to plot for :class:`Epochs` constructed
+            from a :class:`Stream`. If :class:`Epochs` was constructed
+            from a :class:`Events`, this parameter is ignored. Defaults to None.
         cmap_name : str
             Colormap to use for different epochs. Defaults to 'cool'.
         %(ax_param)s
@@ -309,7 +314,8 @@ class Epochs:
         """
         Converts epochs into a 3D arrays with dimensions (n_epochs, n_channels, n_times).
         Acts similarly as :meth:`mne.Epochs.get_data`.
-        Requires the epoch to be created from a :class:`pyneon.Stream`.
+
+        Requires the epoch to be created from a :class:`Stream`.
 
         Parameters
         ----------
@@ -321,7 +327,7 @@ class Epochs:
             Desired sampling rate in Hz for the output NumPy array.
             If None, the nominal sampling rate of the source Stream is used.
             Defaults to None.
-        %(interp_kwargs)s
+        %(interp_kind_params)s
 
         Returns
         -------
@@ -330,9 +336,11 @@ class Epochs:
         info : dict
             A dictionary containing:
 
-                "epoch_times": The common time grid, in nanoseconds.\n
-                "column_names": List of provided column names.\n
-                "nan_flag": Boolean indicating whether NaN values were found in the data.
+            ================ ================================
+            ``epoch_times``  The common time grid, in nanoseconds.
+            ``column_names`` List of provided column names.
+            "nan_flag"       Boolean indicating whether NaN values were found in the data.
+            ================ ================================
         """
         if not isinstance(self.source, Stream):
             raise TypeError("The source must be a Stream to convert to NumPy array.")
@@ -410,14 +418,14 @@ class Epochs:
         exclude_cols : list of str
             Columns to exclude from baseline correction.
         inplace : bool, optional
-            If ``True``, replace ``epochs_dict``. Otherwise returns a new instance of dict.
+            If ``True``, replace :attr:`epochs_dict`. Otherwise returns a new instance of dict.
             Defaults to ``False``.
 
         Returns
         -------
         dict or None
             A new dict with modified epoch data if ``inplace=False``, otherwise ``None``.
-            See :attr:`pyneon.Epochs.epochs_dict` for details.
+            See :attr:`epochs_dict` for details.
         """
 
         def _get_baseline_mask(
@@ -539,7 +547,7 @@ def events_to_epochs_info(
     """
     Construct a ``epochs_info`` DataFrame suitable for creating epochs around event onsets.
 
-    For simple event classes (`"blinks"`, `"fixations"`, `"saccades"`), all events
+    For simple event classes ("blinks", "fixations", "saccades"), all events
     in the input are used automatically. For more complex or combined event collections
     (e.g., loaded from ``events.csv``), you can either include all events
     (`event_name="all"`) or filter by specific names using ``event_name``.
@@ -634,7 +642,7 @@ def construct_epochs_info(
 ) -> pd.DataFrame:
     """
     Handles the construction of the ``epochs_info`` DataFrame for creating epochs. It populates
-    single values for `t_before`, `t_after`, and `description` to match the length of `t_ref`.
+    single values for ``t_before``, ``t_after``, and ``description`` to match the length of `t_ref`.
     and converts all times to Unix timestamps in nanoseconds.
 
     Parameters
@@ -662,7 +670,7 @@ def construct_epochs_info(
         Global reference time (in nanoseconds) to be added to `t_ref`.
         Unit is nanosecond. Defaults to 0. This is useful when the reference times
         are relative to a global start time
-        (for instance :attr:`pyneon.Stream.first_ts`).
+        (for instance :attr:`Stream.first_ts`).
 
     Returns
     -------

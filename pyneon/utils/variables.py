@@ -127,7 +127,7 @@ data_types = {
     "center x [px]": float,
     "center y [px]": float,
     # Video mean intensity
-    "intensity": float,
+    "brightness": float,
     # Homographies
     "homography (0,0)": float,
     "homography (0,1)": float,

@@ -39,7 +39,8 @@ def interpolate(
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
 
-    %(interp_kwargs)s
+    %(interp_kind_params)s
+    %(max_gap_ms)s
 
     Returns
     -------
@@ -172,7 +173,8 @@ def interpolate_events(
         to both before and after the event.
         Defaults to 0.05.
 
-    %(interp_kwargs)s
+    %(interp_kind_params)s
+    %(max_gap_ms)s
 
     Returns
     -------
@@ -370,7 +372,7 @@ def concat_streams(
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
 
-    %(interp_kwargs)s
+    %(interp_kind_params)s
 
     %(inplace)s
 

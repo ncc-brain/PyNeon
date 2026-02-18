@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyneon import Events, Stream, Dataset, get_sample_data
+from pyneon import Dataset, Events, Stream, get_sample_data
 from pyneon.recording import Recording
 from pyneon.utils.variables import nominal_sampling_rates
 

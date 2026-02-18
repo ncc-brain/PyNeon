@@ -54,11 +54,11 @@ def _export_data(recording, attr_name, filename, target_dir):
         data = attr.data.copy()
     except FileNotFoundError:
         warn(f"Warning: '{attr_name}' data file not found in recording.")
-        return # Do not export
+        return  # Do not export
     except ValueError:
         warn(f"Warning: '{attr_name}' data is empty.")
-        return # Do not export
-    
+        return  # Do not export
+
     # Make timestamp index a column again
     if data.index.name == "timestamp [ns]":
         data.reset_index(inplace=True, drop=False)

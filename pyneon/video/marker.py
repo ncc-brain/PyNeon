@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Literal, Optional
+import re
+from typing import TYPE_CHECKING, Literal, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -7,16 +8,72 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .constants import DETECTION_COLUMNS
+from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES, DETECTION_COLUMNS
 from .utils import (
     _verify_format,
     distort_points,
-    marker_family_to_dict,
-    resolve_detection_window,
+    resolve_processing_window,
 )
 
 if TYPE_CHECKING:
     from .video import Video
+
+
+def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
+    # AprilTags
+    if marker_family in APRILTAG_FAMILIES:
+        dict_name: str = f"DICT_APRILTAG_{marker_family.upper()}"
+        aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dict_name))
+        return "april", aruco_dict
+
+    # ArUco Original
+    if marker_family.lower() == "aruco_original":
+        aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+        return "aruco", aruco_dict
+
+    # Other ArUco (format: {size}_{number})
+    aruco_pattern = re.compile(r"^(\d+)x\1_(\d+)$")
+    pattern_match = aruco_pattern.match(marker_family)
+
+    if pattern_match:
+        # Split marker name into size and number components
+        size, number = marker_family.split("_")
+
+        if size not in ARUCO_SIZES:
+            raise ValueError(
+                f"Invalid Aruco marker size '{size}' in '{marker_family}'. "
+                f"Supported sizes: {', '.join(ARUCO_SIZES)}"
+            )
+
+        if number not in ARUCO_NUMBERS:
+            raise ValueError(
+                f"Invalid Aruco marker number '{number}' in '{marker_family}'. "
+                f"Supported numbers: {', '.join(ARUCO_NUMBERS)}"
+            )
+
+        dict_name = f"DICT_{marker_family.upper()}"
+        aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dict_name))
+        return "aruco", aruco_dict
+
+    # Provide helpful error message with supported formats
+    raise ValueError(
+        f"Unrecognized marker family '{marker_family}'. "
+        f"Expected format:\n"
+        f"  - AprilTag: {', '.join(APRILTAG_FAMILIES)}\n"
+        f"  - Aruco: {{size}}_{{number}} (e.g., '6x6_250')\n"
+        f"    Available sizes: {', '.join(ARUCO_SIZES)}\n"
+        f"    Available numbers: {', '.join(ARUCO_NUMBERS)}"
+    )
+
+
+def generate_marker(
+    marker_family: str,
+    marker_id: int,
+    marker_size_pixels: int,
+):
+    aruco_dict = marker_family_to_dict(marker_family)
+    img = cv2.aruco.generateImageMarker(aruco_dict, marker_id, marker_size_pixels)
+    return img
 
 
 @fill_doc
@@ -24,8 +81,8 @@ def detect_markers(
     video: "Video",
     marker_family: str | list[str],
     step: int = 1,
-    detection_window: Optional[tuple[int | float, int | float]] = None,
-    detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    processing_window: Optional[tuple[int | float, int | float]] = None,
+    processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
     undistort: bool = False,
 ) -> Stream:
@@ -58,10 +115,10 @@ def detect_markers(
     if step < 1:
         raise ValueError("step must be >= 1")
 
-    start_frame_idx, end_frame_idx = resolve_detection_window(
+    start_frame_idx, end_frame_idx = resolve_processing_window(
         video,
-        detection_window,
-        detection_window_unit,
+        processing_window,
+        processing_window_unit,
     )
 
     def _process_frame(frame_idx: int, gray_frame: np.ndarray) -> list[dict]:

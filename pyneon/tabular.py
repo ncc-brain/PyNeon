@@ -7,7 +7,7 @@ from .utils.variables import data_types
 
 class BaseTabular:
     """
-    Base for tabular data classes like :class:`pyneon.Events` and :class:`pyneon.Stream`.
+    Base for tabular data classes like :class:`Events` and :class:`Stream`.
 
     When initialized, performs the following checks and processing on the input data:
 

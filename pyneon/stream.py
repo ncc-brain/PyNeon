@@ -3,10 +3,10 @@ from numbers import Number
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 from warnings import warn
-from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from .preprocess import (
     compute_azimuth_and_elevation,
@@ -47,8 +47,7 @@ def _apply_homographies_on_gaze(
     homographies : Stream
         Stream containing homography matrices with columns 'homography (0,0)' through
         'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
-    max_gap_ms : Number, optional
-        Maximum allowed gap (in milliseconds) for interpolation. Defaults to 500.
+    %(max_gap_ms)s
     overwrite : bool, optional
         If True, overwrite existing surface coordinate columns. Defaults to False.
 
@@ -191,7 +190,7 @@ class Stream(BaseTabular):
     """
     Container for continuous data streams (gaze, eye states, IMU).
 
-    Data is indexed by timestamps in nanoseconds.
+    Data is indexed by timestamps in nanoseconds (``timestamp [ns]``).
 
     Parameters
     ----------
@@ -213,13 +212,14 @@ class Stream(BaseTabular):
         Path to the source file(s). ``None`` if initialized from DataFrame.
     data : pandas.DataFrame
         Stream data with ``timestamp [ns]`` as index.
-    type : {"gaze", "eye_states", "imu", "custom"}
+    type : str
         Inferred stream type based on data columns.
 
     Examples
     --------
     Load from Pupil Cloud CSV:
 
+    >>> from pyneon import Stream
     >>> gaze = Stream("gaze.csv")
 
     Load from native format:
@@ -277,7 +277,6 @@ Effective sampling frequency: {self.sampling_freq_effective:.2f} Hz
 Nominal sampling frequency: {self.sampling_freq_nominal} Hz
 Columns: {list(self.data.columns)}
 """
-
 
     @property
     def timestamps(self) -> np.ndarray:
@@ -358,9 +357,7 @@ Columns: {list(self.data.columns)}
 
     @property
     def sampling_freq_effective(self) -> float:
-        """Effective sampling frequency of the stream in Hz.
-
-        Calculated as the number of samples divided by duration.
+        """Effective/empirical sampling frequency of the stream in Hz.
 
         Returns
         -------
@@ -414,27 +411,52 @@ Columns: {list(self.data.columns)}
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Crop data to a specific time range based on timestamps,
-        relative times since start, or sample numbers.
+        Extract a subset of stream data within a specified temporal range.
+
+        The ``by`` parameter determines how ``tmin`` and ``tmax`` are interpreted:
+        - ``"timestamp"``: Absolute Unix timestamps in nanoseconds
+        - ``"time"``: Relative time in seconds from the stream's first sample
+        - ``"sample"``: Zero-based sample indices
+
+        Both bounds are inclusive. If either bound is omitted, it defaults to the
+        stream's natural boundary (earliest or latest sample).
 
         Parameters
         ----------
         tmin : numbers.Number, optional
-            Start timestamp/time/sample to crop the data to (inclusive). If ``None``,
-            the minimum timestamp/time/sample in the data is used. Defaults to ``None``.
+            Lower bound of the range to extract (inclusive). If ``None``,
+            starts from the stream's beginning. Defaults to ``None``.
         tmax : numbers.Number, optional
-            End timestamp/time/sample to crop the data to (exclusive). If ``None``,
-            the maximum timestamp/time/sample in the data is used. Defaults to ``None``.
-        by : "timestamp" or "time" or "sample", optional
-            Whether tmin and tmax are Unix timestamps in nanoseconds
-            OR relative times in seconds OR sample numbers of the stream data.
-            Defaults to "timestamp".
+            Upper bound of the range to extract (inclusive). If ``None``,
+            extends to the stream's end. Defaults to ``None``.
+        by : {"timestamp", "time", "sample"}, optional
+            Unit used to interpret ``tmin`` and ``tmax``. Defaults to ``"timestamp"``.
 
         %(inplace)s
 
         Returns
         -------
         %(stream_or_none)s
+
+        Raises
+        ------
+        ValueError
+            If both ``tmin`` and ``tmax`` are ``None``, if bounds are negative,
+            or if no data falls within the specified range.
+
+        Examples
+        --------
+        Crop to the first 0.5 seconds of data:
+
+        >>> stream_500ms = stream.crop(tmin=0, tmax=0.5, by="time")
+
+        Crop using absolute timestamps:
+
+        >>> cropped = stream.crop(tmin=start_ts, tmax=end_ts, by="timestamp")
+
+        Extract samples 100 through 200:
+
+        >>> samples = stream.crop(tmin=100, tmax=200, by="sample")
         """
         if tmin is None and tmax is None:
             raise ValueError("At least one of `tmin` or `tmax` must be provided")
@@ -449,7 +471,7 @@ Columns: {list(self.data.columns)}
         # tmin and tmax should be positive numbers
         if tmin < 0 or tmax < 0:
             raise ValueError("Crop bounds must be non-negative")
-        mask = (t >= tmin) & (t < tmax)
+        mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
         inst = self if inplace else self.copy()
@@ -463,19 +485,31 @@ Columns: {list(self.data.columns)}
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Temporally crop the stream to the range of timestamps of another stream.
-        Equivalent to ``crop(other.first_ts, other.last_ts)``.
+        Align this stream's temporal range to match another stream.
+
+        This method crops the data to include only samples between the first and
+        last timestamps of the reference stream. It is equivalent to calling
+        ``crop(tmin=other.first_ts, tmax=other.last_ts, by="timestamp")``.
+
+        Useful for ensuring temporal alignment across multiple data streams,
+        particularly when streams have different start or end times.
 
         Parameters
         ----------
         other : Stream
-            The stream whose timestamp range is used to restrict the data.
+            Reference stream whose temporal boundaries define the cropping range.
 
         %(inplace)s
 
         Returns
         -------
         %(stream_or_none)s
+
+        Examples
+        --------
+        Align IMU data to match the temporal extent of gaze data:
+
+        >>> imu_aligned = imu.restrict(gaze)
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -490,6 +524,8 @@ Columns: {list(self.data.columns)}
     ) -> Optional["Stream"]:
         """
         Interpolate the stream to new timestamps.
+        Useful for temporal synchronization (e.g., stream-to-stream, stream-to-video) or
+        resampling to a uniform rate.
 
         Data columns of float type are interpolated using the method specified by ``float_kind``,
         while other columns use the method specified by ``other_kind``. This distinction allows
@@ -498,12 +534,12 @@ Columns: {list(self.data.columns)}
         Parameters
         ----------
         new_ts : numpy.ndarray, optional
-            An array of new timestamps (in nanoseconds) at which to evaluate
-            the interpolant. If ``None`` (default), new and equally-spaced timestamps
-            are generated according to :attr:`sampling_freq_nominal`.
+            Target timestamps (in nanoseconds) for the resampled data. If ``None``,
+            timestamps are auto-generated at uniform intervals based on
+            :attr:`sampling_freq_nominal`. Defaults to ``None``.
 
-        %(interp_kwargs)s
-
+        %(interp_kind_params)s
+        %(max_gap_ms)s
         %(inplace)s
 
         Returns
@@ -512,8 +548,20 @@ Columns: {list(self.data.columns)}
 
         Notes
         -----
-        - If ``new_ts`` contains timestamps outside the range of ``self.ts``,
-          the corresponding rows will contain NaN.
+        - Timestamps in ``new_ts`` that fall outside the original data range
+          will have NaN values in the interpolated stream.
+        - Column data types are preserved after interpolation.
+        - Uses `scipy.interpolate.interp1d` internally.
+
+        Examples
+        --------
+        Interpolate gaze data to uniform 200 Hz sampling:
+
+        >>> gaze_uniform = gaze.interpolate()
+
+        Align gaze data to IMU timestamps:
+
+        >>> gaze_on_imu = gaze.interpolate(new_ts=imu.ts)
         """
         # If new_ts is not provided, generate a evenly spaced array of timestamps
         if new_ts is None:
@@ -608,6 +656,7 @@ Columns: {list(self.data.columns)}
     ) -> Optional["Stream"]:
         """
         Interpolate data during the duration of events in the stream data.
+        Particularly useful for repairing blink artifacts in eye states or gaze data.
         Similar to :func:`mne.preprocessing.eyetracking.interpolate_blinks`.
 
         Parameters
@@ -622,8 +671,8 @@ Columns: {list(self.data.columns)}
             to both before and after the event.
             Defaults to 0.05.
 
-        %(interp_kwargs)s
-
+        %(interp_kind_params)s
+        %(max_gap_ms)s
         %(inplace)s
 
         Returns
@@ -780,13 +829,18 @@ Columns: {list(self.data.columns)}
         other : Stream
             The other stream to concatenate.
 
-        %(interp_kwargs)s
-
+        %(interp_kind_params)s
+        %(max_gap_ms)s
         %(inplace)s
 
         Returns
         -------
         %(stream_or_none)s
+
+        Notes
+        -----
+        To concatenate multiple :class:`Stream` throughout the recording, you can also use
+        :meth:`Recording.concat_streams()`.
         """
         # Interpolate other to self timestamps if needed
         if not np.array_equal(self.ts, other.ts):

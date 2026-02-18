@@ -12,7 +12,7 @@ from .utils import (
     _verify_format,
     distort_points,
     get_undistort_valid_fraction,
-    resolve_detection_window,
+    resolve_processing_window,
 )
 
 if TYPE_CHECKING:
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 def detect_surface(
     video: "Video",
     step: int = 1,
-    detection_window: tuple[int | float, int | float] | None = None,
-    detection_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    processing_window: tuple[int | float, int | float] | None = None,
+    processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     min_area_ratio: float = 0.01,
     max_area_ratio: float = 0.98,
     brightness_threshold: int = 180,
@@ -64,10 +64,10 @@ def detect_surface(
     if decimate <= 0:
         raise ValueError("decimate must be > 0")
 
-    start_frame_idx, end_frame_idx = resolve_detection_window(
+    start_frame_idx, end_frame_idx = resolve_processing_window(
         video,
-        detection_window,
-        detection_window_unit,
+        processing_window,
+        processing_window_unit,
     )
     detections = []
     frames_to_process = range(start_frame_idx, end_frame_idx + 1, step)

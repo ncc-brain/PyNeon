@@ -171,7 +171,7 @@ class Events(BaseTabular):
         Path to the source file(s). ``None`` if initialized from a DataFrame.
     data : pandas.DataFrame
         Event data with standardized column names.
-    type : {"blinks", "fixations", "saccades", "events", "custom"}
+    type : str
         Inferred event type based on data columns.
 
     Examples
@@ -302,26 +302,49 @@ Columns: {list(self.data.columns)}
         inplace: bool = False,
     ) -> Optional["Events"]:
         """
-        Crop data to a specific time range based on timestamps or sample numbers.
+        Extract a subset of events within a specified temporal range.
+
+        The ``by`` parameter determines how ``tmin`` and ``tmax`` are interpreted:
+        - ``"timestamp"``: Absolute Unix timestamps in nanoseconds (based on event start times)
+        - ``"sample"``: Zero-based event indices
+
+        Both bounds are inclusive. If either bound is omitted, it defaults to the
+        events' natural boundary (earliest or latest event).
 
         Parameters
         ----------
-        tmin : number, optional
-            Start timestamp/sample to crop the data to (inclusive). If ``None``,
-            the minimum timestamp/sample in the data is used. Defaults to ``None``.
-        tmax : number, optional
-            End timestamp/sample to crop the data to (exclusive). If ``None``,
-            the maximum timestamp/sample in the data is used. Defaults to ``None``.
-        by : "timestamp" or "sample", optional
-            Whether tmin and tmax are Unix timestamps in nanoseconds
-            or sample numbers of the stream data.
-            Defaults to "timestamp".
+        tmin : numbers.Number, optional
+            Lower bound of the range to extract (inclusive). If ``None``,
+            starts from the first event. Defaults to ``None``.
+        tmax : numbers.Number, optional
+            Upper bound of the range to extract (inclusive). If ``None``,
+            extends to the last event. Defaults to ``None``.
+        by : {"timestamp", "sample"}, optional
+            Unit used to interpret ``tmin`` and ``tmax``. Defaults to ``"timestamp"``.
 
         %(inplace)s
 
         Returns
         -------
         %(events_or_none)s
+
+        Raises
+        ------
+        ValueError
+            If both ``tmin`` and ``tmax`` are ``None``, or if no events
+            fall within the specified range.
+
+        Examples
+        --------
+        Crop fixations to the first 5 seconds:
+
+        >>> fixations_5s = fixations.crop(tmin=rec.gaze.first_ts, 
+        ...                                tmax=rec.gaze.first_ts + 5e9, 
+        ...                                by="timestamp")
+
+        Extract the first 100 blinks:
+
+        >>> first_100 = blinks.crop(tmin=0, tmax=99, by="sample")
         """
         if tmin is None and tmax is None:
             raise ValueError("At least one of `tmin` or `tmax` must be provided")
@@ -331,7 +354,7 @@ Columns: {list(self.data.columns)}
             t = np.arange(len(self))
         tmin = t.min() if tmin is None else tmin
         tmax = t.max() if tmax is None else tmax
-        mask = (t >= tmin) & (t < tmax)
+        mask = (t >= tmin) & (t <= tmax)
         if not mask.any():
             raise ValueError("No data found in the specified time range")
 
@@ -342,19 +365,32 @@ Columns: {list(self.data.columns)}
     @fill_doc
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
-        Temporally crop the events to the range of timestamps of a stream.
-        Equivalent to ``crop(other.first_ts, other.last_ts)``.
+        Align events to match a stream's temporal range.
+
+        This method filters events to include only those whose start times fall
+        between the first and last timestamps of the reference stream. It is
+        equivalent to calling
+        ``crop(tmin=other.first_ts, tmax=other.last_ts, by="timestamp")``.
+
+        Useful for limiting event analysis to periods when a particular data stream
+        is available.
 
         Parameters
         ----------
         other : Stream
-            The stream whose timestamp range is used to restrict the events.
+            Reference stream whose temporal boundaries define the cropping range.
 
         %(inplace)s
 
         Returns
         -------
         %(events_or_none)s
+
+        Examples
+        --------
+        Analyze only blinks that occurred during recorded gaze data:
+
+        >>> blinks_with_gaze = blinks.restrict(gaze)
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -372,10 +408,10 @@ Columns: {list(self.data.columns)}
         Parameters
         ----------
         dur_min : number, optional
-            Minimum duration (in milliseconds) of events to keep.
+            Minimum duration (in milliseconds) of events to keep (inclusive).
             If ``None``, no minimum duration filter is applied. Defaults to ``None``.
         dur_max : number, optional
-            Maximum duration (in milliseconds) of events to keep.
+            Maximum duration (in milliseconds) of events to keep (inclusive).
             If ``None``, no maximum duration filter is applied. Defaults to ``None``.
         reset_id : bool, optional
             Whether to reset event IDs after filtering.
@@ -417,7 +453,7 @@ Columns: {list(self.data.columns)}
     ) -> Optional["Events"]:
         """
         Filter events by matching values in a specified column.
-        Designed primarily for filtering ``Recording.events`` by their names.
+        Designed primarily for filtering :attr:`Recording.events` by their names.
 
         This method selects only the events whose value in ``col_name`` matches
         one or more of the provided ``names``. If no events match, a

@@ -1,6 +1,6 @@
 DOC = dict()
 
-DOC["interp_kwargs"] = """\
+DOC["interp_kind_params"] = """\
 float_kind : str or int, optional
     Kind of interpolation applied to columns of float type.
     See :class:`scipy.interpolate.interp1d` for details.
@@ -10,19 +10,32 @@ other_kind : str or int, optional
     See :class:`scipy.interpolate.interp1d` for details.
     Only "nearest", "nearest-up", "previous", and "next" are recommended.
     Defaults to "nearest".
-max_gap_ms : numbers.Number, optional
-    Maximum allowed gap (in milliseconds) between a new timestamp and
-    adjacent original timestamps. If a new timestamp's distance to
-    both its immediate left and right original timestamps exceeds this
-    threshold, the data at that timestamp will be set to empty.
-    If ``None``, no gap-based filtering is applied.
-    Defaults to 500."""
+"""
 
 
 DOC["inplace"] = """\
 inplace : bool, optional
     If ``True``, replace current data. Otherwise returns a new instance.
     Defaults to ``False``."""
+
+DOC["step_param"] = """\
+step : int, optional
+    Process every Nth frame. For example, step=5 processes frames
+    0, 5, 10, 15, ...). Defaults to 1 (process all frames)."""
+
+DOC["window_params"] = """\
+processing_window : tuple[int | float, int | float] or None
+    Start and end of the processing window. Interpretation depends on
+    ``processing_window_unit``. Defaults to ``None`` (full duration).
+processing_window_unit : {"frame", "time", "timestamp"}, optional
+    Unit for values in ``processing_window``. Possible values are:
+
+    - "timestamp": Unix timestamps in nanoseconds
+    - "time": Seconds relative to video start
+    - "frame": video frame indices (0-based)
+
+    Defaults to "frame".
+"""
 
 DOC["max_gap_ms"] = """\
 max_gap_ms : int, optional
@@ -34,44 +47,37 @@ max_gap_ms : int, optional
 
 DOC["stream_or_none"] = """\
 Stream or None
-    A new ``Stream`` instance with modified data
+    A new :class:`Stream` instance with modified data
     if ``inplace=False``, otherwise ``None``.
 """
 
 DOC["events_or_none"] = """\
 Events or None
-    A new ``Events`` instance with modified data
+    A new :class:`Events` instance with modified data
     if ``inplace=False``, otherwise ``None``.
 """
 
 DOC["epochs_info"] = """\
 epochs_info : pandas.DataFrame, shape (n_epochs, 4)
-    DataFrame containing epoch information with the following columns (time in ns):
+    DataFrame containing epoch information with the following columns
+    (times are UNIX timestamps in nanoseconds):
 
-        ``t_ref``: Reference time of the epoch.\n
-        ``t_before``: Time before the reference time to start the epoch.\n
-        ``t_after``: Time after the reference time to end the epoch.\n
-        ``description``: Description or label associated with the epoch.
+    ================ ================================
+    Column           Description
+    ================ ================================
+    ``t_ref``        Reference time of the epoch.
+    ``t_before``     Time before the reference time to start the epoch.
+    ``t_after``      Time after the reference time to end the epoch.
+    ``description``  Description or label associated with the epoch.
+    ================ ================================
 """
 
 DOC["detect_markers_params"] = """
 marker_family : str or list[str], optional
     AprilTag family/ArUco dictionary to detect. Accepts a single family string
     (e.g., '36h11') or a list of families (e.g., ['36h11', '6x6_250']).
-step : int, optional
-    If > 1, detect markers only in every Nth frame (e.g., step=5 processes frames
-    0, 5, 10, 15, ...). Defaults to 1.
-detection_window : tuple, optional
-    A tuple (start, end) specifying the range to search for detections.
-    Interpretation depends on ``detection_window_unit``. Defaults to ``None`` (all frames).
-detection_window_unit : {"frame", "time", "timestamp"}, optional
-    Unit for values in ``detection_window``. Possible values are:
-
-    - "timestamp": Unix timestamps in nanoseconds
-    - "time": Seconds relative to video start
-    - "frame": video frame indices (0-based)
-
-    Defaults to "frame".
+%(step_param)s
+%(window_params)s
 detector_parameters : cv2.aruco.DetectorParameters, optional
     Detector parameters to use for all marker families. If None, a default
     DetectorParameters instance is created. Defaults to ``None``.
@@ -82,19 +88,8 @@ undistort : bool, optional
 """
 
 DOC["detect_surface_params"] = """
-step : int, optional
-    Process every Nth frame (default 1 = process all frames).
-detection_window : tuple, optional
-    A tuple (start, end) specifying the range to search for detections.
-    Interpretation depends on ``detection_window_unit``. Defaults to ``None`` (all frames).
-detection_window_unit : {"frame", "time", "timestamp"}, optional
-    Unit for values in ``detection_window``. Possible values are:
-
-    - "timestamp": Unix timestamps in nanoseconds
-    - "time": Seconds relative to video start
-    - "frame": video frame indices (0-based)
-
-    Defaults to "frame".
+%(step_param)s
+%(window_params)s
 min_area_ratio : float, optional
     Minimum contour area relative to frame area. Contours smaller than this
     ratio are ignored. Default is 0.01 (1% of frame area).

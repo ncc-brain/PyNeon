@@ -1,5 +1,4 @@
 import json
-import shutil
 from datetime import datetime
 from functools import cached_property
 from numbers import Number
@@ -7,33 +6,27 @@ from pathlib import Path
 from typing import Literal, Optional
 from warnings import warn
 
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from .events import Events
 from .export import export_cloud_format, export_eye_bids, export_motion_bids
-from .preprocess import concat_events, concat_streams, smooth_camera_pose
+from .preprocess import concat_events, concat_streams
 from .stream import Stream
 from .utils.doc_decorators import fill_doc
 from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
-from .video import (
-    Video,
-    detect_markers,
-    estimate_camera_pose,
-    estimate_scanpath,
-    find_homographies,
-)
-from .vis import overlay_detections_and_pose, overlay_scanpath, plot_distribution
+from .video import Video
+from .vis import plot_distribution
 
 
 class Recording:
     """
-    Container of a multi-modal recording with streams, events, and videos.
+    Container of a multi-modal recording with
+    :class:`Stream`, :class:`Events`, and :class:`Video`
 
     The recording directory is expected to follow either the Pupil Cloud format
-    (tested with data format version >= 2.3) or the native Pupil Labs format.
+    (tested with data format version >= 2.3) or the native Pupil Labs format
     (tested with data format version >= 2.5).
     In both cases, the directory must contain an ``info.json`` file.
 
@@ -131,7 +124,7 @@ class Recording:
                 info["wearer_name"] = None
                 warn("Cannot find wearer.json in native recording.")
         self.info = info
-        self.data_format_version = info.get("data_format_version", None)
+        self.data_format_version = info.get("data_format_version", "unknown")
 
     def _infer_format(self):
         gaze_csv = self.recording_dir / "gaze.csv"
@@ -167,7 +160,7 @@ class Recording:
 
     def __repr__(self) -> str:
         return f"""
-Data format: {self.format}
+Data format: {self.format} (version: {self.data_format_version})
 Recording ID: {self.recording_id}
 Wearer ID: {self.info.get("wearer_id", "N/A")}
 Wearer name: {self.info.get("wearer_name", "N/A")}
@@ -178,7 +171,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def gaze(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` instance containing gaze data.
+        Return a cached :class:`Stream` instance containing gaze data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``gaze.csv``.
 
@@ -198,7 +191,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def imu(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` instance containing IMU data.
+        Return a cached :class:`Stream` instance containing IMU data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``imu.csv``.
 
@@ -213,7 +206,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_states(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` instance containing eye states data.
+        Return a cached :class:`Stream` instance containing eye states data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``3d_eye_states.csv``.
 
@@ -228,7 +221,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def blinks(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` instance containing blink event data.
+        Return a cached :class:`Events` instance containing blink event data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``blinks.csv``.
 
@@ -243,7 +236,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def fixations(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` instance containing fixations data.
+        Return a cached :class:`Events` instance containing fixations data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``fixations.csv``.
 
@@ -258,7 +251,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def saccades(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` instance containing saccades data.
+        Return a cached :class:`Events` instance containing saccades data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``saccades.csv``.
 
@@ -275,7 +268,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def events(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` instance containing events data.
+        Return a cached :class:`Events` instance containing events data.
 
         For **Pupil Cloud** recordings, the events data is loaded from ``events.csv``.
 
@@ -290,7 +283,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def scene_video(self) -> Video:
         """
-        Return a cached :class:`pyneon.Video` instance containing scene video data.
+        Return a cached :class:`Video` instance containing scene video data.
 
         For **Pupil Cloud** recordings, the video is loaded from the only ``*.mp4`` file
         in the recording directory.
@@ -352,7 +345,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     @cached_property
     def eye_video(self) -> Video:
         """
-        Return a cached :class:`pyneon.Video` instance containing eye video data.
+        Return a cached :class:`Video` instance containing eye video data.
 
         Eye video is only available for **native** recordings and is loaded from the
         ``Neon Sensor Module*.mp4`` file in the recording directory.
@@ -468,6 +461,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         new_data = concat_events(self, event_names)
         return Events(new_data)
 
+    @fill_doc
     def plot_distribution(
         self,
         heatmap_source: Literal["gaze", "fixations", None] = "gaze",
@@ -525,8 +519,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
     ) -> Stream:
         """
         Synchronize gaze data to video frames by applying windowed averaging
@@ -550,694 +542,12 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 - 'gaze y [px]': Gaze y-coordinate in pixels
                 - 'frame index': Index of the video frame corresponding to the gaze data
         """
-        if output_path is None:
-            gaze_file = self.der_dir / "gaze_synced.csv"
-        else:
-            gaze_file = Path(output_path)
-
-        if gaze_file.is_file() and not overwrite:
-            synced_gaze = pd.read_csv(gaze_file, index_col="timestamp [ns]")
-            if synced_gaze.empty:
-                raise ValueError("Gaze data is empty.")
-            return Stream(synced_gaze)
-
-        if self.gaze is None or self.scene_video is None:
-            raise ValueError("Gaze-video synchronization requires gaze and video data.")
-
-        synced_gaze = self.gaze.window_average(self.scene_video.ts, window_size).data
-        synced_gaze["frame index"] = np.arange(len(synced_gaze))
-
-        synced_gaze.index.name = "timestamp [ns]"
-        synced_gaze.to_csv(gaze_file, index=True)
-
-        return Stream(synced_gaze)
-
-    def estimate_scanpath(
-        self,
-        sync_gaze: Optional[Stream] = None,
-        lk_params: Optional[dict] = None,
-        output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-    ) -> Stream:
-        """
-        Estimate scanpaths by propagating fixations across frames with Lucas-Kanade.
-
-        If a cached result exists and ``overwrite`` is False, it is loaded from disk.
-
-        Parameters
-        ----------
-        sync_gaze : Stream, optional
-            Gaze data synchronised to video frames. If ``None``, it is created with
-            Recording.sync_gaze_to_video().
-        lk_params : dict, optional
-            Parameters forwarded to the LK optical-flow call.
-        output_path : str or pathlib.Path, optional
-            Where to save the pickle. Defaults to ``<der_dir>/scanpath.pkl``.
-        overwrite : bool, optional
-            Force recomputation even if a pickle exists.
-
-        Returns
-        -------
-        Stream
-            Indexed by "timestamp [ns]" with one column "fixations"
-            containing a nested DataFrame for each video frame.
-        """
-        scanpath_path = (
-            Path(output_path) if output_path else self.der_dir / "scanpath.pkl"
-        )
-
-        if scanpath_path.is_file() and not overwrite:
-            print(f"Loading saved scanpath from {scanpath_path}")
-            df = pd.read_pickle(scanpath_path)
-            if df.empty:
-                raise ValueError("Scanpath data is empty.")
-            return Stream(df)
-
-        if sync_gaze is None:
-            sync_gaze = self.sync_gaze_to_video()
-
-        scanpath_df = estimate_scanpath(
-            self.scene_video,
-            sync_gaze,
-            lk_params=lk_params,
-        )
-        scanpath_df.index.name = "timestamp [ns]"
-
-        # save
-        scanpath_df.to_pickle(scanpath_path)
-
-        return Stream(scanpath_df)
-
-    @fill_doc
-    def detect_markers(
-        self,
-        marker_family: str | list[str] = "36h11",
-        step: int = 1,
-        detection_window: Optional[tuple[int | float, int | float]] = None,
-        detection_window_unit: str = "frame",
-        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Stream:
-        """
-        Detect fiducial markers (AprilTag or ArUco) in a video and return their positions per frame.
-
-        Uses saved results if available unless `overwrite=True`.
-
-        Parameters
-        ----------
-        %(detect_markers_params)s
-        overwrite : bool, optional
-            If True, reruns detection even if saved results exist. Defaults to False.
-        output_path : str or pathlib.Path, optional
-            Path to save the detection CSV file. Defaults to `<der_dir>/markers.csv`.
-
-        Returns
-        -------
-        %(detect_markers_return)s
-        """
-
-        window_unit = detection_window_unit
-        valid_units = {"frame", "time", "timestamp"}
-        if window_unit not in valid_units:
-            raise ValueError(
-                f"Invalid detection_window_unit '{detection_window_unit}'. Use one of {sorted(valid_units)}."
-            )
-
-        if output_path is None:
-            csv_file = self.der_dir / "markers.csv"
-        else:
-            csv_file = Path(output_path)
-
-        # If a saved file exists and overwrite is False, just read and return it
-        if csv_file.is_file() and not overwrite:
-            print(f"Loading saved detections from {csv_file}")
-            detected_markers = pd.read_csv(csv_file, index_col="timestamp [ns]")
-            if detected_markers.empty:
-                raise ValueError("Marker detection data is empty.")
-            return Stream(detected_markers)
-
-        detected_markers = detect_markers(
-            video=self.scene_video,
-            marker_family=marker_family,
-            step=step,
-            detection_window=detection_window,
-            detection_window_unit=window_unit,
-            detector_parameters=detector_parameters,
-        )
-
-        if detected_markers.data.empty:
-            raise ValueError("No marker detections found.")
-
-        # Save results to CSV
-        detected_markers.data.to_csv(csv_file, index=True)
-
-        return detected_markers
-
-    @fill_doc
-    def find_homographies(
-        self,
-        marker_info: pd.DataFrame,
-        detected_markers: Optional[Stream] = None,
-        valid_markers: int = 2,
-        method: int = cv2.LMEDS,
-        ransacReprojThreshold: float = 3.0,
-        maxIters: int = 2000,
-        confidence: float = 0.995,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Stream:
-        """
-        Compute and return homographies for each frame using marker detections and reference marker layout.
-
-        Parameters
-        ----------
-        marker_info : pandas.DataFrame
-            DataFrame containing marker reference positions, with columns:
-                - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")
-                - "size": size of the marker in the reference plane units
-                - "center x": x center of the marker in OpenCV coordinates
-                - "center y": y center of the marker in OpenCV coordinates
-        detected_markers : Stream, optional
-            Stream containing marker detection results per frame. If None, detections are recomputed.
-        %(find_homographies_params)s
-        overwrite : bool, optional
-            Whether to force recomputation even if saved homographies exist. Defaults to False.
-        output_path : str or pathlib.Path, optional
-            Optional file path for saving the homographies as pickle. If None, defaults to `<der_dir>/homographies.pkl`.
-
-        Returns
-        -------
-        %(find_homographies_return)s
-        """
-
-        if output_path is None:
-            pkl_file = self.der_dir / "homographies.pkl"
-        else:
-            pkl_file = Path(output_path)
-
-        # If a saved file exists and overwrite is False, just read and return it
-        if pkl_file.is_file() and not overwrite:
-            print(f"Loading saved homographies from {pkl_file}")
-            df = pd.read_pickle(pkl_file)
-            homographies = Stream(df)
-            return homographies
-
-        if detected_markers is None:
-            detected_markers = self.detect_markers()
-
-        homographies = find_homographies(
-            detected_markers=detected_markers,
-            marker_layout=marker_info,
-            valid_markers=valid_markers,
-            method=method,
-            ransacReprojThreshold=ransacReprojThreshold,
-            maxIters=maxIters,
-            confidence=confidence,
-        )
-
-        homographies.data.to_pickle(pkl_file)
-
-        return homographies
-
-    def gaze_on_surface(
-        self,
-        homographies: Optional[Stream] = None,
-        marker_info: Optional[pd.DataFrame] = None,
-        synced_gaze: Optional[Stream] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Stream:
-        """
-        Project gaze coordinates from eye space to surface space using homographies.
-
-        Computes or loads frame-wise or sample-wise homographies and applies them to
-        either synchronized or raw gaze data. If homographies are already sampled to
-        the raw gaze timestamps, they are applied directly. Otherwise, synchronized
-        gaze is used.
-
-        If a saved version exists and `overwrite` is False, the data is loaded from disk.
-
-        Parameters
-        ----------
-        homographies : Stream, optional
-            Stream containing precomputed homographies. If None, they are computed from `marker_info`.
-        marker_info : pandas.DataFrame, optional
-            AprilTag marker info used to compute homographies. Required if `homographies` is None.
-        synced_gaze : Stream, optional
-            Gaze data aligned to video frames. If None, will be either `self.gaze` or
-            computed using `sync_gaze_to_video()` depending on the `homographies` frequency.
-        overwrite : bool, optional
-            If True, recompute and overwrite any existing surface-transformed gaze data. Defaults to False.
-        output_path : str or pathlib.Path, optional
-            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_surface.csv`.
-
-        Returns
-        -------
-        Stream
-            A Stream containing gaze data with surface coordinates, including:
-                - 'frame index': Frame index
-                - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
-                - Any additional columns from the gaze input
-        """
-
-        if output_path is None:
-            gaze_on_surface_path = self.der_dir / "gaze_on_surface.csv"
-        else:
-            gaze_on_surface_path = Path(output_path)
-
-        if gaze_on_surface_path.is_file() and not overwrite:
-            # Load saved gaze on surface data
-            data = pd.read_csv(gaze_on_surface_path)
-            if data.empty:
-                raise ValueError("Gaze data is empty.")
-            return Stream(data)
-
-        if homographies is None:
-            if marker_info is None:
-                raise ValueError(
-                    "Marker information is required for homography estimation."
-                )
-            homographies = self.find_homographies(marker_info=marker_info)
-
-        if synced_gaze is None:
-            # Detect frequency / alignment
-            if homographies.data.index.equals(self.gaze.data.index):
-                synced_gaze = self.gaze
-            else:
-                synced_gaze = self.sync_gaze_to_video()
-
-        # data = apply_homographies_on_gaze(synced_gaze.data, homographies.data)
-
-        # Save gaze on surface data to CSV
-        data.to_csv(gaze_on_surface_path, index=True)
-
-        return Stream(data)
-
-    def fixations_on_surface(
-        self,
-        gaze_on_surface: Optional[Stream] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Events:
-        """
-        Project fixation events into surface space by summarizing gaze samples.
-
-        This function maps each fixation to surface coordinates by averaging the
-        surface-transformed gaze points (`x_trans`, `y_trans`) associated with
-        that fixation. If saved data exists and `overwrite` is False, it is loaded
-        from disk instead of being recomputed.
-
-        Parameters
-        ----------
-        gaze_on_surface : pandas.DataFrame, optional
-            DataFrame of gaze coordinates already transformed to surface space.
-            If None, will be computed via `self.gaze_on_surface()`.
-            Must include 'fixation id', 'x_trans', and 'y_trans' columns.
-        overwrite : bool, optional
-            If True, forces recomputation and overwrites any existing output file.
-            Defaults to False.
-        output_path : str or pathlib.Path, optional
-            Custom path to save the resulting fixation data as a CSV.
-            If None, defaults to `self.der_dir / "fixations_on_surface.csv"`.
-
-        Returns
-        -------
-        Events
-            An Events instance containing:
-                - All columns from the raw fixations table
-                - \"gaze x [surface coord]\" : float
-                    Mean surface-space x-coordinate for the fixation.
-                - "gaze y [surface coord]" : float
-                    Mean surface-space y-coordinate for the fixation.
-        """
-
-        if output_path is None:
-            fixation_on_surface_path = self.der_dir / "fixations_on_surface.csv"
-        else:
-            fixation_on_surface_path = Path(output_path)
-
-        # Check if fixations already exist
-        if fixation_on_surface_path.is_file() and not overwrite:
-            data = pd.read_csv(fixation_on_surface_path)
-            if data.empty:
-                raise ValueError("Fixations data is empty.")
-            return Events(data)
-
-        raw_fixations = self.fixations.data
-
-        if raw_fixations.empty:
-            raise ValueError("No fixations data found.")
-
-        if gaze_on_surface is None:
-            # Check if gaze on surface already exists
-            gaze_on_surface = self.gaze_on_surface()
-
-        # Summarize gaze points first:
-        gaze_means = (
-            gaze_on_surface.data.groupby("fixation id", as_index=False)[
-                ["gaze x [surface coord]", "gaze y [surface coord]"]
-            ]
-            .mean()
-            .rename(
-                columns={
-                    "gaze x [surface coord]": "fixation x [surface coord]",
-                    "gaze y [surface coord]": "fixation y [surface coord]",
-                }
-            )
-        )
-
-        raw_fixations = raw_fixations.reset_index(drop=False)
-
-        # Merge back into fixations:
-        data = raw_fixations.merge(gaze_means, on="fixation id", how="outer")
-        data = data.set_index("start timestamp [ns]")
-
-        # save fixations to csv
-        data.to_csv(fixation_on_surface_path, index=True)
-
-        return Events(data)
-
-    def _estimate_camera_pose(
-        self,
-        marker_locations_df: pd.DataFrame,
-        detected_markers: Optional[Stream] = None,
-        output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-    ) -> Stream:
-        """
-        Compute the camera pose (R|t) for every frame.
-
-        Parameters
-        ----------
-        marker_locations_df : pandas.DataFrame
-            3-D positions, normals and size for every marker (columns:
-            'marker_id','x','y','z','normal_x','normal_y','normal_z','size').
-        detected_markers : Stream, optional
-            Per-frame marker detections.  If ``None``, they are produced by Recording.detect_markers().
-        output_path : str or pathlib.Path, optional
-            Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
-        overwrite : bool, optional
-            If True, forces recomputation and overwrites any existing saved result. Defaults to False.
-
-        Returns
-        -------
-        Stream
-            Indexed by "timestamp [ns]" with columns
-            ``'frame id', 'translation_vector', 'rotation_vector', 'camera_pos'``.
-        """
-
-        json_file = (
-            Path(output_path) if output_path else self.der_dir / "camera_pose.json"
-        )
-
-        # load
-        if json_file.is_file() and not overwrite:
-            print(f"Loading saved camera pose from {json_file}")
-            df = pd.read_json(json_file, orient="records", lines=True)
-            df["timestamp [ns]"] = df["timestamp [ns]"].astype("int64")
-            df = df.set_index("timestamp [ns]")
-            if df.empty:
-                raise ValueError("Camera pose data is empty.")
-            return Stream(df)
-
-        # prerequisites
-        req = {"marker_id", "pos_vec", "norm_vec", "size"}
-        missing = req - set(marker_locations_df.columns)
-        if missing:
-            raise ValueError(f"marker_locations_df is missing: {missing}")
-
-        if detected_markers is None:
-            detected_markers = self.detect_markers()
-
-        if detected_markers.data.empty:
-            raise ValueError("No marker detections found.")
-
-        # compute
-        cam_pose_df = estimate_camera_pose(
-            video=self.scene_video,
-            marker_locations_df=marker_locations_df,
-            detected_markers=detected_markers.data,
-        )
-        cam_pose_df.index.name = "timestamp [ns]"
-
-        # save
-        cam_pose_df.reset_index().to_json(json_file, orient="records", lines=True)
-
-        return Stream(cam_pose_df)
-
-    def _smooth_camera_pose(
-        self,
-        camera_pose_raw: Optional[pd.DataFrame] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-        **kwargs,
-    ) -> pd.DataFrame:
-        """
-        Kalman-smooth camera positions and gate outliers.
-
-        Parameters
-        ----------
-        camera_pose_raw : pandas.DataFrame, optional
-            Raw camera-pose table with columns ``'frame id'`` and ``'camera_pos'``.
-            If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
-            computes it via Recording.estimate_camera_pose().
-        overwrite : bool, default False
-            Recompute even if a smoothed file already exists.
-        output_path : str or pathlib.Path, optional
-            Where to save the JSON (``smoothed_camera_pose.json`` by default).
-        kwargs : dict, optional
-            Optional arguments:
-                - initial_state_noise: float (default=0.1)
-                - process_noise: float (default=0.1)
-                - measurement_noise: float (default=0.01)
-                - gating_threshold: float (default=2.0)
-                - bidirectional: bool (default=False)
-
-        Returns
-        -------
-        pd.DataFrame
-            Same rows as *camera_pose_raw* with the extra column
-            ``'smoothed_camera_pos'`` (3-vector).
-        """
-
-        # Defaults
-        initial_state_noise = kwargs.get("initial_state_noise", 0.1)
-        process_noise = kwargs.get("process_noise", 0.1)
-        measurement_noise = kwargs.get("measurement_noise", 0.01)
-        gating_threshold = kwargs.get("gating_threshold", 2.0)
-        bidirectional = kwargs.get("bidirectional", False)
-
-        # target path
-        json_file = (
-            Path(output_path)
-            if output_path
-            else self.der_dir / "smoothed_camera_pose.json"
-        )
-
-        # fast-path load
-        if json_file.is_file() and not overwrite:
-            print(f"Loading smoothed camera pose from {json_file}")
-            df = pd.read_json(json_file, orient="records", lines=True)
-            df["camera_pos"] = df["camera_pos"].apply(np.array)
-            df["smoothed_camera_pos"] = df["smoothed_camera_pos"].apply(np.array)
-            return df
-
-        # obtain raw pose
-        if camera_pose_raw is None:
-            raw_path = self.der_dir / "camera_pose.json"
-            if raw_path.is_file():
-                camera_pose_raw = pd.read_json(raw_path, orient="records", lines=True)
-                camera_pose_raw["camera_pos"] = camera_pose_raw["camera_pos"].apply(
-                    lambda p: np.array(p, dtype=float)
-                )
-            else:
-                camera_pose_raw = self.estimate_camera_pose()  # returns DataFrame
-
-        if camera_pose_raw.empty:
-            raise ValueError("Camera-pose table is empty; cannot smooth.")
-
-        smoothed = smooth_camera_pose(
-            camera_pose_raw,
-            initial_state_noise,
-            process_noise,
-            measurement_noise,
-            gating_threshold,
-            bidirectional,
-        )
-
-        # save and return
-        smoothed.to_json(json_file, orient="records", lines=True)
-        return smoothed
-
-    def overlay_scanpath(
-        self,
-        scanpath: Optional[Stream] = None,
-        show_video: bool = False,
-        output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-        **kwargs,
-    ) -> None:
-        """
-        Render a video with the scan-path overlaid.
-
-        Parameters
-        ----------
-        scanpath : Stream, optional
-            Nested scan-path table (as from Recording.estimate_scanpath()).
-            If *None*, it is loaded or computed automatically.
-        show_video : bool
-            Display the video live while rendering.
-        output_path : str or pathlib.Path, optional
-            Target MP4 path. If "default", saves scanpath.mp4 to the derivatives
-            folder under the recording directory. If *None*, no file is written.
-        overwrite : bool, default False
-            Regenerate the overlay even if the MP4 already exists.
-        kwargs : dict, optional
-            Optional arguments:
-                - circle_radius: int, default 10
-                    Radius of the fixation circles.
-                - line_thickness: int, default 2
-                    Thickness of the fixation lines.
-                - text_size: int, default 1
-                    Size of the fixation text.
-                - max_fixations: int, default 10
-                    Maximum number of fixations to display.
-        """
-
-        # Defaults for kwargs
-        circle_radius = kwargs.get("circle_radius", 10)
-        line_thickness = kwargs.get("line_thickness", 2)
-        text_size = kwargs.get("text_size", 1)
-        max_fixations = kwargs.get("max_fixations", 10)
-
-        if scanpath is None:
-            scanpath = self.estimate_scanpath()
-
-        if self.scene_video is None:
-            raise ValueError("A loaded video is required to draw the overlay.")
-
-        if output_path == "default":
-            output_path = (
-                self.scene_video.video_file.parent / "derivatives" / "scanpath.mp4"
-            )
-        elif output_path is not None:
-            output_path = Path(output_path)
-
-        if output_path is not None and output_path.is_file() and not overwrite:
-            print(f"Overlay video already exists at {output_path}; skipping render.")
-            if show_video:
-                print("`show_video=True` has no effect because rendering was skipped.")
-            return
-
-        overlay_scanpath(
-            self.scene_video,
-            scanpath.data,
-            circle_radius,
-            line_thickness,
-            text_size,
-            max_fixations,
-            show_video,
-            output_path,
-        )
-
-    def overlay_detections_and_pose(
-        self,
-        april_detections: pd.DataFrame,
-        camera_positions: pd.DataFrame,
-        room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-        output_path: Path | str | None = None,
-        graph_size: np.ndarray = np.array([300, 300]),
-        show_video: bool = False,
-    ):
-        """
-        Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.
-
-        Parameters
-        ----------
-        april_detections : pandas.DataFrame
-            DataFrame containing the AprilTag detections.
-        camera_positions : pandas.DataFrame
-            DataFrame containing the camera positions.
-        room_corners : numpy.ndarray
-            Array containing the room corners coordinates. Defaults to a unit square.
-        output_path pathlib.Path or str
-            Path to save the video with detections and poses overlaid. If "default",
-            saves detection_and_pose.mp4 to the derivatives folder under the
-            recording directory. If None, no output video is written.
-        graph_size : numpy.ndarray
-            Size of the graph to overlay on the video. Defaults to [300, 300].
-        show_video : bool
-            Whether to display the video with detections and poses overlaid. Defaults to False.
-        """
-        if self.scene_video is None:
-            raise ValueError(
-                "Overlaying detections and pose on video requires video data."
-            )
-
-        if output_path == "default":
-            output_path = (
-                self.scene_video.video_file.parent
-                / "derivatives"
-                / "detection_and_pose.mp4"
-            )
-        elif output_path is not None:
-            output_path = Path(output_path)
-
-        overlay_detections_and_pose(
-            self,
-            april_detections,
-            camera_positions,
-            room_corners,
-            output_path,
-            graph_size,
-            show_video,
-        )
-
-    def clear_der_dir(
-        self,
-        include: str | list[str] = ["all"],
-        exclude: str | list[str] = [],
-    ):
-        """
-        Clear the derived data directory by removing files and folders.
-
-        Parameters
-        ----------
-        include : str or list of str, optional
-            Files or folders to delete. If ["all"], delete everything in the directory.
-            Supports full names or base names without extensions (e.g. "scanpath" matches "scanpath.pkl").
-        exclude : str or list of str, optional
-            Files or folders to exclude. Applies only if include is ["all"].
-            Also supports base names.
-        """
-
-        der_dir = Path(self.der_dir)
-        if not der_dir.is_dir():
-            raise ValueError(f"Derived data directory {der_dir} does not exist.")
-
-        include_set = {include} if isinstance(include, str) else set(include)
-        exclude_set = {exclude} if isinstance(exclude, str) else set(exclude)
-
-        def matches_name(p: Path, names: set[str]) -> bool:
-            return p.name in names or p.stem in names
-
-        if "all" in include:
-            # Delete everything not matching excluded names
-            targets = [p for p in der_dir.iterdir() if not matches_name(p, exclude_set)]
-        else:
-            # Delete only explicitly included files/folders
-            targets = [p for p in der_dir.iterdir() if matches_name(p, include_set)]
-
-        deleted_paths = []
-        for p in targets:
-            if p.is_file():
-                p.unlink()
-            elif p.is_dir():
-                shutil.rmtree(p)
-            deleted_paths.append(p.name)
-
-        print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
+        try:
+            gaze = self.gaze
+            video = self.scene_video
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"Cannot sync gaze to video because {e}") from e
+        return gaze.window_average(video.ts, window_size)
 
     def export_cloud_format(
         self,

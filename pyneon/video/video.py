@@ -1,6 +1,6 @@
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 from warnings import warn
 
 import cv2
@@ -13,14 +13,14 @@ from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
 from ..vis.video import (
+    overlay_detections,
     overlay_scanpath,
     plot_detections,
     plot_frame,
-    overlay_detections,
 )
 from .marker import detect_markers
 from .surface import detect_surface
-from .utils import get_undistort_maps
+from .utils import get_undistort_maps, resolve_processing_window
 
 
 class Video(cv2.VideoCapture):
@@ -45,9 +45,12 @@ class Video(cv2.VideoCapture):
         Alias for timestamps.
     """
 
-    def __init__(self, video_file: Path, timestamps: np.ndarray, info: Optional[dict] = None):
+    def __init__(
+        self, video_file: Path, timestamps: np.ndarray, info: Optional[dict] = None
+    ):
         super().__init__(video_file)
         self.video_file = video_file
+        timestamps = np.asarray(timestamps, dtype=np.int64)
         self.timestamps = timestamps
         self.ts = self.timestamps
         self.info = info
@@ -58,7 +61,7 @@ class Video(cv2.VideoCapture):
         if info == {}:
             warn("Video info is empty and will be loaded from default values.")
             self.info = default_camera_info
-        elif info is None: # Eye video
+        elif info is None:  # Eye video
             self.info = {}
 
         if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
@@ -69,7 +72,7 @@ class Video(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
-    
+
     def __repr__(self) -> str:
         return f"""Video name: {self.video_file.name}
 Video height: {self.height} px
@@ -154,7 +157,7 @@ Effective FPS: {self.fps:.2f}
     def undistortion_matrix(self) -> np.ndarray:
         """Optimal new camera matrix used for undistortion."""
         return self.undistort_cache[2]
-    
+
     @property
     def current_frame_index(self) -> int:
         """Current frame index based on the video position."""
@@ -179,17 +182,18 @@ Effective FPS: {self.fps:.2f}
         Raises
         ------
         ValueError
-            If any timestamp is outside the video timestamp range.
+            If any timestamp is earlier than the first video timestamp or
+            later than the last video timestamp.
         """
         ts_array = np.atleast_1d(np.asarray(timestamp, dtype=np.int64))
 
-        if ts_array.size > 0 and (
-            ts_array.min() < self.ts[0] or ts_array.max() > self.ts[-1]
-        ):
-            raise ValueError("Timestamp is out of bounds of the video timestamps.")
+        if ts_array.size > 0 and ts_array.min() < self.ts[0]:
+            raise ValueError("Timestamp is earlier than the first video timestamp.")
+        if ts_array.size > 0 and ts_array.max() > self.ts[-1]:
+            raise ValueError("Timestamp is later than the last video timestamp.")
 
-        indices = np.searchsorted(self.ts, ts_array).astype(int)
-        return indices
+        frame_indices = np.searchsorted(self.ts, ts_array).astype(int)
+        return frame_indices
 
     def read_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
         """
@@ -218,19 +222,23 @@ Effective FPS: {self.fps:.2f}
         current = self.current_frame_index
 
         # Use grab to advance frame-by-frame when seeking forward to maintain timestamp alignment in VFR videos.
-        if 0 <= (frame_index - current):
-            while current < frame_index:
+        if frame_index > current:
+            while frame_index > current:
                 if not self.grab():
+                    warn(
+                        f"Failed to grab frame while seeking forward to frame {frame_index}."
+                    )
                     return None
                 current += 1
-        elif current != frame_index:
-            # reset to start and grab forward if seeking backward to maintain timestamp alignment in VFR videos.
+        elif current != frame_index:  # Target frame is in the past
+            # Reset to start and grab forward
             self.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            self.read_frame_at(frame_index)
-        
+            return self.read_frame_at(frame_index)
+
         assert self.current_frame_index == frame_index
         ret, frame = self.retrieve()
         if not ret:
+            warn(f"Failed to retrieve frame at index {frame_index}.")
             return None
         return frame
 
@@ -271,8 +279,8 @@ Effective FPS: {self.fps:.2f}
         self,
         marker_family: str | list[str] = "36h11",
         step: int = 1,
-        detection_window: Optional[tuple[int | float, int | float]] = None,
-        detection_window_unit: str = "frame",
+        processing_window: Optional[tuple[int | float, int | float]] = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
         detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
         undistort: bool = False,
     ) -> Stream:
@@ -291,8 +299,8 @@ Effective FPS: {self.fps:.2f}
             self,
             marker_family=marker_family,
             step=step,
-            detection_window=detection_window,
-            detection_window_unit=detection_window_unit,
+            processing_window=processing_window,
+            processing_window_unit=processing_window_unit,
             detector_parameters=detector_parameters,
             undistort=undistort,
         )
@@ -301,8 +309,8 @@ Effective FPS: {self.fps:.2f}
     def detect_surface(
         self,
         step: int = 1,
-        detection_window: tuple[int | float, int | float] | None = None,
-        detection_window_unit: str = "frame",
+        processing_window: tuple[int | float, int | float] | None = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
         min_area_ratio: float = 0.01,
         max_area_ratio: float = 0.98,
         brightness_threshold: int = 180,
@@ -328,8 +336,8 @@ Effective FPS: {self.fps:.2f}
         return detect_surface(
             self,
             step=step,
-            detection_window=detection_window,
-            detection_window_unit=detection_window_unit,
+            processing_window=processing_window,
+            processing_window_unit=processing_window_unit,
             min_area_ratio=min_area_ratio,
             max_area_ratio=max_area_ratio,
             brightness_threshold=brightness_threshold,
@@ -488,7 +496,9 @@ Effective FPS: {self.fps:.2f}
         if output_path is None and not show:
             raise ValueError("Either show=True or output_path must be provided.")
         if output_path == "default":
-            output_path = self.video_file.parent / "derivatives" / "undistorted_video.mp4"
+            output_path = (
+                self.video_file.parent / "derivatives" / "undistorted_video.mp4"
+            )
 
         # Open the input video
         self.reset()
@@ -547,27 +557,59 @@ Effective FPS: {self.fps:.2f}
         """
         return cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
 
-    def compute_intensity(self):
+    @fill_doc
+    def compute_frame_brightness(
+        self,
+        step: int = 1,
+        processing_window: Optional[tuple[int | float, int | float]] = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    ):
         """
-        Generate a :class:`pyneon.Stream` object containing the
-        mean intensity of each video frame.
+        Compute per-frame mean grayscale brightness.
+
+        Each frame is converted to grayscale and averaged to yield a single
+        brightness value per frame.
+
+        Parameters
+        ----------
+        %(step_param)s
+        %(window_params)s
 
         Returns
         -------
         Stream
             Stream indexed by ``timestamp [ns]`` with a single column
-            ``intensity`` containing the per-frame mean brightness.
+            ``brightness`` containing mean grayscale brightness values.
         """
+        # Determine frame range
+        start_frame, end_frame = resolve_processing_window(
+            self,
+            processing_window,
+            processing_window_unit,
+        )
+
         vals = []
-        self.reset()
-        for _ in tqdm(range(len(self)), desc="Computing frame intensities"):
-            ret, frame = self.read()
-            if not ret:
+        frame_indices = []
+
+        for frame_index in tqdm(
+            range(start_frame, end_frame + 1, step),
+            desc="Computing frame brightness",
+        ):
+            frame = self.read_frame_at(frame_index)
+            if frame is None:
                 break
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             brightness = np.mean(gray_frame)
             vals.append(brightness)
+            frame_indices.append(frame_index)
+
         vals = np.array(vals)
-        assert len(vals) == len(self.ts)
-        stream = Stream(pd.DataFrame({"timestamp [ns]": self.ts, "intensity": vals}))
+        stream = Stream(
+            pd.DataFrame(
+                {
+                    "timestamp [ns]": self.ts[frame_indices],
+                    "brightness": vals,
+                }
+            )
+        )
         return stream

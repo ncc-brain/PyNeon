@@ -10,7 +10,7 @@ from PIL import Image
 from scipy.ndimage import gaussian_filter
 
 from ..utils.doc_decorators import fill_doc
-from ..video.utils import marker_family_to_dict
+from ..video.marker import marker_family_to_dict
 
 if TYPE_CHECKING:
     from ..epochs import Epochs
