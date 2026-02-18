@@ -8,7 +8,6 @@ data_dir = Path(__file__).parent.parent.parent / "data"
 
 data_url_dict = {
     "simple": "https://osf.io/download/gv46n/",
-    # "PLR": "https://figshare.com/ndownloader/articles/30921452/versions/1?folder_path=PLR",
     "markers": "https://osf.io/download/t56b2/",
     "PLR": "https://osf.io/download/5kmwp/",
 }
