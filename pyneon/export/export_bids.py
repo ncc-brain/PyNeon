@@ -270,7 +270,9 @@ def export_eye_bids(
         if physioevents_data.empty:
             physioevents_data = events
         else:
-            physioevents_data = pd.concat([physioevents_data, events], ignore_index=True)
+            physioevents_data = pd.concat(
+                [physioevents_data, events], ignore_index=True
+            )
     except Exception:
         warn("Could not process messages, skipping exporting messages.")
 

@@ -1,11 +1,12 @@
+import gc
 import re
 
+import cv2
 import numpy as np
 import pandas as pd
 import pytest
 
 from pyneon import Dataset, Events, Stream, get_sample_data
-from pyneon.recording import Recording
 from pyneon.utils.variables import nominal_sampling_rates
 
 
@@ -246,3 +247,26 @@ def cloud_gaze(simple_dataset_cloud):
 @pytest.fixture(scope="package")
 def native_gaze(simple_dataset_native):
     return simple_dataset_native.recordings[0].gaze
+
+
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_opencv():
+    """Cleanup OpenCV resources after each test function."""
+    yield
+    try:
+        cv2.destroyAllWindows()
+    except Exception:
+        pass  # Ignore errors if no windows were created
+    gc.collect()
+
+
+# Or use session scope to clean up once at the end of all tests
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_opencv_session():
+    """Cleanup OpenCV resources at the end of the test session."""
+    yield
+    try:
+        cv2.destroyAllWindows()
+    except Exception:
+        pass
+    gc.collect()
