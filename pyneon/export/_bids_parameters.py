@@ -44,21 +44,21 @@ EYE_META_DEFAULT = {
         "Units": "ns",
     },
     "x_coordinate": {
-        "LongName": "Gaze position (x)",
-        "Description": "Horizontal gaze position x-coordinate in the scene camera frame, measured from the top-left corner",
+        # Description adapted from https://docs.pupil-labs.com/neon/data-collection/data-format/#gaze-csv
+        "Description": "X-coordinate of the mapped gaze point in world camera pixel coordinates.",
         "Units": "pixel",
     },
     "y_coordinate": {
-        "LongName": "Gaze position (y)",
-        "Description": "Vertical gaze position y-coordinate in the scene camera frame, measured from the top-left corner",
+        "Description": "Y-coordinate of the mapped gaze point in world camera pixel coordinates.",
         "Units": "pixel",
     },
     "pupil_size_left": {
-        "Description": "Physical diameter of the left eye pupil, measured in millimeters",
+        # Description adapted from https://docs.pupil-labs.com/neon/data-collection/data-format/#_3d-eye-states-csv
+        "Description": "Physical diameter of the pupil of the left eye",
         "Units": "mm",
     },
     "pupil_size_right": {
-        "Description": "Physical diameter of the right eye pupil, measured in millimeters",
+        "Description": "Physical diameter of the pupil of the right eye",
         "Units": "mm",
     },
 }
@@ -77,7 +77,7 @@ EYE_EVENTS_META_DEFAULT = {
         "Units": "ns",
     },
     "duration": {
-        "Description": "Event duration in seconds",
+        "Description": "Event duration",
         "Units": "s",
     },
     "trial_type": {

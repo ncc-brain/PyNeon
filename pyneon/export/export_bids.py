@@ -251,9 +251,12 @@ def export_eye_bids(
             # Add trial_type column with value "blink", "saccade", or "fixation"
             events_data = events_data[["onset", "duration"]]
             events_data["trial_type"] = attr_name[:-1]  # remove "s" at the end
-            physioevents_data = pd.concat(
-                [physioevents_data, events_data], ignore_index=True
-            )
+            if physioevents_data.empty:
+                physioevents_data = events_data
+            else:
+                physioevents_data = pd.concat(
+                    [physioevents_data, events_data], ignore_index=True
+                )
         except Exception:
             warn(
                 f"Could not process events for {attr_name}, skipping exporting events for this attribute."
@@ -264,7 +267,10 @@ def export_eye_bids(
         events = rec.events.data
         events = events.rename(columns={"timestamp [ns]": "onset", "name": "message"})
         events = events[["onset", "message"]]
-        physioevents_data = pd.concat([physioevents_data, events], ignore_index=True)
+        if physioevents_data.empty:
+            physioevents_data = events
+        else:
+            physioevents_data = pd.concat([physioevents_data, events], ignore_index=True)
     except Exception:
         warn("Could not process messages, skipping exporting messages.")
 
@@ -273,7 +279,7 @@ def export_eye_bids(
         physioevents_tsv_path,
         sep="\t",
         index=False,
-        header=True,
+        header=False,
         na_rep="n/a",
         compression="gzip",
     )
