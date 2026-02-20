@@ -167,6 +167,29 @@ Recording start time: {self.start_datetime}
 Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 """
 
+    def close(self) -> None:
+        """Release cached video handles, if any."""
+        for attr_name in ("scene_video", "eye_video"):
+            video = self.__dict__.get(attr_name)
+            if isinstance(video, Video):
+                try:
+                    video.close()
+                except Exception:
+                    pass
+
+    def __enter__(self) -> "Recording":
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> bool:
+        self.close()
+        return False
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
+
     @cached_property
     def gaze(self) -> Stream:
         """

@@ -203,7 +203,9 @@ def simple_dataset_native():
         except ValueError:
             with pytest.warns(UserWarning, match=r"'blinks' data is empty"):
                 recording.export_cloud_format("data/export", rebase=False)
-    return dataset
+    yield dataset
+    for recording in dataset.recordings:
+        recording.close()
 
 
 @pytest.fixture(scope="package")
@@ -214,7 +216,9 @@ def simple_dataset_cloud():
     for recording in dataset.recordings:
         with pytest.raises(ValueError, match="Recording is already in Cloud format"):
             recording.export_cloud_format("data/export", rebase=False)
-    return dataset
+    yield dataset
+    for recording in dataset.recordings:
+        recording.close()
 
 
 @pytest.fixture(scope="package")
