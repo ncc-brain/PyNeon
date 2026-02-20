@@ -41,7 +41,6 @@ class Recording:
         ├── fixations.csv
         ├── gaze.csv
         ├── imu.csv
-        ├── saccades.csv
         ├── info.json (REQUIRED)
         ├── labels.csv
         ├── saccades.csv
@@ -318,14 +317,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 info = {}
             else:
                 dtype = np.dtype(calib_dtype)
-            calibration = np.frombuffer(calib_file.open("rb").read(), dtype)[0]
-            info = {
-                "camera_matrix": calibration["scene_camera_matrix"].tolist(),
-                "distortion_coefficients": calibration[
-                    "scene_distortion_coefficients"
-                ].tolist(),
-                "serial_number": calibration["serial"].decode("utf-8"),
-            }
+                calibration = np.frombuffer(calib_file.open("rb").read(), dtype)[0]
+                info = {
+                    "camera_matrix": calibration["scene_camera_matrix"].tolist(),
+                    "distortion_coefficients": calibration[
+                        "scene_distortion_coefficients"
+                    ].tolist(),
+                    "serial_number": calibration["serial"].decode("utf-8"),
+                }
         else:
             ts_file = self.recording_dir / "world_timestamps.csv"
             info_file = self.recording_dir / "scene_camera.json"

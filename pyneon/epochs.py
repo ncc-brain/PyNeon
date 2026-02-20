@@ -237,12 +237,16 @@ class Epochs:
 
     @property
     def columns(self) -> pd.Index:
-        return self.data.columns[:-3]
+        if self.data.empty:
+            return pd.Index([])
+        return self.data.columns.drop("epoch time [ns]", errors="ignore")
 
     @property
     def dtypes(self) -> pd.Series:
         """Data types of the epoched data."""
-        return self.data.dtypes[:-3]
+        if self.data.empty:
+            return pd.Series(dtype=object)
+        return self.data.drop(columns=["epoch time [ns]"], errors="ignore").dtypes
 
     @property
     def is_equal_length(self) -> bool:

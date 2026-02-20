@@ -114,9 +114,9 @@ data_types = {
     "type": "string",
     # Marker detections
     "frame index": "Int64",
-    "marker family": str,
-    "marker id": str,
-    "marker name": str,
+    "marker family": "string",
+    "marker id": "string",
+    "marker name": "string",
     "top left x [px]": float,
     "top left y [px]": float,
     "top right x [px]": float,
@@ -127,7 +127,7 @@ data_types = {
     "bottom right y [px]": float,
     "center x [px]": float,
     "center y [px]": float,
-    # Video mean intensity
+    # Video mean brightness
     "brightness": float,
     # Homographies
     "homography (0,0)": float,
