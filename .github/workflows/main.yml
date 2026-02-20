@@ -61,6 +61,13 @@ jobs:
         run: pip install .[dev]
 
       - name: Run tests
+        if: matrix.os != 'windows-latest'
+        run: pytest tests
+
+      - name: Run tests (Windows, disable MSMF)
+        if: matrix.os == 'windows-latest'
+        env:
+          OPENCV_VIDEOIO_PRIORITY_MSMF: "0"
         run: pytest tests
 
   build-docs:

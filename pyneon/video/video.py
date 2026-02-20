@@ -244,13 +244,29 @@ Effective FPS: {self.fps:.2f}
 
     def reset(self):
         """Reopen the video file and reset the read position to the first frame."""
-        if self.isOpened():
-            self.release()
+        self.close()
         super().__init__(self.video_file)
-        # setting to 0 is safe
-        self.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        self.set(cv2.CAP_PROP_POS_FRAMES, 0) # Ensure position is at the start
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
+
+    def close(self) -> None:
+        """Release the underlying video handle."""
+        if self.isOpened():
+            self.release()
+
+    def __enter__(self) -> "Video":
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> bool:
+        self.close()
+        return False
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     @fill_doc
     def plot_frame(
