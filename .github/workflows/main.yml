@@ -60,17 +60,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install test dependencies
-        run: pip install .[dev]
+        run: pip install .[dev] pytest-forked
 
       - name: Run tests
         if: matrix.os != 'windows-latest'
-        run: pytest tests
+        run: pytest tests --forked -p no:cacheprovider
 
       - name: Run tests (Windows, disable MSMF)
         if: matrix.os == 'windows-latest'
         env:
           OPENCV_VIDEOIO_PRIORITY_MSMF: "0"
-        run: pytest tests
+        run: pytest tests --forked -p no:cacheprovider
 
   build-docs:
     runs-on: ubuntu-latest
