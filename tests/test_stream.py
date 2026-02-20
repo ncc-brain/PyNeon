@@ -3,6 +3,26 @@ import re
 import numpy as np
 import pytest
 
+from pyneon import Stream
+
+@pytest.mark.parametrize(
+    "dataset_fixture",
+    ["simple_dataset_native", "simple_dataset_cloud"],
+)
+def test_save_stream(request, dataset_fixture, tmp_path):
+    dataset = request.getfixturevalue(dataset_fixture)
+    for rec in dataset.recordings:
+        for name in ["gaze", "eye_states", "imu"]:
+            stream = getattr(rec, name)
+            output_path = tmp_path / f"{name}.csv"
+            stream.save(output_path)
+            assert output_path.exists()
+            stream_loaded = Stream(output_path)
+            assert np.array_equal(stream_loaded.data.index, stream.data.index)
+            for col in stream.columns:
+                assert np.allclose(stream_loaded[col], stream[col], equal_nan=True)
+            # Delete the saved file after test
+            output_path.unlink()
 
 @pytest.mark.parametrize(
     "gaze_fixture",

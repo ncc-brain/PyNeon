@@ -109,8 +109,9 @@ data_types = {
     "mean velocity [px/s]": float,
     "peak velocity [px/s]": float,
     # Events
-    "name": str,
-    "type": str,
+    "event id": "int64",
+    "name": "string",
+    "type": "string",
     # Marker detections
     "frame index": "Int64",
     "marker family": str,

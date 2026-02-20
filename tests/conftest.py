@@ -10,6 +10,7 @@ from pyneon import Dataset, Events, Stream, get_sample_data
 from pyneon.utils.variables import nominal_sampling_rates
 
 
+
 @pytest.fixture(scope="package")
 def sim_gaze():
     ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
@@ -190,29 +191,6 @@ def sim_custom_events():
     assert custom.data.index.name == "event id"
     return custom
 
-
-if __name__ == "__main__":
-    ts = np.arange(1e9, 5e9, 1e9 / 50)  # 50 Hz
-    ts = np.delete(ts, 2)  # Remove one ts to make it non-uniformly sampled
-    df = pd.DataFrame(
-        np.random.rand(len(ts), 2),
-        index=ts,
-        columns=["gaze x [px]", "gaze y [px]"],
-    )
-    df.index.name = "timestamp [ns]"
-
-    gaze = Stream(df)
-    assert gaze.type == "gaze"
-    assert gaze.sampling_freq_nominal == nominal_sampling_rates["gaze"]
-
-    step_size = int(1e9 / gaze.sampling_freq_nominal)
-    new_ts = np.arange(gaze.first_ts, gaze.last_ts, step_size, dtype=np.int64)
-    print(gaze.ts[0])
-    print(new_ts[0])
-
-    gaze.interpolate()
-
-
 @pytest.fixture(scope="package")
 def simple_dataset_native():
     dataset_dir = get_sample_data("simple", format="native")
@@ -247,26 +225,3 @@ def cloud_gaze(simple_dataset_cloud):
 @pytest.fixture(scope="package")
 def native_gaze(simple_dataset_native):
     return simple_dataset_native.recordings[0].gaze
-
-
-@pytest.fixture(scope="function", autouse=True)
-def cleanup_opencv():
-    """Cleanup OpenCV resources after each test function."""
-    yield
-    try:
-        cv2.destroyAllWindows()
-    except Exception:
-        pass  # Ignore errors if no windows were created
-    gc.collect()
-
-
-# Or use session scope to clean up once at the end of all tests
-@pytest.fixture(scope="session", autouse=True)
-def cleanup_opencv_session():
-    """Cleanup OpenCV resources at the end of the test session."""
-    yield
-    try:
-        cv2.destroyAllWindows()
-    except Exception:
-        pass
-    gc.collect()

@@ -122,6 +122,7 @@ def _infer_events_type(data: pd.DataFrame) -> str:
         "saccade id": "saccades",
         "fixation id": "fixations",
         "name": "events",
+        "event id": "events",
     }
     reverse_map = {v: k for k, v in col_map.items()}
 
@@ -136,6 +137,7 @@ def _infer_events_type(data: pd.DataFrame) -> str:
         data.index.name = "event id"
     else:
         data.set_index(reverse_map[type], inplace=True)
+    data.index = data.index.astype(np.int64)
     return type
 
 

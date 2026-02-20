@@ -1,7 +1,35 @@
 import re
 
+from pyneon import Events
 import numpy as np
 import pytest
+
+@pytest.mark.parametrize(
+    "dataset_fixture",
+    ["simple_dataset_native", "simple_dataset_cloud"],
+)
+def test_save_events(request, dataset_fixture, tmp_path):
+    dataset = request.getfixturevalue(dataset_fixture)
+    for rec in dataset.recordings:
+        for name in ["blinks", "fixations", "saccades", "events"]:
+            try:
+                events = getattr(rec, name)
+            except ValueError: # Empty data
+                continue
+            output_path = tmp_path / f"{name}.csv"
+            events.save(output_path)
+            assert output_path.exists()
+            events_loaded = Events(output_path)
+            assert np.array_equal(events_loaded.data.index, events.data.index)
+            for col in events.columns:
+                # assert same for col of str type
+                if events.data[col].dtype == "string":
+                    assert np.array_equal(events_loaded.data[col], events.data[col])
+                else:
+                    # For numeric columns, use np.allclose to handle potential floating point differences
+                    assert np.allclose(events_loaded.data[col], events.data[col], equal_nan=True), f"Column '{col}' does not match after loading from CSV."
+            # Delete the saved file after test
+            output_path.unlink()
 
 
 @pytest.mark.parametrize(

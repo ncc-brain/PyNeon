@@ -56,3 +56,6 @@ full = ["pyneon[dev,doc]"]
 Homepage = "https://ncc-brain.github.io/PyNeon/"
 Issues = "https://github.com/ncc-brain/PyNeon/issues"
 
+[tool.pytest.ini_options]
+addopts = "--code-highlight=no"
+
