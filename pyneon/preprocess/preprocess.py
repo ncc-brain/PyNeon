@@ -437,7 +437,7 @@ def concat_streams(
     else:
         raise ValueError("Invalid sampling_freq, must be 'min', 'max', or numeric")
     sf_name = streams_info.loc[streams_info["sf"] == sf, "name"].values
-    print(f"Using {sf_note} sampling rate: {sf} Hz ({str(sf_name)})")
+    print(f"Using {sf_note} sampling rate: {sf} Hz ({sf_name})")
 
     max_first_ts = streams_info["first_ts"].max()
     max_first_ts_name = streams_info.loc[
