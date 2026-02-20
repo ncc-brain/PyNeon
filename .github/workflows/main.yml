@@ -64,13 +64,13 @@ jobs:
 
       - name: Run tests
         if: matrix.os != 'windows-latest'
-        run: pytest tests
+        run: python -X faulthandler -m pytest -p no:faulthandler -s tests
 
       - name: Run tests (Windows, disable MSMF)
         if: matrix.os == 'windows-latest'
         env:
           OPENCV_VIDEOIO_PRIORITY_MSMF: "0"
-        run: pytest tests
+        run: python -X faulthandler -m pytest -p no:faulthandler -s tests
 
   build-docs:
     runs-on: ubuntu-latest
