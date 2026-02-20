@@ -77,25 +77,22 @@ def _export_scene_video(recording: "Recording", target_dir: Path):
         warn("Warning: 'scene_video' not found in recording.")
         return
     scene_video = recording.scene_video
+    target_video_path = target_dir / scene_video.video_file.name
     try:
-        target_video_path = target_dir / scene_video.video_file.name
-        try:
-            copy(scene_video.video_file, target_video_path)
-        except Exception as e:
-            warn(f"Warning: Failed to copy video file: {e}")
-        # Export timestamps
-        world_ts_df = pd.DataFrame(
-            {
-                "section_id": recording.info.get("section_id", pd.NA),
-                "recording_id": recording.recording_id,
-                "timestamp [ns]": scene_video.ts,
-            }
-        )
-        world_ts_df.to_csv(target_dir / "world_timestamps.csv", index=False)
-        with open(target_dir / "scene_camera.json", "w", encoding="utf-8") as f:
-            json.dump(scene_video.info, f, indent=4)
-    finally:
-        scene_video.close()
+        copy(scene_video.video_file, target_video_path)
+    except Exception as e:
+        warn(f"Warning: Failed to copy video file: {e}")
+    # Export timestamps
+    world_ts_df = pd.DataFrame(
+        {
+            "section_id": recording.info.get("section_id", pd.NA),
+            "recording_id": recording.recording_id,
+            "timestamp [ns]": scene_video.ts,
+        }
+    )
+    world_ts_df.to_csv(target_dir / "world_timestamps.csv", index=False)
+    with open(target_dir / "scene_camera.json", "w", encoding="utf-8") as f:
+        json.dump(scene_video.info, f, indent=4)
 
 
 def _export_template(recording, target_dir):
