@@ -265,7 +265,7 @@ Effective FPS: {self.fps:.2f}
     def reset(self):
         """Reopen the video file and reset the read position to the first frame."""
         self.close()
-        super().__init__(str(self.video_file))
+        self.open(str(self.video_file))
         self._closed = False
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")

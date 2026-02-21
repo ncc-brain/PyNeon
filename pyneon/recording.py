@@ -172,7 +172,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """Release cached video handles, if any."""
         for attr_name in ("scene_video", "eye_video"):
             video = self.__dict__.get(attr_name)
-            if isinstance(video, Video):
+            # Check if video is a Video instance and not None
+            if video is not None and hasattr(video, "release"):
                 try:
                     video.close()
                 except Exception:
@@ -190,7 +191,9 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         if sys.is_finalizing():
             return
         try:
-            self.close()
+            # Check if cv2 is still available before closing
+            if "cv2" in sys.modules:
+                self.close()
         except Exception:
             pass
 
