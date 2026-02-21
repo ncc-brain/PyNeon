@@ -1,4 +1,5 @@
 import json
+import sys
 from datetime import datetime
 from functools import cached_property
 from numbers import Number
@@ -186,9 +187,11 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         return False
 
     def __del__(self) -> None:
+        if sys.is_finalizing():
+            return
         try:
             self.close()
-        except BaseException:
+        except Exception:
             pass
 
     @cached_property

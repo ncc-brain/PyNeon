@@ -48,13 +48,17 @@ class Video(cv2.VideoCapture):
     def __init__(
         self, video_file: Path, timestamps: np.ndarray, info: Optional[dict] = None
     ):
-        super().__init__(video_file)
+        super().__init__(str(video_file))
         self.video_file = video_file
+        if not self.isOpened():
+            raise IOError(f"Failed to open video file: {video_file}")
+
         timestamps = np.asarray(timestamps, dtype=np.int64)
         self.timestamps = timestamps
         self.ts = self.timestamps
         self.info = info
         self._undistort_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+        self._closed = False
 
         self.der_dir = video_file.parent / "derivatives"
 
@@ -235,25 +239,44 @@ Effective FPS: {self.fps:.2f}
             self.set(cv2.CAP_PROP_POS_FRAMES, 0)
             return self.read_frame_at(frame_index)
 
-        assert self.current_frame_index == frame_index
         ret, frame = self.retrieve()
-        if not ret:
-            warn(f"Failed to retrieve frame at index {frame_index}.")
-            return None
+        if not ret or frame is None:
+            # Fallback for backends where retrieve() can fail intermittently.
+            # Reopen and walk sequentially to the target frame, then decode.
+            self.reset()
+            current = 0
+            while frame_index > current:
+                if not self.grab():
+                    warn(
+                        f"Failed to grab frame while retrying access to frame {frame_index}."
+                    )
+                    return None
+                current += 1
+
+            ret, frame = self.retrieve()
+            if not ret or frame is None:
+                # Some backends only return an image through read().
+                ret, frame = self.read()
+            if not ret or frame is None:
+                warn(f"Failed to retrieve frame at index {frame_index}.")
+                return None
         return frame
 
     def reset(self):
         """Reopen the video file and reset the read position to the first frame."""
         self.close()
-        super().__init__(self.video_file)
-        self.set(cv2.CAP_PROP_POS_FRAMES, 0) # Ensure position is at the start
+        super().__init__(str(self.video_file))
+        self._closed = False
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
 
     def close(self) -> None:
         """Release the underlying video handle."""
+        if self._closed:
+            return
         if self.isOpened():
-            self.release()
+            super().release()
+        self._closed = True
 
     def __enter__(self) -> "Video":
         return self
@@ -261,12 +284,6 @@ Effective FPS: {self.fps:.2f}
     def __exit__(self, exc_type, exc, traceback) -> bool:
         self.close()
         return False
-
-    def __del__(self) -> None:
-        try:
-            self.close()
-        except BaseException:
-            pass
 
     @fill_doc
     def plot_frame(
