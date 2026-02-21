@@ -23,7 +23,7 @@ from .surface import detect_surface
 from .utils import get_undistort_maps, resolve_processing_window
 
 
-class Video(cv2.VideoCapture):
+class Video:
     """
     OpenCV VideoCapture wrapper that pairs a video with frame timestamps.
 
@@ -48,7 +48,7 @@ class Video(cv2.VideoCapture):
     def __init__(
         self, video_file: Path, timestamps: np.ndarray, info: Optional[dict] = None
     ):
-        super().__init__(str(video_file))
+        self._cap = cv2.VideoCapture(str(video_file))
         self.video_file = video_file
         if not self.isOpened():
             raise IOError(f"Failed to open video file: {video_file}")
@@ -73,6 +73,26 @@ class Video(cv2.VideoCapture):
                 f"Number of timestamps ({len(self.timestamps)}) does not match "
                 f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
             )
+
+    # Delegate methods to underlying cv2.VideoCapture object
+    def isOpened(self):
+        return self._cap.isOpened()
+
+    def grab(self):
+        return self._cap.grab()
+
+    def retrieve(self):
+        return self._cap.retrieve()
+
+    def read(self):
+        return self._cap.read()
+
+    def set(self, propId, value):
+        return self._cap.set(propId, value)
+
+    def get(self, propId):
+        return self._cap.get(propId)
+
 
     def __len__(self) -> int:
         return int(len(self.ts))
@@ -265,20 +285,29 @@ Effective FPS: {self.fps:.2f}
     def reset(self):
         """Reopen the video file and reset the read position to the first frame."""
         self.close()
-        self.open(str(self.video_file))
+        # Create a new VideoCapture object
+        self._cap = cv2.VideoCapture(str(self.video_file))
         self._closed = False
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
+
+    def release(self):
+        """Release the underlying video handle."""
+        self.close()
 
     def close(self) -> None:
         """Release the underlying video handle."""
         if getattr(self, "_closed", True):
             return
-        try:
-            if self.isOpened():
-                super().release()
-        except Exception:
-            pass
+        
+        # Safely release the capture
+        if hasattr(self, "_cap"):
+             try:
+                 if self._cap.isOpened():
+                     self._cap.release()
+             except Exception:
+                 pass
+        
         self._closed = True
 
     def __enter__(self) -> "Video":
