@@ -265,7 +265,7 @@ Effective FPS: {self.fps:.2f}
     def __del__(self) -> None:
         try:
             self.close()
-        except Exception:
+        except BaseException:
             pass
 
     @fill_doc

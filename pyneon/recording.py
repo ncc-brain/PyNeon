@@ -176,6 +176,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                     video.close()
                 except Exception:
                     pass
+                self.__dict__[attr_name] = None
 
     def __enter__(self) -> "Recording":
         return self
@@ -187,7 +188,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def __del__(self) -> None:
         try:
             self.close()
-        except Exception:
+        except BaseException:
             pass
 
     @cached_property
