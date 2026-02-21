@@ -5,6 +5,9 @@ import cv2
 import numpy as np
 import pandas as pd
 import pytest
+from typeguard import install_import_hook
+
+install_import_hook("pyneon")
 
 from pyneon import Dataset, Events, Stream, get_sample_data
 from pyneon.utils.variables import nominal_sampling_rates
