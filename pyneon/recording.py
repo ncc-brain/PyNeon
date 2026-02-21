@@ -187,15 +187,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         self.close()
         return False
 
-    def __del__(self) -> None:
-        if sys.is_finalizing():
-            return
-        try:
-            # Check if cv2 is still available before closing
-            if "cv2" in sys.modules:
-                self.close()
-        except Exception:
-            pass
 
     @cached_property
     def gaze(self) -> Stream:

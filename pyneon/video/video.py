@@ -272,10 +272,13 @@ Effective FPS: {self.fps:.2f}
 
     def close(self) -> None:
         """Release the underlying video handle."""
-        if self._closed:
+        if getattr(self, "_closed", True):
             return
-        if self.isOpened():
-            super().release()
+        try:
+            if self.isOpened():
+                super().release()
+        except Exception:
+            pass
         self._closed = True
 
     def __enter__(self) -> "Video":
