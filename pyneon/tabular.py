@@ -1,6 +1,6 @@
+from pathlib import Path
 from warnings import warn
 
-from pathlib import Path
 import pandas as pd
 
 from .utils.variables import data_types
@@ -122,7 +122,7 @@ class BaseTabular:
         ----------
         output_path : str | Path
             Path to save the CSV file.
-            
+
         Examples
         --------
         >>> gaze = recording.gaze

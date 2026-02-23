@@ -5,6 +5,7 @@ import pytest
 
 from pyneon import Stream
 
+
 @pytest.mark.parametrize(
     "dataset_fixture",
     ["simple_dataset_native", "simple_dataset_cloud"],
@@ -23,6 +24,7 @@ def test_save_stream(request, dataset_fixture, tmp_path):
                 assert np.allclose(stream_loaded[col], stream[col], equal_nan=True)
             # Delete the saved file after test
             output_path.unlink()
+
 
 @pytest.mark.parametrize(
     "gaze_fixture",
@@ -168,6 +170,15 @@ def test_concat(request, dataset_fixture, stream_names, sampling_freq):
         elif "xxx" in stream_names:
             with pytest.raises(
                 ValueError, match="Invalid stream name, can only be one of"
+            ):
+                concat_stream = rec.concat_streams(
+                    stream_names=stream_names, sampling_freq=sampling_freq
+                )
+            break
+        elif len(stream_names) == 1:
+            with pytest.raises(
+                ValueError,
+                match="Must provide at least two streams to concatenate",
             ):
                 concat_stream = rec.concat_streams(
                     stream_names=stream_names, sampling_freq=sampling_freq

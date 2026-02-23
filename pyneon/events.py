@@ -200,7 +200,7 @@ class Events(BaseTabular):
             source = Path(source)
         if isinstance(source, Path):
             if not source.is_file():
-                raise FileNotFoundError(f"File does not exist: {source}")
+                raise FileNotFoundError(f"{source} does not exist")
             if source.suffix == ".csv":
                 self.file = source
                 data = pd.read_csv(source)

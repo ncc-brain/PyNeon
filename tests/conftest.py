@@ -1,17 +1,11 @@
-import gc
 import re
 
-import cv2
 import numpy as np
 import pandas as pd
 import pytest
-from typeguard import install_import_hook
-
-install_import_hook("pyneon")
 
 from pyneon import Dataset, Events, Stream, get_sample_data
 from pyneon.utils.variables import nominal_sampling_rates
-
 
 
 @pytest.fixture(scope="package")
@@ -194,6 +188,7 @@ def sim_custom_events():
     assert custom.data.index.name == "event id"
     return custom
 
+
 @pytest.fixture(scope="package")
 def simple_dataset_native():
     dataset_dir = get_sample_data("simple", format="native")
@@ -232,3 +227,13 @@ def cloud_gaze(simple_dataset_cloud):
 @pytest.fixture(scope="package")
 def native_gaze(simple_dataset_native):
     return simple_dataset_native.recordings[0].gaze
+
+
+@pytest.fixture(scope="package")
+def cloud_fixations(simple_dataset_cloud):
+    return simple_dataset_cloud.recordings[0].fixations
+
+
+@pytest.fixture(scope="package")
+def native_fixations(simple_dataset_native):
+    return simple_dataset_native.recordings[0].fixations

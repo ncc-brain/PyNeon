@@ -93,7 +93,6 @@ class Video:
     def get(self, propId):
         return self._cap.get(propId)
 
-
     def __len__(self) -> int:
         return int(len(self.ts))
 
@@ -299,15 +298,15 @@ Effective FPS: {self.fps:.2f}
         """Release the underlying video handle."""
         if getattr(self, "_closed", True):
             return
-        
+
         # Safely release the capture
         if hasattr(self, "_cap"):
-             try:
-                 if self._cap.isOpened():
-                     self._cap.release()
-             except Exception:
-                 pass
-        
+            try:
+                if self._cap.isOpened():
+                    self._cap.release()
+            except Exception:
+                pass
+
         self._closed = True
 
     def __enter__(self) -> "Video":

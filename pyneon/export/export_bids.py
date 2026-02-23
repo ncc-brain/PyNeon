@@ -54,13 +54,7 @@ def export_motion_bids(
     ----------
     .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
     """
-    # First check if IMU data is present in the recording
-    try:
-        imu = rec.imu
-    except Exception as e:
-        raise ValueError(
-            "No IMU data found in the recording. Cannot export motion data."
-        ) from e
+    imu = rec.imu
 
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():
@@ -168,12 +162,7 @@ def export_eye_bids(
     extra_metadata: dict = {},
 ):
     """ """
-    try:
-        gaze = rec.gaze
-    except Exception as e:
-        raise ValueError(
-            "Gaze data cannot be loaded and thus cannot be exported to Eye-Tracking BIDS."
-        ) from e
+    gaze = rec.gaze
     try:
         eye_states = rec.eye_states
         eye_states = eye_states.interpolate(gaze.ts)

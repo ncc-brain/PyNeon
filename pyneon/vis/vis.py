@@ -159,17 +159,17 @@ def plot_distribution(
             "At least one of heatmap_source and scatter_source must be provided."
         )
 
-    if rec.scene_video is None:
+    try:
+        scene_video = rec.scene_video
+    except Exception:
+        scene_video = None
+
+    if scene_video is None:
         if width_height is None:
             raise ValueError("No video data available and no width_height provided.")
-        width_height = width_height
     else:
-        width_height = (rec.scene_video.width, rec.scene_video.height)
+        width_height = (scene_video.width, scene_video.height)
 
-    if rec.gaze is None:
-        raise ValueError("No gaze data available.")
-    if rec.fixations is None:
-        raise ValueError("No fixation data available.")
     gaze = rec.gaze
     fixations = rec.fixations
 

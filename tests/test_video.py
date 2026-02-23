@@ -16,7 +16,10 @@ def test_video_basics(request, dataset_fixture):
             if dataset_fixture == "simple_dataset_cloud":
                 with pytest.raises(
                     ValueError,
-                    match="Pupil Cloud recordings do not contain eye video.",
+                    match=(
+                        "Recording.eye_video cannot be read because: "
+                        "Pupil Cloud recordings do not contain eye video."
+                    ),
                 ):
                     eye_video = recording.eye_video
             else:

@@ -1,8 +1,10 @@
 import re
 
-from pyneon import Events
 import numpy as np
 import pytest
+
+from pyneon import Events
+
 
 @pytest.mark.parametrize(
     "dataset_fixture",
@@ -14,7 +16,7 @@ def test_save_events(request, dataset_fixture, tmp_path):
         for name in ["blinks", "fixations", "saccades", "events"]:
             try:
                 events = getattr(rec, name)
-            except ValueError: # Empty data
+            except ValueError:  # Empty data
                 continue
             output_path = tmp_path / f"{name}.csv"
             events.save(output_path)
@@ -27,37 +29,44 @@ def test_save_events(request, dataset_fixture, tmp_path):
                     assert np.array_equal(events_loaded.data[col], events.data[col])
                 else:
                     # For numeric columns, use np.allclose to handle potential floating point differences
-                    assert np.allclose(events_loaded.data[col], events.data[col], equal_nan=True), f"Column '{col}' does not match after loading from CSV."
+                    assert np.allclose(
+                        events_loaded.data[col], events.data[col], equal_nan=True
+                    ), f"Column '{col}' does not match after loading from CSV."
             # Delete the saved file after test
             output_path.unlink()
 
 
 @pytest.mark.parametrize(
+    "fixations_fixture",
+    ["sim_fixations", "cloud_fixations", "native_fixations"],
+)
+@pytest.mark.parametrize(
     "by",
     ["timestamp", "sample"],
 )
-def test_crop(sim_blinks, by):
-    ts0 = sim_blinks.start_ts
+def test_crop(request, fixations_fixture, by):
+    fixations = request.getfixturevalue(fixations_fixture)
+    ts0 = fixations.start_ts
     if by == "timestamp":
         t0 = ts0.copy()
     else:
-        t0 = np.arange(len(sim_blinks))
+        t0 = np.arange(len(fixations))
     tmax_index = len(t0) // 2
     # Cropping is inclusive of tmax, so we need to include the tmax_index in the expected result
     ts_first_half = ts0[: tmax_index + 1]
 
-    sim_blinks_cropped = sim_blinks.crop(tmax=t0[tmax_index], by=by)
-    assert np.array_equal(sim_blinks_cropped.start_ts, ts_first_half)
+    fixations_cropped = fixations.crop(tmax=t0[tmax_index], by=by)
+    assert np.array_equal(fixations_cropped.start_ts, ts_first_half)
 
     # If none of tmin and tmax is provided, should raise ValueError
     with pytest.raises(
         ValueError, match=re.escape("At least one of `tmin` or `tmax` must be provided")
     ):
-        sim_blinks.crop(by=by)
+        fixations.crop(by=by)
 
     # If cropping after the end time, should find no data and raise ValueError
     with pytest.raises(ValueError, match="No data found in the specified time range"):
-        sim_blinks.crop(tmin=t0[-1] + 1e9, by=by)
+        fixations.crop(tmin=t0[-1] + 1e9, by=by)
 
 
 def test_filter_by_duration(sim_blinks):
@@ -89,6 +98,12 @@ def test_filter_by_duration(sim_blinks):
     assert 50 not in filtered_blinks.durations
     assert 500 not in filtered_blinks.durations
     assert len(filtered_blinks) == n_blinks - 2
+
+    # Filter blinks with duration between 100 ms and 500 ms (both inclusive)
+    filtered_blinks = sim_blinks.filter_by_duration(dur_min=100, dur_max=500)
+    assert 50 not in filtered_blinks.durations
+    assert 500 in filtered_blinks.durations
+    assert len(filtered_blinks) == n_blinks - 1
 
 
 def test_filter_by_name(sim_events):
@@ -122,3 +137,73 @@ def test_filter_by_name(sim_events):
     assert result is None
     assert all(name == "stimulus_onset" for name in events_copy.data["name"])
     assert len(events_copy) == 1
+
+
+@pytest.mark.parametrize(
+    "dataset_fixture",
+    ["simple_dataset_native", "simple_dataset_cloud"],
+)
+@pytest.mark.parametrize(
+    "events_names",
+    (
+        "all",
+        ["fixations", "saccades"],
+        ["fixations", "saccades", "blinks"],
+        ["fixations", "saccades", "events"],
+        "xxx",
+        ["xxx", "fixations"],
+    ),
+)
+def test_concat(request, dataset_fixture, events_names):
+    dataset = request.getfixturevalue(dataset_fixture)
+    for rec in dataset.recordings:
+        # First test Recording-level concatenation
+        if events_names == "xxx":
+            with pytest.raises(
+                ValueError,
+                match="Invalid events_names, must be 'all' or a list of event names.",
+            ):
+                concat_events = rec.concat_events(events_names=events_names)
+            break
+        if "xxx" in events_names:
+            with pytest.raises(
+                ValueError, match="Invalid event name, can only be one of"
+            ):
+                concat_events = rec.concat_events(events_names=events_names)
+            break
+        if len(events_names) == 1:
+            with pytest.raises(
+                ValueError,
+                match="Must provide at least two events to concatenate",
+            ):
+                concat_events = rec.concat_events(events_names=events_names)
+            break
+        if "blinks" in events_names:
+            try:  # Test if blinks can be obtained
+                _ = rec.blinks
+            except Exception:
+                break
+        concat_events = rec.concat_events(events_names=events_names)
+        events_names = (
+            ["blinks", "fixations", "saccades", "events"]
+            if events_names == "all"
+            else events_names
+        )
+        expected_n_events = 0
+        expected_columns = [
+            "type"
+        ]  # Always have a "type" column to indicate the event type
+        for name in events_names:
+            expected_n_events += len(getattr(rec, name))
+            new_columns = getattr(rec, name).columns.tolist()
+            if name == "events":
+                new_columns.remove("timestamp [ns]")
+                new_columns = [
+                    col if col != "name" else "message name" for col in new_columns
+                ]
+                new_columns = [
+                    col if col != "type" else "message type" for col in new_columns
+                ]
+            expected_columns += new_columns
+        assert set(concat_events.columns) == set(expected_columns)
+        assert len(concat_events) == expected_n_events

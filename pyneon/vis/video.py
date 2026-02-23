@@ -505,11 +505,10 @@ def overlay_detections_and_pose(
     """
     if output_path is None and not show_video:
         raise ValueError("Either show_video=True or output_path must be provided.")
+    scene_video = recording.scene_video
     if output_path == "default":
         output_path = (
-            recording.scene_video.video_file.parent
-            / "derivatives"
-            / "detection_and_pose.mp4"
+            scene_video.video_file.parent / "derivatives" / "detection_and_pose.mp4"
         )
 
     # Compute the room boundaries from the provided corners
@@ -540,7 +539,7 @@ def overlay_detections_and_pose(
         )
         detections_by_frame[f_id].append((row["marker id"], corners))
 
-    cap = recording.scene_video
+    cap = scene_video
     cap.reset()
     frame_index = 0
 

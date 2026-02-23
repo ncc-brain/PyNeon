@@ -52,7 +52,7 @@ data_types = {
     # Events
     "timestamp [ns]": "int64",
     "start timestamp [ns]": "int64",
-    "end timestamp [ns]": "int64",
+    "end timestamp [ns]": "Int64",
     "duration [ms]": "Int64",
     # Gaze
     "gaze x [px]": float,
@@ -109,9 +109,12 @@ data_types = {
     "mean velocity [px/s]": float,
     "peak velocity [px/s]": float,
     # Events
-    "event id": "int64",
+    "event id": "Int32",
     "name": "string",
     "type": "string",
+    # Events columns after concatenation
+    "message name": "string",
+    "message type": "string",
     # Marker detections
     "frame index": "Int64",
     "marker family": "string",
@@ -140,11 +143,11 @@ data_types = {
     "homography (2,1)": float,
     "homography (2,2)": float,
     # Gaze on surface
-    "x_trans": float,
-    "y_trans": float,
-    # Fixations on surface
     "gaze x [surface coord]": float,
     "gaze y [surface coord]": float,
+    # Fixations on surface
+    "fixation x [surface coord]": float,
+    "fixation y [surface coord]": float,
     # scanpath
     "fixations": object,
 }
@@ -240,7 +243,7 @@ default_camera_info = {
             0.025633412650283308,
         ]
     ],
-    "serial_number": "XXXXXX",
+    "serial_number": "unknown",
 }
 
 circular_columns = {

@@ -237,7 +237,7 @@ class Stream(BaseTabular):
             source = Path(source)
         if isinstance(source, Path):
             if not source.is_file():
-                raise FileNotFoundError(f"File does not exist: {source}")
+                raise FileNotFoundError(f"{source} does not exist")
             if source.suffix == ".csv":  # Path to Pupil Cloud CSV file
                 self.file = source
                 data = pd.read_csv(source, index_col="timestamp [ns]")

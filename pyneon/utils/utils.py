@@ -78,16 +78,15 @@ def load_or_compute(
         if df.empty:
             raise ValueError(f"{path.name} is empty.")
         return df
+    df = compute_fn()
+    if path.suffix == ".csv":
+        df.to_csv(path, index=False)
+    elif path.suffix == ".json":
+        df.to_json(path, orient="records", lines=True)
+    elif path.suffix == ".pkl":
+        df.to_pickle(path)
     else:
-        df = compute_fn()
-        if path.suffix == ".csv":
-            df.to_csv(path, index=False)
-        elif path.suffix == ".json":
-            df.to_json(path, orient="records", lines=True)
-        elif path.suffix == ".pkl":
-            df.to_pickle(path)
-        else:
-            raise ValueError(f"Unsupported file type: {path.suffix}")
-        if df.empty:
-            raise ValueError(f"{path.name} is empty.")
-        return df
+        raise ValueError(f"Unsupported file type: {path.suffix}")
+    if df.empty:
+        raise ValueError(f"{path.name} is empty.")
+    return df

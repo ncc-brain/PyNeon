@@ -408,9 +408,7 @@ def concat_streams(
     concat_list = []
     print("Concatenating streams:")
     for name in stream_names:
-        stream_obj = getattr(rec, name, None)
-        if stream_obj is None:
-            raise ValueError(f"Cannot load {name} data.")
+        stream_obj = getattr(rec, name)
         concat_list.append(
             {
                 "stream": stream_obj,
@@ -486,12 +484,12 @@ VALID_EVENTS = {
 
 def concat_events(
     rec: "Recording",
-    event_names: str | list[str],
+    events_names: str | list[str],
 ) -> pd.DataFrame:
     """
     Concatenate different events. All columns in the selected event type will be
     present in the final DataFrame. An additional ``type`` column denotes the event
-    type. If "events" is in ``event_names``, its ``timestamp [ns]`` column will be
+    type. If "events" is in ``events_names``, its ``timestamp [ns]`` column will be
     renamed to ``start timestamp [ns]``, and the ``name`` and ``type`` columns will
     be renamed to ``message name`` and ``message type`` respectively to prevent confusion
     between physiological events and user-supplied messages.
@@ -500,7 +498,7 @@ def concat_events(
     ----------
     rec : Recording
         Recording instance containing the events to concatenate.
-    event_names : list of str
+    events_names : list of str
         List of event names to concatenate. Event names must be in
         ``{"blinks", "fixations", "saccades", "events"}``
         (singular forms are tolerated).
@@ -510,21 +508,21 @@ def concat_events(
     pandas.DataFrame
         Concatenated events.
     """
-    if isinstance(event_names, str):
-        if event_names == "all":
-            event_names = list(VALID_EVENTS)
+    if isinstance(events_names, str):
+        if events_names == "all":
+            events_names = list(VALID_EVENTS)
         else:
             raise ValueError(
-                "Invalid event_names, must be 'all' or a list of event names."
+                "Invalid events_names, must be 'all' or a list of event names."
             )
 
-    if len(event_names) <= 1:
+    if len(events_names) <= 1:
         raise ValueError("Must provide at least two events to concatenate.")
 
-    event_names = [ev.lower() for ev in event_names]
+    events_names = [ev.lower() for ev in events_names]
     # Check if all events are valid
-    if not all([ev in VALID_EVENTS for ev in event_names]):
-        raise ValueError(f"Invalid event name, can only be {VALID_EVENTS}")
+    if not all([ev in VALID_EVENTS for ev in events_names]):
+        raise ValueError(f"Invalid event name, can only be one of {VALID_EVENTS}")
 
     concat_data = pd.DataFrame(
         {
@@ -534,9 +532,7 @@ def concat_events(
         }
     )
     print("Concatenating events:")
-    if "blinks" in event_names or "blink" in event_names:
-        if rec.blinks is None:
-            raise ValueError("Cannot load blink data.")
+    if "blinks" in events_names or "blink" in events_names:
         data = rec.blinks.data
         data["type"] = "blink"
         concat_data = (
@@ -545,9 +541,7 @@ def concat_events(
             else pd.concat([concat_data, data], ignore_index=False)
         )
         print("\tBlinks")
-    if "fixations" in event_names or "fixation" in event_names:
-        if rec.fixations is None:
-            raise ValueError("Cannot load fixation data.")
+    if "fixations" in events_names or "fixation" in events_names:
         data = rec.fixations.data
         data["type"] = "fixation"
         concat_data = (
@@ -556,9 +550,7 @@ def concat_events(
             else pd.concat([concat_data, data], ignore_index=False)
         )
         print("\tFixations")
-    if "saccades" in event_names or "saccade" in event_names:
-        if rec.saccades is None:
-            raise ValueError("Cannot load saccade data.")
+    if "saccades" in events_names or "saccade" in events_names:
         data = rec.saccades.data
         data["type"] = "saccade"
         concat_data = (
@@ -567,12 +559,15 @@ def concat_events(
             else pd.concat([concat_data, data], ignore_index=False)
         )
         print("\tSaccades")
-    if "events" in event_names or "event" in event_names:
-        if rec.events is None:
-            raise ValueError("Cannot load event data.")
+    if "events" in events_names or "event" in events_names:
         data = rec.events.data
-        data.index.name = "start timestamp [ns]"
-        data = data.rename(columns={"name": "message name", "type": "message type"})
+        data = data.rename(
+            columns={
+                "timestamp [ns]": "start timestamp [ns]",
+                "name": "message name",
+                "type": "message type",
+            }
+        )
         data["type"] = "event"
         concat_data = (
             data
