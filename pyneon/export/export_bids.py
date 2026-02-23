@@ -10,6 +10,7 @@ import pandas as pd
 from ._bids_parameters import (
     EYE_EVENTS_META_DEFAULT,
     EYE_META_DEFAULT,
+    MOTION_CHANNEL_MAP,
     MOTION_META_DEFAULT,
 )
 
@@ -83,17 +84,26 @@ def export_motion_bids(
     imu.data.to_csv(motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a")
 
     ch_names = imu.columns
-    ch_names = [re.sub(r"\s\[[^\]]*\]", "", ch) for ch in ch_names]
-    channels = pd.DataFrame(
-        {
-            "name": ch_names,
-            "component": ["x", "y", "z"] * 3 + ["w", "x", "y", "z"],
-            "type": ["GYRO"] * 3 + ["ACCEL"] * 3 + ["ORNT"] * 7,
-            "tracked_point": ["Head"] * 13,
-            "units": ["deg/s"] * 3 + ["g"] * 3 + ["deg"] * 3 + ["arbitrary"] * 4,
-            "sampling_frequency": [int(imu.sampling_freq_effective)] * 13,
-        }
+    ch_names = [re.sub(r"\s\[[^\]]*\]", "", ch) for ch in ch_names]  # Strip units
+
+    def get_channel_metadata(ch_name):
+        key = " ".join(ch_name.strip().lower().split())
+        meta = MOTION_CHANNEL_MAP.get(key)
+        if meta is None:
+            warn(
+                "Unrecognized IMU channel name for Motion-BIDS export: "
+                f"'{ch_name}'. Using 'n/a' for component/type/units."
+            )
+            return "n/a", "n/a", "n/a"
+        return meta["component"], meta["type"], meta["units"]
+
+    # Initialize dataframe and map metadata
+    channels = pd.DataFrame({"name": ch_names})
+    channels[["component", "type", "units"]] = channels["name"].apply(
+        lambda x: pd.Series(get_channel_metadata(x))
     )
+    channels["tracked_point"] = "Head"
+    channels["sampling_frequency"] = int(imu.sampling_freq_effective)
     channels.to_csv(channels_tsv_path, sep="\t", index=False)
 
     ch_meta = {
@@ -248,7 +258,7 @@ def export_eye_bids(
                 )
         except Exception:
             warn(
-                f"Could not process events for {attr_name}, skipping exporting events for this attribute."
+                f"Could not process {attr_name}, skipping exporting events for this attribute."
             )
 
     # Try to process messages if available, and add them to the physioevents data

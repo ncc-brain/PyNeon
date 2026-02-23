@@ -20,6 +20,22 @@ MOTION_META_DEFAULT = {
     "TrackingSystemName": "IMU included in Neon",
 }
 
+MOTION_CHANNEL_MAP = {
+    "gyro x": {"component": "x", "type": "GYRO", "units": "deg/s"},
+    "gyro y": {"component": "y", "type": "GYRO", "units": "deg/s"},
+    "gyro z": {"component": "z", "type": "GYRO", "units": "deg/s"},
+    "acceleration x": {"component": "x", "type": "ACCEL", "units": "g"},
+    "acceleration y": {"component": "y", "type": "ACCEL", "units": "g"},
+    "acceleration z": {"component": "z", "type": "ACCEL", "units": "g"},
+    "roll": {"component": "x", "type": "ORNT", "units": "deg"},
+    "pitch": {"component": "y", "type": "ORNT", "units": "deg"},
+    "yaw": {"component": "z", "type": "ORNT", "units": "deg"},
+    "quaternion w": {"component": "w", "type": "ORNT", "units": "arbitrary"},
+    "quaternion x": {"component": "x", "type": "ORNT", "units": "arbitrary"},
+    "quaternion y": {"component": "y", "type": "ORNT", "units": "arbitrary"},
+    "quaternion z": {"component": "z", "type": "ORNT", "units": "arbitrary"},
+}
+
 EYE_META_DEFAULT = {
     "SamplingFrequency": "",
     "StartTime": 0,
