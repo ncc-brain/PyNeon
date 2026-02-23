@@ -637,8 +637,7 @@ def overlay_detections_and_pose(
             color = (0, 255, 0) if detected else (0, 0, 255)
             cv2.circle(frame, pt, 5, color, -1)
 
-    # Try reading a frame to determine size
-    ret, test_frame = cap.read()
+    # Get video properties
     height, width = cap.height, cap.width
     fps = cap.fps or 30
 
@@ -731,6 +730,9 @@ def overlay_detections_and_pose(
 
         if out is not None:
             out.write(frame)
+
+        # Increment frame index for next iteration
+        frame_index += 1
 
     if out is not None:
         out.release()
