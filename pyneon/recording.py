@@ -539,7 +539,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-    ) -> Stream:
+        inplace: bool = False,
+    ) -> Optional[Stream]:
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around timestamps of each video frame.
@@ -549,25 +550,22 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         window_size : int, optional
             Size of the time window in nanoseconds used for averaging.
             If None, defaults to the median interval between video frame timestamps.
-        overwrite : bool, optional
-            If True, force recomputation even if saved data exists. Defaults to False.
-        output_path : str or pathlib.Path, optional
-            Path to save the resulting CSV file. Defaults to `<der_dir>/gaze_synced.csv`.
+        inplace : bool, optional
+            If True, update the gaze stream in-place and return None.
+            If False, return a new Stream. Defaults to False.
 
         Returns
         -------
-        Stream
-            A Stream indexed by `"timestamp [ns]"`, containing:
-                - 'gaze x [px]': Gaze x-coordinate in pixels
-                - 'gaze y [px]': Gaze y-coordinate in pixels
-                - 'frame index': Index of the video frame corresponding to the gaze data
+        Stream or None
+            A Stream indexed by "timestamp [ns]" containing the window-averaged
+            gaze data, or None if ``inplace=True``.
         """
         try:
             gaze = self.gaze
             video = self.scene_video
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f"Cannot sync gaze to video because {e}") from e
-        return gaze.window_average(video.ts, window_size)
+        except Exception as e:
+            raise RuntimeError(f"Cannot sync gaze to video because {e}") from e
+        return gaze.window_average(video.ts, window_size, inplace=inplace)
 
     def export_cloud_format(
         self,
@@ -595,33 +593,51 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         extra_metadata: dict = {},
     ):
         """
-        Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
-        file and metadata (with template fields) are saved to a .json file.
-        Users should later edit the metadata file according to the experiment to make
-        it BIDS-compliant.
+        Export IMU data to Motion-BIDS [1]_ format.
+
+        Motion-BIDS standardizes motion sensor data from IMUs. The export creates
+        motion time-series and metadata files plus channels files, and a scans file
+        in the subject/session directory.
+        
+        For instance, an exported directory could look like this:
+        
+        .. code-block:: text
+        
+            sub-01/
+                ses-1/
+                    motion/
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.json
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.tsv
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.json
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.tsv
+                    sub-01_ses-1_scans.tsv
 
         Parameters
         ----------
         motion_dir : str or pathlib.Path
             Output directory to save the Motion-BIDS formatted data.
         prefix : str, optional
-            Prefix for the BIDS filenames, by default "sub-``wearer_name``_task-XXX_tracksys-NeonIMU".
-            The format should be "sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]"
-            (Fields in [] are optional). Files will be saved as
-            ``{prefix}_motion.<tsv|json>``.
+            BIDS naming prefix. The format is:
+
+            ``sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]``
+
+            Required fields are ``sub-<label>``, ``task-<label>``, and
+            ``tracksys-<label>`` (use ``tracksys-NeonIMU`` for Neon IMU data).
+            Files are saved as ``{prefix}_motion.<tsv|json>`` and
+            ``{prefix}_channels.<tsv|json>``.
         extra_metadata : dict, optional
-            Extra metadata to include in the .json file. Keys must be valid BIDS fields.
+            Extra metadata to include in the JSON metadata file. Keys must be valid
+            BIDS fields (for example, ``TaskName``).
 
         Notes
         -----
         Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-        standardize the organization of motion data for reproducible research [1]_.
-        For more information, see
+        standardize the organization of motion data for reproducible research.
+        See Jeung et al. (2024), Motion-BIDS: an extension to the brain imaging data
+        structure to organize motion data for reproducible research. Scientific Data,
+        11(1), 716. https://doi.org/10.1038/s41597-024-03559-8
+        For the specification, see
         https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html.
-
-        References
-        ----------
-        .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
         """
         export_motion_bids(self, motion_dir, prefix, extra_metadata)
 
@@ -632,9 +648,25 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         extra_metadata: dict = {},
     ):
         """
-        Export eye-tracking data to Eye-tracking-BIDS format. Continuous samples
-        and events are saved to .tsv.gz files with accompanying .json metadata files.
-        Users should later edit the metadata files according to the experiment.
+        Export eye-tracking data to Eye-Tracking-BIDS format.
+
+        Eye-Tracking-BIDS standardizes gaze position, pupil data, and eye-tracking
+        events. The export creates physiology time-series and events files with
+        accompanying metadata.
+
+        An example exported directory could look like this:
+        
+        .. code-block:: text
+        
+            sub-01/
+                ses-1/
+                    motion/
+                        <existing motion files if motion export is performed>
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.json
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.tsv.gz
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.json
+                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.tsv.gz
+                    sub-01_ses-1_scans.tsv
 
         Parameters
         ----------
@@ -642,16 +674,20 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         output_dir : str or pathlib.Path
             Output directory to save the Eye-tracking-BIDS formatted data.
         prefix : str, optional
-            Prefix for the BIDS filenames, by default "sub-XX_recording-eye".
-            The format should be `<matches>[_recording-<label>]_<physio|physioevents>.<tsv.gz|json>`
-            (Fields in [] are optional). Files will be saved as
-            ``{prefix}_physio.<tsv.gz|json>`` and ``{prefix}_physioevents.<tsv.gz|json>``.
+            BIDS naming prefix. Must include ``sub-<label>`` at minimum. Files are
+            saved as ``{prefix}_physio.<tsv.gz|json>`` and
+            ``{prefix}_physioevents.<tsv.gz|json>``.
+        extra_metadata : dict, optional
+            Extra metadata to include in the JSON metadata file. Keys must be valid
+            BIDS fields.
 
         Notes
         -----
-        Eye-tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-        standardize the organization of eye-tracking data for reproducible research.
-        The extension is still being finalized. This method follows the latest standards
-        outlined in https://github.com/bids-standard/bids-specification/pull/1128.
+        Eye-tracking data is physiology data and can live alongside most modalities.
+        Use a matching ``prefix`` to associate eye-tracking data with the
+        corresponding modality/session.
+        See Szinte et al. (2026), Eye-Tracking-BIDS: the Brain Imaging Data Structure
+        extended to gaze position and pupil data. bioRxiv.
+        https://doi.org/10.64898/2026.02.03.703514
         """
         export_eye_bids(self, output_dir, prefix, extra_metadata)
