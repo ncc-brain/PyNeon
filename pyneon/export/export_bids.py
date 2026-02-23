@@ -150,7 +150,7 @@ def export_motion_bids(
     if len(scans_path_potential) >= 1:
         scans_path = scans_path_potential[0]
         scans = pd.read_csv(scans_path, sep="\t")
-        if filename in scans.filename.values:
+        if scans.filename.isin(filename).any():
             return
         else:
             scans = pd.concat([scans, new_scan], ignore_index=True)
