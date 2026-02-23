@@ -178,10 +178,10 @@ def test_concat(request, dataset_fixture, events_names):
             ):
                 concat_events = rec.concat_events(events_names=events_names)
             break
-        if "blinks" in events_names:
+        if "blinks" in events_names or events_names == "all":
             try:  # Test if blinks can be obtained
                 _ = rec.blinks
-            except Exception:
+            except ValueError:
                 break
         concat_events = rec.concat_events(events_names=events_names)
         events_names = (
