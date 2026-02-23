@@ -55,7 +55,7 @@ def export_motion_bids(
     ----------
     .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
     """
-    imu = rec.imu
+    imu = rec.imu.interpolate(max_gap_ms=None)
 
     motion_dir = Path(motion_dir)
     if not motion_dir.is_dir():
@@ -103,7 +103,7 @@ def export_motion_bids(
         lambda x: pd.Series(get_channel_metadata(x))
     )
     channels["tracked_point"] = "Head"
-    channels["sampling_frequency"] = int(imu.sampling_freq_effective)
+    channels["sampling_frequency"] = float(imu.sampling_freq_effective)
     channels.to_csv(channels_tsv_path, sep="\t", index=False)
 
     ch_meta = {
@@ -177,9 +177,7 @@ def export_eye_bids(
         eye_states = rec.eye_states
         eye_states = eye_states.interpolate(gaze.ts)
     except Exception:
-        warn(
-            "Eye states data cannot be loaded. Will export gaze data without pupil diameter information."
-        )
+        warn("Could not read eye states data. Pupil diameter will not be exported.")
         eye_states = None
     info = rec.info
 
@@ -257,9 +255,7 @@ def export_eye_bids(
                     [physioevents_data, events_data], ignore_index=True
                 )
         except Exception:
-            warn(
-                f"Could not process {attr_name}, skipping exporting events for this attribute."
-            )
+            warn(f"Could not read {attr_name} data. These events will not be exported.")
 
     # Try to process messages if available, and add them to the physioevents data
     try:
@@ -273,7 +269,7 @@ def export_eye_bids(
                 [physioevents_data, events], ignore_index=True
             )
     except Exception:
-        warn("Could not process messages, skipping exporting messages.")
+        warn("Could not read messages data. Messages will not be exported.")
 
     physioevents_data = physioevents_data.sort_values(by="onset")
     physioevents_data.to_csv(
