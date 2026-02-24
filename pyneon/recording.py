@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .events import Events
-from .export import export_cloud_format, export_eye_bids, export_motion_bids
+from .export import export_cloud_format, export_eye_tracking_bids, export_motion_bids
 from .preprocess import concat_events, concat_streams
 from .stream import Stream
 from .utils.doc_decorators import fill_doc
@@ -673,7 +673,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """
         export_motion_bids(self, motion_dir, prefix, extra_metadata)
 
-    def export_eye_bids(
+    def export_eye_tracking_bids(
         self,
         output_dir: str | Path,
         prefix: Optional[str] = None,
@@ -728,4 +728,4 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         ----------
         .. [2] Szinte, M., Bach, D. R., Draschkow, D., Esteban, O., Gagl, B., Gau, R., Gregorova, K., Halchenko, Y. O., Huberty, S., Kling, S. M., Kulkarni, S., Maintainers, T. B., Markiewicz, C. J., Mikkelsen, M., Oostenveld, R., & Pfarr, J.-K. (2026). Eye-Tracking-BIDS: The Brain Imaging Data Structure extended to gaze position and pupil data. bioRxiv. https://doi.org/10.64898/2026.02.03.703514
         """
-        export_eye_bids(self, output_dir, prefix, extra_metadata)
+        export_eye_tracking_bids(self, output_dir, prefix, extra_metadata)

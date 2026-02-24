@@ -165,7 +165,7 @@ def export_motion_bids(
     scans.to_csv(scans_path, sep="\t", index=False)
 
 
-def export_eye_bids(
+def export_eye_tracking_bids(
     rec: "Recording",
     output_dir: str | Path,
     prefix: Optional[str] = None,
