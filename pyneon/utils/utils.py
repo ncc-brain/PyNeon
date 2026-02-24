@@ -1,6 +1,3 @@
-from pathlib import Path
-from typing import Callable
-
 import numpy as np
 import pandas as pd
 
@@ -56,37 +53,3 @@ def _check_data(data: pd.DataFrame) -> None:
     # Sort by index
     data = data.sort_index(ascending=True)
     assert data.index.is_monotonic_increasing
-
-
-def load_or_compute(
-    path: Path,
-    compute_fn: Callable[[], pd.DataFrame],
-    overwrite: bool = False,
-) -> pd.DataFrame:
-    """
-    Load a DataFrame from a file or compute it if the file does not exist.
-    """
-    if path.is_file() and not overwrite:
-        if path.suffix == ".csv":
-            df = pd.read_csv(path)
-        elif path.suffix == ".json":
-            df = pd.read_json(path, orient="records", lines=True)
-        elif path.suffix == ".pkl":
-            df = pd.read_pickle(path)
-        else:
-            raise ValueError(f"Unsupported file type: {path.suffix}")
-        if df.empty:
-            raise ValueError(f"{path.name} is empty.")
-        return df
-    df = compute_fn()
-    if path.suffix == ".csv":
-        df.to_csv(path, index=False)
-    elif path.suffix == ".json":
-        df.to_json(path, orient="records", lines=True)
-    elif path.suffix == ".pkl":
-        df.to_pickle(path)
-    else:
-        raise ValueError(f"Unsupported file type: {path.suffix}")
-    if df.empty:
-        raise ValueError(f"{path.name} is empty.")
-    return df

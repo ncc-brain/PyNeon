@@ -343,7 +343,7 @@ class Epochs:
             ================ ================================
             ``epoch_times``  The common time grid, in nanoseconds.
             ``column_names`` List of provided column names.
-            "nan_flag"       Boolean indicating whether NaN values were found in the data.
+            ``nan_flag``     Boolean indicating whether NaN values were found in the data.
             ================ ================================
         """
         if not isinstance(self.source, Stream):

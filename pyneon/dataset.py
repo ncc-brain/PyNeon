@@ -47,7 +47,7 @@ class Dataset:
             ├── blinks.dtype
             └── ...
 
-    Individual recordings will be read into :class:`pyneon.Recording` instances
+    Individual recordings will be read into :class:`Recording` instances
     (based on ``sections.csv``, if available) and accessible through the
     ``recordings`` attribute.
 
@@ -61,7 +61,7 @@ class Dataset:
     dataset_dir : pathlib.Path
         Path to the directory containing the dataset.
     recordings : list of Recording
-        List of :class:`pyneon.Recording` instances for each recording in the dataset.
+        List of :class:`Recording` instances for each recording in the dataset.
     sections : pandas.DataFrame
         DataFrame containing the sections of the dataset.
 

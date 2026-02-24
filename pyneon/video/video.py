@@ -1,6 +1,7 @@
 from functools import cached_property
 from pathlib import Path
 from typing import Literal, Optional, Union
+from numbers import Number
 from warnings import warn
 
 import cv2
@@ -25,7 +26,11 @@ from .utils import get_undistort_maps, resolve_processing_window
 
 class Video:
     """
-    OpenCV VideoCapture wrapper that pairs a video with frame timestamps.
+    OpenCV VideoCapture wrapper that pairs a video with frame timestamps and
+    camera metadata.
+
+    The video is accessed via the :attr:`cap` property, frame timestamps via
+    :attr:`timestamps`, and camera metadata via :attr:`info`.
 
     Parameters
     ----------
@@ -42,7 +47,9 @@ class Video:
     timestamps : numpy.ndarray
         Frame timestamps in nanoseconds.
     ts : numpy.ndarray
-        Alias for timestamps.
+        Alias for ``timestamps``.
+    info : dict
+        Camera metadata dictionary.
     """
 
     def __init__(
@@ -60,8 +67,6 @@ class Video:
         self._undistort_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
         self._closed = False
 
-        self.der_dir = video_file.parent / "derivatives"
-
         if info == {}:
             warn("Video info is empty and will be loaded from default values.")
             self.info = default_camera_info
@@ -73,25 +78,6 @@ class Video:
                 f"Number of timestamps ({len(self.timestamps)}) does not match "
                 f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
             )
-
-    # Delegate methods to underlying cv2.VideoCapture object
-    def isOpened(self):
-        return self._cap.isOpened()
-
-    def grab(self):
-        return self._cap.grab()
-
-    def retrieve(self):
-        return self._cap.retrieve()
-
-    def read(self):
-        return self._cap.read()
-
-    def set(self, propId, value):
-        return self._cap.set(propId, value)
-
-    def get(self, propId):
-        return self._cap.get(propId)
 
     def __len__(self) -> int:
         return int(len(self.ts))
@@ -107,14 +93,103 @@ Duration: {self.duration:.2f} seconds
 Effective FPS: {self.fps:.2f}
 """
 
+    # Delegate methods to underlying cv2.VideoCapture object
+    def isOpened(self) -> bool:
+        """
+        Check if the video file is open.
+
+        Returns
+        -------
+        bool
+            True if open, False otherwise.
+        """
+        return self._cap.isOpened()
+
+    def grab(self) -> bool:
+        """
+        Grab the next frame without decoding.
+
+        Returns
+        -------
+        bool
+            True if successful, False otherwise.
+        """
+        return self._cap.grab()
+
+    def retrieve(self) -> tuple[bool, Optional[np.ndarray]]:
+        """
+        Retrieve and decode the last grabbed frame.
+
+        Returns
+        -------
+        success : bool
+            True if successful, False otherwise.
+        frame : numpy.ndarray or None
+            Frame as a 3D BGR array if successful, None otherwise.
+        """
+        return self._cap.retrieve()
+
+    def read(self) -> tuple[bool, Optional[np.ndarray]]:
+        """
+        Read and decode the next frame (equivalent to grab() + retrieve()).
+
+        Returns
+        -------
+        success : bool
+            True if successful, False otherwise.
+        frame : numpy.ndarray or None
+            Frame as a 3D BGR array if successful, None otherwise.
+        """
+        return self._cap.read()
+
+    def set(self, propId: int, value: Number) -> bool:
+        """
+        Set a video property.
+
+        Parameters
+        ----------
+        propId : int
+            OpenCV property ID (e.g., cv2.CAP_PROP_POS_FRAMES).
+        value : Number
+            New value for the property.
+
+        Returns
+        -------
+        bool
+            True if successful, False otherwise.
+
+        Warnings
+        --------
+        Seeking frames with ``cv2.CAP_PROP_POS_FRAMES`` is unreliable for
+        variable frame rate (VFR) videos. Neon recordings typically have
+        non-constant FPS, making direct seeking unpredictable.
+        See https://github.com/opencv/opencv/issues/9053.
+
+        For safe random frame access, use :meth:`read_frame_at` instead,
+        which maintains internal frame counting and handles VFR timing
+        correctly::
+
+            # Good: Safe frame reading in VFR videos
+            frame = video.read_frame_at(100)
+
+            # Risky: May not work reliably on VFR videos
+            video.set(cv2.CAP_PROP_POS_FRAMES, 100)
+            ret, frame = video.read()
+        """
+        return self._cap.set(propId, value)
+
+    def get(self, propId: int) -> float:
+        """Query a video property value."""
+        return self._cap.get(propId)
+
     @property
     def first_ts(self) -> int:
-        """First timestamp of the video."""
+        """First frame timestamp in nanoseconds."""
         return int(self.ts[0])
 
     @property
     def last_ts(self) -> int:
-        """Last timestamp of the video."""
+        """Last frame timestamp in nanoseconds."""
         return int(self.ts[-1])
 
     @property
@@ -186,21 +261,65 @@ Effective FPS: {self.fps:.2f}
         """Current frame index based on the video position."""
         return int(self.get(cv2.CAP_PROP_POS_FRAMES))
 
+    @property
+    def cap(self) -> cv2.VideoCapture:
+        """
+        The underlying OpenCV VideoCapture object.
+
+        Access this property for OpenCV operations not covered by
+        PyNeon convenience methods.
+
+        Returns
+        -------
+        cv2.VideoCapture
+            The underlying video capture object.
+
+        Warnings
+        --------
+        Direct manipulation of this object may interfere with PyNeon's frame
+        synchronization and state management. Use with caution.
+
+        Notes
+        -----
+        PyNeon provides convenience methods for most common video operations:
+        :meth:`read_frame_at`, :meth:`detect_markers`, :meth:`undistort_frame`.
+        These handle frame indexing, timestamp mapping, and state management
+        automatically. For standard use cases, prefer these over direct cap access.
+
+        For advanced OpenCV operations, common access patterns include:
+
+        - ``video.cap.get(cv2.CAP_PROP_*)``: Query video properties
+        - ``video.cap.get(cv2.CAP_PROP_FRAME_WIDTH)``: Get frame width
+        - ``video.cap.grab()`` and ``video.cap.retrieve()``: Read frames directly
+
+        Direct frame seeking via ``video.cap.set(cv2.CAP_PROP_POS_FRAMES, ...)``
+        may break VFR timestamp alignment. Use :meth:`read_frame_at` instead.
+        After direct cap manipulation, consider calling :meth:`reset` to
+        resynchronize internal state.
+
+        See Also
+        --------
+        read_frame_at : Recommended method for safe frame reading
+        reset : Reset video state after direct cap manipulation
+        OpenCV VideoCapture : https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html
+        """
+        return self._cap
+
     def timestamp_to_frame_index(
         self, timestamp: Union[int, np.int64, np.ndarray]
     ) -> np.ndarray:
         """
-        Map one or many timestamps (ns) to nearest frame index/indices.
+        Map timestamps to frame indices (nearest frame).
 
         Parameters
         ----------
         timestamp : int or numpy.ndarray
-            Timestamp(s) in nanoseconds.
+            Single timestamp or array of timestamps in nanoseconds.
 
         Returns
         -------
         numpy.ndarray
-            1D array of frame indices corresponding to the timestamp(s).
+            Frame index or array of frame indices (always returned as array).
 
         Raises
         ------
@@ -220,9 +339,10 @@ Effective FPS: {self.fps:.2f}
 
     def read_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
         """
-        Read a single frame using sequential access.
-        Advances by grabbing intermediate frames for forward jumps to keep
-        timestamps aligned in VFR videos, rewinding to start if .
+        Read a single frame by index.
+
+        For forward jumps, grabs intermediate frames to maintain timestamp
+        alignment in VFR videos. For backward jumps, resets to start.
 
         Parameters
         ----------
@@ -238,6 +358,12 @@ Effective FPS: {self.fps:.2f}
         ------
         ValueError
             If ``frame_index`` is out of bounds.
+
+        Notes
+        -----
+        Recommended for all frame access in Neon videos with VFR. Automatically
+        handles frame positioning and timestamp alignment, managing internal state
+        correctly.
         """
         if frame_index < 0 or frame_index >= len(self.ts):
             raise ValueError(f"frame_index {frame_index} is out of bounds.")
@@ -282,7 +408,17 @@ Effective FPS: {self.fps:.2f}
         return frame
 
     def reset(self):
-        """Reopen the video file and reset the read position to the first frame."""
+        """
+        Reopen the video file and reset to the first frame.
+
+        Recreates the internal VideoCapture object. Use this after direct
+        :attr:`cap` manipulation or to restart from the beginning.
+
+        Notes
+        -----
+        This discards any pending frame operations and reloads from disk.
+        Useful after :attr:`cap` manipulation to resynchronize state.
+        """
         self.close()
         # Create a new VideoCapture object
         self._cap = cv2.VideoCapture(str(self.video_file))
@@ -291,11 +427,11 @@ Effective FPS: {self.fps:.2f}
             raise IOError(f"Failed to reopen video file: {self.video_file}")
 
     def release(self):
-        """Release the underlying video handle."""
+        """Close and release the video handle (alias for :meth:`close`)."""
         self.close()
 
     def close(self) -> None:
-        """Release the underlying video handle."""
+        """Close and release the video handle."""
         if getattr(self, "_closed", True):
             return
 
@@ -424,18 +560,18 @@ Effective FPS: {self.fps:.2f}
         show: bool = True,
     ):
         """
-        Plot detections on a frame from this video.
+        Visualize detections on a frame.
 
         Parameters
         ----------
         detections : Stream
             Stream containing marker or surface-corner detections.
         frame_index : int
-            Index of the frame to plot.
+            Frame index to plot.
         show_ids : bool
-            Display detection IDs at their centers when available. Defaults to True.
+            Display detection IDs at their centers. Defaults to True.
         color : str
-            Matplotlib color for detections. Defaults to "magenta".
+            Matplotlib color for overlay. Defaults to "magenta".
         %(ax_param)s
         %(show_param)s
 
