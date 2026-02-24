@@ -6,15 +6,12 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
-from ..utils.doc_decorators import fill_doc
-from .constants import DETECTION_COLUMNS, MARKERS_LAYOUT_COLUMNS
+from .constants import MARKERS_LAYOUT_COLUMNS
 
 
-@fill_doc
 def find_homographies(
-    detected_markers: Stream | pd.DataFrame,
-    marker_layout: Optional[pd.DataFrame] = None,
-    surface_layout: Optional[pd.DataFrame | np.ndarray] = None,
+    detections: Stream | pd.DataFrame,
+    layout: pd.DataFrame | np.ndarray,
     valid_markers: int = 2,
     method: int = cv2.LMEDS,
     ransacReprojThreshold: float = 3.0,
@@ -24,110 +21,169 @@ def find_homographies(
     """
     Compute a homography for each frame using marker or surface-corner detections.
 
-    For marker detections, provide ``marker_layout`` with columns defined in
-    ``%(marker_layout)s``. For surface-corner detections (from
-    :func:`pyneon.video.detect_surface`), provide ``surface_layout``
-    containing a ``corners`` column with a 4x2 array per row, or a single 4x2
-    numpy array. If ``surface_layout`` contains a ``marker id`` column, it is used
-    to match detections to layout rows.
+    The function automatically determines the detection and layout types
+    based on the input data:
+
+    - **Marker detections** from :meth:`Video.detect_markers` require a marker layout
+      (DataFrame with "marker name", "size", "center x", "center y" columns).
+    - **Surface-corner detections** (column: "corners")
+      require surface layout (DataFrame with "corners" column, or a 4x2 numpy array)
 
     Parameters
     ----------
-    detected_markers : Stream or pandas.DataFrame
+    detections : Stream or pandas.DataFrame
         Stream or DataFrame containing per-frame detections.
-    marker_layout : pandas.DataFrame, optional
-        Marker layout DataFrame (for fiducials). Required for marker detections.
-    surface_layout : pandas.DataFrame or numpy.ndarray, optional
-        Surface layout with a ``corners`` column or a 4x2 numpy array. Required
-        for surface-corner detections.
-    %(find_homographies_params)s
+    layout : pandas.DataFrame or numpy.ndarray
+        Layout specification for computing homographies. Format depends on the
+        detection type:
+
+        - For marker detections: DataFrame with columns "marker name", "size",
+          "center x", "center y" (marker reference coordinates)
+        - For surface-corner detections: DataFrame with a "corners" column
+          containing 4x2 arrays per row, or a single 4x2 numpy array. If a
+          "surface id" column is present, it's used to match detections to layout rows.
+    valid_markers : int, optional
+        Minimum number of markers required to compute a homography. Defaults to 2.
+    method : int, optional
+        Method used to compute a homography matrix. The following methods are possible:
+
+        - 0 - a regular method using all the points, i.e., the least squares method
+        - ``cv2.RANSAC`` - RANSAC-based robust method
+        - ``cv2.LMEDS`` - Least-Median robust method
+        - ``cv2.RHO`` - PROSAC-based robust method
+
+        Defaults to ``cv2.LMEDS``.
+    ransacReprojThreshold : float, optional
+        Maximum allowed reprojection error to treat a point pair as an inlier
+        (used in the RANSAC and RHO methods only). Defaults to 3.0.
+    maxIters : int, optional
+        The maximum number of RANSAC iterations. Defaults to 2000.
+    confidence : float, optional
+        Confidence level, between 0 and 1, for the estimated homography.
+        Defaults to 0.995.
 
     Returns
     -------
-    %(find_homographies_return)s
+    Stream
+        A Stream indexed by 'timestamp [ns]' with columns
+        'homography (0,0)' through 'homography (2,2)': The 9 elements of the
+        flattened 3x3 homography matrix.
+        
+    Notes
+    -----
+    The flattened homography matrix as columns, and the fact that
+    homographies is a Stream, allows for interpolation.
     """
-    if isinstance(detected_markers, Stream):
-        detection_df = detected_markers.data
+    if isinstance(detections, Stream):
+        detection_df = detections.data
     else:
-        detection_df = detected_markers
-
+        detection_df = detections
     if detection_df.empty:
         raise ValueError("Detections are empty.")
 
-    actual_cols = set(detection_df.columns)
-    if detection_df.index.name:
-        actual_cols.add(detection_df.index.name)
+    is_marker = all(
+        col in detection_df.columns
+        for col in [
+            "marker family",
+            "marker id",
+            "marker name",
+        ]
+    )
+    is_surface = "surface id" in detection_df.columns
 
-    uses_marker_columns = set(DETECTION_COLUMNS).issubset(actual_cols)
-    uses_corner_column = "corners" in detection_df.columns
-
-    if not (uses_marker_columns or uses_corner_column):
-        raise ValueError(
-            "Detections must contain marker corner columns or a 'corners' column."
-        )
-
-    if marker_layout is not None and surface_layout is not None:
-        raise ValueError("Provide only one of marker_layout or surface_layout.")
-
-    if marker_layout is not None:
-        if not uses_marker_columns:
+    # Validate and prepare layout based on detection type
+    if is_marker:
+        if not all(col in layout.columns for col in MARKERS_LAYOUT_COLUMNS):
             raise ValueError(
-                "marker_layout is only supported for detections with marker corner columns."
+                f"Marker layout DataFrame must contain columns: {MARKERS_LAYOUT_COLUMNS}"
             )
-        detection_mode = "marker"
-        layout_df = _prepare_marker_layout(marker_layout)
-        layout_by_marker = None
-        base_corners = None
-    elif surface_layout is not None:
-        detection_mode = "surface"
-        layout_df, layout_by_marker, base_corners = _prepare_corner_layout(
-            surface_layout
+        layout = layout.copy()
+        # Compute marker corners from center positions and size
+        layout["marker_corners"] = layout.apply(
+            lambda row: np.array(
+                [
+                    [
+                        row["center x"] - row["size"] / 2,
+                        row["center y"] - row["size"] / 2,
+                    ],
+                    [
+                        row["center x"] + row["size"] / 2,
+                        row["center y"] - row["size"] / 2,
+                    ],
+                    [
+                        row["center x"] + row["size"] / 2,
+                        row["center y"] + row["size"] / 2,
+                    ],
+                    [
+                        row["center x"] - row["size"] / 2,
+                        row["center y"] + row["size"] / 2,
+                    ],
+                ],
+                dtype=np.float32,
+            ),
+            axis=1,
         )
+    elif is_surface:
+        layout, layout_by_marker, base_corners = _prepare_corner_layout(layout)
     else:
-        raise ValueError("Either marker_layout or surface_layout must be provided.")
+        raise ValueError(
+            "Invalid detections. Please use outputs from detect_markers or detect_surface, or ensure the DataFrame has the required columns."
+        )
 
     unique_timestamps = detection_df.index.unique()
     homography_for_frame = {}
-    required_points = max(valid_markers, 1) * 4
 
     for ts in tqdm(unique_timestamps, desc="Computing homographies"):
         frame_detections = detection_df.loc[ts]
 
         if isinstance(frame_detections, pd.Series):
             frame_detections = frame_detections.to_frame().T
-
         if frame_detections.shape[0] < valid_markers:
             continue
 
         world_points = []
         surface_points = []
 
-        if detection_mode == "marker":
+        if is_marker:
             for _, detection in frame_detections.iterrows():
                 marker_name = detection["marker name"]
-                if marker_name not in layout_df["marker name"].values:
+                if marker_name not in layout["marker name"].values:
                     continue
 
-                corners_detected = _extract_corners(detection)
-                ref_corners = layout_df.loc[
-                    layout_df["marker name"] == marker_name, "marker_corners"
+                world_corners = np.array(
+                    [
+                        [detection["top left x [px]"], detection["top left y [px]"]],
+                        [detection["top right x [px]"], detection["top right y [px]"]],
+                        [
+                            detection["bottom right x [px]"],
+                            detection["bottom right y [px]"],
+                        ],
+                        [
+                            detection["bottom left x [px]"],
+                            detection["bottom left y [px]"],
+                        ],
+                    ],
+                    dtype=np.float32,
+                )
+                ref_corners = layout.loc[
+                    layout["marker name"] == marker_name, "marker_corners"
                 ].values[0]
 
-                if corners_detected.shape != (4, 2) or ref_corners.shape != (4, 2):
+                if world_corners.shape != (4, 2) or ref_corners.shape != (4, 2):
                     raise ValueError(
                         "Marker corners must have shape (4, 2), got "
-                        f"{corners_detected.shape} and {ref_corners.shape}"
+                        f"{world_corners.shape} and {ref_corners.shape}"
                     )
 
-                world_points.extend(corners_detected)
+                world_points.extend(world_corners)
                 surface_points.extend(ref_corners)
         else:  # surface mode
             for _, detection in frame_detections.iterrows():
-                corners_detected = _extract_corners(detection)
+                world_corners = np.asarray(detection["corners"], dtype=np.float32)
 
-                if corners_detected.shape != (4, 2):
+                if world_corners.shape != (4, 2):
                     raise ValueError(
-                        f"Detected corners must have shape (4, 2), got {corners_detected.shape}"
+                        f"Detected corners must have shape (4, 2), got {world_corners.shape}"
                     )
 
                 if layout_by_marker is not None:
@@ -138,11 +194,8 @@ def find_homographies(
                 else:
                     ref_corners = base_corners
 
-                world_points.extend(corners_detected)
+                world_points.extend(world_corners)
                 surface_points.extend(ref_corners)
-
-        if len(world_points) < required_points:
-            continue
 
         world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
         surface_points = np.array(surface_points, dtype=np.float32).reshape(-1, 2)
@@ -173,61 +226,10 @@ def find_homographies(
     return Stream(df)
 
 
-def _extract_corners(detection: pd.Series) -> np.ndarray:
-    if "corners" in detection:
-        return np.asarray(detection["corners"], dtype=np.float32)
-    return np.array(
-        [
-            [detection["top left x [px]"], detection["top left y [px]"]],
-            [detection["top right x [px]"], detection["top right y [px]"]],
-            [detection["bottom right x [px]"], detection["bottom right y [px]"]],
-            [detection["bottom left x [px]"], detection["bottom left y [px]"]],
-        ],
-        dtype=np.float32,
-    )
-
-
 def _get_id(detection: pd.Series) -> Optional[int]:
     if "marker id" in detection:
         return int(detection["marker id"])
     return None
-
-
-def _prepare_marker_layout(marker_layout: pd.DataFrame) -> pd.DataFrame:
-    if not isinstance(marker_layout, pd.DataFrame):
-        raise ValueError("marker_layout must be a DataFrame for marker detections.")
-    if not set(MARKERS_LAYOUT_COLUMNS).issubset(marker_layout.columns):
-        raise ValueError(
-            "marker_layout must contain the following columns: "
-            f"{', '.join(MARKERS_LAYOUT_COLUMNS)}"
-        )
-
-    marker_layout = marker_layout.copy()
-    marker_layout["marker_corners"] = marker_layout.apply(
-        lambda row: np.array(
-            [
-                [
-                    row["center x"] - row["size"] / 2,
-                    row["center y"] - row["size"] / 2,
-                ],
-                [
-                    row["center x"] + row["size"] / 2,
-                    row["center y"] - row["size"] / 2,
-                ],
-                [
-                    row["center x"] + row["size"] / 2,
-                    row["center y"] + row["size"] / 2,
-                ],
-                [
-                    row["center x"] - row["size"] / 2,
-                    row["center y"] + row["size"] / 2,
-                ],
-            ],
-            dtype=np.float32,
-        ),
-        axis=1,
-    )
-    return marker_layout
 
 
 def _prepare_corner_layout(
@@ -236,21 +238,15 @@ def _prepare_corner_layout(
     Optional[pd.DataFrame], Optional[dict[int, np.ndarray]], Optional[np.ndarray]
 ]:
     if isinstance(surface_layout, np.ndarray):
+        if surface_layout.shape != (4, 2):
+            raise ValueError("Layout array must have shape (4, 2).")
         base_corners = np.asarray(surface_layout, dtype=np.float32)
-        if base_corners.shape != (4, 2):
-            raise ValueError("surface_layout array must have shape (4, 2).")
         return None, None, base_corners
 
-    if not isinstance(surface_layout, pd.DataFrame):
-        raise ValueError("surface_layout must be a DataFrame or 4x2 numpy array.")
-
-    if "corners" not in surface_layout.columns:
-        raise ValueError("surface_layout must contain a 'corners' column.")
-
-    if "marker id" in surface_layout.columns:
+    if "surface id" in surface_layout.columns:
         layout_by_marker = {}
         for _, row in surface_layout.iterrows():
-            marker_id = int(row["marker id"])
+            marker_id = int(row["surface id"])
             corners = np.asarray(row["corners"], dtype=np.float32)
             if corners.shape != (4, 2):
                 raise ValueError("Each layout 'corners' entry must be shape (4, 2).")
@@ -259,7 +255,7 @@ def _prepare_corner_layout(
 
     if len(surface_layout) != 1:
         raise ValueError(
-            "surface_layout must have one row or include a 'marker id' column when using corner detections."
+            "surface_layout must have one row or include a 'surface id' column when using corner detections."
         )
 
     base_corners = np.asarray(surface_layout["corners"].iloc[0], dtype=np.float32)

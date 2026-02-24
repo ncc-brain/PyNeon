@@ -8,7 +8,12 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES, DETECTION_COLUMNS
+from .constants import (
+    APRILTAG_FAMILIES,
+    ARUCO_NUMBERS,
+    ARUCO_SIZES,
+    DETECTION_COLUMNS,
+)
 from .utils import (
     _verify_format,
     distort_points,

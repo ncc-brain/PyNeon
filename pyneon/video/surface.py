@@ -58,7 +58,6 @@ def detect_surface(
     -------
     %(detect_surface_return)s
     """
-
     if step < 1:
         raise ValueError("step must be >= 1")
     if decimate <= 0:
@@ -164,9 +163,7 @@ def detect_surface(
             detection_row = {
                 "frame index": actual_frame_idx,
                 "timestamp [ns]": int(video.ts[actual_frame_idx]),
-                "marker family": "surface",
-                "marker id": cid,
-                "marker name": f"surface_{cid}",
+                "surface id": cid,
                 "top left x [px]": corners[0, 0],
                 "top left y [px]": corners[0, 1],
                 "top right x [px]": corners[1, 0],
@@ -183,16 +180,9 @@ def detect_surface(
                 detection_row["score"] = sel["score"]
             detections.append(detection_row)
 
-    df = pd.DataFrame(detections)
+    df = pd.DataFrame(detections).set_index("timestamp [ns]")
     if df.empty:
-        print("Warning: No surface contours detected.")
-        cols = list(DETECTION_COLUMNS)
-        if report_diagnostics:
-            cols.extend(["area_ratio", "score"])
-        df = pd.DataFrame(columns=cols)
-
-    df.set_index("timestamp [ns]", inplace=True)
-    _verify_format(df, DETECTION_COLUMNS)
+        raise ValueError("No surfaces detected in the video with the given parameters.")
     return Stream(df)
 
 

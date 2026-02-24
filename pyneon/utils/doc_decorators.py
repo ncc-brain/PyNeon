@@ -92,7 +92,7 @@ DOC["detect_surface_params"] = """
 %(window_params)s
 min_area_ratio : float, optional
     Minimum contour area relative to frame area. Contours smaller than this
-    ratio are ignored. Default is 0.01 (1% of frame area).
+    ratio are ignored. Default is 0.01 (of frame area).
 max_area_ratio : float, optional
     Maximum contour area relative to frame area. Contours larger than this
     ratio are ignored. Default is 0.98.
@@ -127,44 +127,7 @@ undistort : bool, optional
     in the original (distorted) video frame. Defaults to ``False``.
 """
 
-DOC["find_homographies_params"] = """
-valid_markers : int, optional
-    Minimum number of markers required to compute a homography. Defaults to 2.
-method : int, optional
-    Method used to compute a homography matrix. The following methods are possible:
 
-    - 0 - a regular method using all the points, i.e., the least squares method
-    - ``cv2.RANSAC`` - RANSAC-based robust method
-    - ``cv2.LMEDS`` - Least-Median robust method
-    - ``cv2.RHO`` - PROSAC-based robust method
-
-    Defaults to ``cv2.LMEDS``.
-ransacReprojThreshold : float, optional
-    Maximum allowed reprojection error to treat a point pair as an inlier
-    (used in the RANSAC and RHO methods only). Defaults to 3.0.
-maxIters : int, optional
-    The maximum number of RANSAC iterations. Defaults to 2000.
-confidence : float, optional
-    Confidence level, between 0 and 1, for the estimated homography.
-    Defaults to 0.995.
-"""
-
-DOC["marker_layout"] = """
-marker_layout : pandas.DataFrame
-    DataFrame describing the layout. Must include columns:
-
-    - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")\n
-    - "size": marker size in the reference plane units\n
-    - "center x": x center of the marker in surface coordinates\n
-    - "center y": y center of the marker in surface coordinates
-"""
-
-DOC["find_homographies_return"] = """
-Stream
-    A Stream indexed by 'timestamp [ns]' with columns
-    'homography (0,0)' through 'homography (2,2)': The 9 elements of the
-    flattened 3x3 homography matrix.
-"""
 
 DOC["detect_markers_return"] = """
 Stream

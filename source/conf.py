@@ -33,6 +33,9 @@ extensions = [
 autosummary_generate = True  # Enable automatic generation
 autosummary_imported_members = True  # Optional: include imported members
 
+# Suppress warnings about autosummary stub files not being found
+suppress_warnings = ["autosummary.stub_files"]
+
 autodoc_member_order = "bysource"
 autodoc_inherit_docstrings = True
 templates_path = ["_templates"]
