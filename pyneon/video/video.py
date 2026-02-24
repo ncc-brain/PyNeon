@@ -268,6 +268,9 @@ Effective FPS: {self.fps:.2f}
 
         Access this property for OpenCV operations not covered by
         PyNeon convenience methods.
+        
+        For documentation of the ``cv.VideoCapture`` API, see:
+        https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html
 
         Returns
         -------
@@ -301,7 +304,6 @@ Effective FPS: {self.fps:.2f}
         --------
         read_frame_at : Recommended method for safe frame reading
         reset : Reset video state after direct cap manipulation
-        OpenCV VideoCapture : https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html
         """
         return self._cap
 
