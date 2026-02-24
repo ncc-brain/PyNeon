@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .events import Events
-from .export import export_cloud_format, export_eye_bids, export_motion_bids
+from .export import export_cloud_format, export_eye_tracking_bids, export_motion_bids
 from .preprocess import concat_events, concat_streams
 from .stream import Stream
 from .utils.doc_decorators import fill_doc
@@ -625,11 +625,14 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         extra_metadata: dict = {},
     ):
         """
-        Export IMU data to Motion-BIDS [1]_ format.
+        Export IMU data to Motion-BIDS format.
 
-        Motion-BIDS standardizes motion sensor data from IMUs. The export creates
-        motion time-series and metadata files plus channels files, and a scans file
-        in the subject/session directory.
+        Motion-BIDS [1]_ is an extension to the Brain Imaging Data Structure (BIDS) that
+        standardizes motion sensor data from IMUs for reproducible research. This method
+        creates motion time-series and metadata files, channels files, and updates the
+        scans file in the subject/session directory. The output files are BIDS-compliant
+        templates and may require additional metadata editing for full compliance with
+        your specific use case.
 
         For instance, an exported directory could look like this:
 
@@ -643,6 +646,9 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                         sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.json
                         sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.tsv
                     sub-01_ses-1_scans.tsv
+
+        Motion-BIDS specification can be found at:
+        https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html
 
         Parameters
         ----------
@@ -661,19 +667,13 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Extra metadata to include in the JSON metadata file. Keys must be valid
             BIDS fields (for example, ``TaskName``).
 
-        Notes
-        -----
-        Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-        standardize the organization of motion data for reproducible research.
-        See Jeung et al. (2024), Motion-BIDS: an extension to the brain imaging data
-        structure to organize motion data for reproducible research. Scientific Data,
-        11(1), 716. https://doi.org/10.1038/s41597-024-03559-8
-        For the specification, see
-        https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html.
+        References
+        ----------
+        .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., Warmerdam, E., Hansen, C., Oostenveld, R., & Welzel, J. (2024). Motion-BIDS: An extension to the brain imaging data structure to organize motion data for reproducible research. Scientific Data, 11(1), 716. https://doi.org/10.1038/s41597-024-03559-8
         """
         export_motion_bids(self, motion_dir, prefix, extra_metadata)
 
-    def export_eye_bids(
+    def export_eye_tracking_bids(
         self,
         output_dir: str | Path,
         prefix: Optional[str] = None,
@@ -682,9 +682,16 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         """
         Export eye-tracking data to Eye-Tracking-BIDS format.
 
-        Eye-Tracking-BIDS standardizes gaze position, pupil data, and eye-tracking
-        events. The export creates physiology time-series and events files with
-        accompanying metadata.
+        Eye-Tracking-BIDS [2]_ standardizes gaze position, pupil data, and eye-tracking
+        events by treating eye-tracking data as physiological data that can be organized
+        alongside most BIDS modalities. The export creates the following files:
+
+        - Gaze coordinates (x, y) as time-series data (``_physio.tsv.gz``), including
+          pupil diameter measurements when available
+        - Eye events (blinks, saccades, fixations) and experimental messages as event
+          markers (``_physioevents.tsv.gz``)
+
+        Accompanying metadata is saved in JSON sidecar files.
 
         An example exported directory could look like this:
 
@@ -700,9 +707,13 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                         sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.tsv.gz
                     sub-01_ses-1_scans.tsv
 
+        BIDS specifications for physiological recordings and specifically eye-tracking data can be found at:
+
+        - https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html
+        - https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html#eye-tracking
+
         Parameters
         ----------
-
         output_dir : str or pathlib.Path
             Output directory to save the Eye-tracking-BIDS formatted data.
         prefix : str, optional
@@ -713,13 +724,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Extra metadata to include in the JSON metadata file. Keys must be valid
             BIDS fields.
 
-        Notes
-        -----
-        Eye-tracking data is physiology data and can live alongside most modalities.
-        Use a matching ``prefix`` to associate eye-tracking data with the
-        corresponding modality/session.
-        See Szinte et al. (2026), Eye-Tracking-BIDS: the Brain Imaging Data Structure
-        extended to gaze position and pupil data. bioRxiv.
-        https://doi.org/10.64898/2026.02.03.703514
+        References
+        ----------
+        .. [2] Szinte, M., Bach, D. R., Draschkow, D., Esteban, O., Gagl, B., Gau, R., Gregorova, K., Halchenko, Y. O., Huberty, S., Kling, S. M., Kulkarni, S., Maintainers, T. B., Markiewicz, C. J., Mikkelsen, M., Oostenveld, R., & Pfarr, J.-K. (2026). Eye-Tracking-BIDS: The Brain Imaging Data Structure extended to gaze position and pupil data. bioRxiv. https://doi.org/10.64898/2026.02.03.703514
         """
-        export_eye_bids(self, output_dir, prefix, extra_metadata)
+        export_eye_tracking_bids(self, output_dir, prefix, extra_metadata)
