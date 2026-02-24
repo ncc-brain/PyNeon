@@ -136,7 +136,7 @@ class TestBIDS:
             },
         ],
     )
-    def test_export_eye_bids_basic(
+    def test_export_eye_tracking_bids_basic(
         self, request, dataset_fixture, extra_metadata, tmp_path
     ):
         """Test basic Eye-Tracking-BIDS export with default prefix."""
@@ -147,13 +147,13 @@ class TestBIDS:
         for recording in dataset.recordings:
             try:
                 _ = recording.blinks
-                recording.export_eye_bids(output_dir, extra_metadata=extra_metadata)
+                recording.export_eye_tracking_bids(output_dir, extra_metadata=extra_metadata)
             except ValueError:
                 with pytest.warns(
                     UserWarning,
                     match="Could not read blinks data. These events will not be exported.",
                 ):
-                    recording.export_eye_bids(output_dir, extra_metadata=extra_metadata)
+                    recording.export_eye_tracking_bids(output_dir, extra_metadata=extra_metadata)
 
             # Verify files are created
             prefix = f"sub-{recording.info['wearer_name']}_task-TaskName"
@@ -193,7 +193,7 @@ class TestBIDS:
         "dataset_fixture",
         ["simple_dataset_native", "simple_dataset_cloud"],
     )
-    def test_export_eye_bids_with_prefix(self, request, dataset_fixture, tmp_path):
+    def test_export_eye_tracking_bids_with_prefix(self, request, dataset_fixture, tmp_path):
         """Test Eye-Tracking-BIDS export with custom prefix."""
         dataset = request.getfixturevalue(dataset_fixture)
         valid_prefix = "sub-01_ses-1_task-LabMuse"
@@ -204,14 +204,14 @@ class TestBIDS:
         for recording in dataset.recordings:
             try:
                 _ = recording.blinks
-                recording.export_eye_bids(output_dir, prefix=valid_prefix)
+                recording.export_eye_tracking_bids(output_dir, prefix=valid_prefix)
             except ValueError:
                 with pytest.warns(
                     UserWarning,
                     match="Could not read blinks data. These events will not be exported.",
                 ):
-                    recording.export_eye_bids(output_dir, prefix=valid_prefix)
+                    recording.export_eye_tracking_bids(output_dir, prefix=valid_prefix)
 
             # Test invalid prefix
             with pytest.raises(ValueError, match="Prefix must contain 'sub-<label>'"):
-                recording.export_eye_bids(output_dir, prefix=invalid_prefix)
+                recording.export_eye_tracking_bids(output_dir, prefix=invalid_prefix)
