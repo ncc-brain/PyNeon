@@ -1,4 +1,5 @@
 import datetime
+import gzip
 import json
 import re
 from pathlib import Path
@@ -17,6 +18,19 @@ from ._bids_parameters import (
 if TYPE_CHECKING:
     from ..recording import Recording
 
+def _infer_prefix_from_dir(rec, output_dir):
+    # Infer sub and ses names from motion_dir
+    sub_name = f"sub-{rec.info['wearer_name']}"
+    ses_name = None
+    parent_dir = output_dir.parent
+    if parent_dir.name.startswith("sub-"):
+        sub_name = parent_dir.name
+        ses_name = None
+    elif parent_dir.name.startswith("ses-"):
+        ses_name = parent_dir.name
+        if parent_dir.parent.name.startswith("sub-"):
+            sub_name = parent_dir.parent.name
+    return sub_name, ses_name
 
 def export_motion_bids(
     rec: "Recording",
@@ -63,12 +77,24 @@ def export_motion_bids(
     if motion_dir.name != "motion":
         raise RuntimeWarning(
             f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS"
-        )
+        )    
+    
+    # Infer sub and ses names from motion_dir
+    sub_name, ses_name = _infer_prefix_from_dir(rec, motion_dir)
+    sub_ses_name = f"{sub_name}_{ses_name}" if ses_name else sub_name
+    
+    # If prefix is not provided, construct it using the inferred sub and ses names
     if prefix is None:
-        prefix = f"sub-{rec.info['wearer_name']}_task-TaskName_tracksys-NeonIMU"
+        if ses_name is None:
+            prefix = f"{sub_name}_task-TaskName_tracksys-NeonIMU"
+        else:
+            prefix = f"{sub_name}_{ses_name}_task-TaskName_tracksys-NeonIMU"
+
+    # Check if required fields are in the prefix
     for field in ["sub-", "task-", "tracksys-"]:
         if field not in prefix:
             raise ValueError(f"Prefix must contain '{field}<label>' field.")
+    task_name = re.search(r"task-([^_]+)", prefix).group(1)
 
     # Define file paths
     motion_tsv_path = motion_dir / f"{prefix}_motion.tsv"
@@ -77,10 +103,6 @@ def export_motion_bids(
     channels_json_path = motion_dir / f"{prefix}_channels.json"
 
     # Export IMU data
-    motion_acq_time = datetime.datetime.fromtimestamp(imu.first_ts / 1e9).strftime(
-        "%Y-%m-%dT%H:%M:%S.%f"
-    )
-
     imu.data.to_csv(motion_tsv_path, sep="\t", index=False, header=False, na_rep="n/a")
 
     ch_names = imu.columns
@@ -97,14 +119,20 @@ def export_motion_bids(
             return "n/a", "n/a", "n/a"
         return meta["component"], meta["type"], meta["units"]
 
-    # Initialize dataframe and map metadata
+    # Channels REQUIRED data
     channels = pd.DataFrame({"name": ch_names})
     channels[["component", "type", "units"]] = channels["name"].apply(
         lambda x: pd.Series(get_channel_metadata(x))
     )
     channels["tracked_point"] = "Head"
+    channels = channels[["name", "component", "type", "tracked_point", "units"]]
+    
+    # Channels RECOMMENDED and OPTIONAL data
+    channels["placement"] = "Head-mounted Neon glasses"
     channels["sampling_frequency"] = float(imu.sampling_freq_effective)
-    channels.to_csv(channels_tsv_path, sep="\t", index=False)
+    channels["status"] = "good"
+    channels["status_description"] = None
+    channels.to_csv(channels_tsv_path, sep="\t", index=False, na_rep="n/a")
 
     ch_meta = {
         "reference_frame": {
@@ -122,9 +150,14 @@ def export_motion_bids(
         json.dump(ch_meta, f, indent=4)
 
     info = rec.info
-    metadata = MOTION_META_DEFAULT.copy()
-    metadata.update(
+    motion_metadata = MOTION_META_DEFAULT.copy()
+    motion_metadata.update(
         {
+            "TaskName": task_name,
+            "ACCELChannelCount": sum(channels["type"] == "ACCEL"),
+            "GYROChannelCount": sum(channels["type"] == "GYRO"),
+            "ORNTChannelCount": sum(channels["type"] == "ORNT"),
+            "SamplingFrequencyEffective": imu.sampling_freq_effective,
             "DeviceSerialNumber": info["module_serial_number"],
             "SoftwareVersions": (
                 f"App version: {info['app_version']}; "
@@ -133,34 +166,29 @@ def export_motion_bids(
             "SamplingFrequency": imu.sampling_freq_nominal,
         }
     )
-    metadata.update(extra_metadata)
+    motion_metadata.update(extra_metadata)
 
     with open(motion_json_path, "w") as f:
-        json.dump(metadata, f, indent=4)
+        json.dump(motion_metadata, f, indent=4)
 
-    scans_dir = motion_dir.parent
-    scans_path_potential = list(scans_dir.glob("*_scans.tsv"))
+    scans_path = motion_dir.parent / f"{sub_ses_name}_scans.tsv"
     filename = [motion_dir.name + "/" + motion_tsv_path.name]
+    motion_acq_time = datetime.datetime.fromtimestamp(imu.first_ts / 1e9).strftime(
+        "%Y-%m-%dT%H:%M:%S.%f"
+    )
     new_scan = pd.DataFrame.from_dict(
         {
             "filename": filename,
             "acq_time": [motion_acq_time],
         }
     )
-    if len(scans_path_potential) >= 1:
-        scans_path = scans_path_potential[0]
+    if scans_path.is_file():
         scans = pd.read_csv(scans_path, sep="\t")
         if scans.filename.isin(filename).any():
             return
         else:
             scans = pd.concat([scans, new_scan], ignore_index=True)
     else:
-        match = re.search(r"(sub-\d+)(_ses-\d+)?", prefix)
-        if match:
-            scan_prefix = match.group(0)
-        else:
-            scan_prefix = "sub-XX_ses-YY"
-        scans_path = scans_dir / f"{scan_prefix}_scans.tsv"
         scans = new_scan
     scans.to_csv(scans_path, sep="\t", index=False)
 
@@ -171,7 +199,34 @@ def export_eye_tracking_bids(
     prefix: Optional[str] = None,
     extra_metadata: dict = {},
 ):
-    """ """
+    """
+    Export eye-tracking data to Eye-Tracking-BIDS format. Gaze position, pupil data,
+    and eye-tracking events are saved as physiology data with metadata.
+    
+    Parameters
+    ----------
+    rec : Recording
+        Recording instance containing the eye-tracking data.
+    output_dir : str or pathlib.Path
+        Output directory to save the Eye-Tracking-BIDS formatted data.
+    prefix : str, optional
+        Prefix for the BIDS filenames (must include ``sub-<label>`` and ``task-<label>``).
+        If not provided, the function will attempt to infer the prefix from existing
+        files in the output directory. Defaults to "sub-``wearer_name``_task-TaskName"
+        if no existing files are found.
+    extra_metadata : dict, optional
+        Additional metadata to include in the JSON files. Defaults to an empty dict.
+    
+    Notes
+    -----
+    Eye-Tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
+    standardize the organization of eye-tracking data for reproducible research.
+    For more information, see
+    https://bids-specification.readthedocs.io/en/stable/modality-specific-files/eyetracking.html.
+    
+    The function automatically detects and uses matching prefixes from existing files
+    in the output directory, allowing seamless integration with other modalities (e.g., motion).
+    """
     gaze = rec.gaze
     try:
         eye_states = rec.eye_states
@@ -184,11 +239,26 @@ def export_eye_tracking_bids(
     output_dir = Path(output_dir)
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True)
+    
+    # Infer sub and ses names from output_dir
+    sub_name, ses_name = _infer_prefix_from_dir(rec, output_dir)
 
+    # If prefix is not provided, construct a default one
     if prefix is None:
-        prefix = f"sub-{rec.info['wearer_name']}_task-TaskName"
+        # Try using the inferred sub and ses names
+        if ses_name is None:
+            prefix = f"{sub_name}_task-TaskName"
+        else:
+            prefix = f"{sub_name}_{ses_name}_task-TaskName"
+        # Or better, use prefix in existing files in the output_dir if available
+        existing_file = list(output_dir.glob("sub-*"))
+        if existing_file:
+            prefix = "_".join(existing_file[0].stem.split("_")[:-1])
+    
     if "sub-" not in prefix:
         raise ValueError("Prefix must contain 'sub-<label>' field.")
+    task_name_match = re.search(r"task-([^_]+)", prefix)
+    task_name = task_name_match.group(1) if task_name_match else ""
 
     physio_tsv_path = output_dir / f"{prefix}_physio.tsv.gz"
     physio_json_path = output_dir / f"{prefix}_physio.json"
@@ -205,25 +275,26 @@ def export_eye_tracking_bids(
     physio_data["timestamp"] = gaze.ts
     physio_data["x_coordinate"] = gaze["gaze x [px]"].values
     physio_data["y_coordinate"] = gaze["gaze y [px]"].values
-    if eye_states is not None:
+    if eye_states is not None and "pupil diameter left [mm]" in eye_states.columns and "pupil diameter right [mm]" in eye_states.columns:
         physio_data["left_pupil_diameter"] = eye_states[
             "pupil diameter left [mm]"
         ].values
         physio_data["right_pupil_diameter"] = eye_states[
             "pupil diameter right [mm]"
         ].values
-    physio_data.to_csv(
-        physio_tsv_path,
-        sep="\t",
-        index=False,
-        header=False,
-        na_rep="n/a",
-        compression="gzip",
-    )
+    with gzip.GzipFile(fileobj=open(physio_tsv_path, 'wb'), mode='wb', mtime=0, filename='') as f:
+        physio_data.to_csv(
+            f,
+            sep="\t",
+            index=False,
+            header=False,
+            na_rep="n/a",
+        )
 
     physio_metadata = EYE_META_DEFAULT.copy()
     physio_metadata.update(
         {
+            "TaskName": task_name,
             "SamplingFrequency": gaze.sampling_freq_effective,
             "DeviceSerialNumber": info["module_serial_number"],
             "SoftwareVersions": (
@@ -275,15 +346,20 @@ def export_eye_tracking_bids(
         warn("Could not read messages data. Messages will not be exported.")
 
     physioevents_data = physioevents_data.sort_values(by="onset")
-    physioevents_data.to_csv(
-        physioevents_tsv_path,
-        sep="\t",
-        index=False,
-        header=False,
-        na_rep="n/a",
-        compression="gzip",
-    )
+    with gzip.GzipFile(fileobj=open(physioevents_tsv_path, 'wb'), mode='wb', mtime=0, filename='') as f:
+        physioevents_data.to_csv(
+            f,
+            sep="\t",
+            index=False,
+            header=False,
+            na_rep="n/a",
+        )
 
     physioevents_metadata = EYE_EVENTS_META_DEFAULT.copy()
+    physioevents_metadata.update(
+        {
+            "TaskName": task_name,
+        }
+    )
     with open(physioevents_json_path, "w") as f:
         json.dump(physioevents_metadata, f, indent=4)

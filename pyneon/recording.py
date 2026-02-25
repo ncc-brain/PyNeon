@@ -634,17 +634,28 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         templates and may require additional metadata editing for full compliance with
         your specific use case.
 
-        For instance, an exported directory could look like this:
+        The exported files are:
+        
+        .. code-block:: text
+
+            <motion_dir>/
+                <prefix>_channels.json
+                <prefix>_channels.tsv
+                <prefix>_motion.json
+                <prefix>_motion.tsv
+            sub-<label>_[ses-<label>]_scans.tsv
+        
+        For example:
 
         .. code-block:: text
 
             sub-01/
                 ses-1/
                     motion/
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.json
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.tsv
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.json
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.tsv
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_channels.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_channels.tsv
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_motion.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_motion.tsv
                     sub-01_ses-1_scans.tsv
 
         Motion-BIDS specification can be found at:
@@ -654,6 +665,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         ----------
         motion_dir : str or pathlib.Path
             Output directory to save the Motion-BIDS formatted data.
+            The directory name itself should be "motion" as specified by Motion-BIDS.
         prefix : str, optional
             BIDS naming prefix. The format is:
 
@@ -661,8 +673,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
             Required fields are ``sub-<label>``, ``task-<label>``, and
             ``tracksys-<label>`` (use ``tracksys-NeonIMU`` for Neon IMU data).
-            Files are saved as ``{prefix}_motion.<tsv|json>`` and
-            ``{prefix}_channels.<tsv|json>``.
+            If not provided, inferred from the directory structure (parent directories)
+            or defaults to ``sub-{wearer_name}_task-TaskName_tracksys-NeonIMU``.
         extra_metadata : dict, optional
             Extra metadata to include in the JSON metadata file. Keys must be valid
             BIDS fields (for example, ``TaskName``).
@@ -684,16 +696,21 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Eye-Tracking-BIDS [2]_ standardizes gaze position, pupil data, and eye-tracking
         events by treating eye-tracking data as physiological data that can be organized
-        alongside most BIDS modalities. The export creates the following files:
+        alongside most BIDS modalities. The export creates gaze (and pupil diameter)
+        time-series and event data files with accompanying metadata.
 
-        - Gaze coordinates (x, y) as time-series data (``_physio.tsv.gz``), including
-          pupil diameter measurements when available
-        - Eye events (blinks, saccades, fixations) and experimental messages as event
-          markers (``_physioevents.tsv.gz``)
+        The exported files are:
+        
+        .. code-block:: text
 
-        Accompanying metadata is saved in JSON sidecar files.
+            <output_dir>/
+                <prefix>_physio.tsv.gz
+                <prefix>_physio.json
+                <prefix>_physioevents.tsv.gz
+                <prefix>_physioevents.json
+            sub-<label>_[ses-<label>]_scans.tsv
 
-        An example exported directory could look like this:
+        For example:
 
         .. code-block:: text
 
@@ -701,11 +718,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 ses-1/
                     motion/
                         <existing motion files if motion export is performed>
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.json
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.tsv.gz
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.json
-                        sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.tsv.gz
-                    sub-01_ses-1_scans.tsv
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physio.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physio.tsv.gz
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physioevents.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physioevents.tsv.gz
 
         BIDS specifications for physiological recordings and specifically eye-tracking data can be found at:
 
@@ -717,9 +733,10 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         output_dir : str or pathlib.Path
             Output directory to save the Eye-tracking-BIDS formatted data.
         prefix : str, optional
-            BIDS naming prefix. Must include ``sub-<label>`` at minimum. Files are
-            saved as ``{prefix}_physio.<tsv.gz|json>`` and
-            ``{prefix}_physioevents.<tsv.gz|json>``.
+            BIDS naming prefix. Must include ``sub-<label>`` and ``task-<label>``.
+            If not provided, the function attempts to infer it from the directory
+            structure or detect it from existing files (e.g., from ``export_motion_bids()``).
+            Defaults to ``sub-{wearer_name}_task-TaskName`` if no existing files are found.
         extra_metadata : dict, optional
             Extra metadata to include in the JSON metadata file. Keys must be valid
             BIDS fields.

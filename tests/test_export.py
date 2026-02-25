@@ -53,7 +53,7 @@ class TestBIDS:
             with open(motion_json_path, "r") as f:
                 metadata = json.load(f)
             assert metadata["Manufacturer"] == "TDK InvenSense & Pupil Labs"
-            assert metadata["TrackingSystemName"] == "IMU included in Neon"
+            assert metadata["TrackingSystemName"] == "Neon IMU"
             assert (
                 metadata["DeviceSerialNumber"] == recording.info["module_serial_number"]
             )
@@ -77,7 +77,7 @@ class TestBIDS:
                 "units",
                 "sampling_frequency",
             }
-            assert set(channels_df.columns) == required_columns
+            assert required_columns.issubset(set(channels_df.columns))
             assert len(channels_df) == len(imu.columns)
             assert all(channels_df["tracked_point"] == "Head")
 

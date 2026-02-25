@@ -1,3 +1,5 @@
+from ..utils.variables import nominal_sampling_rates
+
 MOTION_META_DEFAULT = {
     "TaskName": "",
     "TaskDescription": "",
@@ -9,15 +11,23 @@ MOTION_META_DEFAULT = {
     "InstitutionName": "",
     "InstitutionAddress": "",
     "InstitutionalDepartmentName": "",
-    "SamplingFrequency": "",
-    "ACCELChannelCount": 3,
-    "GYROChannelCount": 3,
+    "SamplingFrequency": nominal_sampling_rates["imu"],
+    "ACCELChannelCount": 0,
+    "ANGACCELChannelCount": 0,
+    "GYROChannelCount": 0,
+    "JNTANGChannelCount": 0,
+    "LATENCYChannelCount": 0,
+    "MAGNChannelCount": 0,
+    "MISCChannelCount": 0,
     "MissingValues": "n/a",
-    "MotionChannelCount": 13,
-    "ORNTChannelCount": 7,
+    "MotionChannelCount": 0,
+    "ORNTChannelCount": 0,
+    "POSChannelCount": 0,
+    "SamplingFrequencyEffective": nominal_sampling_rates["imu"],
     "SubjectArtefactDescription": "",
     "TrackedPointsCount": 0,
-    "TrackingSystemName": "IMU included in Neon",
+    "TrackingSystemName": "Neon IMU",
+    "VELChannelCount": 0,
 }
 
 MOTION_CHANNEL_MAP = {
