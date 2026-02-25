@@ -232,6 +232,9 @@ def export_eye_tracking_bids(
             ),
         }
     )
+    if eye_states is None:
+        physio_metadata.pop("left_pupil_diameter")
+        physio_metadata.pop("right_pupil_diameter")
     physio_metadata.update(extra_metadata)
     with open(physio_json_path, "w") as f:
         json.dump(physio_metadata, f, indent=4)

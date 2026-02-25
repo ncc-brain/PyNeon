@@ -30,10 +30,10 @@ MOTION_CHANNEL_MAP = {
     "roll": {"component": "x", "type": "ORNT", "units": "deg"},
     "pitch": {"component": "y", "type": "ORNT", "units": "deg"},
     "yaw": {"component": "z", "type": "ORNT", "units": "deg"},
-    "quaternion w": {"component": "w", "type": "ORNT", "units": "arbitrary"},
-    "quaternion x": {"component": "x", "type": "ORNT", "units": "arbitrary"},
-    "quaternion y": {"component": "y", "type": "ORNT", "units": "arbitrary"},
-    "quaternion z": {"component": "z", "type": "ORNT", "units": "arbitrary"},
+    "quaternion w": {"component": "quat_w", "type": "ORNT", "units": "arbitrary"},
+    "quaternion x": {"component": "quat_x", "type": "ORNT", "units": "arbitrary"},
+    "quaternion y": {"component": "quat_y", "type": "ORNT", "units": "arbitrary"},
+    "quaternion z": {"component": "quat_z", "type": "ORNT", "units": "arbitrary"},
 }
 
 EYE_META_DEFAULT = {
@@ -68,12 +68,12 @@ EYE_META_DEFAULT = {
         "Description": "Y-coordinate of the mapped gaze point in world camera pixel coordinates.",
         "Units": "pixel",
     },
-    "pupil_size_left": {
+    "left_pupil_diameter": {
         # Description adapted from https://docs.pupil-labs.com/neon/data-collection/data-format/#_3d-eye-states-csv
         "Description": "Physical diameter of the pupil of the left eye",
         "Units": "mm",
     },
-    "pupil_size_right": {
+    "right_pupil_diameter": {
         "Description": "Physical diameter of the pupil of the right eye",
         "Units": "mm",
     },
