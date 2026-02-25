@@ -88,7 +88,6 @@ def find_homographies(
 
     unique_timestamps = detection_df.index.unique()
     homography_for_frame = {}
-    required_points = max(valid_markers, 1) * 4
 
     for ts in tqdm(unique_timestamps, desc="Computing homographies"):
         frame_detections = detection_df.loc[ts]
@@ -140,9 +139,6 @@ def find_homographies(
 
                 world_points.extend(corners_detected)
                 surface_points.extend(ref_corners)
-
-        if len(world_points) < required_points:
-            continue
 
         world_points = np.array(world_points, dtype=np.float32).reshape(-1, 2)
         surface_points = np.array(surface_points, dtype=np.float32).reshape(-1, 2)
