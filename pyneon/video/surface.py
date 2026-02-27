@@ -145,39 +145,38 @@ def detect_surface(
             continue
 
         if mode == "largest":
-            selected = [max(candidates, key=lambda x: x["area_ratio"])]
+            selected = max(candidates, key=lambda x: x["area_ratio"])
         elif mode == "best":
-            selected = [max(candidates, key=lambda x: x["score"])]
+            selected = max(candidates, key=lambda x: x["score"])
         else:
             raise ValueError(
                 f"Unknown mode '{mode}', must be 'largest' or 'best'."
             )
 
-        for cid, sel in enumerate(selected):
-            corners = sel["corners"]
-            center = np.mean(corners, axis=0)
-            if undistort:
-                corners = distort_points(video, corners)
-                center = distort_points(video, center)
-            detection_row = {
-                "frame index": actual_frame_idx,
-                "timestamp [ns]": int(video.ts[actual_frame_idx]),
-                "surface id": cid,
-                "top left x [px]": corners[0, 0],
-                "top left y [px]": corners[0, 1],
-                "top right x [px]": corners[1, 0],
-                "top right y [px]": corners[1, 1],
-                "bottom right x [px]": corners[2, 0],
-                "bottom right y [px]": corners[2, 1],
-                "bottom left x [px]": corners[3, 0],
-                "bottom left y [px]": corners[3, 1],
-                "center x [px]": center[0],
-                "center y [px]": center[1],
-            }
-            if report_diagnostics:
-                detection_row["area_ratio"] = sel["area_ratio"]
-                detection_row["score"] = sel["score"]
-            detections.append(detection_row)
+        corners = selected["corners"]
+        center = np.mean(corners, axis=0)
+        if undistort:
+            corners = distort_points(video, corners)
+            center = distort_points(video, center)
+        detection_row = {
+            "frame index": actual_frame_idx,
+            "timestamp [ns]": int(video.ts[actual_frame_idx]),
+            "surface id": 0,
+            "top left x [px]": corners[0, 0],
+            "top left y [px]": corners[0, 1],
+            "top right x [px]": corners[1, 0],
+            "top right y [px]": corners[1, 1],
+            "bottom right x [px]": corners[2, 0],
+            "bottom right y [px]": corners[2, 1],
+            "bottom left x [px]": corners[3, 0],
+            "bottom left y [px]": corners[3, 1],
+            "center x [px]": center[0],
+            "center y [px]": center[1],
+        }
+        if report_diagnostics:
+            detection_row["area_ratio"] = selected["area_ratio"]
+            detection_row["score"] = selected["score"]
+        detections.append(detection_row)
 
     df = pd.DataFrame(detections)
     if df.empty:
