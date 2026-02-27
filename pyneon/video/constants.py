@@ -1,8 +1,5 @@
 DETECTION_COLUMNS = [
     "frame index",
-    "marker family",
-    "marker id",
-    "marker name",
     "top left x [px]",
     "top left y [px]",
     "top right x [px]",
