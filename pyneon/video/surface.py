@@ -31,7 +31,7 @@ def detect_surface(
     adaptive: bool = True,
     morph_kernel: int = 5,
     decimate: float = 1.0,
-    mode: Literal["largest", "best", "all"] = "largest",
+    mode: Literal["largest", "best"] = "largest",
     report_diagnostics: bool = False,
     undistort: bool = False,
 ) -> Stream:
@@ -148,11 +148,9 @@ def detect_surface(
             selected = [max(candidates, key=lambda x: x["area_ratio"])]
         elif mode == "best":
             selected = [max(candidates, key=lambda x: x["score"])]
-        elif mode == "all":
-            selected = candidates
         else:
             raise ValueError(
-                f"Unknown mode '{mode}', must be 'largest', 'best', or 'all'."
+                f"Unknown mode '{mode}', must be 'largest' or 'best'."
             )
 
         for cid, sel in enumerate(selected):
