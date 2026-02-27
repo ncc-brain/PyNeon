@@ -557,7 +557,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Returns
         -------
-        %(fig_ax_return)s
+        %(fig_ax_returns)s
         """
         return plot_distribution(
             self,
@@ -635,7 +635,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         your specific use case.
 
         The exported files are:
-        
+
         .. code-block:: text
 
             <motion_dir>/
@@ -644,7 +644,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
                 <prefix>_motion.json
                 <prefix>_motion.tsv
             sub-<label>_[ses-<label>]_scans.tsv
-        
+
         For example:
 
         .. code-block:: text
@@ -700,7 +700,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         time-series and event data files with accompanying metadata.
 
         The exported files are:
-        
+
         .. code-block:: text
 
             <output_dir>/

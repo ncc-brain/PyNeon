@@ -11,11 +11,11 @@ from scipy.ndimage import gaussian_filter
 
 from ..utils.doc_decorators import fill_doc
 from ..video.marker import marker_family_to_dict
+from ..video.utils import _validate_marker_layout
 
 if TYPE_CHECKING:
     from ..epochs import Epochs
     from ..recording import Recording
-    from ..stream import Stream
 
 
 @fill_doc
@@ -41,7 +41,7 @@ def plot_marker_layout(
 
     Returns
     -------
-    %(fig_ax_return)s
+    %(fig_ax_returns)s
     layout: np.ndarray
         The rendered marker layout as a 2D numpy array (grayscale image).
     """
@@ -51,6 +51,7 @@ def plot_marker_layout(
         fig = ax.get_figure()
 
     # Calculate actual bounds for each marker, then find overall canvas size
+    _validate_marker_layout(marker_layout)
     min_x = (marker_layout["center x"] - marker_layout["size"] / 2).min()
     max_x = (marker_layout["center x"] + marker_layout["size"] / 2).max()
     min_y = (marker_layout["center y"] - marker_layout["size"] / 2).min()
@@ -152,7 +153,7 @@ def plot_distribution(
 
     Returns
     -------
-    %(fig_ax_return)s
+    %(fig_ax_returns)s
     """
     if heatmap_source is None and scatter_source is None:
         raise ValueError(
@@ -246,7 +247,7 @@ def plot_epochs(
 
     Returns
     -------
-    %(fig_ax_return)s
+    %(fig_ax_returns)s
     """
     if ax is None:
         fig, ax = plt.subplots()

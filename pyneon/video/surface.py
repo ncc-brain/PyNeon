@@ -7,13 +7,13 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .constants import DETECTION_COLUMNS
+from .variables import SURFACE_DETECTION_COLUMNS
 from .utils import (
-    _verify_format,
     distort_points,
     get_undistort_valid_fraction,
     resolve_processing_window,
 )
+from ..utils import _validate_df_columns
 
 if TYPE_CHECKING:
     from .video import Video
@@ -56,7 +56,7 @@ def detect_surface(
 
     Returns
     -------
-    %(detect_surface_return)s
+    %(detect_surface_returns)s
     """
 
     if step < 1:
@@ -149,9 +149,7 @@ def detect_surface(
         elif mode == "best":
             selected = max(candidates, key=lambda x: x["score"])
         else:
-            raise ValueError(
-                f"Unknown mode '{mode}', must be 'largest' or 'best'."
-            )
+            raise ValueError(f"Unknown mode '{mode}', must be 'largest' or 'best'.")
 
         corners = selected["corners"]
         center = np.mean(corners, axis=0)
@@ -161,7 +159,7 @@ def detect_surface(
         detection_row = {
             "frame index": actual_frame_idx,
             "timestamp [ns]": int(video.ts[actual_frame_idx]),
-            "surface id": 0,
+            "surface name": "surface_0",
             "top left x [px]": corners[0, 0],
             "top left y [px]": corners[0, 1],
             "top right x [px]": corners[1, 0],
@@ -178,13 +176,12 @@ def detect_surface(
             detection_row["score"] = selected["score"]
         detections.append(detection_row)
 
-    df = pd.DataFrame(detections)
-    if df.empty:
+    if not detections:
         raise ValueError("No surfaces detected in the specified processing window.")
 
-
+    df = pd.DataFrame(detections)
     df.set_index("timestamp [ns]", inplace=True)
-    _verify_format(df, DETECTION_COLUMNS)
+    _validate_df_columns(df, SURFACE_DETECTION_COLUMNS, df_name="surface detections")
     return Stream(df)
 
 

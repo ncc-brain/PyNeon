@@ -1,24 +1,35 @@
-import re
-from numbers import Number
-from typing import Any, Iterable, Literal, Optional, Tuple
+from typing import Any, Literal, Optional
 
 import cv2
 import numpy as np
 import pandas as pd
 
-from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES
+from ..utils import _validate_df_columns
+from .variables import MARKERS_LAYOUT_COLUMNS, SURFACE_DETECTION_COLUMNS
 
 
-def _verify_format(df: pd.DataFrame, expected_columns: Iterable[str]) -> None:
-    """Verify that the DataFrame contains all expected columns (including index)."""
-    actual_columns = set(df.columns)
-    if df.index.name:
-        actual_columns.add(df.index.name)
+def _validate_marker_layout(marker_layout: pd.DataFrame) -> None:
+    """Validate marker layout DataFrame."""
+    _validate_df_columns(
+        marker_layout,
+        MARKERS_LAYOUT_COLUMNS,
+        df_name="marker_layout",
+    )
+    # Check if there are duplicate marker names
+    if marker_layout["marker name"].duplicated().any():
+        duplicates = marker_layout[marker_layout["marker name"].duplicated()][
+            "marker name"
+        ]
+        raise ValueError(
+            f"Duplicate marker names found in layout: {duplicates.tolist()}"
+        )
 
-    missing = set(expected_columns) - actual_columns
-    if missing:
-        raise ValueError(f"Missing expected columns: {missing}")
-
+def _validate_surface_layout(surface_layout: np.ndarray) -> None:
+    """Validate surface layout corners array."""
+    if surface_layout.shape != (4, 2):
+        raise ValueError(
+            f"Surface layout must have shape (4, 2), got {surface_layout.shape}."
+        )
 
 def get_undistort_maps(
     video: Any,

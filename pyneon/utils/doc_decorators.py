@@ -1,3 +1,5 @@
+import re
+
 DOC = dict()
 
 DOC["interp_kind_params"] = """\
@@ -13,7 +15,7 @@ other_kind : str or int, optional
 """
 
 
-DOC["inplace"] = """\
+DOC["inplace_param"] = """\
 inplace : bool, optional
     If ``True``, replace current data. Otherwise returns a new instance.
     Defaults to ``False``."""
@@ -37,7 +39,7 @@ processing_window_unit : {"frame", "time", "timestamp"}, optional
     Defaults to "frame".
 """
 
-DOC["max_gap_ms"] = """\
+DOC["max_gap_ms_param"] = """\
 max_gap_ms : int, optional
     Maximum allowed distance (in milliseconds) to both adjacent original
     timestamps (left and right). A requested new timestamp will be ignored
@@ -45,13 +47,13 @@ max_gap_ms : int, optional
     greater than or equal to ``max_gap_ms`` (no interpolation will be
     performed at that timestamp). Defaults to 500."""
 
-DOC["stream_or_none"] = """\
+DOC["stream_or_none_returns"] = """\
 Stream or None
     A new :class:`Stream` instance with modified data
     if ``inplace=False``, otherwise ``None``.
 """
 
-DOC["events_or_none"] = """\
+DOC["events_or_none_returns"] = """\
 Events or None
     A new :class:`Events` instance with modified data
     if ``inplace=False``, otherwise ``None``.
@@ -62,14 +64,14 @@ epochs_info : pandas.DataFrame, shape (n_epochs, 4)
     DataFrame containing epoch information with the following columns
     (times are UNIX timestamps in nanoseconds):
 
-    ================ ================================
-    Column           Description
-    ================ ================================
-    ``t_ref``        Reference time of the epoch.
-    ``t_before``     Time before the reference time to start the epoch.
-    ``t_after``      Time after the reference time to end the epoch.
-    ``description``  Description or label associated with the epoch.
-    ================ ================================
+    ============ ================================
+    Column       Description
+    ============ ================================
+    t_ref        Reference time of the epoch.
+    t_before     Time before the reference time to start the epoch.
+    t_after      Time after the reference time to end the epoch.
+    description  Description or label associated with the epoch.
+    ============ ================================
 """
 
 DOC["detect_markers_params"] = """
@@ -159,30 +161,40 @@ marker_layout : pandas.DataFrame
     - "center y": y center of the marker in surface coordinates
 """
 
-DOC["find_homographies_return"] = """
+DOC["find_homographies_returns"] = """
 Stream
     A Stream indexed by 'timestamp [ns]' with columns
     'homography (0,0)' through 'homography (2,2)': The 9 elements of the
     flattened 3x3 homography matrix.
 """
 
-DOC["detect_markers_return"] = """
+DOC["detect_markers_returns"] = """
 Stream
-    Stream indexed by "timestamp [ns]" with columns:
+    Stream of detected markers. Each row corresponds to a detected marker in a video frame
+    indexed by "timestamp [ns]" and contains the following columns:
 
-    - "frame index": The frame number\n
-    - "marker family": Marker family (e.g., "36h11")\n
-    - "marker id": Marker ID, for example 0, 1\n
-    - "marker name": Marker identifier, for example "36h11_0", "36h11_1"\n
-    - "top left x [px]", "top left y [px]"\n
-    - "top right x [px]", "top right y [px]"\n
-    - "bottom right x [px]", "bottom right y [px]"\n
-    - "bottom left x [px]", "bottom left y [px]"\n
-    - "center x [px]": X-coordinate of marker center in pixels\n
-    - "center y [px]": Y-coordinate of marker center in pixels
+    =================== =========================================================
+    Column              Description
+    =================== =========================================================
+    frame index         Frame number of the marker detection.
+    marker family       AprilTag family or ArUco dictionary
+                        of the detected marker (e.g., "36h11", "6x6_250").
+    marker id           ID of the detected marker within its family (e.g., 0, 1, 2).
+    marker name         Full identifier combining family and id (e.g., "36h11_0", "36h11_1").
+    top left x [px]     X coordinate of the top-left corner of the detected marker.
+    top left y [px]     Y coordinate of the top-left corner of the detected marker.
+    top right x [px]    X coordinate of the top-right corner of the detected marker.
+    top right y [px]    Y coordinate of the top-right corner of the detected marker.
+    bottom right x [px] X coordinate of the bottom-right corner of the detected marker.
+    bottom right y [px] Y coordinate of the bottom-right corner of the detected marker.
+    bottom left x [px]  X coordinate of the bottom-left corner of the detected marker.
+    bottom left y [px]  Y coordinate of the bottom-left corner of the detected marker.
+    center x [px]       X coordinate of the center of the detected marker.
+    center y [px]       Y coordinate of the center of the detected marker.
+    =================== =========================================================
 """
 
-DOC["detect_surface_return"] = """
+DOC["detect_surface_returns"] = """
 Stream
     Stream indexed by "timestamp [ns]" with columns:
 
@@ -200,7 +212,7 @@ Stream
     - "score": float (if `report_diagnostics` is True)
 """
 
-DOC["fig_ax_return"] = """
+DOC["fig_ax_returns"] = """
 fig : matplotlib.figure.Figure
     Figure instance containing the plot.
 ax : matplotlib.axes.Axes
@@ -230,8 +242,39 @@ output_path : pathlib.Path or str or None, optional
 """
 
 
+# Automatically fill nested %(...)s placeholders in DOC values
+
+
+def _fill_nested_placeholders(doc_dict, max_depth=5):
+    """Recursively fill nested %(...)s placeholders in documentation strings."""
+    pattern = re.compile(r"%\([^)]+\)s")
+
+    for depth in range(max_depth):
+        changed = False
+        for key, value in doc_dict.items():
+            if isinstance(value, str) and pattern.search(value):
+                try:
+                    new_value = value % doc_dict
+                    if new_value != value:
+                        doc_dict[key] = new_value
+                        changed = True
+                except (KeyError, ValueError, TypeError):
+                    # Skip if placeholder references don't exist yet or format fails
+                    pass
+        if not changed:
+            break
+    return doc_dict
+
+
+DOC = _fill_nested_placeholders(DOC)
+
+
 def fill_doc(func):
     """Fill a function docstring with common doc snippets using %-format."""
     if func.__doc__:
         func.__doc__ = func.__doc__ % DOC
     return func
+
+
+if __name__ == "__main__":
+    print(DOC["detect_markers_params"])

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing import Iterable, Optional
 
 
 def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
@@ -24,7 +25,7 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
     return transformed_2d
 
 
-def _check_data(data: pd.DataFrame) -> None:
+def _validate_neon_tabular_data(data: pd.DataFrame) -> None:
     """
     Check if the data is in the correct format.
     """
@@ -53,3 +54,21 @@ def _check_data(data: pd.DataFrame) -> None:
     # Sort by index
     data = data.sort_index(ascending=True)
     assert data.index.is_monotonic_increasing
+
+
+def _validate_df_columns(
+    df: pd.DataFrame,
+    required_columns: Iterable[str],
+    include_index_name: bool = False,
+    df_name: Optional[str] = None,
+) -> None:
+    """Verify that the DataFrame contains all expected columns (including index)."""
+    for required_col in required_columns:
+        df_cols = set(df.columns)
+        if include_index_name and df.index.name:
+            df_cols.add(df.index.name)
+        if required_col not in df_cols:
+            df_name_str = f" '{df_name}'" if df_name else ""
+            raise ValueError(
+                f"DataFrame{df_name_str} must contain '{required_col}' column."
+            )

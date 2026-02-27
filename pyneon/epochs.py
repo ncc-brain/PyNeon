@@ -43,15 +43,14 @@ class Epochs:
 
     Attributes
     ----------
-    epochs_info : pandas.DataFrame
-        The supplied epochs information DataFrame with additional columns:
+    %(epochs_info)s
 
-        ================ ================================
-        Column           Description
-        ================ ================================
-        ``t_start``      Start time of the epoch (``t_ref - t_before``).
-        ``t_end``        End time of the epoch (``t_ref + t_after``).
-        ================ ================================
+        ======= ================================
+        Column  Description
+        ======= ================================
+        t_start Start time of the epoch (``t_ref - t_before``).
+        t_end   End time of the epoch (``t_ref + t_after``).
+        ======= ================================
 
     source : Stream or Events
         The source data used to create epochs.
@@ -77,8 +76,8 @@ class Epochs:
                 "description": "str",
             }
         )
-        self.epochs_info = epochs_info
-        self.source = source.copy()
+        self.epochs_info: pd.DataFrame = epochs_info
+        self.source: Stream | Events = source.copy()
         self._check_overlap()
 
     def __len__(self):
@@ -296,7 +295,7 @@ class Epochs:
 
         Returns
         -------
-        %(fig_ax_return)s
+        %(fig_ax_returns)s
         """
         fig_ax = plot_epochs(
             self,
@@ -340,11 +339,11 @@ class Epochs:
         info : dict
             A dictionary containing:
 
-            ================ ================================
-            ``epoch_times``  The common time grid, in nanoseconds.
-            ``column_names`` List of provided column names.
-            ``nan_flag``     Boolean indicating whether NaN values were found in the data.
-            ================ ================================
+            ============ ================================
+            epoch_times  The common time grid, in nanoseconds.
+            column_names List of provided column names.
+            nan_flag     Boolean indicating whether NaN values were found in the data.
+            ============ ================================
         """
         if not isinstance(self.source, Stream):
             raise TypeError("The source must be a Stream to convert to NumPy array.")

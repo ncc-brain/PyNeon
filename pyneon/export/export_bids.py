@@ -18,6 +18,7 @@ from ._bids_parameters import (
 if TYPE_CHECKING:
     from ..recording import Recording
 
+
 def _infer_prefix_from_dir(rec, output_dir):
     # Infer sub and ses names from motion_dir
     sub_name = f"sub-{rec.info['wearer_name']}"
@@ -31,6 +32,7 @@ def _infer_prefix_from_dir(rec, output_dir):
         if parent_dir.parent.name.startswith("sub-"):
             sub_name = parent_dir.parent.name
     return sub_name, ses_name
+
 
 def export_motion_bids(
     rec: "Recording",
@@ -77,12 +79,12 @@ def export_motion_bids(
     if motion_dir.name != "motion":
         raise RuntimeWarning(
             f"Directory name {motion_dir.name} is not 'motion' as specified by Motion-BIDS"
-        )    
-    
+        )
+
     # Infer sub and ses names from motion_dir
     sub_name, ses_name = _infer_prefix_from_dir(rec, motion_dir)
     sub_ses_name = f"{sub_name}_{ses_name}" if ses_name else sub_name
-    
+
     # If prefix is not provided, construct it using the inferred sub and ses names
     if prefix is None:
         if ses_name is None:
@@ -126,7 +128,7 @@ def export_motion_bids(
     )
     channels["tracked_point"] = "Head"
     channels = channels[["name", "component", "type", "tracked_point", "units"]]
-    
+
     # Channels RECOMMENDED and OPTIONAL data
     channels["placement"] = "Head-mounted Neon glasses"
     channels["sampling_frequency"] = float(imu.sampling_freq_effective)
@@ -202,7 +204,7 @@ def export_eye_tracking_bids(
     """
     Export eye-tracking data to Eye-Tracking-BIDS format. Gaze position, pupil data,
     and eye-tracking events are saved as physiology data with metadata.
-    
+
     Parameters
     ----------
     rec : Recording
@@ -216,14 +218,14 @@ def export_eye_tracking_bids(
         if no existing files are found.
     extra_metadata : dict, optional
         Additional metadata to include in the JSON files. Defaults to an empty dict.
-    
+
     Notes
     -----
     Eye-Tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
     standardize the organization of eye-tracking data for reproducible research.
     For more information, see
     https://bids-specification.readthedocs.io/en/stable/modality-specific-files/eyetracking.html.
-    
+
     The function automatically detects and uses matching prefixes from existing files
     in the output directory, allowing seamless integration with other modalities (e.g., motion).
     """
@@ -239,7 +241,7 @@ def export_eye_tracking_bids(
     output_dir = Path(output_dir)
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True)
-    
+
     # Infer sub and ses names from output_dir
     sub_name, ses_name = _infer_prefix_from_dir(rec, output_dir)
 
@@ -254,7 +256,7 @@ def export_eye_tracking_bids(
         existing_file = list(output_dir.glob("sub-*"))
         if existing_file:
             prefix = "_".join(existing_file[0].stem.split("_")[:-1])
-    
+
     if "sub-" not in prefix:
         raise ValueError("Prefix must contain 'sub-<label>' field.")
     task_name_match = re.search(r"task-([^_]+)", prefix)
@@ -275,14 +277,20 @@ def export_eye_tracking_bids(
     physio_data["timestamp"] = gaze.ts
     physio_data["x_coordinate"] = gaze["gaze x [px]"].values
     physio_data["y_coordinate"] = gaze["gaze y [px]"].values
-    if eye_states is not None and "pupil diameter left [mm]" in eye_states.columns and "pupil diameter right [mm]" in eye_states.columns:
+    if (
+        eye_states is not None
+        and "pupil diameter left [mm]" in eye_states.columns
+        and "pupil diameter right [mm]" in eye_states.columns
+    ):
         physio_data["left_pupil_diameter"] = eye_states[
             "pupil diameter left [mm]"
         ].values
         physio_data["right_pupil_diameter"] = eye_states[
             "pupil diameter right [mm]"
         ].values
-    with gzip.GzipFile(fileobj=open(physio_tsv_path, 'wb'), mode='wb', mtime=0, filename='') as f:
+    with gzip.GzipFile(
+        fileobj=open(physio_tsv_path, "wb"), mode="wb", mtime=0, filename=""
+    ) as f:
         physio_data.to_csv(
             f,
             sep="\t",
@@ -346,7 +354,9 @@ def export_eye_tracking_bids(
         warn("Could not read messages data. Messages will not be exported.")
 
     physioevents_data = physioevents_data.sort_values(by="onset")
-    with gzip.GzipFile(fileobj=open(physioevents_tsv_path, 'wb'), mode='wb', mtime=0, filename='') as f:
+    with gzip.GzipFile(
+        fileobj=open(physioevents_tsv_path, "wb"), mode="wb", mtime=0, filename=""
+    ) as f:
         physioevents_data.to_csv(
             f,
             sep="\t",

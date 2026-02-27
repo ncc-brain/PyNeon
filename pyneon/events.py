@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .tabular import BaseTabular
-from .utils import _apply_homography
+from .utils import _apply_homography, _validate_df_columns
 from .utils.doc_decorators import fill_doc
 from .utils.variables import native_to_cloud_column_map
 
@@ -195,6 +195,10 @@ class Events(BaseTabular):
     >>> saccades = Events(df)
     """
 
+    file: Optional[Path]
+    data: pd.DataFrame
+    type: str
+
     def __init__(self, source: pd.DataFrame | Path | str, type: Optional[str] = None):
         if isinstance(source, str):
             source = Path(source)
@@ -324,11 +328,11 @@ Columns: {list(self.data.columns)}
         by : {"timestamp", "sample"}, optional
             Unit used to interpret ``tmin`` and ``tmax``. Defaults to ``"timestamp"``.
 
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        %(events_or_none)s
+        %(events_or_none_returns)s
 
         Raises
         ------
@@ -382,11 +386,11 @@ Columns: {list(self.data.columns)}
         other : Stream
             Reference stream whose temporal boundaries define the cropping range.
 
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        %(events_or_none)s
+        %(events_or_none_returns)s
 
         Examples
         --------
@@ -419,11 +423,11 @@ Columns: {list(self.data.columns)}
             Whether to reset event IDs after filtering.
             Defaults to ``False``.
 
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        %(events_or_none)s
+        %(events_or_none_returns)s
         """
         if "duration [ms]" not in self.data.columns:
             raise ValueError("No `duration [ms]` column found in the instance.")
@@ -473,11 +477,11 @@ Columns: {list(self.data.columns)}
         reset_id: bool = False, optional
             Whether to reset event IDs after filtering.
             Defaults to ``False``.
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        %(events_or_none)s
+        %(events_or_none_returns)s
         """
         if col_name not in self.data.columns:
             raise KeyError(f"No `{col_name}` column found in the instance.")
@@ -521,16 +525,16 @@ Columns: {list(self.data.columns)}
         homographies : Stream
             Stream containing homography matrices with columns ``'homography (0,0)'`` through
             ``'homography (2,2)'`` as returned by :func:`pyneon.video.find_homographies`.
-        %(max_gap_ms)s
+        %(max_gap_ms_param)s
         overwrite : bool, optional
             Only applicable if surface fixation columns already exist.
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        %(events_or_none)s
+        %(events_or_none_returns)s
         """
         inst = self if inplace else self.copy()
         data = inst.data
@@ -545,10 +549,7 @@ Columns: {list(self.data.columns)}
             )
 
         required_cols = ["fixation x [px]", "fixation y [px]"]
-        if not all(col in data.columns for col in required_cols):
-            raise ValueError(
-                f"Data must contain the following columns: {required_cols}"
-            )
+        _validate_df_columns(data, required_cols, df_name="Events data")
 
         data["fixation x [surface coord]"] = np.nan
         data["fixation y [surface coord]"] = np.nan
@@ -559,8 +560,7 @@ Columns: {list(self.data.columns)}
         ).data
 
         h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
-        if not all(col in homographies_data.columns for col in h_cols):
-            raise ValueError(f"Homographies data must contain columns: {h_cols}")
+        _validate_df_columns(homographies_data, h_cols, df_name="homographies")
 
         homographies_data = homographies_data.dropna()
 

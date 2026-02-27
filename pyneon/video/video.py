@@ -39,15 +39,11 @@ class Video:
     timestamps : numpy.ndarray
         Frame timestamps in nanoseconds. Must match the number of frames.
     info : dict or None
-        Camera metadata, typically including ``camera_matrix`` and
-        ``distortion_coefficients``.
+        Camera metadata, typically including :attr:`camera_matrix` and
+        :attr:`distortion_coefficients`.
 
     Attributes
     ----------
-    timestamps : numpy.ndarray
-        Frame timestamps in nanoseconds.
-    ts : numpy.ndarray
-        Alias for ``timestamps``.
     info : dict
         Camera metadata dictionary.
     """
@@ -61,8 +57,7 @@ class Video:
             raise IOError(f"Failed to open video file: {video_file}")
 
         timestamps = np.asarray(timestamps, dtype=np.int64)
-        self.timestamps = timestamps
-        self.ts = self.timestamps
+        self._timestamps = timestamps
         self.info = info
         self._undistort_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
         self._closed = False
@@ -73,7 +68,7 @@ class Video:
         elif info is None:  # Eye video
             self.info = {}
 
-        if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
+        if len(self._timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
             raise ValueError(
                 f"Number of timestamps ({len(self.timestamps)}) does not match "
                 f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
@@ -93,6 +88,28 @@ Duration: {self.duration:.2f} seconds
 Effective FPS: {self.fps:.2f}
 """
 
+    @property
+    def timestamps(self) -> np.ndarray:
+        """Timestamps of the video frames in nanoseconds.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
+        return self._timestamps
+    
+    @property
+    def ts(self) -> np.ndarray:
+        """Alias for :attr:`timestamps` for convenience.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
+        return self._timestamps
+
     # Delegate methods to underlying cv2.VideoCapture object
     def isOpened(self) -> bool:
         """
@@ -107,7 +124,7 @@ Effective FPS: {self.fps:.2f}
 
     def grab(self) -> bool:
         """
-        Grab the next frame without decoding.
+        Grabs the next frame from video file or capturing device.
 
         Returns
         -------
@@ -118,7 +135,7 @@ Effective FPS: {self.fps:.2f}
 
     def retrieve(self) -> tuple[bool, Optional[np.ndarray]]:
         """
-        Retrieve and decode the last grabbed frame.
+        Decodes and returns the grabbed video frame.
 
         Returns
         -------
@@ -131,7 +148,8 @@ Effective FPS: {self.fps:.2f}
 
     def read(self) -> tuple[bool, Optional[np.ndarray]]:
         """
-        Read and decode the next frame (equivalent to grab() + retrieve()).
+        Grabs, decodes and returns the next video frame.
+        (equivalent to :meth:`grab` + :meth:`retrieve`).
 
         Returns
         -------
@@ -268,7 +286,7 @@ Effective FPS: {self.fps:.2f}
 
         Access this property for OpenCV operations not covered by
         PyNeon convenience methods.
-        
+
         For documentation of the ``cv.VideoCapture`` API, see:
         https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html
 
@@ -472,7 +490,7 @@ Effective FPS: {self.fps:.2f}
 
         Returns
         -------
-        %(fig_ax_return)s
+        %(fig_ax_returns)s
         """
         return plot_frame(self, frame_index, ax, show)
 
@@ -495,7 +513,7 @@ Effective FPS: {self.fps:.2f}
 
         Returns
         -------
-        %(detect_markers_return)s
+        %(detect_markers_returns)s
         """
         return detect_markers(
             self,
@@ -533,7 +551,7 @@ Effective FPS: {self.fps:.2f}
 
         Returns
         -------
-        %(detect_surface_return)s
+        %(detect_surface_returns)s
         """
         return detect_surface(
             self,
@@ -579,7 +597,7 @@ Effective FPS: {self.fps:.2f}
 
         Returns
         -------
-        %(fig_ax_return)s
+        %(fig_ax_returns)s
         """
         return plot_detections(
             self,

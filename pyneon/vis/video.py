@@ -8,7 +8,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..utils.doc_decorators import fill_doc
-from ..video.constants import DETECTION_COLUMNS
+from ..utils import _validate_df_columns
+from ..video.variables import DETECTION_COLUMNS
 
 if TYPE_CHECKING:
     from ..recording import Recording
@@ -37,7 +38,7 @@ def plot_frame(
 
     Returns
     -------
-    %(fig_ax_return)s
+    %(fig_ax_returns)s
     """
     if frame_index >= len(video.ts) or frame_index < 0:
         raise IndexError(f"Frame index {frame_index} out of range")
@@ -113,39 +114,6 @@ def _overlay_marker_detections_on_frame(
     return frame
 
 
-def _plot_marker_detections(
-    ax: plt.Axes,
-    detections: pd.DataFrame,
-    show_ids: bool,
-    color: str,
-) -> None:
-    for _, marker in detections.iterrows():
-        if show_ids:
-            ax.text(
-                marker["center x [px]"],
-                marker["center y [px]"],
-                marker["marker id"],
-                color=color,
-                ha="center",
-                va="center",
-            )
-        corners_x = [
-            marker["top left x [px]"],
-            marker["top right x [px]"],
-            marker["bottom right x [px]"],
-            marker["bottom left x [px]"],
-            marker["top left x [px]"],
-        ]
-        corners_y = [
-            marker["top left y [px]"],
-            marker["top right y [px]"],
-            marker["bottom right y [px]"],
-            marker["bottom left y [px]"],
-            marker["top left y [px]"],
-        ]
-        ax.plot(corners_x, corners_y, color=color)
-
-
 @fill_doc
 def plot_detections(
     video: "Video",
@@ -174,21 +142,39 @@ def plot_detections(
 
     Returns
     -------
-        %(fig_ax_return)s
+        %(fig_ax_returns)s
     """
     fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
     detections_df = detections.data
-    if "frame index" not in detections_df.columns:
-        raise ValueError("Detections must include a 'frame index' column.")
+    _validate_df_columns(detections_df, ["frame index"], df_name="detections")
     frame_detections = detections_df[detections_df["frame index"] == frame_index]
 
     if not frame_detections.empty:
-        if set(DETECTION_COLUMNS).issubset(frame_detections.columns):
-            _plot_marker_detections(ax, frame_detections, show_ids, color)
-        else:
-            raise ValueError(
-                "Detections must contain marker corner columns or a 'corners' column."
-            )
+        for _, marker in frame_detections.iterrows():
+            if show_ids:
+                ax.text(
+                    marker["center x [px]"],
+                    marker["center y [px]"],
+                    marker["marker id"],
+                    color=color,
+                    ha="center",
+                    va="center",
+                )
+            corners_x = [
+                marker["top left x [px]"],
+                marker["top right x [px]"],
+                marker["bottom right x [px]"],
+                marker["bottom left x [px]"],
+                marker["top left x [px]"],
+            ]
+            corners_y = [
+                marker["top left y [px]"],
+                marker["top right y [px]"],
+                marker["bottom right y [px]"],
+                marker["bottom left y [px]"],
+                marker["top left y [px]"],
+            ]
+            ax.plot(corners_x, corners_y, color=color)
     if show:
         plt.show()
     return fig, ax

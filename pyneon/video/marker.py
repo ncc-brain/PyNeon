@@ -8,9 +8,14 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .constants import APRILTAG_FAMILIES, ARUCO_NUMBERS, ARUCO_SIZES, DETECTION_COLUMNS
+from ..utils import _validate_df_columns
+from .variables import (
+    APRILTAG_FAMILIES,
+    ARUCO_NUMBERS,
+    ARUCO_SIZES,
+    MARKER_DETECTION_COLUMNS,
+)
 from .utils import (
-    _verify_format,
     distort_points,
     resolve_processing_window,
 )
@@ -94,7 +99,7 @@ def detect_markers(
     video : Video
         Scene video to detect markers from.
     %(detect_markers_params)s
-    %(detect_markers_return)s
+    %(detect_markers_returns)s
     """
     # Normalize marker family input to a list and create detectors for each
     families: list[str] = (
@@ -177,10 +182,12 @@ def detect_markers(
         records = _process_frame(frame_index, gray_frame)
         detected_markers.extend(records)
 
-    df = pd.DataFrame(detected_markers)
-    if df.empty:
-        raise ValueError("No marker detected.")
+    if not detected_markers:
+        raise ValueError(
+            f"No {families} marker detected with the specified parameters."
+        )
 
+    df = pd.DataFrame(detected_markers)
     df.set_index("timestamp [ns]", inplace=True)
-    _verify_format(df, DETECTION_COLUMNS)
+    _validate_df_columns(df, MARKER_DETECTION_COLUMNS, df_name="marker detections")
     return Stream(df)

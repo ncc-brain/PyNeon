@@ -147,13 +147,17 @@ class TestBIDS:
         for recording in dataset.recordings:
             try:
                 _ = recording.blinks
-                recording.export_eye_tracking_bids(output_dir, extra_metadata=extra_metadata)
+                recording.export_eye_tracking_bids(
+                    output_dir, extra_metadata=extra_metadata
+                )
             except ValueError:
                 with pytest.warns(
                     UserWarning,
                     match="Could not read blinks data. These events will not be exported.",
                 ):
-                    recording.export_eye_tracking_bids(output_dir, extra_metadata=extra_metadata)
+                    recording.export_eye_tracking_bids(
+                        output_dir, extra_metadata=extra_metadata
+                    )
 
             # Verify files are created
             prefix = f"sub-{recording.info['wearer_name']}_task-TaskName"
@@ -193,7 +197,9 @@ class TestBIDS:
         "dataset_fixture",
         ["simple_dataset_native", "simple_dataset_cloud"],
     )
-    def test_export_eye_tracking_bids_with_prefix(self, request, dataset_fixture, tmp_path):
+    def test_export_eye_tracking_bids_with_prefix(
+        self, request, dataset_fixture, tmp_path
+    ):
         """Test Eye-Tracking-BIDS export with custom prefix."""
         dataset = request.getfixturevalue(dataset_fixture)
         valid_prefix = "sub-01_ses-1_task-LabMuse"

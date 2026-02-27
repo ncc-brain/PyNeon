@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
-from ..utils import _check_data
+from ..utils import _validate_neon_tabular_data, _validate_df_columns
 from ..utils.doc_decorators import fill_doc
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ def interpolate(
         index named ``timestamp [ns]``.
 
     %(interp_kind_params)s
-    %(max_gap_ms)s
+    %(max_gap_ms_param)s
 
     Returns
     -------
@@ -53,7 +53,7 @@ def interpolate(
     - If ``new_ts`` contains timestamps outside the range of ``data.index``,
       the corresponding rows will contain NaN.
     """
-    _check_data(data)
+    _validate_neon_tabular_data(data)
     new_ts = np.sort(new_ts).astype("int64")
 
     # Track which timestamps are invalid
@@ -174,7 +174,7 @@ def interpolate_events(
         Defaults to 0.05.
 
     %(interp_kind_params)s
-    %(max_gap_ms)s
+    %(max_gap_ms_param)s
 
     Returns
     -------
@@ -182,7 +182,7 @@ def interpolate_events(
         Interpolated data with the same columns and dtypes as ``data``
         and indexed by ``data.index``.
     """
-    _check_data(data)
+    _validate_neon_tabular_data(data)
 
     # Make a (2, n_blink) matrix of blink start and end timestamps
     event_times = np.array(
@@ -250,7 +250,7 @@ def window_average(
         original integer type after averaging.
     """
 
-    _check_data(data)
+    _validate_neon_tabular_data(data)
     new_ts = np.sort(new_ts).astype("int64")
 
     # ------------------------------------------------------------------ checks
@@ -318,11 +318,7 @@ def compute_azimuth_and_elevation(
     required_cols = ["gaze x [px]", "gaze y [px]"]
     camera_resolution = [1600, 1200]  # Pupil Neon camera resolution in pixels
     camera_fov = [103, 77]  # Pupil Neon camera field of view in degrees
-
-    if not all(col in data.columns for col in required_cols):
-        raise ValueError(
-            f"Data must contain the following columns to compute gaze angles: {required_cols}"
-        )
+    _validate_df_columns(data, required_cols, df_name="gaze data")
     if method == "linear":
         data["azimuth [deg]"] = (
             (data["gaze x [px]"] - camera_resolution[0] / 2)
@@ -374,7 +370,7 @@ def concat_streams(
 
     %(interp_kind_params)s
 
-    %(inplace)s
+    %(inplace_param)s
 
     Returns
     -------
