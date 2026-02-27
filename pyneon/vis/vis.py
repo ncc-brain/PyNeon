@@ -100,7 +100,7 @@ def plot_marker_layout(
             )
 
     # Display the canvas
-    ax.imshow(layout, cmap="gray", extent=[min_x, max_x, max_y, min_y])
+    ax.imshow(layout, cmap="gray", extent=[min_x, max_x, max_y, min_y], origin="upper")
     ax.set_xlabel("x [surface coord]")
     ax.set_ylabel("y [surface coord]")
     ax.set_aspect("equal")

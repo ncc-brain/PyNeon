@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from ..utils.doc_decorators import fill_doc
 from ..utils import _validate_df_columns
-from ..video.variables import DETECTION_COLUMNS
+from ..video.variables import DETECTION_COLUMNS_BASE
 
 if TYPE_CHECKING:
     from ..recording import Recording
@@ -132,7 +132,7 @@ def plot_detections(
     video : Video
         Video instance to plot the frame from.
     detections : Stream
-        Stream containing marker or surface-corner detections.
+        Stream containing marker or contour detections.
     frame_index : int
         Index of the frame to plot.
     show_ids : bool
@@ -150,29 +150,29 @@ def plot_detections(
     frame_detections = detections_df[detections_df["frame index"] == frame_index]
 
     if not frame_detections.empty:
-        for _, marker in frame_detections.iterrows():
-            if show_ids:
+        for _, det in frame_detections.iterrows():
+            if show_ids and "marker id" in det.index:
                 ax.text(
-                    marker["center x [px]"],
-                    marker["center y [px]"],
-                    marker["marker id"],
+                    det["center x [px]"],
+                    det["center y [px]"],
+                    det["marker id"],
                     color=color,
                     ha="center",
                     va="center",
                 )
             corners_x = [
-                marker["top left x [px]"],
-                marker["top right x [px]"],
-                marker["bottom right x [px]"],
-                marker["bottom left x [px]"],
-                marker["top left x [px]"],
+                det["top left x [px]"],
+                det["top right x [px]"],
+                det["bottom right x [px]"],
+                det["bottom left x [px]"],
+                det["top left x [px]"],
             ]
             corners_y = [
-                marker["top left y [px]"],
-                marker["top right y [px]"],
-                marker["bottom right y [px]"],
-                marker["bottom left y [px]"],
-                marker["top left y [px]"],
+                det["top left y [px]"],
+                det["top right y [px]"],
+                det["bottom right y [px]"],
+                det["bottom left y [px]"],
+                det["top left y [px]"],
             ]
             ax.plot(corners_x, corners_y, color=color)
     if show:
@@ -197,7 +197,7 @@ def overlay_detections(
     video : Video
         Video instance to overlay the detected markers on.
     detections : Stream
-        Stream containing marker or surface-corner detections.
+        Stream containing marker or contour detections.
     show_ids : bool
         Whether to overlay IDs at their centers when available. Defaults to True.
     color : tuple[int, int, int]
@@ -225,7 +225,7 @@ def overlay_detections(
         )
 
     detections_df = detections.data
-    if not set(DETECTION_COLUMNS).issubset(detections_df.columns):
+    if not set(DETECTION_COLUMNS_BASE).issubset(detections_df.columns):
         raise ValueError("Detections does not abide by the expected format.")
 
     grouped = detections_df.groupby("frame index")

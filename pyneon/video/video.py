@@ -20,7 +20,7 @@ from ..vis.video import (
     plot_frame,
 )
 from .marker import detect_markers
-from .surface import detect_surface
+from .detect_contour import detect_contour
 from .utils import get_undistort_maps, resolve_processing_window
 
 
@@ -526,7 +526,7 @@ Effective FPS: {self.fps:.2f}
         )
 
     @fill_doc
-    def detect_surface(
+    def detect_contour(
         self,
         step: int = 1,
         processing_window: tuple[int | float, int | float] | None = None,
@@ -547,13 +547,13 @@ Effective FPS: {self.fps:.2f}
 
         Parameters
         ----------
-        %(detect_surface_params)s
+        %(detect_contour_params)s
 
         Returns
         -------
-        %(detect_surface_returns)s
+        %(detect_contour_returns)s
         """
-        return detect_surface(
+        return detect_contour(
             self,
             step=step,
             processing_window=processing_window,
@@ -585,7 +585,7 @@ Effective FPS: {self.fps:.2f}
         Parameters
         ----------
         detections : Stream
-            Stream containing marker or surface-corner detections.
+            Stream containing marker or contour detections.
         frame_index : int
             Frame index to plot.
         show_ids : bool
@@ -671,7 +671,7 @@ Effective FPS: {self.fps:.2f}
         Parameters
         ----------
         detections : Stream
-            Stream containing marker or surface-corner detections.
+            Stream containing marker or contour detections.
         show_ids : bool
             Whether to overlay IDs at their centers when available. Defaults to True.
         color : tuple[int, int, int]

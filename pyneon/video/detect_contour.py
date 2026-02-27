@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .variables import SURFACE_DETECTION_COLUMNS
+from .variables import CONTOUR_DETECTION_COLUMNS
 from .utils import (
     distort_points,
     get_undistort_valid_fraction,
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @fill_doc
-def detect_surface(
+def detect_contour(
     video: "Video",
     step: int = 1,
     processing_window: tuple[int | float, int | float] | None = None,
@@ -52,11 +52,11 @@ def detect_surface(
     video : Video
         Video instance supporting OpenCV-like `set()` and `read()` methods,
         and providing frame timestamps (`video.ts`).
-    %(detect_surface_params)s
+    %(detect_contour_params)s
 
     Returns
     -------
-    %(detect_surface_returns)s
+    %(detect_contour_returns)s
     """
 
     if step < 1:
@@ -79,7 +79,7 @@ def detect_surface(
     if undistort:
         valid_fraction = get_undistort_valid_fraction(video)
 
-    for actual_frame_idx in tqdm(frames_to_process, desc="Detecting surface corners"):
+    for actual_frame_idx in tqdm(frames_to_process, desc="Detecting contour corners"):
         frame = video.read_frame_at(actual_frame_idx)
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if gray_frame is None:
@@ -159,7 +159,7 @@ def detect_surface(
         detection_row = {
             "frame index": actual_frame_idx,
             "timestamp [ns]": int(video.ts[actual_frame_idx]),
-            "surface name": "surface_0",
+            "contour name": "contour_0",
             "top left x [px]": corners[0, 0],
             "top left y [px]": corners[0, 1],
             "top right x [px]": corners[1, 0],
@@ -177,11 +177,11 @@ def detect_surface(
         detections.append(detection_row)
 
     if not detections:
-        raise ValueError("No surfaces detected in the specified processing window.")
+        raise ValueError("No contours detected in the specified processing window.")
 
     df = pd.DataFrame(detections)
     df.set_index("timestamp [ns]", inplace=True)
-    _validate_df_columns(df, SURFACE_DETECTION_COLUMNS, df_name="surface detections")
+    _validate_df_columns(df, CONTOUR_DETECTION_COLUMNS, df_name="contour detections")
     return Stream(df)
 
 

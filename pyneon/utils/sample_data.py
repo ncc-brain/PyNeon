@@ -31,7 +31,7 @@ def get_sample_data(
         Name of the sample dataset to retrieve. Must be one of:
         - "simple": Basic sample recording
         - "PLR": Pupil light reflex data
-        - "markers": Recording with visual markers for surface mapping
+        - "markers": Recording with fiducial markers for surface mapping
     replace : bool, optional
         If True, re-download the data even if it already exists locally.
         Defaults to False.

@@ -89,7 +89,7 @@ undistort : bool, optional
     in the original (distorted) video frame. Defaults to ``False``.
 """
 
-DOC["detect_surface_params"] = """
+DOC["detect_contour_params"] = """
 %(step_param)s
 %(window_params)s
 min_area_ratio : float, optional
@@ -194,14 +194,12 @@ Stream
     =================== =========================================================
 """
 
-DOC["detect_surface_returns"] = """
+DOC["detect_contour_returns"] = """
 Stream
     Stream indexed by "timestamp [ns]" with columns:
 
     - "frame index": The frame number\n
-    - "marker family": "surface"\n
-    - "marker id": sequential ID per contour in frame\n
-    - "marker name": identifier like "surface_0"\n
+    - "contour name": identifier like "contour_0"\n
     - "top left x [px]", "top left y [px]"\n
     - "top right x [px]", "top right y [px]"\n
     - "bottom right x [px]", "bottom right y [px]"\n

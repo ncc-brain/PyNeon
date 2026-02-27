@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .utils import _validate_marker_layout, _validate_surface_layout
+from .utils import _validate_marker_layout, _validate_contour_layout
 
 def _reshape_corners(detection: pd.Series) -> np.ndarray:
     return np.array(
@@ -30,17 +30,15 @@ def find_homographies(
 ) -> Stream:
     """
     Compute a homography (3x3 matrix) for each frame using marker
-    or surface-corner detections.
+    or contour detections.
 
     Parameters
     ----------
     detections : Stream
         Stream containing per-frame detections with corner coordinates.
-        Obtained from :meth:`Video.detect_markers` or :meth:`Video.detect_surfaces`.
+        Obtained from :meth:`Video.detect_markers` or :meth:`Video.detect_contour`.
     layout : pd.DataFrame or np.ndarray
         If using marker detections, provide a DataFrame with columns:
-    surface_layout : np.ndarray, optional
-        Surface corner coordinates as a 4x2 array.
     %(find_homographies_params)s
 
     Returns
@@ -83,13 +81,13 @@ def find_homographies(
         # Construct a lookup dictionary with marker name being key and corners being value
         surface_pts_lookup = {row["marker name"]: row["corners"] for _, row in layout.iterrows()}
     else:
-        _validate_surface_layout(layout)
-        surface_pts_lookup = {"surface_0": layout}
+        _validate_contour_layout(layout)
+        surface_pts_lookup = {"contour_0": layout}
 
     homography_per_frame = {}
     unique_timestamps = detection_df.index.unique()
 
-    for ts in tqdm(unique_timestamps, desc="Computing surface homographies"):
+    for ts in tqdm(unique_timestamps, desc="Computing surface-mapping homographies"):
         frame_detections = detection_df.loc[ts]
         if isinstance(frame_detections, pd.Series):
             frame_detections = frame_detections.to_frame().T
@@ -102,7 +100,7 @@ def find_homographies(
 
         for _, detection in frame_detections.iterrows():
             camera_pts = _reshape_corners(detection)
-            name = detection["marker name"] if is_marker_detection else "surface_0"
+            name = detection["marker name"] if is_marker_detection else "contour_0"
             surface_pts = surface_pts_lookup[name]
             if camera_pts.shape != (4, 2):
                 raise ValueError(

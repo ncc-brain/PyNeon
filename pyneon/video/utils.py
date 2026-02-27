@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from ..utils import _validate_df_columns
-from .variables import MARKERS_LAYOUT_COLUMNS, SURFACE_DETECTION_COLUMNS
+from .variables import MARKERS_LAYOUT_COLUMNS
 
 
 def _validate_marker_layout(marker_layout: pd.DataFrame) -> None:
@@ -24,11 +24,11 @@ def _validate_marker_layout(marker_layout: pd.DataFrame) -> None:
             f"Duplicate marker names found in layout: {duplicates.tolist()}"
         )
 
-def _validate_surface_layout(surface_layout: np.ndarray) -> None:
-    """Validate surface layout corners array."""
-    if surface_layout.shape != (4, 2):
+def _validate_contour_layout(contour_layout: np.ndarray) -> None:
+    """Validate contour layout corners array."""
+    if contour_layout.shape != (4, 2):
         raise ValueError(
-            f"Surface layout must have shape (4, 2), got {surface_layout.shape}."
+            f"Contour layout must have shape (4, 2), got {contour_layout.shape}."
         )
 
 def get_undistort_maps(

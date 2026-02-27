@@ -1,4 +1,4 @@
-DETECTION_COLUMNS = [
+DETECTION_COLUMNS_BASE = [
     "frame index",
     "top left x [px]",
     "top left y [px]",
@@ -16,14 +16,14 @@ DETECTION_COLUMNS = [
 APRILTAG_FAMILIES = ["16h5", "25h9", "36h10", "36h11"]
 ARUCO_SIZES = ["4x4", "5x5", "6x6", "7x7"]
 ARUCO_NUMBERS = ["50", "100", "250", "1000"]
-MARKER_DETECTION_COLUMNS = DETECTION_COLUMNS + [
+MARKER_DETECTION_COLUMNS = DETECTION_COLUMNS_BASE + [
     "marker family",
     "marker id",
     "marker name",
 ]
 
-SURFACE_DETECTION_COLUMNS = DETECTION_COLUMNS + [
-    "surface name",
+CONTOUR_DETECTION_COLUMNS = DETECTION_COLUMNS_BASE + [
+    "contour name",
 ]
 
 MARKERS_LAYOUT_COLUMNS = [
