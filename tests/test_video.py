@@ -30,13 +30,17 @@ def test_video_basics(request, dataset_fixture):
             n_frames = len(video.ts)
             assert n_frames == video.get(cv2.CAP_PROP_FRAME_COUNT)
 
-            # Select 5 random frames within n_frames
+            # Select random frames within n_frames and always test first and last frame
             random_frames = np.random.choice(n_frames, size=10, replace=False)
+            random_frames = np.append(random_frames, [0, n_frames - 1])
             for frame_idx in random_frames:
                 frame_idx = int(frame_idx)
                 frame = video.read_frame_at(frame_idx)
-                assert frame.shape == (video.height, video.width, 3)
                 assert frame_idx == video.current_frame_index
+                if frame_idx == 0:
+                    assert frame is None
+                else:
+                    assert frame.shape == (video.height, video.width, 3)
 
             with pytest.raises(ValueError, match="is out of bounds."):
                 video.read_frame_at(-5)

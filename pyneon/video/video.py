@@ -401,30 +401,12 @@ Effective FPS: {self.fps:.2f}
                 current += 1
         elif current != frame_index:  # Target frame is in the past
             # Reset to start and grab forward
-            self.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.reset()
             return self.read_frame_at(frame_index)
 
         ret, frame = self.retrieve()
         if not ret or frame is None:
-            # Fallback for backends where retrieve() can fail intermittently.
-            # Reopen and walk sequentially to the target frame, then decode.
-            self.reset()
-            current = 0
-            while frame_index > current:
-                if not self.grab():
-                    warn(
-                        f"Failed to grab frame while retrying access to frame {frame_index}."
-                    )
-                    return None
-                current += 1
-
-            ret, frame = self.retrieve()
-            if not ret or frame is None:
-                # Some backends only return an image through read().
-                ret, frame = self.read()
-            if not ret or frame is None:
-                warn(f"Failed to retrieve frame at index {frame_index}.")
-                return None
+            warn(f"Failed to retrieve frame at index {frame_index}. Returning None.")
         return frame
 
     def reset(self):
