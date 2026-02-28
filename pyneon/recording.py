@@ -1,5 +1,4 @@
 import json
-import shutil
 from datetime import datetime
 from functools import cached_property
 from numbers import Number
@@ -12,27 +11,22 @@ import numpy as np
 import pandas as pd
 
 from .events import Events
-from .export import export_cloud_format, export_eye_bids, export_motion_bids
-from .preprocess import concat_events, concat_streams, smooth_camera_pose
+from .export import export_cloud_format, export_eye_tracking_bids, export_motion_bids
+from .preprocess import concat_events, concat_streams
 from .stream import Stream
+from .utils.doc_decorators import fill_doc
 from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
-from .video import (
-    Video,
-    detect_apriltags,
-    estimate_camera_pose,
-    estimate_scanpath,
-    find_homographies,
-    gaze_on_surface,
-)
-from .vis import overlay_detections_and_pose, overlay_scanpath, plot_distribution
+from .video import Video
+from .vis import plot_distribution
 
 
 class Recording:
     """
-    Container of a multi-modal recording with streams, events, and videos.
+    Container of a multi-modal recording with
+    :class:`Stream`, :class:`Events`, and :class:`Video`
 
     The recording directory is expected to follow either the Pupil Cloud format
-    (tested with data format version >= 2.3) or the native Pupil Labs format.
+    (tested with data format version >= 2.3) or the native Pupil Labs format
     (tested with data format version >= 2.5).
     In both cases, the directory must contain an ``info.json`` file.
 
@@ -47,7 +41,6 @@ class Recording:
         ├── fixations.csv
         ├── gaze.csv
         ├── imu.csv
-        ├── saccades.csv
         ├── info.json (REQUIRED)
         ├── labels.csv
         ├── saccades.csv
@@ -82,7 +75,7 @@ class Recording:
         └── worn.dtype
 
     Streams, events, and scene video will be located but not loaded until
-    accessed as properties such as ``gaze``, ``imu``, and ``eye_states``.
+    accessed as properties such as :attr:`gaze`, :attr:`fixations`, and :attr:`scene_video`.
 
     Parameters
     ----------
@@ -95,7 +88,7 @@ class Recording:
         Recording ID.
     recording_dir : pathlib.Path
         Path to the recording directory.
-    format : {'cloud', 'native'}
+    format : {"cloud", "native"}
         Recording format, either "cloud" for Pupil Cloud format or "native" for
         native format.
     info : dict
@@ -130,11 +123,7 @@ class Recording:
                 info["wearer_name"] = None
                 warn("Cannot find wearer.json in native recording.")
         self.info = info
-        self.data_format_version = info.get("data_format_version", None)
-
-        self.der_dir = recording_dir / "derivatives"
-        if not self.der_dir.is_dir():
-            self.der_dir.mkdir()
+        self.data_format_version = info.get("data_format_version", "unknown")
 
     def _infer_format(self):
         gaze_csv = self.recording_dir / "gaze.csv"
@@ -170,7 +159,7 @@ class Recording:
 
     def __repr__(self) -> str:
         return f"""
-Data format: {self.format}
+Data format: {self.format} (version: {self.data_format_version})
 Recording ID: {self.recording_id}
 Wearer ID: {self.info.get("wearer_id", "N/A")}
 Wearer name: {self.info.get("wearer_name", "N/A")}
@@ -178,10 +167,55 @@ Recording start time: {self.start_datetime}
 Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 """
 
+    def close(self) -> None:
+        """Release cached video handles, if any."""
+        for attr_name in ("scene_video", "eye_video"):
+            video = self.__dict__.get(attr_name)
+            # Check if video is a Video instance and not None
+            if video is not None and hasattr(video, "release"):
+                try:
+                    video.close()
+                except Exception:
+                    pass
+                self.__dict__[attr_name] = None
+
+    def __enter__(self) -> "Recording":
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> bool:
+        self.close()
+        return False
+
+    def _load_property(self, property_name: str, loader):
+        """Load a property using the provided loader function.
+
+        Parameters
+        ----------
+        property_name : str
+            Name of the property being loaded (for error messages).
+        loader : callable
+            Function that loads and returns the property.
+
+        Returns
+        -------
+        object
+            The loaded property.
+
+        Raises
+        ------
+        ValueError
+            If the loader function raises an exception.
+        """
+        try:
+            return loader()
+        except Exception as e:
+            message = f"Recording.{property_name} cannot be read because: {e}"
+            raise ValueError(message) from e
+
     @cached_property
     def gaze(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` object containing gaze data.
+        Return a cached :class:`Stream` instance containing gaze data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``gaze.csv``.
 
@@ -189,111 +223,131 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         otherwise from ``gaze ps1.raw``) along with the corresponding ``.time`` and
         ``.dtype`` files.
         """
-        if self.format == "native":
-            gaze_200hz_file = self.recording_dir / "gaze_200hz.raw"
-            if gaze_200hz_file.is_file():
-                return Stream(gaze_200hz_file)
-            else:
+
+        def _load():
+            if self.format == "native":
+                gaze_200hz_file = self.recording_dir / "gaze_200hz.raw"
+                if gaze_200hz_file.is_file():
+                    return Stream(gaze_200hz_file)
                 return Stream(self.recording_dir / "gaze ps1.raw")
-        else:
             return Stream(self.recording_dir / "gaze.csv")
+
+        return self._load_property("gaze", _load)
 
     @cached_property
     def imu(self) -> Stream:
         """
-        Return a cached :class:`pyneon.Stream` object containing IMU data.
+        Return a cached :class:`Stream` instance containing IMU data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``imu.csv``.
 
         For **native** recordings, the data is loaded from ``imu ps1.raw``, along with
         the corresponding ``.time`` and ``.dtype`` files.
         """
-        if self.format == "native":
-            return Stream(self.recording_dir / "imu ps1.raw")
-        else:
+
+        def _load():
+            if self.format == "native":
+                return Stream(self.recording_dir / "imu ps1.raw")
             return Stream(self.recording_dir / "imu.csv")
+
+        return self._load_property("imu", _load)
 
     @cached_property
     def eye_states(self) -> Stream:
         """
-        Returns a (cached) :class:`pyneon.Stream` object containing eye states data.
+        Return a cached :class:`Stream` instance containing eye states data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``3d_eye_states.csv``.
 
         For **native** recordings, the data is loaded from ``eye_state ps1.raw``, along
         with the corresponding ``.time`` and ``.dtype`` files.
         """
-        if self.format == "native":
-            return Stream(self.recording_dir / "eye_state ps1.raw")
-        else:
+
+        def _load():
+            if self.format == "native":
+                return Stream(self.recording_dir / "eye_state ps1.raw")
             return Stream(self.recording_dir / "3d_eye_states.csv")
+
+        return self._load_property("eye_states", _load)
 
     @cached_property
     def blinks(self) -> Events:
         """
-        Return a cached :class:`pyneon.Events` object containing blink event data.
+        Return a cached :class:`Events` instance containing blink event data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``blinks.csv``.
 
         For **native** recordings, the data is loaded from ``blinks ps1.raw``, along with
         the corresponding ``.time`` and ``.dtype`` files.
         """
-        if self.format == "native":
-            return Events(self.recording_dir / "blinks ps1.raw")
-        else:
+
+        def _load():
+            if self.format == "native":
+                return Events(self.recording_dir / "blinks ps1.raw")
             return Events(self.recording_dir / "blinks.csv")
+
+        return self._load_property("blinks", _load)
 
     @cached_property
     def fixations(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing fixations data.
+        Return a cached :class:`Events` instance containing fixations data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``fixations.csv``.
 
         For **native** recordings, the data is loaded from ``fixations ps1.raw``,
         along with the corresponding ``.time`` and ``.dtype`` files.
         """
-        if self.format == "native":
-            return Events(self.recording_dir / "fixations ps1.raw", "fixations")
-        else:
+
+        def _load():
+            if self.format == "native":
+                return Events(self.recording_dir / "fixations ps1.raw", "fixations")
             return Events(self.recording_dir / "fixations.csv")
+
+        return self._load_property("fixations", _load)
 
     @cached_property
     def saccades(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing saccades data.
+        Return a cached :class:`Events` instance containing saccades data.
 
         For **Pupil Cloud** recordings, the data is loaded from ``saccades.csv``.
 
         For **native** recordings, the data is loaded from ``fixations ps1.raw``,
         along with the corresponding ``.time`` and ``.dtype`` files.
         """
-        if self.format == "native":
-            # Note: In the native format, both fixations and saccades are stored in 'fixations ps1.raw'.
-            # The event type argument ("saccades") is used to distinguish which events to load.
-            return Events(self.recording_dir / "fixations ps1.raw", "saccades")
-        else:
+
+        def _load():
+            if self.format == "native":
+                # Note: In the native format, both fixations and saccades are stored in 'fixations ps1.raw'.
+                # The event type argument ("saccades") is used to distinguish which events to load.
+                return Events(self.recording_dir / "fixations ps1.raw", "saccades")
             return Events(self.recording_dir / "saccades.csv")
+
+        return self._load_property("saccades", _load)
 
     @cached_property
     def events(self) -> Events:
         """
-        Returns a (cached) :class:`pyneon.Events` object containing events data.
+        Return a cached :class:`Events` instance containing events data.
 
         For **Pupil Cloud** recordings, the events data is loaded from ``events.csv``.
 
         For **native** recordings, the events data is loaded from ``event.txt`` and
         ``event.time``.
         """
-        if self.format == "native":
-            return Events(self.recording_dir / "event.txt")
-        else:
+
+        def _load():
+            if self.format == "native":
+                return Events(self.recording_dir / "event.txt")
             return Events(self.recording_dir / "events.csv")
+
+        return self._load_property("events", _load)
 
     @cached_property
     def scene_video(self) -> Video:
         """
-        Returns a (cached) :class:`pyneon.Video` object containing scene video data.
+        Return a cached :class:`Video` instance containing scene video data.
 
         For **Pupil Cloud** recordings, the video is loaded from the only ``*.mp4`` file
         in the recording directory.
@@ -301,82 +355,92 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         For **native** recordings, the video is loaded from the ``Neon Scene Camera*.mp4``
         file in the recording directory.
         """
-        reg_exp = "Neon Scene Camera*.mp4" if self.format == "native" else "*.mp4"
-        video_files = list(self.recording_dir.glob(reg_exp))
-        if len(video_files) == 0:
-            raise FileNotFoundError(
-                f"No scene video file found in {self.recording_dir}"
-            )
-        elif len(video_files) > 1:
-            raise FileNotFoundError(
-                f"Multiple scene video files found in {self.recording_dir}"
-            )
-        video_file = video_files[0]
-        if self.format == "native":
-            ts_file = video_file.with_suffix(".time")
-            if not ts_file.is_file():
+
+        def _load():
+            reg_exp = "Neon Scene Camera*.mp4" if self.format == "native" else "*.mp4"
+            video_files = list(self.recording_dir.glob(reg_exp))
+            if len(video_files) == 0:
                 raise FileNotFoundError(
-                    f"Missing {ts_file.name} in {self.recording_dir}"
+                    f"No scene video file found in {self.recording_dir}"
                 )
-            ts = np.fromfile(ts_file, dtype=np.int64)
-            calib_file = self.recording_dir / "calibration.bin"
-            if not calib_file.is_file():
-                warn(
-                    f"Missing calibration.bin in {self.recording_dir}; "
-                    "scene camera info will be empty."
+            if len(video_files) > 1:
+                raise FileNotFoundError(
+                    f"Multiple scene video files found in {self.recording_dir}"
                 )
-                info = {}
+            video_file = video_files[0]
+            if self.format == "native":
+                ts_file = video_file.with_suffix(".time")
+                if not ts_file.is_file():
+                    raise FileNotFoundError(
+                        f"Missing {ts_file.name} in {self.recording_dir}"
+                    )
+                ts = np.fromfile(ts_file, dtype=np.int64)
+                calib_file = self.recording_dir / "calibration.bin"
+                if not calib_file.is_file():
+                    warn(
+                        f"Missing calibration.bin in {self.recording_dir}; "
+                        "scene camera info will be empty."
+                    )
+                    info = {}
+                else:
+                    dtype = np.dtype(calib_dtype)
+                    calibration = np.frombuffer(calib_file.open("rb").read(), dtype)[0]
+                    info = {
+                        "camera_matrix": calibration["scene_camera_matrix"].tolist(),
+                        "distortion_coefficients": calibration[
+                            "scene_distortion_coefficients"
+                        ].tolist(),
+                        "serial_number": calibration["serial"].decode("utf-8"),
+                    }
             else:
-                dtype = np.dtype(calib_dtype)
-            calibration = np.frombuffer(calib_file.open("rb").read(), dtype)[0]
-            info = {
-                "camera_matrix": calibration["scene_camera_matrix"].tolist(),
-                "distortion_coefficients": calibration[
-                    "scene_distortion_coefficients"
-                ].tolist(),
-                "serial_number": calibration["serial"].decode("utf-8"),
-            }
-        else:
-            ts_file = self.recording_dir / "world_timestamps.csv"
-            info_file = self.recording_dir / "scene_camera.json"
-            if not ts_file.is_file():
-                raise FileNotFoundError(
-                    f"Missing world_timestamps.csv in {self.recording_dir}"
-                )
-            ts = pd.read_csv(ts_file)["timestamp [ns]"].to_numpy().astype(np.int64)
-            if not info_file.is_file():
-                raise FileNotFoundError(
-                    f"Missing scene_camera.json in {self.recording_dir}"
-                )
-            with open(info_file) as f:
-                info = json.load(f)
-        return Video(video_file, ts, info)
+                ts_file = self.recording_dir / "world_timestamps.csv"
+                info_file = self.recording_dir / "scene_camera.json"
+                if not ts_file.is_file():
+                    raise FileNotFoundError(
+                        f"Missing world_timestamps.csv in {self.recording_dir}"
+                    )
+                ts = pd.read_csv(ts_file)["timestamp [ns]"].to_numpy().astype(np.int64)
+                if not info_file.is_file():
+                    raise FileNotFoundError(
+                        f"Missing scene_camera.json in {self.recording_dir}"
+                    )
+                with open(info_file) as f:
+                    info = json.load(f)
+            return Video(video_file, ts, info)
+
+        return self._load_property("scene_video", _load)
 
     @cached_property
     def eye_video(self) -> Video:
         """
-        Returns a (cached) :class:`pyneon.Video` object containing eye video data.
+        Return a cached :class:`Video` instance containing eye video data.
 
         Eye video is only available for **native** recordings and is loaded from the
         ``Neon Sensor Module*.mp4`` file in the recording directory.
         """
-        if self.format == "cloud":
-            raise ValueError("Pupil Cloud recordings do not contain eye video.")
-        video_files = list(self.recording_dir.glob("Neon Sensor Module*.mp4"))
-        if len(video_files) == 0:
-            raise FileNotFoundError(f"No eye video file found in {self.recording_dir}")
-        elif len(video_files) > 1:
-            raise FileNotFoundError(
-                f"Multiple eye video files found in {self.recording_dir}"
-            )
-        video_file = video_files[0]
-        ts_file = video_file.with_suffix(".time")
-        if not ts_file.is_file():
-            raise FileNotFoundError(
-                f"Missing .time file {ts_file.name} in {self.recording_dir}"
-            )
-        ts = np.fromfile(ts_file, dtype=np.int64)
-        return Video(video_file, ts, {})
+
+        def _load():
+            if self.format == "cloud":
+                raise ValueError("Pupil Cloud recordings do not contain eye video.")
+            video_files = list(self.recording_dir.glob("Neon Sensor Module*.mp4"))
+            if len(video_files) == 0:
+                raise FileNotFoundError(
+                    f"No eye video file found in {self.recording_dir}"
+                )
+            if len(video_files) > 1:
+                raise FileNotFoundError(
+                    f"Multiple eye video files found in {self.recording_dir}"
+                )
+            video_file = video_files[0]
+            ts_file = video_file.with_suffix(".time")
+            if not ts_file.is_file():
+                raise FileNotFoundError(
+                    f"Missing .time file {ts_file.name} in {self.recording_dir}"
+                )
+            ts = np.fromfile(ts_file, dtype=np.int64)
+            return Video(video_file, ts, None)
+
+        return self._load_property("eye_video", _load)
 
     @property
     def start_time(self) -> int:
@@ -406,7 +470,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Concatenate data from different streams under common timestamps.
         Since the streams may have different timestamps and sampling frequencies,
         resampling of all streams to a set of common timestamps is performed.
-        The latest start timestamp and earliest last timestamp of the selected sreams
+        The latest start timestamp and earliest last timestamp of the selected streams
         are used to define the common timestamps.
 
         Parameters
@@ -434,7 +498,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns
         -------
         Stream
-            Stream object containing concatenated data.
+            Stream instance containing concatenated data.
         """
         return Stream(
             concat_streams(
@@ -447,7 +511,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             )
         )
 
-    def concat_events(self, event_names: str | list[str]) -> Events:
+    def concat_events(self, events_names: str | list[str]) -> Events:
         """
         Concatenate different events. All columns in the selected event type will be
         present in the final DataFrame. An additional "type" column denotes the event
@@ -458,7 +522,7 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Parameters
         ----------
-        event_names : list of str
+        events_names : list of str
             List of event names to concatenate. Event names must be in
             ``{"blinks", "fixations", "saccades", "events"}``
             (singular forms are tolerated).
@@ -466,17 +530,22 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         Returns
         -------
         Events
-            Events object containing concatenated data.
+            Events instance containing concatenated data.
         """
-        new_data = concat_events(self, event_names)
+        new_data = concat_events(self, events_names)
         return Events(new_data)
 
+    @fill_doc
     def plot_distribution(
         self,
         heatmap_source: Literal["gaze", "fixations", None] = "gaze",
         scatter_source: Literal["gaze", "fixations", None] = "fixations",
+        step_size: int = 10,
+        sigma: int | float = 2,
+        width_height: tuple[int, int] = (1600, 1200),
+        cmap: str = "inferno",
+        ax: Optional[plt.Axes] = None,
         show: bool = True,
-        **kwargs,
     ) -> tuple[plt.Figure, plt.Axes]:
         """
         Plot a heatmap of gaze or fixation data on a matplotlib axis.
@@ -485,8 +554,6 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
 
         Parameters
         ----------
-        rec : Recording
-            Recording object containing the gaze and video data.
         heatmap_source : {'gaze', 'fixations', None}
             Source of the data to plot as a heatmap. If None, no heatmap is plotted.
             Defaults to 'gaze'.
@@ -494,29 +561,23 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             Source of the data to plot as a scatter plot. If None, no scatter plot is plotted.
             Defaults to 'fixations'. Gaze data is typically more dense and thus less suitable
             for scatter plots.
-        show : bool
-            Show the figure if ``True``. Defaults to True.
-        **kwargs : keyword arguments
-            Additional parameters for the plot, including:
-                - 'step_size': Step size for the heatmap grid. Default is 10.
-                - 'sigma': Sigma value for Gaussian smoothing. Default is 2.
-                - 'width_height': Width and height of the figure in pixels. Default is (1600, 1200).
-                - 'cmap': Colormap for the heatmap. Default is 'inferno'.
-                - 'ax': Matplotlib axis to plot on. If None, a new figure and axis are created.
+        step_size : int
+            Size of the grid cells in pixels. Defaults to 10.
+        sigma : int or float
+            Standard deviation of the Gaussian kernel used to smooth the heatmap.
+            If None or 0, no smoothing is applied. Defaults to 2.
+        width_height : tuple[int, int]
+            If video is not available, the width and height of the scene camera frames to
+            specify the heatmap dimensions. Defaults to (1600, 1200).
+        cmap : str
+            Colormap to use for the heatmap. Defaults to 'inferno'.
+        %(ax_param)s
+        %(show_param)s
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_returns)s
         """
-        step_size = kwargs.get("step_size", 10)
-        sigma = kwargs.get("sigma", 2)
-        width_height = kwargs.get("width_height", (1600, 1200))
-        cmap = kwargs.get("cmap", "inferno")
-        ax = kwargs.get("ax", None)
-
         return plot_distribution(
             self,
             heatmap_source,
@@ -532,9 +593,8 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
     def sync_gaze_to_video(
         self,
         window_size: Optional[int] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Stream:
+        inplace: bool = False,
+    ) -> Optional[Stream]:
         """
         Synchronize gaze data to video frames by applying windowed averaging
         around timestamps of each video frame.
@@ -544,713 +604,19 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         window_size : int, optional
             Size of the time window in nanoseconds used for averaging.
             If None, defaults to the median interval between video frame timestamps.
-        overwrite : bool, optional
-            If True, force recomputation even if saved data exists. Default is False.
-        output_path : str or pathlib.Path, optional
-            Path to save the resulting CSV file. Defaults to `<der_dir>/gaze_synced.csv`.
+        inplace : bool, optional
+            If True, update the gaze stream in-place and return None.
+            If False, return a new Stream. Defaults to False.
 
         Returns
         -------
-        Stream
-            A Stream indexed by `"timestamp [ns]"`, containing:
-                - 'gaze x [px]': Gaze x-coordinate in pixels
-                - 'gaze y [px]': Gaze y-coordinate in pixels
-                - 'frame_idx': Index of the video frame corresponding to the gaze data
+        Stream or None
+            A Stream indexed by "timestamp [ns]" containing the window-averaged
+            gaze data, or None if ``inplace=True``.
         """
-        if output_path is None:
-            gaze_file = self.der_dir / "gaze_synced.csv"
-        else:
-            gaze_file = Path(output_path)
-
-        if gaze_file.is_file() and not overwrite:
-            synced_gaze = pd.read_csv(gaze_file, index_col="timestamp [ns]")
-            if synced_gaze.empty:
-                raise ValueError("Gaze data is empty.")
-            return Stream(synced_gaze)
-
-        if self.gaze is None or self.scene_video is None:
-            raise ValueError("Gaze-video synchronization requires gaze and video data.")
-
-        synced_gaze = self.gaze.window_average(self.scene_video.ts, window_size).data
-        synced_gaze["frame_idx"] = np.arange(len(synced_gaze))
-
-        synced_gaze.index.name = "timestamp [ns]"
-        synced_gaze.to_csv(gaze_file, index=True)
-
-        return Stream(synced_gaze)
-
-    def estimate_scanpath(
-        self,
-        sync_gaze: Optional[Stream] = None,
-        lk_params: Optional[dict] = None,
-        output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-    ) -> Stream:
-        """
-        Estimate scanpaths by propagating fixations across frames with Lucas-Kanade.
-
-        If a cached result exists and ``overwrite`` is False, it is loaded from disk.
-
-        Parameters
-        ----------
-        sync_gaze : Stream, optional
-            Gaze data synchronised to video frames. If ``None``, it is created with
-            Recording.sync_gaze_to_video().
-        lk_params : dict, optional
-            Parameters forwarded to the LK optical-flow call.
-        output_path : str or pathlib.Path, optional
-            Where to save the pickle. Defaults to ``<der_dir>/scanpath.pkl``.
-        overwrite : bool, optional
-            Force recomputation even if a pickle exists.
-
-        Returns
-        -------
-        Stream
-            Indexed by "timestamp [ns]" with one column "fixations"
-            containing a nested DataFrame for each video frame.
-        """
-        scanpath_path = (
-            Path(output_path) if output_path else self.der_dir / "scanpath.pkl"
-        )
-
-        if scanpath_path.is_file() and not overwrite:
-            print(f"Loading saved scanpath from {scanpath_path}")
-            df = pd.read_pickle(scanpath_path)
-            if df.empty:
-                raise ValueError("Scanpath data is empty.")
-            return Stream(df)
-
-        if sync_gaze is None:
-            sync_gaze = self.sync_gaze_to_video()
-
-        scanpath_df = estimate_scanpath(
-            self.scene_video,
-            sync_gaze,
-            lk_params=lk_params,
-        )
-        scanpath_df.index.name = "timestamp [ns]"
-
-        # ------------------------------------------------------------------ save
-        scanpath_df.to_pickle(scanpath_path)
-
-        return Stream(scanpath_df)
-
-    def detect_apriltags(
-        self,
-        tag_family: str = "tag36h11",
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-        **kwargs,
-    ) -> Stream:
-        """
-        Detect AprilTags in a video and return their positions per frame.
-
-        Runs AprilTag detection on video frames using the `pupil_apriltags` backend.
-        Uses saved results if available unless `overwrite=True`.
-
-        Parameters
-        ----------
-        tag_family : str, optional
-            The AprilTag family to detect (e.g., "tag36h11"). Default is "tag36h11".
-        overwrite : bool, optional
-            If True, reruns detection even if saved results exist.
-        output_path : str or pathlib.Path, optional
-            Path to save the detection JSON file. Defaults to `<der_dir>/apriltags.json`.
-        **kwargs : keyword arguments
-            Additional parameters for AprilTag detection, including:
-                - 'nthreads': Number of threads to use for detection. Default is 4.
-                - 'quad_decimate': Decimation factor for the quad detection. Default is 1.0, thus no decimation.
-                - 'skip_frames': Number of frames to skip between detections. Default is 1, thus no skipping.
-
-        Returns
-        -------
-        Stream
-            Stream indexed by `"timestamp [ns]"` with one row per detected tag, including:
-                - 'frame_idx': Index in the downsampled video sequence
-                - 'orig_frame_idx': Original frame index in the full video
-                - 'tag_id': ID of the detected AprilTag
-                - 'corners': A 4x2 array of tag corner coordinates
-                - 'center': A 1x2 array of the tag center
-        """
-
-        nthreads = kwargs.get("nthreads", 4)
-        quad_decimate = kwargs.get("quad_decimate", 1.0)
-        skip_frames = kwargs.get("skip_frames", 1)
-
-        if output_path is None:
-            json_file = self.der_dir / "apriltags.json"
-        else:
-            json_file = Path(output_path)
-
-        # If a saved file exists and overwrite is False, just read and return it
-        if json_file.is_file() and not overwrite:
-            print(f"Loading saved detections from {json_file}")
-            all_detections = pd.read_json(json_file, orient="records", lines=True)
-            all_detections["timestamp [ns]"] = all_detections["timestamp [ns]"].astype(
-                "int64"
-            )
-            if all_detections.empty:
-                raise ValueError("AprilTag detection data is empty.")
-            return Stream(all_detections)
-
-        all_detections = detect_apriltags(
-            video=self.scene_video,
-            tag_family=tag_family,
-            nthreads=nthreads,
-            quad_decimate=quad_decimate,
-            skip_frames=skip_frames,
-        )
-
-        if all_detections.empty:
-            raise ValueError("No AprilTag detections found.")
-
-        # Save results to JSON
-        all_detections.reset_index().to_json(json_file, orient="records", lines=True)
-
-        return Stream(all_detections)
-
-    def find_homographies(
-        self,
-        tag_info: pd.DataFrame,
-        all_detections: Optional[Stream] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-        **kwargs,
-    ) -> Stream:
-        """
-        Compute and return homographies for each frame using AprilTag detections and reference marker layout.
-
-        Parameters
-        ----------
-        tag_info : pandas.DataFrame
-            DataFrame containing AprilTag reference positions and orientations, with columns:
-                - 'tag_id': ID of the tag
-                - 'x', 'y', 'z': 3D coordinates of the tag's center
-                - 'normal_x', 'normal_y', 'normal_z': Normal vector of the tag surface
-                - 'size': Side length of the tag in meters
-        all_detections : Stream, optional
-            Stream containing AprilTag detection results per frame. If None, detections are recomputed.
-        overwrite : bool, optional
-            Whether to force recomputation even if saved homographies exist.
-        output_path : str or pathlib.Path, optional
-            Optional file path for saving the homographies as JSON. If None, defaults to `<der_dir>/homographies.json`.
-        **kwargs : keyword arguments
-            Additional parameters for homography computation, including:
-                - 'coordinate_system': Coordinate system for the homography ('opencv' or 'psychopy'). Default is 'opencv'.
-                - 'surface_size': Size of the surface in pixels (width, height). Default is (1920, 1080).
-                - 'skip_frames': Number of frames to skip between detections. Default is 1.
-                - 'settings': Additional settings for the homography computation.
-
-        Returns
-        -------
-        Stream
-            A Stream object indexed by `"timestamp [ns]"` containing:
-                - 'frame_idx': Video frame index
-                - 'homography': 3x3 NumPy array representing the homography matrix for that frame
-        """
-
-        # Defaults for kwargs
-        coordinate_system = kwargs.get("coordinate_system", "opencv")
-        surface_size = kwargs.get("surface_size", (1920, 1080))
-        skip_frames = kwargs.get("skip_frames", 1)
-        settings = kwargs.get("settings", None)
-
-        if output_path is None:
-            pkl_file = self.der_dir / "homographies.pkl"
-        else:
-            pkl_file = Path(output_path)
-
-        # If a saved file exists and overwrite is False, just read and return it
-        if pkl_file.is_file() and not overwrite:
-            print(f"Loading saved homographies from {pkl_file}")
-            df = pd.read_pickle(pkl_file)
-            homographies = Stream(df)
-            return homographies
-
-        if all_detections is None:
-            all_detections = self.detect_apriltags()
-
-        # if all_detections.data.empty:
-        #   raise ValueError("No AprilTag detections found.")
-
-        homographies_df = find_homographies(
-            self.scene_video,
-            all_detections.data,
-            tag_info.copy(deep=True),
-            surface_size,
-            skip_frames=skip_frames,
-            coordinate_system=coordinate_system,
-            settings=settings,
-        )
-
-        homographies_df.to_pickle(pkl_file)
-
-        return Stream(homographies_df)
-
-    def gaze_on_surface(
-        self,
-        homographies: Optional[Stream] = None,
-        tag_info: Optional[pd.DataFrame] = None,
-        synced_gaze: Optional[Stream] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Stream:
-        """
-        Project gaze coordinates from eye space to surface space using homographies.
-
-        Computes or loads frame-wise homographies and applies them to the synchronized
-        gaze data to transform it into surface coordinates. If a saved version exists
-        and `overwrite` is False, the data is loaded from disk.
-
-        Parameters
-        ----------
-        homographies : Stream, optional
-            Stream containing precomputed homographies. If None, they are computed from `tag_info`.
-        tag_info : pandas.DataFrame, optional
-            AprilTag marker info used to compute homographies. Required if `homographies` is None.
-        synced_gaze : Stream, optional
-            Gaze data aligned to video frames. If None, will be computed using `sync_gaze_to_video()`.
-        overwrite : bool, optional
-            If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.
-        output_path : str or pathlib.Path, optional
-            File path to save the resulting CSV. Defaults to `<der_dir>/gaze_on_surface.csv`.
-
-        Returns
-        -------
-        Stream
-            A Stream containing gaze data with surface coordinates, including:
-                - 'frame_idx': Frame index
-                - 'x_trans', 'y_trans': Gaze coordinates in surface pixel space
-                - Any additional columns from the synchronized gaze input
-        """
-
-        if output_path is None:
-            gaze_on_surface_path = self.der_dir / "gaze_on_surface.csv"
-        else:
-            gaze_on_surface_path = Path(output_path)
-
-        if gaze_on_surface_path.is_file() and not overwrite:
-            # Load saved gaze on surface data
-            data = pd.read_csv(gaze_on_surface_path)
-            if data.empty:
-                raise ValueError("Gaze data is empty.")
-            return Stream(data)
-
-        if homographies is None:
-            if tag_info is None:
-                raise ValueError(
-                    "Marker information is required for homography estimation."
-                )
-            homographies = self.find_homographies(tag_info=tag_info)
-
-        if synced_gaze is None:
-            # Check if synced gaze already exists
-            synced_gaze = self.sync_gaze_to_video()
-
-        data = gaze_on_surface(synced_gaze.data, homographies.data)
-
-        # Save gaze on surface data to CSV
-        data.to_csv(gaze_on_surface_path, index=True)
-
-        return Stream(data)
-
-    def fixations_on_surface(
-        self,
-        gaze_on_surface: Optional[Stream] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-    ) -> Events:
-        """
-        Project fixation events into surface space by summarizing gaze samples.
-
-        This function maps each fixation to surface coordinates by averaging the
-        surface-transformed gaze points (`x_trans`, `y_trans`) associated with
-        that fixation. If saved data exists and `overwrite` is False, it is loaded
-        from disk instead of being recomputed.
-
-        Parameters
-        ----------
-        gaze_on_surface : pandas.DataFrame, optional
-            DataFrame of gaze coordinates already transformed to surface space.
-            If None, will be computed via `self.gaze_on_surface()`.
-            Must include 'fixation id', 'x_trans', and 'y_trans' columns.
-        overwrite : bool, optional
-            If True, forces recomputation and overwrites any existing output file.
-            Default is False.
-        output_path : str or pathlib.Path, optional
-            Custom path to save the resulting fixation data as a CSV.
-            If None, defaults to `self.der_dir / "fixations_on_surface.csv"`.
-
-        Returns
-        -------
-        Events
-            An events object containing:
-                - All columns from the raw fixations table
-                - 'gaze x [surface coord]' : float
-                    Mean surface-space x-coordinate for the fixation.
-                - 'gaze y [surface coord]' : float
-                    Mean surface-space y-coordinate for the fixation.
-        """
-
-        if output_path is None:
-            fixation_on_surface_path = self.der_dir / "fixations_on_surface.csv"
-        else:
-            fixation_on_surface_path = Path(output_path)
-
-        # Check if fixations already exist
-        if fixation_on_surface_path.is_file() and not overwrite:
-            data = pd.read_csv(fixation_on_surface_path)
-            if data.empty:
-                raise ValueError("Fixations data is empty.")
-            return Events(data)
-
-        raw_fixations = self.fixations.data
-
-        if raw_fixations.empty:
-            raise ValueError("No fixations data found.")
-
-        if gaze_on_surface is None:
-            # Check if gaze on surface already exists
-            gaze_on_surface = self.gaze_on_surface()
-
-        # Summarize gaze points first:
-        gaze_means = (
-            gaze_on_surface.data.groupby("fixation id", as_index=False)[
-                ["x_trans", "y_trans"]
-            ]
-            .mean()
-            .rename(
-                columns={
-                    "x_trans": "gaze x [surface coord]",
-                    "y_trans": "gaze y [surface coord]",
-                }
-            )
-        )
-
-        raw_fixations = raw_fixations.reset_index(drop=False)
-
-        # Merge back into fixations:
-        data = raw_fixations.merge(gaze_means, on="fixation id", how="outer")
-        data = data.set_index("start timestamp [ns]")
-
-        # save fixations to csv
-        data.to_csv(fixation_on_surface_path, index=True)
-
-        return Events(data)
-
-    def estimate_camera_pose(
-        self,
-        tag_locations_df: pd.DataFrame,
-        all_detections: Optional[Stream] = None,
-        output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-    ) -> Stream:
-        """
-        Compute the camera pose (R|t) for every frame.
-
-        Parameters
-        ----------
-        tag_locations_df : pandas.DataFrame
-            3-D positions, normals and size for every AprilTag (columns:
-            'tag_id','x','y','z','normal_x','normal_y','normal_z','size').
-        all_detections : Stream, optional
-            Per-frame AprilTag detections.  If ``None``, they are produced by Recording.detect_apriltags().
-        output_path : str or pathlib.Path, optional
-            Path to save the resulting camera pose data as a JSON file. Defaults to `<der_dir>/camera_pose.json`.
-        overwrite : bool, optional
-            If True, forces recomputation and overwrites any existing saved result. Default is False.
-
-        Returns
-        -------
-        Stream
-            Indexed by "timestamp [ns]" with columns
-            ``'frame_idx', 'translation_vector', 'rotation_vector', 'camera_pos'``.
-        """
-
-        json_file = (
-            Path(output_path) if output_path else self.der_dir / "camera_pose.json"
-        )
-
-        # ------------------------------------------------------------------ load
-        if json_file.is_file() and not overwrite:
-            print(f"Loading saved camera pose from {json_file}")
-            df = pd.read_json(json_file, orient="records", lines=True)
-            df["timestamp [ns]"] = df["timestamp [ns]"].astype("int64")
-            df = df.set_index("timestamp [ns]")
-            if df.empty:
-                raise ValueError("Camera pose data is empty.")
-            return Stream(df)
-
-        # ------------------------------------------------------------------ prerequisites
-        req = {"tag_id", "pos_vec", "norm_vec", "size"}
-        missing = req - set(tag_locations_df.columns)
-        if missing:
-            raise ValueError(f"tag_locations_df is missing: {missing}")
-
-        if all_detections is None:
-            all_detections = self.detect_apriltags()
-
-        if all_detections.data.empty:
-            raise ValueError("No AprilTag detections found.")
-
-        # ------------------------------------------------------------------ compute
-        cam_pose_df = estimate_camera_pose(
-            video=self.scene_video,
-            tag_locations_df=tag_locations_df,
-            all_detections=all_detections.data,
-        )
-        cam_pose_df.index.name = "timestamp [ns]"
-
-        # ------------------------------------------------------------------ save
-        cam_pose_df.reset_index().to_json(json_file, orient="records", lines=True)
-
-        return Stream(cam_pose_df)
-
-    def smooth_camera_pose(
-        self,
-        camera_pose_raw: Optional[pd.DataFrame] = None,
-        overwrite: bool = False,
-        output_path: Optional[str | Path] = None,
-        **kwargs,
-    ) -> pd.DataFrame:
-        """
-        Kalman-smooth camera positions and gate outliers.
-
-        Parameters
-        ----------
-        camera_pose_raw : pandas.DataFrame, optional
-            Raw camera-pose table with columns ``'frame_idx'`` and ``'camera_pos'``.
-            If *None*, tries to load *camera_pose.json* from ``self.der_dir`` or
-            computes it via Recording.estimate_camera_pose().
-        overwrite : bool, default False
-            Recompute even if a smoothed file already exists.
-        output_path : str or pathlib.Path, optional
-            Where to save the JSON (``smoothed_camera_pose.json`` by default).
-        kwargs : dict, optional
-            Optional arguments:
-                - initial_state_noise: float (default=0.1)
-                - process_noise: float (default=0.1)
-                - measurement_noise: float (default=0.01)
-                - gating_threshold: float (default=2.0)
-                - bidirectional: bool (default=False)
-
-        Returns
-        -------
-        pd.DataFrame
-            Same rows as *camera_pose_raw* with the extra column
-            ``'smoothed_camera_pos'`` (3-vector).
-        """
-
-        # Defaults
-        initial_state_noise = kwargs.get("initial_state_noise", 0.1)
-        process_noise = kwargs.get("process_noise", 0.1)
-        measurement_noise = kwargs.get("measurement_noise", 0.01)
-        gating_threshold = kwargs.get("gating_threshold", 2.0)
-        bidirectional = kwargs.get("bidirectional", False)
-
-        # ------------------------------------------------ target path
-        json_file = (
-            Path(output_path)
-            if output_path
-            else self.der_dir / "smoothed_camera_pose.json"
-        )
-
-        # ------------------------------------------------ fast-path load
-        if json_file.is_file() and not overwrite:
-            print(f"Loading smoothed camera pose from {json_file}")
-            df = pd.read_json(json_file, orient="records", lines=True)
-            df["camera_pos"] = df["camera_pos"].apply(np.array)
-            df["smoothed_camera_pos"] = df["smoothed_camera_pos"].apply(np.array)
-            return df
-
-        # ------------------------------------------------ obtain raw pose
-        if camera_pose_raw is None:
-            raw_path = self.der_dir / "camera_pose.json"
-            if raw_path.is_file():
-                camera_pose_raw = pd.read_json(raw_path, orient="records", lines=True)
-                camera_pose_raw["camera_pos"] = camera_pose_raw["camera_pos"].apply(
-                    lambda p: np.array(p, dtype=float)
-                )
-            else:
-                camera_pose_raw = self.estimate_camera_pose()  # returns DataFrame
-
-        if camera_pose_raw.empty:
-            raise ValueError("Camera-pose table is empty; cannot smooth.")
-
-        # ------------------------------------------------ compute
-        smoothed = smooth_camera_pose(
-            camera_pose_raw,
-            initial_state_noise,
-            process_noise,
-            measurement_noise,
-            gating_threshold,
-            bidirectional,
-        )
-
-        # ------------------------------------------------ save & return
-        smoothed.to_json(json_file, orient="records", lines=True)
-        return smoothed
-
-    def overlay_scanpath(
-        self,
-        scanpath: Optional[Stream] = None,
-        show_video: bool = False,
-        video_output_path: Optional[str | Path] = None,
-        overwrite: bool = False,
-        **kwargs,
-    ) -> None:
-        """
-        Render a video with the scan-path overlaid.
-
-        Parameters
-        ----------
-        scanpath : Stream, optional
-            Nested scan-path table (as from Recording.estimate_scanpath()).
-            If *None*, it is loaded or computed automatically.
-        show_video : bool
-            Display the video live while rendering.
-        video_output_path : str or pathlib.Path, optional
-            Target MP4 path. Defaults to `<der_dir>/scanpath.mp4`.
-            If *None*, no file is written.
-        overwrite : bool, default False
-            Regenerate the overlay even if the MP4 already exists.
-        kwargs : dict, optional
-            Optional arguments:
-                - circle_radius: int, default 10
-                    Radius of the fixation circles.
-                - line_thickness: int, default 2
-                    Thickness of the fixation lines.
-                - text_size: int, default 1
-                    Size of the fixation text.
-                - max_fixations: int, default 10
-                    Maximum number of fixations to display.
-        """
-
-        # Defaults for kwargs
-        circle_radius = kwargs.get("circle_radius", 10)
-        line_thickness = kwargs.get("line_thickness", 2)
-        text_size = kwargs.get("text_size", 1)
-        max_fixations = kwargs.get("max_fixations", 10)
-
-        if video_output_path is None:
-            video_output_path = self.der_dir / "scanpath.mp4"
-        else:
-            video_output_path = Path(video_output_path)
-
-        if scanpath is None:
-            scanpath = self.estimate_scanpath()
-
-        if video_output_path.is_file() and not overwrite:
-            print(
-                f"Overlay video already exists at {video_output_path}; skipping render."
-            )
-            if show_video:
-                print("`show_video=True` has no effect because rendering was skipped.")
-            return
-
-        if self.scene_video is None:
-            raise ValueError("A loaded video is required to draw the overlay.")
-
-        overlay_scanpath(
-            self.scene_video,
-            scanpath.data,
-            circle_radius,
-            line_thickness,
-            text_size,
-            max_fixations,
-            show_video,
-            video_output_path,
-        )
-
-    def overlay_detections_and_pose(
-        self,
-        april_detections: pd.DataFrame,
-        camera_positions: pd.DataFrame,
-        room_corners: np.ndarray = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]),
-        video_output_path: Path | str | None = None,
-        graph_size: np.ndarray = np.array([300, 300]),
-        show_video: bool = True,
-    ):
-        """
-        Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.
-
-        Parameters
-        ----------
-        april_detections : pandas.DataFrame
-            DataFrame containing the AprilTag detections.
-        camera_positions : pandas.DataFrame
-            DataFrame containing the camera positions.
-        room_corners : numpy.ndarray
-            Array containing the room corners coordinates. Defaults to a unit square.
-        video_output_path pathlib.Path or str
-            Path to save the video with detections and poses overlaid. Defaults to 'detection_and_pose.mp4'.
-        graph_size : numpy.ndarray
-            Size of the graph to overlay on the video. Defaults to [300, 300].
-        show_video : bool
-            Whether to display the video with detections and poses overlaid. Defaults to True.
-        """
-        if self.scene_video is None:
-            raise ValueError(
-                "Overlaying detections and pose on video requires video data."
-            )
-
-        if video_output_path is None:
-            video_output_path = self.der_dir / "detection_and_pose.mp4"
-
-        overlay_detections_and_pose(
-            self,
-            april_detections,
-            camera_positions,
-            room_corners,
-            video_output_path,
-            graph_size,
-            show_video,
-        )
-
-    def clear_der_dir(
-        self,
-        include: str | list[str] = ["all"],
-        exclude: str | list[str] = [],
-    ):
-        """
-        Clear the derived data directory by removing files and folders.
-
-        Parameters
-        ----------
-        include : str or list of str, optional
-            Files or folders to delete. If ["all"], delete everything in the directory.
-            Supports full names or base names without extensions (e.g. "scanpath" matches "scanpath.pkl").
-        exclude : str or list of str, optional
-            Files or folders to exclude. Applies only if include is ["all"].
-            Also supports base names.
-        """
-
-        der_dir = Path(self.der_dir)
-        if not der_dir.is_dir():
-            raise ValueError(f"Derived data directory {der_dir} does not exist.")
-
-        include_set = {include} if isinstance(include, str) else set(include)
-        exclude_set = {exclude} if isinstance(exclude, str) else set(exclude)
-
-        def matches_name(p: Path, names: set[str]) -> bool:
-            return p.name in names or p.stem in names
-
-        if "all" in include:
-            # Delete everything not matching excluded names
-            targets = [p for p in der_dir.iterdir() if not matches_name(p, exclude_set)]
-        else:
-            # Delete only explicitly included files/folders
-            targets = [p for p in der_dir.iterdir() if matches_name(p, include_set)]
-
-        deleted_paths = []
-        for p in targets:
-            if p.is_file():
-                p.unlink()
-            elif p.is_dir():
-                shutil.rmtree(p)
-            deleted_paths.append(p.name)
-
-        print(f"Deleted {len(deleted_paths)} items from {der_dir}: {deleted_paths}")
+        gaze = self.gaze
+        video = self.scene_video
+        return gaze.window_average(video.ts, window_size, inplace=inplace)
 
     def export_cloud_format(
         self,
@@ -1278,63 +644,124 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         extra_metadata: dict = {},
     ):
         """
-        Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
-        file and metadata (with template fields) are saved to a .json file.
-        Users should later edit the metadata file according to the experiment to make
-        it BIDS-compliant.
+        Export IMU data to Motion-BIDS format.
+
+        Motion-BIDS [1]_ is an extension to the Brain Imaging Data Structure (BIDS) that
+        standardizes motion sensor data from IMUs for reproducible research. This method
+        creates motion time-series and metadata files, channels files, and updates the
+        scans file in the subject/session directory. The output files are BIDS-compliant
+        templates and may require additional metadata editing for full compliance with
+        your specific use case.
+
+        The exported files are:
+
+        .. code-block:: text
+
+            <motion_dir>/
+                <prefix>_channels.json
+                <prefix>_channels.tsv
+                <prefix>_motion.json
+                <prefix>_motion.tsv
+            sub-<label>_[ses-<label>]_scans.tsv
+
+        For example:
+
+        .. code-block:: text
+
+            sub-01/
+                ses-1/
+                    motion/
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_channels.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_channels.tsv
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_motion.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_motion.tsv
+                    sub-01_ses-1_scans.tsv
+
+        Motion-BIDS specification can be found at:
+        https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html
 
         Parameters
         ----------
         motion_dir : str or pathlib.Path
             Output directory to save the Motion-BIDS formatted data.
+            The directory name itself should be "motion" as specified by Motion-BIDS.
         prefix : str, optional
-            Prefix for the BIDS filenames, by default "sub-``wearer_name``_task-XXX_tracksys-NeonIMU".
-            The format should be "sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]"
-            (Fields in [] are optional). Files will be saved as
-            ``{prefix}_motion.<tsv|json>``.
-        extra_metadata : dict, optional
-            Extra metadata to include in the .json file. Keys must be valid BIDS fields.
+            BIDS naming prefix. The format is:
 
-        Notes
-        -----
-        Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-        standardize the organization of motion data for reproducible research [1]_.
-        For more information, see
-        https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html.
+            ``sub-<label>[_ses-<label>]_task-<label>_tracksys-<label>[_acq-<label>][_run-<index>]``
+
+            Required fields are ``sub-<label>``, ``task-<label>``, and
+            ``tracksys-<label>`` (use ``tracksys-NeonIMU`` for Neon IMU data).
+            If not provided, inferred from the directory structure (parent directories)
+            or defaults to ``sub-{wearer_name}_task-TaskName_tracksys-NeonIMU``.
+        extra_metadata : dict, optional
+            Extra metadata to include in the JSON metadata file. Keys must be valid
+            BIDS fields (for example, ``TaskName``).
 
         References
         ----------
-        .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
+        .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., Warmerdam, E., Hansen, C., Oostenveld, R., & Welzel, J. (2024). Motion-BIDS: An extension to the brain imaging data structure to organize motion data for reproducible research. Scientific Data, 11(1), 716. https://doi.org/10.1038/s41597-024-03559-8
         """
         export_motion_bids(self, motion_dir, prefix, extra_metadata)
 
-    def export_eye_bids(
+    def export_eye_tracking_bids(
         self,
         output_dir: str | Path,
-        prefix: str = "",
+        prefix: Optional[str] = None,
         extra_metadata: dict = {},
     ):
         """
-        Export eye-tracking data to Eye-tracking-BIDS format. Continuous samples
-        and events are saved to .tsv.gz files with accompanying .json metadata files.
-        Users should later edit the metadata files according to the experiment.
+        Export eye-tracking data to Eye-Tracking-BIDS format.
+
+        Eye-Tracking-BIDS [2]_ standardizes gaze position, pupil data, and eye-tracking
+        events by treating eye-tracking data as physiological data that can be organized
+        alongside most BIDS modalities. The export creates gaze (and pupil diameter)
+        time-series and event data files with accompanying metadata.
+
+        The exported files are:
+
+        .. code-block:: text
+
+            <output_dir>/
+                <prefix>_physio.tsv.gz
+                <prefix>_physio.json
+                <prefix>_physioevents.tsv.gz
+                <prefix>_physioevents.json
+            sub-<label>_[ses-<label>]_scans.tsv
+
+        For example:
+
+        .. code-block:: text
+
+            sub-01/
+                ses-1/
+                    motion/
+                        <existing motion files if motion export is performed>
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physio.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physio.tsv.gz
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physioevents.json
+                        sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physioevents.tsv.gz
+
+        BIDS specifications for physiological recordings and specifically eye-tracking data can be found at:
+
+        - https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html
+        - https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html#eye-tracking
 
         Parameters
         ----------
-
         output_dir : str or pathlib.Path
             Output directory to save the Eye-tracking-BIDS formatted data.
         prefix : str, optional
-            Prefix for the BIDS filenames, by default "sub-XX_recording-eye".
-            The format should be `<matches>[_recording-<label>]_<physio|physioevents>.<tsv.gz|json>`
-            (Fields in [] are optional). Files will be saved as
-            ``{prefix}_physio.<tsv.gz|json>`` and ``{prefix}_physioevents.<tsv.gz|json>``.
+            BIDS naming prefix. Must include ``sub-<label>`` and ``task-<label>``.
+            If not provided, the function attempts to infer it from the directory
+            structure or detect it from existing files (e.g., from ``export_motion_bids()``).
+            Defaults to ``sub-{wearer_name}_task-TaskName`` if no existing files are found.
+        extra_metadata : dict, optional
+            Extra metadata to include in the JSON metadata file. Keys must be valid
+            BIDS fields.
 
-        Notes
-        -----
-        Eye-tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-        standardize the organization of eye-tracking data for reproducible research.
-        The extension is still being finalized. This method follows the latest standards
-        outlined in https://github.com/bids-standard/bids-specification/pull/1128.
+        References
+        ----------
+        .. [2] Szinte, M., Bach, D. R., Draschkow, D., Esteban, O., Gagl, B., Gau, R., Gregorova, K., Halchenko, Y. O., Huberty, S., Kling, S. M., Kulkarni, S., Maintainers, T. B., Markiewicz, C. J., Mikkelsen, M., Oostenveld, R., & Pfarr, J.-K. (2026). Eye-Tracking-BIDS: The Brain Imaging Data Structure extended to gaze position and pupil data. bioRxiv. https://doi.org/10.64898/2026.02.03.703514
         """
-        export_eye_bids(self, output_dir, prefix, extra_metadata)
+        export_eye_tracking_bids(self, output_dir, prefix, extra_metadata)

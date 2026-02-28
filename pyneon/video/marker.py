@@ -1,0 +1,193 @@
+import re
+from typing import TYPE_CHECKING, Literal, Optional, Tuple
+
+import cv2
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
+from ..stream import Stream
+from ..utils import _validate_df_columns
+from ..utils.doc_decorators import fill_doc
+from .utils import (
+    distort_points,
+    resolve_processing_window,
+)
+from .variables import (
+    APRILTAG_FAMILIES,
+    ARUCO_NUMBERS,
+    ARUCO_SIZES,
+    MARKER_DETECTION_COLUMNS,
+)
+
+if TYPE_CHECKING:
+    from .video import Video
+
+
+def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
+    # AprilTags
+    if marker_family in APRILTAG_FAMILIES:
+        dict_name: str = f"DICT_APRILTAG_{marker_family.upper()}"
+        aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dict_name))
+        return "april", aruco_dict
+
+    # ArUco Original
+    if marker_family.lower() == "aruco_original":
+        aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+        return "aruco", aruco_dict
+
+    # Other ArUco (format: {size}_{number})
+    aruco_pattern = re.compile(r"^(\d+)x\1_(\d+)$")
+    pattern_match = aruco_pattern.match(marker_family)
+
+    if pattern_match:
+        # Split marker name into size and number components
+        size, number = marker_family.split("_")
+
+        if size not in ARUCO_SIZES:
+            raise ValueError(
+                f"Invalid Aruco marker size '{size}' in '{marker_family}'. "
+                f"Supported sizes: {', '.join(ARUCO_SIZES)}"
+            )
+
+        if number not in ARUCO_NUMBERS:
+            raise ValueError(
+                f"Invalid Aruco marker number '{number}' in '{marker_family}'. "
+                f"Supported numbers: {', '.join(ARUCO_NUMBERS)}"
+            )
+
+        dict_name = f"DICT_{marker_family.upper()}"
+        aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dict_name))
+        return "aruco", aruco_dict
+
+    # Provide helpful error message with supported formats
+    raise ValueError(
+        f"Unrecognized marker family '{marker_family}'. "
+        f"Expected format:\n"
+        f"  - AprilTag: {', '.join(APRILTAG_FAMILIES)}\n"
+        f"  - Aruco: {{size}}_{{number}} (e.g., '6x6_250')\n"
+        f"    Available sizes: {', '.join(ARUCO_SIZES)}\n"
+        f"    Available numbers: {', '.join(ARUCO_NUMBERS)}"
+    )
+
+
+def generate_marker(
+    marker_family: str,
+    marker_id: int,
+    marker_size_pixels: int,
+):
+    aruco_dict = marker_family_to_dict(marker_family)
+    img = cv2.aruco.generateImageMarker(aruco_dict, marker_id, marker_size_pixels)
+    return img
+
+
+@fill_doc
+def detect_markers(
+    video: "Video",
+    marker_family: str | list[str],
+    step: int = 1,
+    processing_window: Optional[tuple[int | float, int | float]] = None,
+    processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+    undistort: bool = False,
+) -> Stream:
+    """
+    Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
+
+    Parameters
+    ----------
+    video : Video
+        Scene video to detect markers from.
+    %(detect_markers_params)s
+    %(detect_markers_returns)s
+    """
+    # Normalize marker family input to a list and create detectors for each
+    families: list[str] = (
+        marker_family if isinstance(marker_family, list) else [marker_family]
+    )
+
+    # Use provided detector_parameters or create a default instance
+    if detector_parameters is None:
+        detector_parameters = cv2.aruco.DetectorParameters()
+
+    detectors: list[tuple[str, str, cv2.aruco.ArucoDetector]] = []
+    for fam in families:
+        fam_type, aruco_dict = marker_family_to_dict(fam)
+        detectors.append(
+            (fam, fam_type, cv2.aruco.ArucoDetector(aruco_dict, detector_parameters))
+        )
+
+    if step < 1:
+        raise ValueError("step must be >= 1")
+
+    start_frame_idx, end_frame_idx = resolve_processing_window(
+        video,
+        processing_window,
+        processing_window_unit,
+    )
+
+    def _process_frame(frame_idx: int, gray_frame: np.ndarray) -> list[dict]:
+        """Run detection on a single grayscale frame across all detectors."""
+        records: list[dict] = []
+        for fam_name, fam_type, det in detectors:
+            all_corners, all_ids, _ = det.detectMarkers(gray_frame)
+            if all_ids is None:
+                continue
+
+            for corners, marker_id in zip(all_corners, all_ids):
+                corners = corners.reshape((4, 2))
+                if fam_type == "april":
+                    # For AprilTags, corners start with bottom right
+                    # For ArUco, corners start with top left
+                    # See https://stackoverflow.com/questions/79044142
+                    corners = corners[[2, 3, 0, 1], :]
+                center = np.mean(corners, axis=0)
+                if undistort:
+                    corners = distort_points(video, corners)
+                    center = distort_points(video, center)
+                records.append(
+                    {
+                        "timestamp [ns]": video.ts[frame_idx],
+                        "frame index": frame_idx,
+                        "marker family": fam_name,
+                        "marker id": int(marker_id[0]),
+                        "marker name": f"{fam_name}_{marker_id[0]}",
+                        "top left x [px]": corners[0, 0],
+                        "top left y [px]": corners[0, 1],
+                        "top right x [px]": corners[1, 0],
+                        "top right y [px]": corners[1, 1],
+                        "bottom right x [px]": corners[2, 0],
+                        "bottom right y [px]": corners[2, 1],
+                        "bottom left x [px]": corners[3, 0],
+                        "bottom left y [px]": corners[3, 1],
+                        "center x [px]": center[0],
+                        "center y [px]": center[1],
+                    }
+                )
+        return records
+
+    detected_markers = []
+    frames_to_process = list(range(start_frame_idx, end_frame_idx + 1, step))
+
+    # Ensure video is at the beginning before processing
+    video.reset()
+
+    for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
+        frame = video.read_frame_at(frame_index)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if gray_frame is None:
+            break
+        if undistort:
+            gray_frame = video.undistort_frame(gray_frame)
+        records = _process_frame(frame_index, gray_frame)
+        detected_markers.extend(records)
+
+    if not detected_markers:
+        raise ValueError(
+            f"No {families} marker detected with the specified parameters."
+        )
+
+    df = pd.DataFrame(detected_markers)
+    df.set_index("timestamp [ns]", inplace=True)
+    _validate_df_columns(df, MARKER_DETECTION_COLUMNS, df_name="marker detections")
+    return Stream(df)

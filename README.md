@@ -1,5 +1,6 @@
 ![GitHub License](https://img.shields.io/github/license/ncc-brain/PyNeon?style=plastic)
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fncc-brain.github.io%2FPyNeon%2F&up_message=online&style=plastic&label=Documentation)
+[![PyNeon CI](https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml/badge.svg)](https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml)
 
 # PyNeon
 
@@ -14,14 +15,18 @@ PyNeon supports both **native** (data stored in the companion device) and [**Pup
 
 Documentation for PyNeon is available at <https://ncc-brain.github.io/PyNeon/> which includes detailed references for classes and functions, as well as step-by-step tutorials presented as Jupyter notebooks.
 
+We also created a few sample datasets containing short Neon recordings for testing and tutorial purposes. These datasets can be found on [OSF](https://doi.org/10.17605/OSF.IO/3N85H). We also provide a utility function `get_sample_data()` to download these sample datasets directly from PyNeon.
+
 ## Key Features
 
-- [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/read_recording.html) Easy API for reading in datasets, recordings, or individual modalities of data.
+- Easy API for reading in datasets, recordings, or individual modalities of data.
+  - [Tutorial](https://ncc-brain.github.io/PyNeon/tutorials/read_recording_cloud.html) for reading data in Pupil Cloud format
+  - [Tutorial](https://ncc-brain.github.io/PyNeon/tutorials/read_recording_native.html) for reading data in native format
 - [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/interpolate_and_concat.html) Various preprocessing functions, including data cropping, interpolation,
   concatenation, etc.
 - [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/pupil_size_and_epoching.html) Flexible epoching of data for trial-based analysis.
 - [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/video.html) Methods for working with scene video, including scanpath estimation and AprilTags-based mapping.
-- [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/export_to_bids.html) Exportation to [Motion-BIDS](https://www.nature.com/articles/s41597-024-03559-8) (and forthcoming Eye-Tracking-BIDS) format for interoperability across the cognitive neuroscience community.
+- [(Tutorial)](https://ncc-brain.github.io/PyNeon/tutorials/export_to_bids.html) Exportation to [Motion-BIDS](https://doi.org/10.1038/s41597-024-03559-8) and [Eye-Tracking-BIDS](https://doi.org/10.64898/2026.02.03.703514) formats for interoperability across the cognitive neuroscience community.
 
 ## Installation
 

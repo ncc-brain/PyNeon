@@ -11,45 +11,48 @@ def smooth_camera_pose(
     bidirectional: bool = False,
 ) -> pd.DataFrame:
     """
-    Apply a Kalman filter to smooth camera positions, with optional forward-backward smoothing (RTS smoother).
-    Handles missing measurements and propagates predictions.
+    Smooth camera position estimates using a Kalman filter with optional
+    forward-backward smoothing (RTS smoother).
+
+    This function handles missing measurements and propagates predictions across frames.
 
     Parameters
     ----------
     camera_position_raw : pandas.DataFrame
-        DataFrame containing 'frame_idx' and 'camera_pos' columns.
+        DataFrame containing ``frame index`` and ``camera_pos`` columns.
     initial_state_noise : float, optional
-        Initial state covariance scaling factor. Default is 0.1.
+        Initial state covariance scaling factor. Defaults to 0.1.
     process_noise : float, optional
-        Process noise covariance scaling factor. Default is 0.1.
+        Process noise covariance scaling factor. Defaults to 0.1.
     measurement_noise : float, optional
-        Measurement noise covariance scaling factor. Default is 0.01.
+        Measurement noise covariance scaling factor. Defaults to 0.01.
     gating_threshold : float, optional
-        Mahalanobis distance threshold for gating outliers. Default is 2.0.
+        Mahalanobis distance threshold for gating outliers. Defaults to 2.0.
     bidirectional : bool, optional
-        If True, applies forward-backward RTS smoothing. Default is False.
+        If True, applies forward-backward RTS smoothing. Defaults to False.
 
     Returns
     -------
-    pd.DataFrame
-        A DataFrame with 'frame_idx' and 'smoothed_camera_pos'.
+    pandas.DataFrame
+        A DataFrame with ``frame index`` and ``smoothed_camera_pos`` columns,
+        or ``camera_pos`` if bidirectional is False.
     """
 
     state_dim = 3
     meas_dim = 3
 
-    # Ensure the DataFrame is sorted by frame_idx
-    camera_position_raw = camera_position_raw.sort_values("frame_idx")
+    # Ensure the DataFrame is sorted by frame index
+    camera_position_raw = camera_position_raw.sort_values("frame index")
 
     # Extract all frame indices and create a complete range
     all_frames = np.arange(
-        camera_position_raw["frame_idx"].min(),
-        camera_position_raw["frame_idx"].max() + 1,
+        camera_position_raw["frame index"].min(),
+        camera_position_raw["frame index"].max() + 1,
     )
 
     # Create a lookup for frame detections
     position_lookup = dict(
-        zip(camera_position_raw["frame_idx"], camera_position_raw["camera_pos"])
+        zip(camera_position_raw["frame index"], camera_position_raw["camera_pos"])
     )
 
     # Kalman filter matrices
@@ -90,7 +93,7 @@ def smooth_camera_pose(
     if not bidirectional:
         smoothed_positions = [x.flatten() for x in x_fwd]
         result_df = pd.DataFrame(
-            {"frame_idx": all_frames, "camera_pos": smoothed_positions}
+            {"frame index": all_frames, "camera_pos": smoothed_positions}
         )
         return result_df
 
@@ -111,6 +114,6 @@ def smooth_camera_pose(
 
     # Return results
     result_df = pd.DataFrame(
-        {"frame_idx": all_frames, "camera_pos": smoothed_positions}
+        {"frame index": all_frames, "camera_pos": smoothed_positions}
     )
     return result_df

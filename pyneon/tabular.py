@@ -1,3 +1,4 @@
+from pathlib import Path
 from warnings import warn
 
 import pandas as pd
@@ -7,7 +8,7 @@ from .utils.variables import data_types
 
 class BaseTabular:
     """
-    Base for tabular data classes like :class:`pyneon.Events` and :class:`pyneon.Stream`.
+    Base for tabular data classes like :class:`Events` and :class:`Stream`.
 
     When initialized, performs the following checks and processing on the input data:
 
@@ -111,3 +112,22 @@ class BaseTabular:
         from copy import deepcopy
 
         return deepcopy(self)
+
+    def save(self, output_path: str | Path):
+        """Save the data to a CSV file.
+
+        Data types and index are preserved on reload (round-trip safe).
+
+        Parameters
+        ----------
+        output_path : str or pathlib.Path
+            Path to the output CSV file.
+
+        Examples
+        --------
+        >>> gaze = recording.gaze
+        >>> gaze.save("gaze_data.csv")
+        >>> gaze_reloaded = Stream("gaze_data.csv")
+        """
+        # Use a high-precision float format to make CSV round-trips stable.
+        self.data.to_csv(output_path, index=True, header=True, float_format="%.18g")

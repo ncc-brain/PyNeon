@@ -11,15 +11,24 @@ if TYPE_CHECKING:
 
 
 def export_cloud_format(recording: "Recording", target_dir: str | Path):
-    """Export the recording in a cloud-compatible format.
+    """Export a native recording to cloud-compatible format.
+
+    Converts a native Pupil Labs recording to the Pupil Cloud format,
+    including all data streams, scene video, and metadata.
 
     Parameters
     ----------
     recording : Recording
         The recording to export. ``recording.format`` must be "native".
-    target_dir : str | Path
+    target_dir : str or pathlib.Path
         The target directory to save the exported files.
         Will be created if it does not exist.
+
+    Raises
+    ------
+    ValueError
+        If the recording is already in Cloud format or if target_dir
+        is the same as the recording directory.
     """
     if recording.format != "native":
         raise ValueError("Recording is already in Cloud format; no export needed.")
@@ -51,17 +60,20 @@ def export_cloud_format(recording: "Recording", target_dir: str | Path):
 def _export_data(recording, attr_name, filename, target_dir):
     try:
         attr = getattr(recording, attr_name)
+        data = attr.data.copy()
     except FileNotFoundError:
         warn(f"Warning: '{attr_name}' data file not found in recording.")
-        return
-    data = attr.data.copy()
+        return  # Do not export
+    except ValueError:
+        warn(f"Warning: '{attr_name}' data is empty.")
+        return  # Do not export
+
     # Make timestamp index a column again
     if data.index.name == "timestamp [ns]":
         data.reset_index(inplace=True, drop=False)
-    else:
-        data.reset_index(inplace=True, drop=True)
+
     # Append recording ID and section ID columns
-    data["section id"] = recording.info.get("section_id", pd.NA)
+    data["section id"] = recording.info.get("section_id", None)
     data["recording id"] = recording.recording_id
     cols = data.columns.tolist()
     data = data[cols[-2:] + cols[:-2]]  # Move new columns to front

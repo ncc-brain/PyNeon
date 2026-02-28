@@ -6,31 +6,45 @@ import pandas as pd
 from tqdm import tqdm
 
 if TYPE_CHECKING:
-    from ..stream import Gaze
+    from ..stream import Stream
     from .video import Video
 
 
 def estimate_scanpath(
     video: "Video",
-    sync_gaze: "Gaze",
+    sync_gaze: "Stream",
     lk_params: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
-    Map fixations to video frames using optical flow.
+    Map fixations to video frames using Lucas-Kanade optical flow tracking.
+
+    This function tracks fixation points across video frames using optical flow,
+    allowing fixations to be mapped to their locations even as the scene changes.
 
     Parameters
     ----------
-    video : SceneVideo
-        Video object containing the frames.
-    sync_gaze : NeonGaze
-        Gaze data synchronized with the video frames.
+    video : Video
+        Video instance containing the frames.
+    sync_gaze : Stream
+        Gaze data synchronized with the video frames. Must contain
+        ``fixation id``, ``gaze x [px]``, and ``gaze y [px]`` columns.
+        Timestamps must match video timestamps.
     lk_params : dict, optional
         Parameters for the Lucas-Kanade optical flow algorithm.
+        If None, uses default parameters from Pupil Labs.
+        Defaults to None.
 
     Returns
     -------
     pandas.DataFrame
-        DataFrame containing the scanpath with updated fixation points.
+        DataFrame containing the scanpath with updated fixation points,
+        indexed by ``timestamp [ns]`` with a ``fixations`` column and
+        a ``frame index`` column.
+
+    Raises
+    ------
+    ValueError
+        If gaze and video timestamps do not match.
     """
     if not np.allclose(sync_gaze.ts, video.ts):
         raise ValueError("Gaze and video timestamps do not match.")
@@ -71,7 +85,7 @@ def estimate_scanpath(
     ]
 
     # reset video to the beginning
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video.reset()
     prev_image = None
     for i_frame in tqdm(range(scanpath.shape[0]), desc="Estimating scanpath"):
         # Read the current frame from the video
@@ -143,10 +157,10 @@ def estimate_scanpath(
         prev_image = curr_image
 
     # Reset video to the beginning
-    video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video.reset()
 
     scanpath.index.name = "timestamp [ns]"
 
-    scanpath["frame_idx"] = np.arange(scanpath.shape[0])
+    scanpath["frame index"] = np.arange(scanpath.shape[0])
 
     return scanpath

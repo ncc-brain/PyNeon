@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
-from ..utils import _check_data
+from ..utils import _validate_df_columns, _validate_neon_tabular_data
 from ..utils.doc_decorators import fill_doc
 
 if TYPE_CHECKING:
@@ -21,6 +21,7 @@ def interpolate(
     data: pd.DataFrame,
     float_kind: str | int = "linear",
     other_kind: str | int = "nearest",
+    max_gap_ms: Optional[Number] = 500,
 ) -> pd.DataFrame:
     """
     Interpolate a data stream to a new set of timestamps.
@@ -38,7 +39,8 @@ def interpolate(
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
 
-    %(interp_kwargs)s
+    %(interp_kind_params)s
+    %(max_gap_ms_param)s
 
     Returns
     -------
@@ -51,20 +53,66 @@ def interpolate(
     - If ``new_ts`` contains timestamps outside the range of ``data.index``,
       the corresponding rows will contain NaN.
     """
-    _check_data(data)
+    _validate_neon_tabular_data(data)
     new_ts = np.sort(new_ts).astype("int64")
-    if new_ts[0] < data.index[0]:
+
+    # Track which timestamps are invalid
+    invalid_mask = np.zeros(len(new_ts), dtype=bool)
+
+    # First, mark timestamps outside the data range
+    out_of_range = (new_ts < data.index[0]) | (new_ts > data.index[-1])
+    invalid_mask |= out_of_range
+    n_out_of_bounds = np.sum(out_of_range)
+    if n_out_of_bounds > 0:
         warn(
-            "new_ts contains timestamps before the data start time; "
-            "These samples will be NaN.",
+            f"{n_out_of_bounds} out of {len(new_ts)} requested timestamps are outside "
+            f"the data time range and will have empty data.",
             UserWarning,
         )
-    if new_ts[-1] > data.index[-1]:
-        warn(
-            "new_ts contains timestamps after the data end time; "
-            "These samples will be NaN.",
-            UserWarning,
-        )
+
+    # Then, for in-range timestamps, check max_gap_ms constraint
+    if max_gap_ms is not None:
+        max_gap_ns = int(max_gap_ms * 1e6)
+        old_ts = data.index.to_numpy()
+
+        # Only check timestamps that are within the data range
+        in_range_mask = ~out_of_range
+        if np.any(in_range_mask):
+            new_ts_in_range = new_ts[in_range_mask]
+            idx = np.searchsorted(old_ts, new_ts_in_range, side="left")
+
+            # Check for exact matches first
+            exact_match = np.isin(new_ts_in_range, old_ts)
+
+            # For non-exact matches, compute distances to neighbors
+            left_dist = np.where(
+                idx == 0,
+                np.inf,
+                new_ts_in_range - old_ts[np.clip(idx - 1, 0, len(old_ts) - 1)],
+            )
+            right_dist = np.where(
+                idx == len(old_ts),
+                np.inf,
+                old_ts[np.clip(idx, 0, len(old_ts) - 1)] - new_ts_in_range,
+            )
+
+            # Valid if exact match OR both neighbors are close enough
+            valid_in_range = exact_match | (
+                (left_dist < max_gap_ns) & (right_dist < max_gap_ns)
+            )
+
+            # Mark invalid timestamps
+            invalid_in_range = ~valid_in_range
+            invalid_mask[in_range_mask] |= invalid_in_range
+
+            n_gap_violations = np.sum(invalid_in_range)
+            if n_gap_violations > 0:
+                warn(
+                    f"{n_gap_violations} out of {len(new_ts)} requested timestamps exceed "
+                    f"max_gap_ms={max_gap_ms} relative to neighboring samples and will have empty data.",
+                    UserWarning,
+                )
+
     if other_kind not in ("nearest", "nearest-up", "previous", "next"):
         warn(
             f"Interpolation kind '{other_kind}' for non-float columns "
@@ -90,6 +138,10 @@ def interpolate(
             except (TypeError, ValueError):  # fallback in case .astype fails
                 new_data[col] = vals
 
+    # Set data to NaN for timestamps that are out of range
+    if np.any(invalid_mask):
+        new_data.loc[invalid_mask] = np.nan
+
     return new_data
 
 
@@ -100,6 +152,7 @@ def interpolate_events(
     buffer: Number | tuple[Number, Number] = 0.05,
     float_kind: str | int = "linear",
     other_kind: str | int = "nearest",
+    max_gap_ms: Optional[Number] = 500,
 ) -> pd.DataFrame:
     """
     Interpolate data in the duration of events in the stream data.
@@ -111,16 +164,17 @@ def interpolate_events(
         Data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
     events : Events
-        Events object containing the events to interpolate.
+        Events instance containing the events to interpolate.
         The events must have ``start timestamp [ns]`` and
         ``end timestamp [ns]`` columns.
-    buffer : numbers.Number or , optional
+    buffer : numbers.Number or tuple[numbers.Number, numbers.Number], optional
         The time before and after an event (in seconds) to consider invalid.
         If a single number is provided, the same buffer is applied
         to both before and after the event.
         Defaults to 0.05.
 
-    %(interp_kwargs)s
+    %(interp_kind_params)s
+    %(max_gap_ms_param)s
 
     Returns
     -------
@@ -128,7 +182,7 @@ def interpolate_events(
         Interpolated data with the same columns and dtypes as ``data``
         and indexed by ``data.index``.
     """
-    _check_data(data)
+    _validate_neon_tabular_data(data)
 
     # Make a (2, n_blink) matrix of blink start and end timestamps
     event_times = np.array(
@@ -157,6 +211,7 @@ def interpolate_events(
         new_data,
         float_kind=float_kind,
         other_kind=other_kind,
+        max_gap_ms=max_gap_ms,
     )
     return new_data
 
@@ -195,7 +250,7 @@ def window_average(
         original integer type after averaging.
     """
 
-    _check_data(data)
+    _validate_neon_tabular_data(data)
     new_ts = np.sort(new_ts).astype("int64")
 
     # ------------------------------------------------------------------ checks
@@ -232,6 +287,7 @@ def window_average(
 def compute_azimuth_and_elevation(
     data: pd.DataFrame,
     method: Literal["linear"] = "linear",
+    overwrite: bool = False,
 ) -> None:
     """
     Append gaze azimuth and elevation angles (in degrees) to gaze data
@@ -244,6 +300,9 @@ def compute_azimuth_and_elevation(
     method : str, optional
         Method to compute gaze angles. Currently only "linear" is supported.
         Defaults to "linear".
+    overwrite : bool, optional
+        If ``True``, overwrite existing azimuth and elevation columns.
+        Defaults to ``False``.
 
     Returns
     -------
@@ -251,14 +310,18 @@ def compute_azimuth_and_elevation(
         The function modifies the input DataFrame in-place by adding two new columns:
         ``azimuth [deg]`` and ``elevation [deg]``.
     """
+    if not overwrite and (
+        "azimuth [deg]" in data.columns or "elevation [deg]" in data.columns
+    ):
+        raise ValueError(
+            "Stream data already contains azimuth and/or elevation columns. "
+            "Use overwrite=True to overwrite existing columns."
+        )
+
     required_cols = ["gaze x [px]", "gaze y [px]"]
     camera_resolution = [1600, 1200]  # Pupil Neon camera resolution in pixels
     camera_fov = [103, 77]  # Pupil Neon camera field of view in degrees
-
-    if not all(col in data.columns for col in required_cols):
-        raise ValueError(
-            f"Data must contain the following columns to compute gaze angles: {required_cols}"
-        )
+    _validate_df_columns(data, required_cols, df_name="gaze data")
     if method == "linear":
         data["azimuth [deg]"] = (
             (data["gaze x [px]"] - camera_resolution[0] / 2)
@@ -296,7 +359,7 @@ def concat_streams(
     Parameters
     ----------
     rec : Recording
-        Recording object containing the streams to concatenate.
+        Recording instance containing the streams to concatenate.
     stream_names : str or list of str
         Stream names to concatenate. If "all" (default), then all streams will be used.
         If a list, items must be in ``{"gaze", "imu", "eye_states"}``
@@ -308,9 +371,9 @@ def concat_streams(
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
 
-    %(interp_kwargs)s
+    %(interp_kind_params)s
 
-    %(inplace)s
+    %(inplace_param)s
 
     Returns
     -------
@@ -344,9 +407,7 @@ def concat_streams(
     concat_list = []
     print("Concatenating streams:")
     for name in stream_names:
-        stream_obj = getattr(rec, name, None)
-        if stream_obj is None:
-            raise ValueError(f"Cannot load {name} data.")
+        stream_obj = getattr(rec, name)
         concat_list.append(
             {
                 "stream": stream_obj,
@@ -398,7 +459,7 @@ def concat_streams(
     concat_data = pd.DataFrame(index=new_ts)
     for stream in streams_info["stream"]:
         interp_data = stream.interpolate(
-            new_ts, float_kind, other_kind, inplace=inplace
+            new_ts, float_kind, other_kind, max_gap_ms=None, inplace=inplace
         ).data
         assert concat_data.shape[0] == interp_data.shape[0]
         assert concat_data.index.equals(interp_data.index)
@@ -422,12 +483,12 @@ VALID_EVENTS = {
 
 def concat_events(
     rec: "Recording",
-    event_names: str | list[str],
+    events_names: str | list[str],
 ) -> pd.DataFrame:
     """
     Concatenate different events. All columns in the selected event type will be
     present in the final DataFrame. An additional ``type`` column denotes the event
-    type. If "events" is in ``event_names``, its ``timestamp [ns]`` column will be
+    type. If "events" is in ``events_names``, its ``timestamp [ns]`` column will be
     renamed to ``start timestamp [ns]``, and the ``name`` and ``type`` columns will
     be renamed to ``message name`` and ``message type`` respectively to prevent confusion
     between physiological events and user-supplied messages.
@@ -435,8 +496,8 @@ def concat_events(
     Parameters
     ----------
     rec : Recording
-        Recording object containing the events to concatenate.
-    event_names : list of str
+        Recording instance containing the events to concatenate.
+    events_names : list of str
         List of event names to concatenate. Event names must be in
         ``{"blinks", "fixations", "saccades", "events"}``
         (singular forms are tolerated).
@@ -446,21 +507,21 @@ def concat_events(
     pandas.DataFrame
         Concatenated events.
     """
-    if isinstance(event_names, str):
-        if event_names == "all":
-            event_names = list(VALID_EVENTS)
+    if isinstance(events_names, str):
+        if events_names == "all":
+            events_names = list(VALID_EVENTS)
         else:
             raise ValueError(
-                "Invalid event_names, must be 'all' or a list of event names."
+                "Invalid events_names, must be 'all' or a list of event names."
             )
 
-    if len(event_names) <= 1:
+    if len(events_names) <= 1:
         raise ValueError("Must provide at least two events to concatenate.")
 
-    event_names = [ev.lower() for ev in event_names]
+    events_names = [ev.lower() for ev in events_names]
     # Check if all events are valid
-    if not all([ev in VALID_EVENTS for ev in event_names]):
-        raise ValueError(f"Invalid event name, can only be {VALID_EVENTS}")
+    if not all([ev in VALID_EVENTS for ev in events_names]):
+        raise ValueError(f"Invalid event name, can only be one of {VALID_EVENTS}")
 
     concat_data = pd.DataFrame(
         {
@@ -470,9 +531,7 @@ def concat_events(
         }
     )
     print("Concatenating events:")
-    if "blinks" in event_names or "blink" in event_names:
-        if rec.blinks is None:
-            raise ValueError("Cannot load blink data.")
+    if "blinks" in events_names or "blink" in events_names:
         data = rec.blinks.data
         data["type"] = "blink"
         concat_data = (
@@ -481,9 +540,7 @@ def concat_events(
             else pd.concat([concat_data, data], ignore_index=False)
         )
         print("\tBlinks")
-    if "fixations" in event_names or "fixation" in event_names:
-        if rec.fixations is None:
-            raise ValueError("Cannot load fixation data.")
+    if "fixations" in events_names or "fixation" in events_names:
         data = rec.fixations.data
         data["type"] = "fixation"
         concat_data = (
@@ -492,9 +549,7 @@ def concat_events(
             else pd.concat([concat_data, data], ignore_index=False)
         )
         print("\tFixations")
-    if "saccades" in event_names or "saccade" in event_names:
-        if rec.saccades is None:
-            raise ValueError("Cannot load saccade data.")
+    if "saccades" in events_names or "saccade" in events_names:
         data = rec.saccades.data
         data["type"] = "saccade"
         concat_data = (
@@ -503,12 +558,15 @@ def concat_events(
             else pd.concat([concat_data, data], ignore_index=False)
         )
         print("\tSaccades")
-    if "events" in event_names or "event" in event_names:
-        if rec.events is None:
-            raise ValueError("Cannot load event data.")
+    if "events" in events_names or "event" in events_names:
         data = rec.events.data
-        data.index.name = "start timestamp [ns]"
-        data = data.rename(columns={"name": "message name", "type": "message type"})
+        data = data.rename(
+            columns={
+                "timestamp [ns]": "start timestamp [ns]",
+                "name": "message name",
+                "type": "message type",
+            }
+        )
         data["type"] = "event"
         concat_data = (
             data

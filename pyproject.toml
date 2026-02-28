@@ -29,7 +29,8 @@ dependencies = [
     "pandas",
     "matplotlib",
     "scipy",
-    "opencv-python",
+    "opencv-python>=4.7",
+    "joblib",
     "typeguard",
     "requests",
     "tqdm",
@@ -37,9 +38,9 @@ dependencies = [
 license = "MIT"
 
 [project.optional-dependencies]
-apriltags = ["pupil-apriltags"]
 dev = ["pytest"]
 doc = [
+    "seedir",
     "ruff",
     "isort",
     "jupyter",
@@ -49,9 +50,12 @@ doc = [
     "nbsphinx",
     "myst-parser",
 ]
-full = ["pyneon[apriltags,dev,doc]"]
+full = ["pyneon[dev,doc]"]
 
 [project.urls]
 Homepage = "https://ncc-brain.github.io/PyNeon/"
 Issues = "https://github.com/ncc-brain/PyNeon/issues"
+
+[tool.pytest.ini_options]
+addopts = "--code-highlight=no"
 

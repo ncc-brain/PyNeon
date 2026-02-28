@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .tabular import BaseTabular
+from .utils import _apply_homography, _validate_df_columns
 from .utils.doc_decorators import fill_doc
 from .utils.variables import native_to_cloud_column_map
 
@@ -111,7 +112,7 @@ def _load_native_events_data(
     return data, files
 
 
-def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
+def _infer_events_type(data: pd.DataFrame) -> str:
     """
     Infer event type based on presence of specific columns.
     If multiple or no matches found, return "custom".
@@ -121,6 +122,7 @@ def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
         "saccade id": "saccades",
         "fixation id": "fixations",
         "name": "events",
+        "event id": "events",
     }
     reverse_map = {v: k for k, v in col_map.items()}
 
@@ -128,10 +130,15 @@ def _infer_events_type_and_id(data: pd.DataFrame) -> tuple[str, Optional[str]]:
     types = {col_map[c] for c in data.columns if c in col_map}
     if len(types) != 1:
         # None or more than one match → custom event type
-        return "custom", None
+        data.index = pd.RangeIndex(start=0, stop=len(data), name="event id")
+        return "custom"
     type = types.pop()
-    id_name = None if type == "events" else reverse_map[type]
-    return type, id_name
+    if type == "events":
+        data.index.name = "event id"
+    else:
+        data.set_index(reverse_map[type], inplace=True)
+    data.index = data.index.astype(np.int64)
+    return type
 
 
 class Events(BaseTabular):
@@ -166,11 +173,8 @@ class Events(BaseTabular):
         Path to the source file(s). ``None`` if initialized from a DataFrame.
     data : pandas.DataFrame
         Event data with standardized column names.
-    type : {"blinks", "fixations", "saccades", "events", "custom"}
+    type : str
         Inferred event type based on data columns.
-    id_name : str or None
-        Column name holding event IDs (e.g., ``blink id``, ``fixation id``,
-        ``saccade id``). ``None`` for ``events`` and ``custom`` types.
 
     Examples
     --------
@@ -191,12 +195,16 @@ class Events(BaseTabular):
     >>> saccades = Events(df)
     """
 
+    file: Optional[Path]
+    data: pd.DataFrame
+    type: str
+
     def __init__(self, source: pd.DataFrame | Path | str, type: Optional[str] = None):
         if isinstance(source, str):
             source = Path(source)
         if isinstance(source, Path):
             if not source.is_file():
-                raise FileNotFoundError(f"File does not exist: {source}")
+                raise FileNotFoundError(f"{source} does not exist")
             if source.suffix == ".csv":
                 self.file = source
                 data = pd.read_csv(source)
@@ -206,11 +214,17 @@ class Events(BaseTabular):
             data = source.copy(deep=True)
             self.file = None
         super().__init__(data)
-        self.type, self.id_name = _infer_events_type_and_id(self.data)
+        self.type = _infer_events_type(self.data)
 
     def __getitem__(self, index) -> pd.Series:
         """Get an event series by index."""
         return self.data.iloc[index]
+
+    def __repr__(self) -> str:
+        return f"""Events type: {self.type}
+Number of samples: {len(self)}
+Columns: {list(self.data.columns)}
+"""
 
     @property
     def start_ts(self) -> np.ndarray:
@@ -223,9 +237,9 @@ class Events(BaseTabular):
             If no ``start timestamp [ns]`` or ``timestamp [ns]`` column is found in the instance.
         """
         if self.type == "events":
-            return self.data["timestamp [ns]"].to_numpy()
+            return self.data["timestamp [ns]"].to_numpy(np.int64)
         if "start timestamp [ns]" in self.data.columns:
-            return self.data["start timestamp [ns]"].to_numpy()
+            return self.data["start timestamp [ns]"].to_numpy(np.int64)
         else:
             raise ValueError("No `start timestamp [ns]` column found in the instance.")
 
@@ -240,7 +254,7 @@ class Events(BaseTabular):
             If no ``end timestamp [ns]`` column is found in the instance.
         """
         if "end timestamp [ns]" in self.data.columns:
-            return self.data["end timestamp [ns]"].to_numpy()
+            return self.data["end timestamp [ns]"].to_numpy(np.int64)
         else:
             raise ValueError("No `end timestamp [ns]` column found in the instance.")
 
@@ -262,51 +276,84 @@ class Events(BaseTabular):
     @property
     def id(self) -> np.ndarray:
         """
-        Event ID.
-
-        Raises
-        ------
-        ValueError
-            If no ID column (e.g., ``<xxx> id``) is found in the instance.
+        Event IDs.
         """
-        if self.id_name in self.data.columns and self.id_name is not None:
-            return self.data[self.id_name].to_numpy()
-        else:
-            raise ValueError("No ID column (e.g., `<xxx> id`) found in the instance.")
+        return self.data.index.to_numpy(np.int32)
+
+    @property
+    def id_name(self) -> Optional[str]:
+        """
+        Name of the event ID column based on event type.
+
+        Returns
+        -------
+        str or None
+            The ID column name (e.g., ``"blink id"``, ``"fixation id"``, ``"saccade id"``,
+            ``"event id"``) for known event types, or ``None`` for custom event types.
+        """
+        id_map = {
+            "blinks": "blink id",
+            "fixations": "fixation id",
+            "saccades": "saccade id",
+            "events": "event id",
+        }
+        return id_map.get(self.type, None)
 
     @fill_doc
     def crop(
         self,
         tmin: Optional[Number] = None,
         tmax: Optional[Number] = None,
-        by: Literal["timestamp", "row"] = "timestamp",
+        by: Literal["timestamp", "sample"] = "timestamp",
         inplace: bool = False,
     ) -> Optional["Events"]:
         """
-        Crop data to a specific time range based on timestamps or row numbers.
+        Extract a subset of events within a specified temporal range.
+
+        The ``by`` parameter determines how ``tmin`` and ``tmax`` are interpreted:
+        - ``"timestamp"``: Absolute Unix timestamps in nanoseconds (based on event start times)
+        - ``"sample"``: Zero-based event indices
+
+        Both bounds are inclusive. If either bound is omitted, it defaults to the
+        events' natural boundary (earliest or latest event).
 
         Parameters
         ----------
-        tmin : number, optional
-            Start timestamp/row to crop the data to. If ``None``,
-            the minimum timestamp/row in the data is used. Defaults to ``None``.
-        tmax : number, optional
-            End timestamp/row to crop the data to. If ``None``,
-            the maximum timestamp/row in the data is used. Defaults to ``None``.
-        by : "timestamp" or "row", optional
-            Whether tmin and tmax are UTC timestamps in nanoseconds
-            or row numbers of the stream data.
-            Defaults to "timestamp".
+        tmin : numbers.Number, optional
+            Lower bound of the range to extract (inclusive). If ``None``,
+            starts from the first event. Defaults to ``None``.
+        tmax : numbers.Number, optional
+            Upper bound of the range to extract (inclusive). If ``None``,
+            extends to the last event. Defaults to ``None``.
+        by : {"timestamp", "sample"}, optional
+            Unit used to interpret ``tmin`` and ``tmax``. Defaults to ``"timestamp"``.
 
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        Events or None
-            Cropped events if ``inplace=False``, otherwise ``None``.
+        %(events_or_none_returns)s
+
+        Raises
+        ------
+        ValueError
+            If both ``tmin`` and ``tmax`` are ``None``, or if no events
+            fall within the specified range.
+
+        Examples
+        --------
+        Crop fixations to the first 5 seconds:
+
+        >>> fixations_5s = fixations.crop(tmin=rec.gaze.first_ts,
+        ...                                tmax=rec.gaze.first_ts + 5e9,
+        ...                                by="timestamp")
+
+        Extract the first 100 blinks:
+
+        >>> first_100 = blinks.crop(tmin=0, tmax=99, by="sample")
         """
         if tmin is None and tmax is None:
-            raise ValueError("At least one of tmin or tmax must be provided")
+            raise ValueError("At least one of `tmin` or `tmax` must be provided")
         if by == "timestamp":
             t = self.start_ts
         else:
@@ -324,20 +371,32 @@ class Events(BaseTabular):
     @fill_doc
     def restrict(self, other: "Stream", inplace: bool = False) -> Optional["Events"]:
         """
-        Temporally crop the events to the range of timestamps a stream.
-        Equivalent to ``crop(other.first_ts, other.last_ts)``.
+        Align events to match a stream's temporal range.
+
+        This method filters events to include only those whose start times fall
+        between the first and last timestamps of the reference stream. It is
+        equivalent to calling
+        ``crop(tmin=other.first_ts, tmax=other.last_ts, by="timestamp")``.
+
+        Useful for limiting event analysis to periods when a particular data stream
+        is available.
 
         Parameters
         ----------
         other : Stream
-            Stream to restrict to.
+            Reference stream whose temporal boundaries define the cropping range.
 
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        Events or None
-            Restricted events if ``inplace=False``, otherwise ``None``.
+        %(events_or_none_returns)s
+
+        Examples
+        --------
+        Analyze only blinks that occurred during recorded gaze data:
+
+        >>> blinks_with_gaze = blinks.restrict(gaze)
         """
         return self.crop(other.first_ts, other.last_ts, by="timestamp", inplace=inplace)
 
@@ -346,7 +405,7 @@ class Events(BaseTabular):
         self,
         dur_min: Optional[Number] = None,
         dur_max: Optional[Number] = None,
-        reset_id: bool = True,
+        reset_id: bool = False,
         inplace: bool = False,
     ) -> Optional["Events"]:
         """
@@ -355,22 +414,23 @@ class Events(BaseTabular):
         Parameters
         ----------
         dur_min : number, optional
-            Minimum duration (in milliseconds) of events to keep.
+            Minimum duration (in milliseconds) of events to keep (inclusive).
             If ``None``, no minimum duration filter is applied. Defaults to ``None``.
         dur_max : number, optional
-            Maximum duration (in milliseconds) of events to keep.
+            Maximum duration (in milliseconds) of events to keep (inclusive).
             If ``None``, no maximum duration filter is applied. Defaults to ``None``.
         reset_id : bool, optional
-            Whether to reset event IDs after filtering. Also resets the DataFrame index.
-            Defaults to ``True``.
+            Whether to reset event IDs after filtering.
+            Defaults to ``False``.
 
-        %(inplace)s
+        %(inplace_param)s
 
         Returns
         -------
-        Events or None
-            Filtered events if ``inplace=False``, otherwise ``None``.
+        %(events_or_none_returns)s
         """
+        if "duration [ms]" not in self.data.columns:
+            raise ValueError("No `duration [ms]` column found in the instance.")
         if dur_min is None and dur_max is None:
             raise ValueError("At least one of dur_min or dur_max must be provided")
         dur_min = dur_min if dur_min is not None else self.durations.min()
@@ -379,14 +439,153 @@ class Events(BaseTabular):
         if not mask.any():
             raise ValueError("No data found in the specified duration range")
         print(f"Filtering out {len(self) - mask.sum()} out of {len(self)} events.")
+
         inst = self if inplace else self.copy()
         inst.data = self.data[mask].copy()
         if reset_id:
-            if self.id_name is not None:
-                inst.data[self.id_name] = np.arange(len(inst.data)) + 1
-                inst.data.reset_index(drop=True, inplace=True)
-            else:
-                raise KeyError(
-                    "Cannot reset event IDs as no event ID column is known for this instance."
-                )
+            # Reset without losing original index name
+            inst.data.index = pd.RangeIndex(
+                start=0, stop=len(inst.data), name=inst.data.index.name
+            )
+        return None if inplace else inst
+
+    @fill_doc
+    def filter_by_name(
+        self,
+        names: str | list[str],
+        col_name: str = "name",
+        reset_id: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Events"]:
+        """
+        Filter events by matching values in a specified column.
+        Designed primarily for filtering :attr:`Recording.events` by their names.
+
+        This method selects only the events whose value in ``col_name`` matches
+        one or more of the provided ``names``. If no events match, a
+        ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        names : str or list of str
+            Event name or list of event names to keep. Matching is exact
+            and case-sensitive.
+        col_name : str, optional
+            Name of the column in ``self.data`` to use for filtering.
+            Must exist in the ``Events`` instance's DataFrame.
+            Defaults to ``"name"``.
+        reset_id: bool = False, optional
+            Whether to reset event IDs after filtering.
+            Defaults to ``False``.
+        %(inplace_param)s
+
+        Returns
+        -------
+        %(events_or_none_returns)s
+        """
+        if col_name not in self.data.columns:
+            raise KeyError(f"No `{col_name}` column found in the instance.")
+
+        names = [names] if isinstance(names, str) else names
+        mask = self.data[col_name].isin(names)
+        if not mask.any():
+            raise ValueError(
+                f"No data found matching the specified event names {names}"
+            )
+
+        inst = self if inplace else self.copy()
+        inst.data = self.data[mask].copy()
+        if reset_id:
+            inst.data.index = pd.RangeIndex(
+                start=0, stop=len(inst.data), name=inst.data.index.name
+            )
+        return None if inplace else inst
+
+    @fill_doc
+    def apply_homographies(
+        self,
+        homographies: "Stream",
+        max_gap_ms: Number = 500,
+        overwrite: bool = False,
+        inplace: bool = False,
+    ) -> Optional["Events"]:
+        """
+        Compute fixation locations in surface coordinates using provided homographies
+        based on fixation pixel coordinates and append them to the events data.
+
+        Since homographies are estimated per video frame and might not be available
+        for every frame, they need to be resampled/interpolated to the timestamps of the
+        fixation data before application.
+
+        The events data must contain the required fixation columns:
+        ``fixation x [px]`` and ``fixation y [px]``.
+        The output events will contain two new columns:
+        ``fixation x [surface coord]`` and ``fixation y [surface coord]``.
+
+        Parameters
+        ----------
+        %(homographies)s
+            Returned by :func:`pyneon.find_homographies`.
+        %(max_gap_ms_param)s
+        overwrite : bool, optional
+            Only applicable if surface fixation columns already exist.
+            If ``True``, overwrite existing columns. If ``False``, raise an error.
+            Defaults to ``False``.
+        %(inplace_param)s
+
+        Returns
+        -------
+        %(events_or_none_returns)s
+        """
+        inst = self if inplace else self.copy()
+        data = inst.data
+
+        if not overwrite and (
+            "fixation x [surface coord]" in data.columns
+            or "fixation y [surface coord]" in data.columns
+        ):
+            raise ValueError(
+                "Events already contain fixation surface data. "
+                "Use overwrite=True to overwrite existing columns."
+            )
+
+        required_cols = ["fixation x [px]", "fixation y [px]"]
+        _validate_df_columns(data, required_cols, df_name="Events data")
+
+        data["fixation x [surface coord]"] = np.nan
+        data["fixation y [surface coord]"] = np.nan
+
+        event_ts = inst.start_ts
+        homographies_data = homographies.interpolate(
+            event_ts, float_kind="linear", max_gap_ms=max_gap_ms
+        ).data
+
+        h_cols = [f"homography ({i},{j})" for i in range(3) for j in range(3)]
+        _validate_df_columns(homographies_data, h_cols, df_name="homographies")
+
+        homographies_data = homographies_data.dropna()
+
+        x_col = data.columns.get_loc("fixation x [surface coord]")
+        y_col = data.columns.get_loc("fixation y [surface coord]")
+
+        for event_idx, ts in enumerate(event_ts):
+            if ts not in homographies_data.index:
+                continue
+
+            h_row = homographies_data.loc[ts]
+            if isinstance(h_row, pd.DataFrame):
+                h_row = h_row.iloc[0]
+
+            fix_vals = data.iloc[event_idx][required_cols].values
+            if pd.isna(fix_vals).any():
+                continue
+
+            fix_points = np.asarray(fix_vals, dtype=np.float64).reshape(1, -1)
+            H_flat = h_row[h_cols].values
+            H = H_flat.reshape(3, 3)
+            fix_trans = _apply_homography(fix_points, H)
+
+            data.iat[event_idx, x_col] = fix_trans[:, 0]
+            data.iat[event_idx, y_col] = fix_trans[:, 1]
+
         return None if inplace else inst

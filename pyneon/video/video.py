@@ -1,5 +1,7 @@
+from functools import cached_property
+from numbers import Number
 from pathlib import Path
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 from warnings import warn
 
 import cv2
@@ -9,45 +11,64 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
+from ..utils.doc_decorators import fill_doc
 from ..utils.variables import default_camera_info
-from ..vis import overlay_scanpath, plot_frame
-from .apriltag import detect_apriltags
+from ..vis.video import (
+    overlay_detections,
+    overlay_scanpath,
+    plot_detections,
+    plot_frame,
+)
+from .detect_contour import detect_contour
+from .marker import detect_markers
+from .utils import get_undistort_maps, resolve_processing_window
 
 
-class Video(cv2.VideoCapture):
+class Video:
     """
-    Loaded video file with timestamps.
+    OpenCV VideoCapture wrapper that pairs a video with frame timestamps and
+    camera metadata.
+
+    The video is accessed via the :attr:`cap` property, frame timestamps via
+    :attr:`timestamps`, and camera metadata via :attr:`info`.
 
     Parameters
     ----------
     video_file : pathlib.Path
-        Path to the video file.
+        Path to the video file on disk.
     timestamps : numpy.ndarray
-        Timestamps of the video frames in nanoseconds.
-        Must have the same length as the number of frames in the video.
-    info : dict
-        Dictionary containing video info, including camera matrix and distortion coefficients.
+        Frame timestamps in nanoseconds. Must match the number of frames.
+    info : dict or None
+        Camera metadata, typically including :attr:`camera_matrix` and
+        :attr:`distortion_coefficients`.
 
     Attributes
     ----------
-    timestamps : numpy.ndarray
-        Timestamps of the video frames in nanoseconds.
-    ts : numpy.ndarray
-        Alias for timestamps.
+    info : dict
+        Camera metadata dictionary.
     """
 
-    def __init__(self, video_file: Path, timestamps: np.ndarray, info: dict):
-        super().__init__(video_file)
+    def __init__(
+        self, video_file: Path, timestamps: np.ndarray, info: Optional[dict] = None
+    ):
+        self._cap = cv2.VideoCapture(str(video_file))
         self.video_file = video_file
-        self.timestamps = timestamps
-        self.ts = self.timestamps
-        self.info = info
+        if not self.isOpened():
+            raise IOError(f"Failed to open video file: {video_file}")
 
-        if not info:
+        timestamps = np.asarray(timestamps, dtype=np.int64)
+        self._timestamps = timestamps
+        self.info = info
+        self._undistort_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+        self._closed = False
+
+        if info == {}:
             warn("Video info is empty and will be loaded from default values.")
             self.info = default_camera_info
+        elif info is None:  # Eye video
+            self.info = {}
 
-        if len(self.timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
+        if len(self._timestamps) != self.get(cv2.CAP_PROP_FRAME_COUNT):
             raise ValueError(
                 f"Number of timestamps ({len(self.timestamps)}) does not match "
                 f"number of frames ({self.get(cv2.CAP_PROP_FRAME_COUNT)})"
@@ -55,6 +76,154 @@ class Video(cv2.VideoCapture):
 
     def __len__(self) -> int:
         return int(len(self.ts))
+
+    def __repr__(self) -> str:
+        return f"""Video name: {self.video_file.name}
+Video height: {self.height} px
+Video width: {self.width} px
+Number of frames: {len(self)}
+First timestamp: {self.first_ts}
+Last timestamp: {self.last_ts}
+Duration: {self.duration:.2f} seconds
+Effective FPS: {self.fps:.2f}
+"""
+
+    @property
+    def timestamps(self) -> np.ndarray:
+        """Timestamps of the video frames in nanoseconds.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
+        return self._timestamps
+
+    @property
+    def ts(self) -> np.ndarray:
+        """Alias for :attr:`timestamps` for convenience.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of timestamps in nanoseconds (Unix time).
+        """
+        return self._timestamps
+
+    # Delegate methods to underlying cv2.VideoCapture object
+    def isOpened(self) -> bool:
+        """
+        Check if the video file is open.
+
+        Returns
+        -------
+        bool
+            True if open, False otherwise.
+        """
+        return self._cap.isOpened()
+
+    def grab(self) -> bool:
+        """
+        Grabs the next frame from video file or capturing device.
+
+        Returns
+        -------
+        bool
+            True if successful, False otherwise.
+        """
+        return self._cap.grab()
+
+    def retrieve(self) -> tuple[bool, Optional[np.ndarray]]:
+        """
+        Decodes and returns the grabbed video frame.
+
+        Returns
+        -------
+        success : bool
+            True if successful, False otherwise.
+        frame : numpy.ndarray or None
+            Frame as a 3D BGR array if successful, None otherwise.
+        """
+        return self._cap.retrieve()
+
+    def read(self) -> tuple[bool, Optional[np.ndarray]]:
+        """
+        Grabs, decodes and returns the next video frame.
+        (equivalent to :meth:`grab` + :meth:`retrieve`).
+
+        Returns
+        -------
+        success : bool
+            True if successful, False otherwise.
+        frame : numpy.ndarray or None
+            Frame as a 3D BGR array if successful, None otherwise.
+        """
+        return self._cap.read()
+
+    def set(self, propId: int, value: Number) -> bool:
+        """
+        Set a video property.
+
+        Parameters
+        ----------
+        propId : int
+            OpenCV property ID (e.g., cv2.CAP_PROP_POS_FRAMES).
+        value : Number
+            New value for the property.
+
+        Returns
+        -------
+        bool
+            True if successful, False otherwise.
+
+        Warnings
+        --------
+        Seeking frames with ``cv2.CAP_PROP_POS_FRAMES`` is unreliable for
+        variable frame rate (VFR) videos. Neon recordings typically have
+        non-constant FPS, making direct seeking unpredictable.
+        See https://github.com/opencv/opencv/issues/9053.
+
+        For safe random frame access, use :meth:`read_frame_at` instead,
+        which maintains internal frame counting and handles VFR timing
+        correctly::
+
+            # Good: Safe frame reading in VFR videos
+            frame = video.read_frame_at(100)
+
+            # Risky: May not work reliably on VFR videos
+            video.set(cv2.CAP_PROP_POS_FRAMES, 100)
+            ret, frame = video.read()
+        """
+        return self._cap.set(propId, value)
+
+    def get(self, propId: int) -> float:
+        """Query a video property value."""
+        return self._cap.get(propId)
+
+    @property
+    def first_ts(self) -> int:
+        """First frame timestamp in nanoseconds."""
+        return int(self.ts[0])
+
+    @property
+    def last_ts(self) -> int:
+        """Last frame timestamp in nanoseconds."""
+        return int(self.ts[-1])
+
+    @property
+    def ts_diff(self) -> np.ndarray:
+        """Difference between consecutive timestamps."""
+        return np.diff(self.ts)
+
+    @property
+    def times(self) -> np.ndarray:
+        """Timestamps converted to seconds relative to video start."""
+        return (self.ts - self.ts[0]) / 1e9
+
+    @property
+    def duration(self) -> float:
+        """Duration of the video in seconds."""
+        return float(self.times[-1] - self.times[0])
 
     @property
     def fps(self) -> float:
@@ -85,39 +254,211 @@ class Video(cv2.VideoCapture):
             raise ValueError("Distortion coefficients not found in video info.")
         return np.array(self.info["distortion_coefficients"])
 
-    def get_frame(self, timestamp: Union[int, np.int64]) -> int:
-        """
-        Get the frame index corresponding to a given timestamp.
+    @cached_property
+    def undistort_cache(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Cached undistortion maps and the optimal new camera matrix."""
+        return get_undistort_maps(self)
 
-        Parameters
-        ----------
-        timestamp : int
-            Timestamp in nanoseconds.
+    @cached_property
+    def map1(self) -> np.ndarray:
+        """First undistortion map for use with ``cv2.remap``."""
+        return self.undistort_cache[0]
+
+    @cached_property
+    def map2(self) -> np.ndarray:
+        """Second undistortion map for use with ``cv2.remap``."""
+        return self.undistort_cache[1]
+
+    @cached_property
+    def undistortion_matrix(self) -> np.ndarray:
+        """Optimal new camera matrix used for undistortion."""
+        return self.undistort_cache[2]
+
+    @property
+    def current_frame_index(self) -> int:
+        """Current frame index based on the video position."""
+        return int(self.get(cv2.CAP_PROP_POS_FRAMES))
+
+    @property
+    def cap(self) -> cv2.VideoCapture:
+        """
+        The underlying OpenCV VideoCapture object.
+
+        Access this property for OpenCV operations not covered by
+        PyNeon convenience methods.
+
+        For documentation of the ``cv.VideoCapture`` API, see:
+        https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html
 
         Returns
         -------
-        int
-            Frame index corresponding to the timestamp.
-        """
-        if timestamp < self.ts[0] or timestamp > self.ts[-1]:
-            raise ValueError("Timestamp is out of bounds of the video timestamps.")
+        cv2.VideoCapture
+            The underlying video capture object.
 
-        return int(np.searchsorted(self.ts, timestamp))
+        Warnings
+        --------
+        Direct manipulation of this object may interfere with PyNeon's frame
+        synchronization and state management. Use with caution.
+
+        Notes
+        -----
+        PyNeon provides convenience methods for most common video operations:
+        :meth:`read_frame_at`, :meth:`detect_markers`, :meth:`undistort_frame`.
+        These handle frame indexing, timestamp mapping, and state management
+        automatically. For standard use cases, prefer these over direct cap access.
+
+        For advanced OpenCV operations, common access patterns include:
+
+        - ``video.cap.get(cv2.CAP_PROP_*)``: Query video properties
+        - ``video.cap.get(cv2.CAP_PROP_FRAME_WIDTH)``: Get frame width
+        - ``video.cap.grab()`` and ``video.cap.retrieve()``: Read frames directly
+
+        Direct frame seeking via ``video.cap.set(cv2.CAP_PROP_POS_FRAMES, ...)``
+        may break VFR timestamp alignment. Use :meth:`read_frame_at` instead.
+        After direct cap manipulation, consider calling :meth:`reset` to
+        resynchronize internal state.
+
+        See Also
+        --------
+        read_frame_at : Recommended method for safe frame reading
+        reset : Reset video state after direct cap manipulation
+        """
+        return self._cap
+
+    def timestamp_to_frame_index(
+        self, timestamp: Union[int, np.int64, np.ndarray]
+    ) -> np.ndarray:
+        """
+        Map timestamps to frame indices (nearest frame).
+
+        Parameters
+        ----------
+        timestamp : int or numpy.ndarray
+            Single timestamp or array of timestamps in nanoseconds.
+
+        Returns
+        -------
+        numpy.ndarray
+            Frame index or array of frame indices (always returned as array).
+
+        Raises
+        ------
+        ValueError
+            If any timestamp is earlier than the first video timestamp or
+            later than the last video timestamp.
+        """
+        ts_array = np.atleast_1d(np.asarray(timestamp, dtype=np.int64))
+
+        if ts_array.size > 0 and ts_array.min() < self.ts[0]:
+            raise ValueError("Timestamp is earlier than the first video timestamp.")
+        if ts_array.size > 0 and ts_array.max() > self.ts[-1]:
+            raise ValueError("Timestamp is later than the last video timestamp.")
+
+        frame_indices = np.searchsorted(self.ts, ts_array).astype(int)
+        return frame_indices
+
+    def read_frame_at(self, frame_index: int) -> Optional[np.ndarray]:
+        """
+        Read a single frame by index.
+
+        For forward jumps, grabs intermediate frames to maintain timestamp
+        alignment in VFR videos. For backward jumps, resets to start.
+
+        Parameters
+        ----------
+        frame_index : int
+            Zero-based frame index to read.
+
+        Returns
+        -------
+        numpy.ndarray or None
+            Frame as a 3D array (BGR), or ``None`` if the frame cannot be read.
+
+        Raises
+        ------
+        ValueError
+            If ``frame_index`` is out of bounds.
+
+        Notes
+        -----
+        Recommended for all frame access in Neon videos with VFR. Automatically
+        handles frame positioning and timestamp alignment, managing internal state
+        correctly.
+        """
+        if frame_index < 0 or frame_index >= len(self.ts):
+            raise ValueError(f"frame_index {frame_index} is out of bounds.")
+
+        current = self.current_frame_index
+
+        # Use grab to advance frame-by-frame when seeking forward to maintain timestamp alignment in VFR videos.
+        if frame_index > current:
+            while frame_index > current:
+                if not self.grab():
+                    warn(
+                        f"Failed to grab frame while seeking forward to frame {frame_index}."
+                    )
+                    return None
+                current += 1
+        elif current != frame_index:  # Target frame is in the past
+            # Reset to start and grab forward
+            self.reset()
+            return self.read_frame_at(frame_index)
+
+        ret, frame = self.retrieve()
+        if not ret or frame is None:
+            warn(f"Failed to retrieve frame at index {frame_index}. Returning None.")
+        return frame
 
     def reset(self):
-        print("Resetting video...")
-        if self.isOpened():
-            self.release()
-        super().__init__(self.video_file)
-        self.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        """
+        Reopen the video file and reset to the first frame.
+
+        Recreates the internal VideoCapture object. Use this after direct
+        :attr:`cap` manipulation or to restart from the beginning.
+
+        Notes
+        -----
+        This discards any pending frame operations and reloads from disk.
+        Useful after :attr:`cap` manipulation to resynchronize state.
+        """
+        self.close()
+        # Create a new VideoCapture object
+        self._cap = cv2.VideoCapture(str(self.video_file))
+        self._closed = False
         if not self.isOpened():
             raise IOError(f"Failed to reopen video file: {self.video_file}")
 
+    def release(self):
+        """Close and release the video handle (alias for :meth:`close`)."""
+        self.close()
+
+    def close(self) -> None:
+        """Close and release the video handle."""
+        if getattr(self, "_closed", True):
+            return
+
+        # Safely release the capture
+        if hasattr(self, "_cap"):
+            try:
+                if self._cap.isOpened():
+                    self._cap.release()
+            except Exception:
+                pass
+
+        self._closed = True
+
+    def __enter__(self) -> "Video":
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> bool:
+        self.close()
+        return False
+
+    @fill_doc
     def plot_frame(
         self,
-        index: int = 0,
+        frame_index: int = 0,
         ax: Optional[plt.Axes] = None,
-        auto_title: bool = True,
         show: bool = True,
     ):
         """
@@ -125,46 +466,324 @@ class Video(cv2.VideoCapture):
 
         Parameters
         ----------
-        index : int
+        frame_index : int
             Index of the frame to plot.
-        ax : matplotlib.axes.Axes or None
-            Axis to plot the frame on. If ``None``, a new figure is created.
-            Defaults to ``None``.
-        auto_title : bool
-            Whether to automatically set the title of the axis.
-            The automatic title includes the video file name and the frame index.
-            Defaults to ``True``.
+        %(ax_param)s
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            Figure object containing the plot.
-        ax : matplotlib.axes.Axes
-            Axis object containing the plot.
+        %(fig_ax_returns)s
         """
-        return plot_frame(self, index, ax, auto_title, show)
+        return plot_frame(self, frame_index, ax, show)
 
-    def detect_apriltags(self, tag_family: str = "tag36h11") -> pd.DataFrame:
+    def undistort_video(
+        self,
+        show: bool = False,
+        output_path: Optional[Path | str] = None,
+    ) -> None:
         """
-        Detect AprilTags in the video frames.
+        Undistort a video using the known camera matrix and distortion coefficients.
 
         Parameters
         ----------
-        tag_family : str, optional
-            The AprilTag family to detect (default is 'tag36h11').
+        output_path : pathlib.Path or str or None
+            Path to save the undistorted output video.
+            If "default", saves undistorted_video.mp4 to the derivatives folder under
+            the recording directory. If None, no output video is written.
 
         Returns
         -------
-        pd.DataFrame
-            A DataFrame containing AprilTag detections, with columns:
-            - 'timestamp [ns]': The timestamp of the frame in nanoseconds, as an index
-            - 'frame_idx': The frame number
-            - 'tag_id': The ID of the detected AprilTag
-            - 'corners': A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
-            - 'center': A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.
+        None
         """
+        if output_path is None and not show:
+            raise ValueError("Either show=True or output_path must be provided.")
+        if output_path == "default":
+            output_path = (
+                self.video_file.parent / "derivatives" / "undistorted_video.mp4"
+            )
 
-        return detect_apriltags(self, tag_family)
+        # Open the input video
+        self.reset()
+        # Get self properties
+        frame_width, frame_height = self.width, self.height
+        fps = self.fps
+        frame_count = len(self)
+
+        # Prepare output video writer
+        out = None
+        if output_path is not None:
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Adjust codec as needed
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            out = cv2.VideoWriter(
+                str(output_path), fourcc, fps, (frame_width, frame_height)
+            )
+
+        for frame_index in tqdm(range(frame_count), desc="Undistorting video"):
+            frame = self.read_frame_at(frame_index)
+            if frame is None:
+                break
+            undistorted = self.undistort_frame(frame)
+
+            if show:
+                cv2.namedWindow("Undistorted Video", cv2.WINDOW_NORMAL)
+                cv2.setWindowProperty(
+                    "Undistorted Video", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+                )
+                cv2.imshow("Undistorted Video", undistorted)
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
+
+            if out is not None:
+                out.write(undistorted)
+
+        if out is not None:
+            out.release()
+        if show:
+            cv2.destroyAllWindows()
+        self.reset()
+
+    def undistort_frame(self, frame: np.ndarray) -> np.ndarray:
+        """
+        Undistort a single frame (color or grayscale).
+
+        Parameters
+        ----------
+        frame : numpy.ndarray
+            Input frame as a 2D (grayscale) or 3D (color) array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Undistorted frame with the same shape as the input.
+        """
+        return cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
+
+    @fill_doc
+    def compute_frame_brightness(
+        self,
+        step: int = 1,
+        processing_window: Optional[tuple[int | float, int | float]] = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+    ):
+        """
+        Compute per-frame mean grayscale brightness.
+
+        Each frame is converted to grayscale and averaged to yield a single
+        brightness value per frame.
+
+        Parameters
+        ----------
+        %(step_param)s
+        %(window_params)s
+
+        Returns
+        -------
+        Stream
+            Stream indexed by ``timestamp [ns]`` with a single column
+            ``brightness`` containing mean grayscale brightness values.
+        """
+        # Determine frame range
+        start_frame, end_frame = resolve_processing_window(
+            self,
+            processing_window,
+            processing_window_unit,
+        )
+
+        vals = []
+        frame_indices = []
+
+        for frame_index in tqdm(
+            range(start_frame, end_frame + 1, step),
+            desc="Computing frame brightness",
+        ):
+            frame = self.read_frame_at(frame_index)
+            if frame is None:
+                break
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            brightness = np.mean(gray_frame)
+            vals.append(brightness)
+            frame_indices.append(frame_index)
+
+        vals = np.array(vals)
+        stream = Stream(
+            pd.DataFrame(
+                {
+                    "timestamp [ns]": self.ts[frame_indices],
+                    "brightness": vals,
+                }
+            )
+        )
+        return stream
+
+    @fill_doc
+    def detect_markers(
+        self,
+        marker_family: str | list[str] = "36h11",
+        step: int = 1,
+        processing_window: Optional[tuple[int | float, int | float]] = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+        undistort: bool = False,
+    ) -> Stream:
+        """
+        Detect fiducial markers (AprilTag or ArUco) in the video frames.
+
+        Parameters
+        ----------
+        %(detect_markers_params)s
+
+        Returns
+        -------
+        %(detect_markers_returns)s
+
+        See also
+        --------
+        :meth:`detect_contour` : Alternative method to detect rectangular contours instead of fiducial markers.
+        :meth:`plot_detections` : Visualize marker detections on video frames.
+        :meth:`overlay_detections` : Create a video with detected markers overlaid.
+        :func:`pyneon.find_homographies` : Compute homographies from detections.
+
+        """
+        return detect_markers(
+            self,
+            marker_family=marker_family,
+            step=step,
+            processing_window=processing_window,
+            processing_window_unit=processing_window_unit,
+            detector_parameters=detector_parameters,
+            undistort=undistort,
+        )
+
+    @fill_doc
+    def detect_contour(
+        self,
+        step: int = 1,
+        processing_window: tuple[int | float, int | float] | None = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+        min_area_ratio: float = 0.01,
+        max_area_ratio: float = 0.98,
+        brightness_threshold: int = 180,
+        adaptive: bool = True,
+        morph_kernel: int = 5,
+        decimate: float = 1.0,
+        mode: str = "largest",
+        report_diagnostics: bool = False,
+        undistort: bool = False,
+    ) -> Stream:
+        """
+        Detect bright rectangular regions (e.g., projected surfaces or monitors)
+        in video frames using luminance-based contour detection.
+
+        Parameters
+        ----------
+        %(detect_contour_params)s
+
+        Returns
+        -------
+        %(detect_contour_returns)s
+
+        See also
+        --------
+        :meth:`detect_markers` : Alternative method to detect fiducial markers.
+        :meth:`plot_detections` : Visualize contour on a video frame.
+        :meth:`overlay_detections` : Create a video with the detected contour overlaid.
+        :func:`pyneon.find_homographies` : Compute homographies from detections.
+        """
+        return detect_contour(
+            self,
+            step=step,
+            processing_window=processing_window,
+            processing_window_unit=processing_window_unit,
+            min_area_ratio=min_area_ratio,
+            max_area_ratio=max_area_ratio,
+            brightness_threshold=brightness_threshold,
+            adaptive=adaptive,
+            morph_kernel=morph_kernel,
+            decimate=decimate,
+            mode=mode,
+            report_diagnostics=report_diagnostics,
+            undistort=undistort,
+        )
+
+    @fill_doc
+    def plot_detections(
+        self,
+        detections: Stream,
+        frame_index: int,
+        show_ids: bool = True,
+        color: str = "magenta",
+        ax: Optional[plt.Axes] = None,
+        show: bool = True,
+    ):
+        """
+        Visualize detections on a frame.
+
+        Parameters
+        ----------
+        detections : Stream
+            Stream containing marker or contour detections.
+        frame_index : int
+            Frame index to plot.
+        show_ids : bool
+            Display detection IDs at their centers. Defaults to True.
+        color : str
+            Matplotlib color for overlay. Defaults to "magenta".
+        %(ax_param)s
+        %(show_param)s
+
+        Returns
+        -------
+        %(fig_ax_returns)s
+        """
+        return plot_detections(
+            self,
+            detections=detections,
+            frame_index=frame_index,
+            show_ids=show_ids,
+            color=color,
+            ax=ax,
+            show=show,
+        )
+
+    @fill_doc
+    def overlay_detections(
+        self,
+        detections: "Stream",
+        show_ids: bool = True,
+        color: tuple[int, int, int] = (255, 0, 255),
+        show_video: bool = False,
+        output_path: Optional[Path | str] = None,
+    ) -> None:
+        """
+        Overlay detections on the video frames.
+        The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        detections : Stream
+            Stream containing marker or contour detections.
+        show_ids : bool
+            Whether to overlay IDs at their centers when available. Defaults to True.
+        color : tuple[int, int, int]
+            BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
+        %(show_video_param)s
+        %(output_path_param)s
+            If "default", saves detections.mp4 to the derivatives folder under the
+            recording directory. If None, no output video is written.
+
+        Returns
+        -------
+        None
+        """
+        overlay_detections(
+            self,
+            detections=detections,
+            show_ids=show_ids,
+            color=color,
+            show_video=show_video,
+            output_path=output_path,
+        )
 
     def overlay_scanpath(
         self,
@@ -173,10 +792,12 @@ class Video(cv2.VideoCapture):
         line_thickness: int = 2,
         max_fixations: int = 10,
         show_video: bool = False,
-        video_output_path: Path | str = "derivatives/scanpath.mp4",
+        output_path: Path | str = None,
     ) -> None:
         """
-        Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.
+        Overlay scanpath fixations on the video frames.
+
+        The resulting video can be displayed and/or saved.
 
         Parameters
         ----------
@@ -191,9 +812,14 @@ class Video(cv2.VideoCapture):
             Maximum number of fixations to plot per frame. Defaults to 10.
         show_video : bool
             Whether to display the video with fixations overlaid. Defaults to False.
-        video_output_path : pathlib.Path or str or None
+        output_path : pathlib.Path or str or None
             Path to save the video with fixations overlaid. If None, the video is not saved.
-            Defaults to 'scanpath.mp4'.
+            If "default", saves scanpath.mp4 to the derivatives folder under the
+            recording directory.
+
+        Returns
+        -------
+        None
         """
         overlay_scanpath(
             self,
@@ -202,89 +828,5 @@ class Video(cv2.VideoCapture):
             line_thickness,
             max_fixations,
             show_video,
-            video_output_path,
+            output_path,
         )
-
-    def undistort(
-        self,
-        output_video_path: Optional[Path | str] = "undistorted_video.mp4",
-    ) -> None:
-        """
-        Undistort a video using the known camera matrix and distortion coefficients.
-
-        Parameters
-        ----------
-        output_video_path : str
-            Path to save the undistorted output video.
-        """
-        # Open the input video
-        cap = self
-        cap.reset()
-        camera_matrix = self.camera_matrix
-        dist_coeffs = self.dist_coeffs
-
-        # Get self properties
-        frame_width, frame_height = self.width, self.height
-        fps = self.fps
-        frame_count = len(self)
-
-        # Prepare output video writer
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Adjust codec as needed
-        out = cv2.VideoWriter(
-            output_video_path, fourcc, fps, (frame_width, frame_height)
-        )
-
-        # Precompute the optimal new camera matrix and undistortion map
-        optimal_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
-            camera_matrix,
-            dist_coeffs,
-            (frame_width, frame_height),
-            1,
-            (frame_width, frame_height),
-        )
-        map1, map2 = cv2.initUndistortRectifyMap(
-            camera_matrix,
-            dist_coeffs,
-            None,
-            optimal_camera_matrix,
-            (frame_width, frame_height),
-            cv2.CV_16SC2,
-        )
-
-        for _ in tqdm(range(frame_count), desc="Undistorting video"):
-            ret, frame = self.read()
-            if not ret:
-                break
-
-            undistorted_frame = cv2.remap(
-                frame, map1, map2, interpolation=cv2.INTER_LINEAR
-            )
-            out.write(undistorted_frame)
-
-        out.release()
-        print(f"Undistorted video saved to {output_video_path}")
-
-    def compute_intensity(self):
-        """
-        Generate a :class:`pyneon.Stream` object containing the
-        mean intensity of each video frame.
-
-        Returns
-        -------
-        pyneon.Stream
-            A ``Stream`` instance containing data indexed by ``timestamp [ns]``
-            with a single column ``intensity``
-        """
-        vals = []
-        self.reset()
-        for _ in tqdm(range(len(self)), desc="Computing frame intensities"):
-            ret, frame = self.read()
-            if not ret:
-                break
-            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            brightness = np.mean(gray_frame)
-            vals.append(brightness)
-        vals = np.array(vals)
-        assert len(vals) == len(self.ts)
-        stream = Stream(pd.DataFrame({"timestamp [ns]": self.ts, "intensity": vals}))
-        return stream
