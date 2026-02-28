@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>&lt;no title&gt; &#8212; PyNeon dev documentation</title>
+    <title>Reading Native-Format Recordings &#8212; PyNeon dev documentation</title>
   
   
   
@@ -48,6 +48,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/read_recording_native';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Preprocessing: Cropping, Interpolation, and Concatenation" href="interpolate_and_concat.html" />
+    <link rel="prev" title="Reading Pupil Cloud-Format Recordings" href="read_recording_cloud.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -126,7 +128,7 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
+<li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
   </a>
@@ -212,10 +214,8 @@
       
       
       
-        
-      
       <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -230,7 +230,7 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
+<li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
   </a>
@@ -281,6 +281,24 @@
     
   </div>
   
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading Pupil Cloud-Format Recordings</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Reading Native-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Preprocessing: Cropping, Interpolation, and Concatenation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing and Epoching Pupil Size Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surface_mapping.html">Surface Mapping Using Fiducial Markers and Screen Corners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene Video and Scanpath Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS Formats</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
       <div class="sidebar-primary-item">
@@ -316,7 +334,10 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">&lt;no title&gt;</span></li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Reading Native-Format Recordings</span></li>
   </ul>
 </nav>
 </div>
@@ -333,59 +354,398 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <div class="nbinput nblast docutils container">
+  <section id="Reading-Native-Format-Recordings">
+<h1>Reading Native-Format Recordings<a class="headerlink" href="#Reading-Native-Format-Recordings" title="Link to this heading">#</a></h1>
+<p>In this tutorial, we demonstrate how to load a Neon recording in native format (stored on the companion device or downloaded as native data) and explore the data structure. We also illustrate PyNeon’s unified API, which handles both native and cloud formats seamlessly, and show how to convert native data to cloud format.</p>
+<section id="Downloading-Sample-Data">
+<h2>Downloading Sample Data<a class="headerlink" href="#Downloading-Sample-Data" title="Link to this heading">#</a></h2>
+<p>We will use the same “simple” dataset as in the <a class="reference internal" href="read_recording_cloud.html"><span class="doc">previous tutorial</span></a>, and analyze the native format instead.</p>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
+
+<span class="c1"># Download sample data (if not existing) and return the path</span>
+<span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">native_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Native Recording Data&quot;</span>
+<span class="n">cloud_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">native_dir</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+C:\Users\qian.chu\Documents\GitHub\PyNeon\data\simple\Native Recording Data
+</pre></div></div>
+</div>
+<p>A dataset in native format has the following directory structure:</p>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">seedir</span><span class="w"> </span><span class="kn">import</span> <span class="n">seedir</span>
+
+<span class="n">seedir</span><span class="p">(</span><span class="n">native_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Native Recording Data/
+├─simple1-56fcec49/
+│ ├─android.log.zip
+│ ├─blinks ps1.raw
+│ ├─blinks ps1.time
+│ ├─blinks.dtype
+│ ├─calibration.bin
+│ ├─event.time
+│ ├─event.txt
+│ ├─extimu ps1.raw
+│ ├─extimu ps1.time
+│ ├─eye_state ps1.raw
+│ ├─eye_state ps1.time
+│ ├─eye_state.dtype
+│ ├─fixations ps1.raw
+│ ├─fixations ps1.time
+│ ├─fixations.dtype
+│ ├─gaze ps1.raw
+│ ├─gaze ps1.time
+│ ├─gaze.dtype
+│ ├─gaze_200hz.raw
+│ ├─gaze_200hz.time
+│ ├─gaze_right ps1.raw
+│ ├─gaze_right ps1.time
+│ ├─imu ps1.raw
+│ ├─imu ps1.time
+│ ├─imu.dtype
+│ ├─imu.proto
+│ ├─info.json
+│ ├─manifest.json
+│ ├─manifest.json.crc
+│ ├─Neon Scene Camera v1 ps1.mp4
+│ ├─Neon Scene Camera v1 ps1.time
+│ ├─Neon Scene Camera v1 ps1.time_aux
+│ ├─Neon Sensor Module v1 ps1.mp4
+│ ├─Neon Sensor Module v1 ps1.time
+│ ├─Neon Sensor Module v1 ps1.time_aux
+│ ├─Neon Sensor Module v1_sae_log_1.bin
+│ ├─template.json
+│ ├─wearer.json
+│ ├─worn ps1.raw
+│ ├─worn.dtype
+│ └─worn_200hz.raw
+└─simple2-6ca28606/
+  ├─android.log.zip
+  ├─blinks ps1.raw
+  ├─blinks ps1.time
+  ├─blinks.dtype
+  ├─calibration.bin
+  ├─event.time
+  ├─event.txt
+  ├─extimu ps1.raw
+  ├─extimu ps1.time
+  ├─eye_state ps1.raw
+  ├─eye_state ps1.time
+  ├─eye_state.dtype
+  ├─fixations ps1.raw
+  ├─fixations ps1.time
+  ├─fixations.dtype
+  ├─gaze ps1.raw
+  ├─gaze ps1.time
+  ├─gaze.dtype
+  ├─gaze_200hz.raw
+  ├─gaze_200hz.time
+  ├─gaze_right ps1.raw
+  ├─gaze_right ps1.time
+  ├─imu ps1.raw
+  ├─imu ps1.time
+  ├─imu.dtype
+  ├─imu.proto
+  ├─info.json
+  ├─manifest.json
+  ├─manifest.json.crc
+  ├─Neon Scene Camera v1 ps1.mp4
+  ├─Neon Scene Camera v1 ps1.time
+  ├─Neon Scene Camera v1 ps1.time_aux
+  ├─Neon Sensor Module v1 ps1.mp4
+  ├─Neon Sensor Module v1 ps1.time
+  ├─Neon Sensor Module v1 ps1.time_aux
+  ├─Neon Sensor Module v1_sae_log_1.bin
+  ├─template.json
+  ├─wearer.json
+  ├─worn ps1.raw
+  ├─worn.dtype
+  └─worn_200hz.raw
+</pre></div></div>
+</div>
+<p>PyNeon provides a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> class to represent a collection of recordings. A dataset can contain one or more recordings. Here, we instantiate a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> by providing the path to the native format data directory.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">native_dir</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Dataset | 2 recordings
+</pre></div></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code> provides index-based access to its recordings through the <code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute, which contains a list of <code class="docutils literal notranslate"><span class="pre">Recording</span></code> instances. Individual recordings can be accessed by index:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Internally accesses the recordings attribute</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">rec</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">recording_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;class &#39;pyneon.recording.Recording&#39;&gt;
+C:\Users\qian.chu\Documents\GitHub\PyNeon\data\simple\Native Recording Data\simple1-56fcec49
+</pre></div></div>
+</div>
+<p>Alternatively, you can directly load a single <code class="docutils literal notranslate"><span class="pre">Recording</span></code> by specifying the recording’s folder path:</p>
+</section>
+<section id="Recording-Metadata-and-Data-Access">
+<h2>Recording Metadata and Data Access<a class="headerlink" href="#Recording-Metadata-and-Data-Access" title="Link to this heading">#</a></h2>
+<p>You can quickly obtain an overview of a <code class="docutils literal notranslate"><span class="pre">Recording</span></code> by printing the instance. This displays basic metadata (recording ID, wearer ID, recording start time, and duration) and the paths to available data files. Note that at this point, data files are located but not yet loaded into memory.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Data format: native (version: 2.5)
+Recording ID: 56fcec49-d660-4d67-b5ed-ba8a083a448a
+Wearer ID: 028e4c69-f333-4751-af8c-84a09af079f5
+Wearer name: Pilot
+Recording start time: 2025-12-18 17:13:49.460000
+Recording duration: 8235000000 ns (8.235 s)
+
+</pre></div></div>
+</div>
+</section>
+<section id="Format-Agnostic-API:-Accessing-Data">
+<h2>Format-Agnostic API: Accessing Data<a class="headerlink" href="#Format-Agnostic-API:-Accessing-Data" title="Link to this heading">#</a></h2>
+<p>One of PyNeon’s key strengths is its <strong>format-agnostic API</strong>. Whether your data is in native or cloud format, the same code works identically. This means you can write analysis pipelines that work seamlessly with either format. Below, we demonstrate accessing data from this native recording using the same approach as the cloud format tutorial.</p>
+<p>Individual data streams can be accessed as properties of the <code class="docutils literal notranslate"><span class="pre">Recording</span></code> instance. For example, <code class="docutils literal notranslate"><span class="pre">recording.gaze</span></code> retrieves gaze data and loads it into memory. If you attempt to access unavailable data, PyNeon returns <code class="docutils literal notranslate"><span class="pre">None</span></code> and issues a warning message.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Gaze and fixation data are available</span>
+<span class="n">gaze</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">gaze</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span>
+
+<span class="n">saccades</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">saccades</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">saccades</span><span class="p">)</span>
+
+<span class="n">scene_video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">scene_video</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scene_video</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Stream type: gaze
+Number of samples: 1048
+First timestamp: 1766074431275967547
+Last timestamp: 1766074436535834547
+Uniformly sampled: False
+Duration: 5.26 seconds
+Effective sampling frequency: 199.05 Hz
+Nominal sampling frequency: 200 Hz
+Columns: [&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;azimuth [deg]&#39;, &#39;elevation [deg]&#39;]
+
+Events type: saccades
+Number of samples: 11
+Columns: [&#39;start timestamp [ns]&#39;, &#39;end timestamp [ns]&#39;, &#39;amplitude [px]&#39;, &#39;amplitude [deg]&#39;, &#39;mean velocity [px/s]&#39;, &#39;peak velocity [px/s]&#39;, &#39;duration [ms]&#39;]
+
+Video name: Neon Scene Camera v1 ps1.mp4
+Video height: 1200 px
+Video width: 1600 px
+Number of frames: 153
+First timestamp: 1766074431584148547
+Last timestamp: 1766074436631408547
+Duration: 5.05 seconds
+Effective FPS: 30.11
+
+</pre></div></div>
+</div>
+<p>Note that accessing native data may trigger on-the-fly conversion from raw binary files (<code class="docutils literal notranslate"><span class="pre">.raw</span></code>, <code class="docutils literal notranslate"><span class="pre">.time</span></code>, <code class="docutils literal notranslate"><span class="pre">.dtype</span></code>) to DataFrames. PyNeon handles this transparently, so the resulting data structures are identical to cloud format data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+                     gaze x [px]  gaze y [px]  worn  azimuth [deg]  \
+timestamp [ns]
+1766074431275967547   731.885864   503.253845    -1      -4.384848
+1766074431280967547   735.500916   502.152618    -1      -4.152129
+1766074431285967547   735.843140   499.517426    -1      -4.130098
+1766074431290967547   735.056641   502.690063    -1      -4.180729
+1766074431295967547   736.322205   501.840668    -1      -4.099258
+
+                     elevation [deg]
+timestamp [ns]
+1766074431275967547         6.207878
+1766074431280967547         6.278540
+1766074431285967547         6.447632
+1766074431290967547         6.244054
+1766074431295967547         6.298557
+gaze x [px]        float64
+gaze y [px]        float64
+worn                  Int8
+azimuth [deg]      float64
+elevation [deg]    float64
+dtype: object
+</pre></div></div>
+</div>
+</section>
+<section id="Converting-Native-Data-to-Cloud-Format">
+<h2>Converting Native Data to Cloud Format<a class="headerlink" href="#Converting-Native-Data-to-Cloud-Format" title="Link to this heading">#</a></h2>
+<p>A common workflow is to convert native format data to cloud format for easier sharing or integration with other tools. PyNeon provides the <code class="docutils literal notranslate"><span class="pre">export_cloud_format()</span></code> method to accomplish this seamlessly.</p>
+<p>The conversion process:</p>
+<ul class="simple">
+<li><p>Reads native binary files and converts them to CSV format</p></li>
+<li><p>Preserves all data integrity and metadata</p></li>
+<li><p>Outputs a standardized directory structure compatible with Pupil Cloud</p></li>
+</ul>
+<p>Let’s export this recording to cloud format:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="n">native_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">&quot;C:\Users\qian.chu\OneDrive - University of Toronto\code_tests\Neon full native&quot;</span>
-<span class="p">)</span>
-<span class="n">cloud_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;../../data/cloud_export_test&quot;</span><span class="p">)</span>
+<span class="c1"># Define output directory for cloud format data</span>
+<span class="n">export_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./export&quot;</span><span class="p">)</span>
+
+<span class="c1"># Export the native recording to cloud format</span>
+<span class="n">rec</span><span class="o">.</span><span class="n">export_cloud_format</span><span class="p">(</span><span class="n">export_dir</span><span class="p">,</span> <span class="n">rebase</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully exported to: </span><span class="si">{</span><span class="n">export_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Successfully exported to: C:\Users\qian.chu\Documents\GitHub\PyNeon\source\tutorials\export
+</pre></div></div>
+</div>
+<p>Let’s verify the exported cloud format directory structure:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">native_dir</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span><span class="o">.</span><span class="n">export_cloud_format</span><span class="p">(</span><span class="n">cloud_dir</span><span class="p">,</span> <span class="n">rebase</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># rec.export_cloud_format(&quot;../../data/cloud_export_test&quot;, rebase=True)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">seedir</span><span class="p">(</span><span class="n">export_dir</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+export/
+├─3d_eye_states.csv
+├─blinks.csv
+├─events.csv
+├─fixations.csv
+├─gaze.csv
+├─imu.csv
+├─info.json
+├─Neon Scene Camera v1 ps1.mp4
+├─saccades.csv
+├─scene_camera.json
+├─template.csv
+└─world_timestamps.csv
+</pre></div></div>
+</div>
+<p>Now we can load and use the exported data with the same PyNeon API:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># rec.export_cloud_format(&quot;../../data/cloud_export_test&quot;, rebase=True)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the exported cloud format data</span>
+<span class="n">rec_cloud</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">export_dir</span><span class="p">)</span>
+<span class="n">gaze_cloud</span> <span class="o">=</span> <span class="n">rec_cloud</span><span class="o">.</span><span class="n">gaze</span>
+
+<span class="c1"># Verify that the data is identical</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exported gaze data (first 5 rows):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gaze_cloud</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Data shapes match:&quot;</span><span class="p">,</span> <span class="n">gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">gaze_cloud</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Exported gaze data (first 5 rows):
+                     gaze x [px]  gaze y [px]  worn  azimuth [deg]  \
+timestamp [ns]
+1766074431275967547   731.885864   503.253845    -1      -4.384848
+1766074431280967547   735.500916   502.152618    -1      -4.152129
+1766074431285967547   735.843140   499.517426    -1      -4.130098
+1766074431290967547   735.056641   502.690063    -1      -4.180729
+1766074431295967547   736.322205   501.840668    -1      -4.099258
+
+                     elevation [deg]
+timestamp [ns]
+1766074431275967547         6.207878
+1766074431280967547         6.278540
+1766074431285967547         6.447632
+1766074431290967547         6.244054
+1766074431295967547         6.298557
+
+Data shapes match: True
+</pre></div></div>
+</div>
+</section>
+</section>
 
 
                 </article>
@@ -397,6 +757,24 @@
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="read_recording_cloud.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Reading Pupil Cloud-Format Recordings</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="interpolate_and_concat.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Preprocessing: Cropping, Interpolation, and Concatenation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               
@@ -415,9 +793,12 @@
     <i class="fa-solid fa-list"></i> On this page
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="simple visible nav section-nav flex-column">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Downloading-Sample-Data">Downloading Sample Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Recording-Metadata-and-Data-Access">Recording Metadata and Data Access</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Format-Agnostic-API:-Accessing-Data">Format-Agnostic API: Accessing Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Converting-Native-Data-to-Cloud-Format">Converting Native Data to Cloud Format</a></li>
 </ul>
-
   </nav></div>
 
   <div class="sidebar-secondary-item">

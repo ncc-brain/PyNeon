@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Processing pupil size data and epoching &#8212; PyNeon dev documentation</title>
+    <title>Processing and Epoching Pupil Size Data &#8212; PyNeon dev documentation</title>
   
   
   
@@ -48,8 +48,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/pupil_size_and_epoching';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Scene video and scanpath mapping" href="video.html" />
-    <link rel="prev" title="Interpolate data and concatenate streams" href="interpolate_and_concat.html" />
+    <link rel="next" title="Surface Mapping Using Fiducial Markers and Screen Corners" href="surface_mapping.html" />
+    <link rel="prev" title="Preprocessing: Cropping, Interpolation, and Concatenation" href="interpolate_and_concat.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -287,11 +287,13 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading a Pupil Cloud-format dataset/recording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Processing pupil size data and epoching</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading Pupil Cloud-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_native.html">Reading Native-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Preprocessing: Cropping, Interpolation, and Concatenation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Processing and Epoching Pupil Size Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surface_mapping.html">Surface Mapping Using Fiducial Markers and Screen Corners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene Video and Scanpath Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS Formats</a></li>
 </ul>
 </div>
 </nav></div>
@@ -335,7 +337,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Processing pupil size data and epoching</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Processing and Epoching Pupil Size Data</span></li>
   </ul>
 </nav>
 </div>
@@ -352,25 +354,20 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Processing-pupil-size-data-and-epoching">
-<h1>Processing pupil size data and epoching<a class="headerlink" href="#Processing-pupil-size-data-and-epoching" title="Link to this heading">#</a></h1>
-<p>When working with event-based recordings, it’s often useful to extract and analyze data segments surrounding those events, rather than processing the entire recording. In mobile eye-tracking, such events could include stimulus presentations or the participant entering a specific area. In this tutorial, we’ll demonstrate how to epoch data around these events using the <code class="docutils literal notranslate"><span class="pre">pyneon.Epochs</span></code> class, with the sample recording <code class="docutils literal notranslate"><span class="pre">screenFlash</span></code>.</p>
+  <section id="Processing-and-Epoching-Pupil-Size-Data">
+<h1>Processing and Epoching Pupil Size Data<a class="headerlink" href="#Processing-and-Epoching-Pupil-Size-Data" title="Link to this heading">#</a></h1>
+<p>When working with event-based recordings, it’s often useful to extract and analyze data segments surrounding those events, rather than processing the entire recording. In mobile eye-tracking, such events could include stimulus presentations or the participant entering a specific area. In this tutorial, we’ll demonstrate how to epoch data around these events using the <code class="docutils literal notranslate"><span class="pre">pyneon.Epochs</span></code> class, with the sample recording <code class="docutils literal notranslate"><span class="pre">PLR</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">get_sample_data</span>
 
 <span class="c1"># Create a Recording object</span>
-<span class="n">rec_dir</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;screenFlash&quot;</span><span class="p">)</span>
-    <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
-    <span class="o">/</span> <span class="s2">&quot;screenflash-54b2f924&quot;</span>
-<span class="p">)</span>
-<span class="n">rec</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">rec_dir</span><span class="p">)</span>
-<span class="n">video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">video</span>
+<span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;PLR&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;native&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">)</span>
+<span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">scene_video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">scene_video</span>
 <span class="n">blinks</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">blinks</span>
 <span class="n">events</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">events</span>
 <span class="n">eye_states</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">eye_states</span>
@@ -388,10 +385,39 @@
 <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 
 <span class="c1"># Visualize two frames from the video that correspond to the dark and flash periods</span>
-<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">auto_title</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">190</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">auto_title</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">scene_video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">scene_video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Dark&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Flash&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_pupil_size_and_epoching_3_0.png" src="../_images/tutorials_pupil_size_and_epoching_3_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Filter events to get flash onsets</span>
+<span class="n">flashes</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">filter_by_name</span><span class="p">(</span><span class="s2">&quot;flash onset&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">flashes</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># # Compute video frame intensities</span>
+<span class="n">intensities</span> <span class="o">=</span> <span class="n">scene_video</span><span class="o">.</span><span class="n">compute_frame_brightness</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">intensities</span><span class="p">[</span><span class="s2">&quot;brightness&quot;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">onset</span> <span class="ow">in</span> <span class="n">flashes</span><span class="o">.</span><span class="n">start_ts</span><span class="p">:</span>
+    <span class="n">dur</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+        <span class="n">onset</span><span class="p">,</span> <span class="n">onset</span> <span class="o">+</span> <span class="mf">0.75</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Flashes&quot;</span>
+    <span class="p">)</span>  <span class="c1"># Each flash lasts 2 seconds</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Video mean brightness&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="p">[</span><span class="n">dur</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -401,29 +427,46 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Resetting video...
-Resetting video...
+               timestamp [ns]         name       type
+event id
+1         1766068461745390000  flash onset  recording
+2         1766068465647497000  flash onset  recording
+3         1766068469642822000  flash onset  recording
+4         1766068473635128000  flash onset  recording
+5         1766068477629326000  flash onset  recording
+6         1766068481628174000  flash onset  recording
+7         1766068485617192000  flash onset  recording
+8         1766068489611285000  flash onset  recording
+9         1766068493606366000  flash onset  recording
+10        1766068497595856000  flash onset  recording
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Computing frame brightness: 100%|██████████| 1295/1295 [00:10&lt;00:00, 124.41it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_pupil_size_and_epoching_3_1.png" src="../_images/tutorials_pupil_size_and_epoching_3_1.png" />
+<img alt="../_images/tutorials_pupil_size_and_epoching_4_2.png" src="../_images/tutorials_pupil_size_and_epoching_4_2.png" />
 </div>
 </div>
 <section id="Visualizing-raw-pupil-size-data-and-repairing-blink-artifacts">
 <h2>Visualizing raw pupil size data and repairing blink artifacts<a class="headerlink" href="#Visualizing-raw-pupil-size-data-and-repairing-blink-artifacts" title="Link to this heading">#</a></h2>
 <p>Let’s inspect the raw pupil size data along with blink events. The shaded region shows when the screen is bright; dashed lines indicate the onset of blinks.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 
 <span class="c1"># Visualize the flashes</span>
-<span class="n">flash_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Flash onset&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">flash_start</span> <span class="ow">in</span> <span class="n">events</span><span class="o">.</span><span class="n">start_ts</span><span class="p">[</span><span class="n">flash_idx</span><span class="p">]:</span>
+<span class="k">for</span> <span class="n">flash_start</span> <span class="ow">in</span> <span class="n">flashes</span><span class="o">.</span><span class="n">start_ts</span><span class="p">:</span>
     <span class="n">dur</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
         <span class="n">flash_start</span><span class="p">,</span> <span class="n">flash_start</span> <span class="o">+</span> <span class="mf">0.75</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Flashes&quot;</span>
     <span class="p">)</span>  <span class="c1"># Each flash lasts 2 seconds</span>
@@ -433,7 +476,7 @@ Resetting video...
     <span class="n">line</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">blink_start</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Blinks&quot;</span><span class="p">)</span>
 
 <span class="c1"># Plot the pupil data</span>
-<span class="p">(</span><span class="n">pupil_l</span><span class="p">,)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">eye_states</span><span class="p">[</span><span class="s2">&quot;pupil diameter left [mm]&quot;</span><span class="p">])</span>
+<span class="p">(</span><span class="n">pupil_l</span><span class="p">,)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">eye_states</span><span class="p">[</span><span class="s2">&quot;pupil diameter right [mm]&quot;</span><span class="p">])</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Timestamp [ns]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Left pupil diameter [mm]&quot;</span><span class="p">)</span>
@@ -446,7 +489,7 @@ Resetting video...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_pupil_size_and_epoching_5_0.png" src="../_images/tutorials_pupil_size_and_epoching_5_0.png" />
+<img alt="../_images/tutorials_pupil_size_and_epoching_6_0.png" src="../_images/tutorials_pupil_size_and_epoching_6_0.png" />
 </div>
 </div>
 <p>From the plot we can note:</p>
@@ -456,7 +499,7 @@ Resetting video...
 </ul>
 <p>First, we’ll address blink artifacts using the <code class="docutils literal notranslate"><span class="pre">interpolate_events()</span></code> method of the <code class="docutils literal notranslate"><span class="pre">Stream</span></code> class. This method masks the data during events (in this case, blinks) and interpolates values around them, effectively removing the transient artifacts.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eye_states</span><span class="o">.</span><span class="n">interpolate_events</span><span class="p">(</span><span class="n">blinks</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -464,22 +507,17 @@ Resetting video...
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 
 <span class="c1"># Visualize the flashes</span>
-<span class="n">flash_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Flash onset&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">flash_start</span> <span class="ow">in</span> <span class="n">events</span><span class="o">.</span><span class="n">start_ts</span><span class="p">[</span><span class="n">flash_idx</span><span class="p">]:</span>
+<span class="k">for</span> <span class="n">flash_start</span> <span class="ow">in</span> <span class="n">flashes</span><span class="o">.</span><span class="n">start_ts</span><span class="p">:</span>
     <span class="n">dur</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
         <span class="n">flash_start</span><span class="p">,</span> <span class="n">flash_start</span> <span class="o">+</span> <span class="mf">7.5</span> <span class="o">*</span> <span class="mf">1e8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgray&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Flashes&quot;</span>
     <span class="p">)</span>  <span class="c1"># Each flash lasts 2 seconds</span>
 
-<span class="c1"># Visualize the blinks</span>
-<span class="k">for</span> <span class="n">blink_start</span> <span class="ow">in</span> <span class="n">blinks</span><span class="o">.</span><span class="n">start_ts</span><span class="p">:</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">blink_start</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Blinks&quot;</span><span class="p">)</span>
-
 <span class="c1"># Plot the pupil data</span>
-<span class="p">(</span><span class="n">pupil_l</span><span class="p">,)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">eye_states</span><span class="p">[</span><span class="s2">&quot;pupil diameter left [mm]&quot;</span><span class="p">])</span>
+<span class="p">(</span><span class="n">pupil_l</span><span class="p">,)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">eye_states</span><span class="p">[</span><span class="s2">&quot;pupil diameter right [mm]&quot;</span><span class="p">])</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Timestamp [ns]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Left pupil diameter [mm]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="p">[</span><span class="n">dur</span><span class="p">,</span> <span class="n">line</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="p">[</span><span class="n">dur</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -488,35 +526,35 @@ Resetting video...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_pupil_size_and_epoching_7_0.png" src="../_images/tutorials_pupil_size_and_epoching_7_0.png" />
+<img alt="../_images/tutorials_pupil_size_and_epoching_8_0.png" src="../_images/tutorials_pupil_size_and_epoching_8_0.png" />
 </div>
 </div>
 </section>
-<section id="Defining-Epochs:-Creating-the-times_df-DataFrame">
-<h2>Defining Epochs: Creating the <code class="docutils literal notranslate"><span class="pre">times_df</span></code> DataFrame<a class="headerlink" href="#Defining-Epochs:-Creating-the-times_df-DataFrame" title="Link to this heading">#</a></h2>
+<section id="Defining-Epochs:-Creating-the-epochs_info-DataFrame">
+<h2>Defining Epochs: Creating the <code class="docutils literal notranslate"><span class="pre">epochs_info</span></code> DataFrame<a class="headerlink" href="#Defining-Epochs:-Creating-the-epochs_info-DataFrame" title="Link to this heading">#</a></h2>
 <p>In order to perform epoching, we require information about the timing and length of epochs. Explicitly, every epoch requires:</p>
 <ul class="simple">
 <li><p>A reference time <code class="docutils literal notranslate"><span class="pre">t_ref</span></code></p></li>
 <li><p>A time window defined by <code class="docutils literal notranslate"><span class="pre">t_before</span></code> and <code class="docutils literal notranslate"><span class="pre">t_after</span></code> to extract the data from</p></li>
 <li><p>An event <code class="docutils literal notranslate"><span class="pre">description</span></code> to annotate the epoch.</p></li>
 </ul>
-<p>PyNeon’s <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> implementation allows epochs of variable lengths, where <code class="docutils literal notranslate"><span class="pre">t_before</span></code> and <code class="docutils literal notranslate"><span class="pre">t_after</span></code> may differ for each event. As a result, defining all epochs requires a DataFrame (<code class="docutils literal notranslate"><span class="pre">times_df</span></code>) with columns: <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>, <code class="docutils literal notranslate"><span class="pre">t_after</span></code>, and <code class="docutils literal notranslate"><span class="pre">description</span></code>.</p>
-<p>While constructing such a DataFrame by hand is possible, it’s easier to generate one using event information from PyNeon <code class="docutils literal notranslate"><span class="pre">Events</span></code> objects. The <code class="docutils literal notranslate"><span class="pre">events_to_times_df</span></code> function streamlines this process by using the onsets of events and user-defined <code class="docutils literal notranslate"><span class="pre">t_before</span></code>/<code class="docutils literal notranslate"><span class="pre">t_after</span></code> values.</p>
-<p>In this example, we’ll use <code class="docutils literal notranslate"><span class="pre">&quot;Flash</span> <span class="pre">onset&quot;</span></code> events, extracting 0.5 seconds before to 3 seconds after each event; the description is set to the event name automatically.</p>
+<p>PyNeon’s <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> implementation allows epochs of variable lengths, where <code class="docutils literal notranslate"><span class="pre">t_before</span></code> and <code class="docutils literal notranslate"><span class="pre">t_after</span></code> may differ for each event. As a result, defining all epochs requires a DataFrame (<code class="docutils literal notranslate"><span class="pre">epochs_info</span></code>) with columns: <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>, <code class="docutils literal notranslate"><span class="pre">t_after</span></code>, and <code class="docutils literal notranslate"><span class="pre">description</span></code>.</p>
+<p>While constructing such a DataFrame by hand is possible, it’s easier to generate one using event information from PyNeon <code class="docutils literal notranslate"><span class="pre">Events</span></code> objects. The <code class="docutils literal notranslate"><span class="pre">events_to_epochs_info</span></code> function streamlines this process by using the onsets of events and user-defined <code class="docutils literal notranslate"><span class="pre">t_before</span></code>/<code class="docutils literal notranslate"><span class="pre">t_after</span></code> values.</p>
+<p>In this example, we’ll use <code class="docutils literal notranslate"><span class="pre">&quot;flash</span> <span class="pre">onset&quot;</span></code> events, extracting 0.5 seconds before to 3 seconds after each event; the description is set to the event name automatically.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Epochs</span><span class="p">,</span> <span class="n">events_to_times_df</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Epochs</span><span class="p">,</span> <span class="n">events_to_epochs_info</span>
 
 <span class="c1"># For complex events, such as those from `events.csv`, we need to specify the event name</span>
-<span class="n">flash_times_df</span> <span class="o">=</span> <span class="n">events_to_times_df</span><span class="p">(</span>
-    <span class="n">events</span><span class="p">,</span> <span class="n">t_before</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">t_after</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">t_unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">event_name</span><span class="o">=</span><span class="s2">&quot;Flash onset&quot;</span>
+<span class="n">flash_epochs_info</span> <span class="o">=</span> <span class="n">events_to_epochs_info</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">,</span> <span class="n">t_before</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">t_after</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">t_unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">event_name</span><span class="o">=</span><span class="s2">&quot;flash onset&quot;</span>
 <span class="p">)</span>
 
-<span class="c1"># Print the epoching-ready times_df</span>
+<span class="c1"># Print the epoching-ready epochs_info</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Flash times DataFrame:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">flash_times_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">flash_epochs_info</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -528,33 +566,34 @@ Resetting video...
 
 Flash times DataFrame:
                  t_ref   t_before     t_after  description
-0  1748359118207381000  500000000  3000000000  Flash onset
-1  1748359122083310000  500000000  3000000000  Flash onset
-2  1748359126042722000  500000000  3000000000  Flash onset
-3  1748359129933171000  500000000  3000000000  Flash onset
-4  1748359133927133000  500000000  3000000000  Flash onset
+0  1766068461745390000  500000000  3000000000  flash onset
+1  1766068465647497000  500000000  3000000000  flash onset
+2  1766068469642822000  500000000  3000000000  flash onset
+3  1766068473635128000  500000000  3000000000  flash onset
+4  1766068477629326000  500000000  3000000000  flash onset
 </pre></div></div>
 </div>
 </section>
 <section id="Creating-Epochs-objects">
 <h2>Creating <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> objects<a class="headerlink" href="#Creating-Epochs-objects" title="Link to this heading">#</a></h2>
-<p>With the <code class="docutils literal notranslate"><span class="pre">times_df</span></code> DataFrame, we can create epochs by passing it along with the relevant <code class="docutils literal notranslate"><span class="pre">Stream</span></code> or <code class="docutils literal notranslate"><span class="pre">Events</span></code> data to the <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> class.</p>
+<p>With the <code class="docutils literal notranslate"><span class="pre">epochs_info</span></code> DataFrame, we can create epochs by passing it along with the relevant <code class="docutils literal notranslate"><span class="pre">Stream</span></code> or <code class="docutils literal notranslate"><span class="pre">Events</span></code> data to the <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> class.</p>
 <p>In this example, we create two types of epochs to test two hypotheses:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">eye_ep</span></code>: epochs from <code class="docutils literal notranslate"><span class="pre">eye_states</span></code> (a <code class="docutils literal notranslate"><span class="pre">Stream</span></code> object), containing pupil size. We hypothesize pupil size will decrease after each flash.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">blink_ep</span></code>: epochs from <code class="docutils literal notranslate"><span class="pre">blinks</span></code> (an <code class="docutils literal notranslate"><span class="pre">Events</span></code> object), letting us check if blinks cluster after each flash.</p></li>
 </ul>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eye_ep</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">eye_states</span><span class="p">,</span> <span class="n">flash_times_df</span><span class="p">)</span>
-<span class="n">blink_ep</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">blinks</span><span class="p">,</span> <span class="n">flash_times_df</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">eye_ep</span><span class="p">)</span><span class="si">}</span><span class="s2"> epochs created from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">flash_times_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> events&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eye_ep</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">eye_states</span><span class="p">,</span> <span class="n">flash_epochs_info</span><span class="p">)</span>
+<span class="n">blink_ep</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">blinks</span><span class="p">,</span> <span class="n">flash_epochs_info</span><span class="p">)</span>
+<span class="n">imu_ep</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">imu</span><span class="p">,</span> <span class="n">flash_epochs_info</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">eye_ep</span><span class="p">)</span><span class="si">}</span><span class="s2"> epochs created from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">flash_epochs_info</span><span class="p">)</span><span class="si">}</span><span class="s2"> events&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
@@ -562,39 +601,24 @@ Flash times DataFrame:
 10 epochs created from 10 events
 </pre></div></div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 1.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 2.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 6.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 7.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 8.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 9.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-</pre></div></div>
-</div>
 <p>Given that we have very sparse blink events, it is not surprising that PyNeon emits a warning when creating the <code class="docutils literal notranslate"><span class="pre">blink_ep</span></code> epochs.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> class provides two key attributes (For details, see the <a class="reference external" href="https://ncc-brain.github.io/PyNeon/reference/epochs.html">API reference</a>):</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> class provides two key attributes (for details, see the <a class="reference external" href="https://ncc-brain.github.io/PyNeon/reference/epochs.html">API reference</a>):</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">epochs</span></code>: a nested DataFrame, indexed by epoch number, with data for each epoch stored under the <code class="docutils literal notranslate"><span class="pre">data</span></code> column.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">data</span></code>: (not to be confused with the <code class="docutils literal notranslate"><span class="pre">data</span></code> column in <code class="docutils literal notranslate"><span class="pre">Epochs.epochs</span></code>) a DataFrame in the same structure as the source, but annotated with epoch membership and timing information (<code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">index</span></code>, <code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">time</span></code>, and <code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">description</span></code>). As a flattened version of <code class="docutils literal notranslate"><span class="pre">Epochs.epochs</span></code>, <code class="docutils literal notranslate"><span class="pre">Epochs.data</span></code> may contain overlapping epochs; in such cases, the additional columns will only show information from the most recent epoch a time point belongs to. Therefore, we recommend primarily using
-<code class="docutils literal notranslate"><span class="pre">Epochs.epochs</span></code> for analysis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">epochs_dict</span></code>: a dictionary keyed by epoch index; each value is a <code class="docutils literal notranslate"><span class="pre">Stream</span></code> or <code class="docutils literal notranslate"><span class="pre">Events</span></code> instance (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if empty), with an added <code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">time</span> <span class="pre">[ns]</span></code> column.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">epochs_info</span></code>: the DataFrame describing <code class="docutils literal notranslate"><span class="pre">t_ref</span></code>, <code class="docutils literal notranslate"><span class="pre">t_before</span></code>, <code class="docutils literal notranslate"><span class="pre">t_after</span></code>, and <code class="docutils literal notranslate"><span class="pre">description</span></code>, plus derived <code class="docutils literal notranslate"><span class="pre">t_start</span></code> and <code class="docutils literal notranslate"><span class="pre">t_end</span></code>.</p></li>
 </ul>
+<p>For quick inspection, <code class="docutils literal notranslate"><span class="pre">Epochs.data</span></code> returns the first non-empty epoch’s DataFrame, but analysis should use <code class="docutils literal notranslate"><span class="pre">epochs_dict</span></code> and <code class="docutils literal notranslate"><span class="pre">epochs_info</span></code>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epochs.epochs contains:</span><span class="se">\n</span><span class="si">{</span><span class="n">eye_ep</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">columns</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Its `data` column contains:</span><span class="se">\n</span><span class="si">{</span><span class="n">eye_ep</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epochs.data contains:</span><span class="se">\n</span><span class="si">{</span><span class="n">eye_ep</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span> <span class="o">=</span> <span class="n">eye_ep</span><span class="o">.</span><span class="n">epochs_dict</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;epochs is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span><span class="si">}</span><span class="s2"> items.&quot;</span><span class="p">)</span>
+<span class="n">first_epoch</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dict values are </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">first_epoch</span><span class="p">)</span><span class="si">}</span><span class="s2"> with shape </span><span class="si">{</span><span class="n">first_epoch</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+<span class="n">epochs_info</span> <span class="o">=</span> <span class="n">eye_ep</span><span class="o">.</span><span class="n">epochs_info</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">epochs_info</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -603,48 +627,22 @@ C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Epochs.epochs contains:
-Index([&#39;t_ref&#39;, &#39;t_before&#39;, &#39;t_after&#39;, &#39;description&#39;, &#39;data&#39;], dtype=&#39;object&#39;)
-
-Its `data` column contains:
-Index([&#39;pupil diameter left [mm]&#39;, &#39;pupil diameter right [mm]&#39;,
-       &#39;eyeball center left x [mm]&#39;, &#39;eyeball center left y [mm]&#39;,
-       &#39;eyeball center left z [mm]&#39;, &#39;eyeball center right x [mm]&#39;,
-       &#39;eyeball center right y [mm]&#39;, &#39;eyeball center right z [mm]&#39;,
-       &#39;optical axis left x&#39;, &#39;optical axis left y&#39;, &#39;optical axis left z&#39;,
-       &#39;optical axis right x&#39;, &#39;optical axis right y&#39;, &#39;optical axis right z&#39;,
-       &#39;eyelid angle top left [rad]&#39;, &#39;eyelid angle bottom left [rad]&#39;,
-       &#39;eyelid aperture left [mm]&#39;, &#39;eyelid angle top right [rad]&#39;,
-       &#39;eyelid angle bottom right [rad]&#39;, &#39;eyelid aperture right [mm]&#39;,
-       &#39;epoch time&#39;],
-      dtype=&#39;object&#39;)
-
-Epochs.data contains:
-Index([&#39;pupil diameter left [mm]&#39;, &#39;pupil diameter right [mm]&#39;,
-       &#39;eyeball center left x [mm]&#39;, &#39;eyeball center left y [mm]&#39;,
-       &#39;eyeball center left z [mm]&#39;, &#39;eyeball center right x [mm]&#39;,
-       &#39;eyeball center right y [mm]&#39;, &#39;eyeball center right z [mm]&#39;,
-       &#39;optical axis left x&#39;, &#39;optical axis left y&#39;, &#39;optical axis left z&#39;,
-       &#39;optical axis right x&#39;, &#39;optical axis right y&#39;, &#39;optical axis right z&#39;,
-       &#39;eyelid angle top left [rad]&#39;, &#39;eyelid angle bottom left [rad]&#39;,
-       &#39;eyelid aperture left [mm]&#39;, &#39;eyelid angle top right [rad]&#39;,
-       &#39;eyelid angle bottom right [rad]&#39;, &#39;eyelid aperture right [mm]&#39;,
-       &#39;epoch index&#39;, &#39;epoch time&#39;, &#39;epoch description&#39;],
-      dtype=&#39;object&#39;)
-
+epochs is a &lt;class &#39;dict&#39;&gt; with 10 items.
+Dict values are &lt;class &#39;pyneon.stream.Stream&#39;&gt; with shape (699, 21).
+RangeIndex(start=0, stop=10, step=1, name=&#39;epoch index&#39;)
 </pre></div></div>
 </div>
 </section>
 <section id="Visualizing-epoch-data">
 <h2>Visualizing epoch data<a class="headerlink" href="#Visualizing-epoch-data" title="Link to this heading">#</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">plot()</span></code> method provides a convenient way to visualize data across epochs.</p>
-<p>For <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> created from a <code class="docutils literal notranslate"><span class="pre">Stream</span></code> (like eye states), specify the desired column to plot all across epochs in a single figure, colored by epoch index. We can observe from the following plot that pupil restriction occurs after each flash consistently, except for the first flash, likely due to a different baseline pupil size.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> created from a <code class="docutils literal notranslate"><span class="pre">Stream</span></code> (like eye states), specify the desired column to plot the same variable across epochs in a single figure, colored by epoch index. We can observe from the following plot that pupil constriction occurs after each flash consistently, except for the first flash, likely due to a different baseline pupil size.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">eye_ep</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;pupil diameter left [mm]&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">eye_ep</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;pupil diameter right [mm]&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -652,12 +650,12 @@ Index([&#39;pupil diameter left [mm]&#39;, &#39;pupil diameter right [mm]&#39;,
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_pupil_size_and_epoching_15_0.png" src="../_images/tutorials_pupil_size_and_epoching_15_0.png" />
+<img alt="../_images/tutorials_pupil_size_and_epoching_16_0.png" src="../_images/tutorials_pupil_size_and_epoching_16_0.png" />
 </div>
 </div>
 <p>For <code class="docutils literal notranslate"><span class="pre">Events</span></code>-based <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> (like blinks), simply call <code class="docutils literal notranslate"><span class="pre">plot()</span></code> with no arguments. Here, each event is displayed as a horizontal line spanning its duration, vertically sorted by epoch. We can see that blinks (N=4 in this example) tend to happen 1 to 1.5 seconds after each flash.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">blink_ep</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
@@ -668,7 +666,7 @@ Index([&#39;pupil diameter left [mm]&#39;, &#39;pupil diameter right [mm]&#39;,
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_pupil_size_and_epoching_17_0.png" src="../_images/tutorials_pupil_size_and_epoching_17_0.png" />
+<img alt="../_images/tutorials_pupil_size_and_epoching_18_0.png" src="../_images/tutorials_pupil_size_and_epoching_18_0.png" />
 </div>
 </div>
 </section>
@@ -681,55 +679,165 @@ Index([&#39;pupil diameter left [mm]&#39;, &#39;pupil diameter right [mm]&#39;,
 <li><p>All epochs must have the same durations (<code class="docutils literal notranslate"><span class="pre">t_before</span></code> and <code class="docutils literal notranslate"><span class="pre">t_after</span></code> equal).</p></li>
 </ul>
 <p>If these are not met, PyNeon will raise a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when <code class="docutils literal notranslate"><span class="pre">to_numpy()</span></code> is called.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">epochs_interp_np</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">eye_ep</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error converting to numpy: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Error converting to numpy: The source must be a uniformly-sampled Stream to convert to NumPy array.
-</pre></div></div>
-</div>
 <p>To ensure compatibility, interpolate the <code class="docutils literal notranslate"><span class="pre">Stream</span></code> data prior to epoching, and maintain constant window sizes across epochs. The resulting array will be shaped <code class="docutils literal notranslate"><span class="pre">(n_epochs,</span> <span class="pre">n_channels,</span> <span class="pre">n_times)</span></code>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create an epoch with the interpolated data</span>
-<span class="n">epochs_interp</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">eye_states</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(),</span> <span class="n">flash_times_df</span><span class="p">)</span>
-<span class="n">epochs_interp_np</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">epochs_interp</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+<span class="n">epochs_np</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">eye_ep</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(n_epochs, n_channels, n_times) = </span><span class="si">{</span><span class="n">epochs_interp_np</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(n_epochs, n_channels, n_times) = </span><span class="si">{</span><span class="n">epochs_np</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-(n_epochs, n_channels, n_times) = (10, 20, 699)
-dict_keys([&#39;column_ids&#39;, &#39;epoch_times&#39;, &#39;nan_flag&#39;])
-</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:275: RuntimeWarning: NaN values were found in the data.
-  warnings.warn(&#34;NaN values were found in the data.&#34;, RuntimeWarning)
+(n_epochs, n_channels, n_times) = (10, 20, 700)
+{&#39;epoch_times&#39;: array([-500000000, -495000000, -490000000, -485000000, -480000000,
+       -475000000, -470000000, -465000000, -460000000, -455000000,
+       -450000000, -445000000, -440000000, -435000000, -430000000,
+       -425000000, -420000000, -415000000, -410000000, -405000000,
+       -400000000, -395000000, -390000000, -385000000, -380000000,
+       -375000000, -370000000, -365000000, -360000000, -355000000,
+       -350000000, -345000000, -340000000, -335000000, -330000000,
+       -325000000, -320000000, -315000000, -310000000, -305000000,
+       -300000000, -295000000, -290000000, -285000000, -280000000,
+       -275000000, -270000000, -265000000, -260000000, -255000000,
+       -250000000, -245000000, -240000000, -235000000, -230000000,
+       -225000000, -220000000, -215000000, -210000000, -205000000,
+       -200000000, -195000000, -190000000, -185000000, -180000000,
+       -175000000, -170000000, -165000000, -160000000, -155000000,
+       -150000000, -145000000, -140000000, -135000000, -130000000,
+       -125000000, -120000000, -115000000, -110000000, -105000000,
+       -100000000,  -95000000,  -90000000,  -85000000,  -80000000,
+        -75000000,  -70000000,  -65000000,  -60000000,  -55000000,
+        -50000000,  -45000000,  -40000000,  -35000000,  -30000000,
+        -25000000,  -20000000,  -15000000,  -10000000,   -5000000,
+                0,    5000000,   10000000,   15000000,   20000000,
+         25000000,   30000000,   35000000,   40000000,   45000000,
+         50000000,   55000000,   60000000,   65000000,   70000000,
+         75000000,   80000000,   85000000,   90000000,   95000000,
+        100000000,  105000000,  110000000,  115000000,  120000000,
+        125000000,  130000000,  135000000,  140000000,  145000000,
+        150000000,  155000000,  160000000,  165000000,  170000000,
+        175000000,  180000000,  185000000,  190000000,  195000000,
+        200000000,  205000000,  210000000,  215000000,  220000000,
+        225000000,  230000000,  235000000,  240000000,  245000000,
+        250000000,  255000000,  260000000,  265000000,  270000000,
+        275000000,  280000000,  285000000,  290000000,  295000000,
+        300000000,  305000000,  310000000,  315000000,  320000000,
+        325000000,  330000000,  335000000,  340000000,  345000000,
+        350000000,  355000000,  360000000,  365000000,  370000000,
+        375000000,  380000000,  385000000,  390000000,  395000000,
+        400000000,  405000000,  410000000,  415000000,  420000000,
+        425000000,  430000000,  435000000,  440000000,  445000000,
+        450000000,  455000000,  460000000,  465000000,  470000000,
+        475000000,  480000000,  485000000,  490000000,  495000000,
+        500000000,  505000000,  510000000,  515000000,  520000000,
+        525000000,  530000000,  535000000,  540000000,  545000000,
+        550000000,  555000000,  560000000,  565000000,  570000000,
+        575000000,  580000000,  585000000,  590000000,  595000000,
+        600000000,  605000000,  610000000,  615000000,  620000000,
+        625000000,  630000000,  635000000,  640000000,  645000000,
+        650000000,  655000000,  660000000,  665000000,  670000000,
+        675000000,  680000000,  685000000,  690000000,  695000000,
+        700000000,  705000000,  710000000,  715000000,  720000000,
+        725000000,  730000000,  735000000,  740000000,  745000000,
+        750000000,  755000000,  760000000,  765000000,  770000000,
+        775000000,  780000000,  785000000,  790000000,  795000000,
+        800000000,  805000000,  810000000,  815000000,  820000000,
+        825000000,  830000000,  835000000,  840000000,  845000000,
+        850000000,  855000000,  860000000,  865000000,  870000000,
+        875000000,  880000000,  885000000,  890000000,  895000000,
+        900000000,  905000000,  910000000,  915000000,  920000000,
+        925000000,  930000000,  935000000,  940000000,  945000000,
+        950000000,  955000000,  960000000,  965000000,  970000000,
+        975000000,  980000000,  985000000,  990000000,  995000000,
+       1000000000, 1005000000, 1010000000, 1015000000, 1020000000,
+       1025000000, 1030000000, 1035000000, 1040000000, 1045000000,
+       1050000000, 1055000000, 1060000000, 1065000000, 1070000000,
+       1075000000, 1080000000, 1085000000, 1090000000, 1095000000,
+       1100000000, 1105000000, 1110000000, 1115000000, 1120000000,
+       1125000000, 1130000000, 1135000000, 1140000000, 1145000000,
+       1150000000, 1155000000, 1160000000, 1165000000, 1170000000,
+       1175000000, 1180000000, 1185000000, 1190000000, 1195000000,
+       1200000000, 1205000000, 1210000000, 1215000000, 1220000000,
+       1225000000, 1230000000, 1235000000, 1240000000, 1245000000,
+       1250000000, 1255000000, 1260000000, 1265000000, 1270000000,
+       1275000000, 1280000000, 1285000000, 1290000000, 1295000000,
+       1300000000, 1305000000, 1310000000, 1315000000, 1320000000,
+       1325000000, 1330000000, 1335000000, 1340000000, 1345000000,
+       1350000000, 1355000000, 1360000000, 1365000000, 1370000000,
+       1375000000, 1380000000, 1385000000, 1390000000, 1395000000,
+       1400000000, 1405000000, 1410000000, 1415000000, 1420000000,
+       1425000000, 1430000000, 1435000000, 1440000000, 1445000000,
+       1450000000, 1455000000, 1460000000, 1465000000, 1470000000,
+       1475000000, 1480000000, 1485000000, 1490000000, 1495000000,
+       1500000000, 1505000000, 1510000000, 1515000000, 1520000000,
+       1525000000, 1530000000, 1535000000, 1540000000, 1545000000,
+       1550000000, 1555000000, 1560000000, 1565000000, 1570000000,
+       1575000000, 1580000000, 1585000000, 1590000000, 1595000000,
+       1600000000, 1605000000, 1610000000, 1615000000, 1620000000,
+       1625000000, 1630000000, 1635000000, 1640000000, 1645000000,
+       1650000000, 1655000000, 1660000000, 1665000000, 1670000000,
+       1675000000, 1680000000, 1685000000, 1690000000, 1695000000,
+       1700000000, 1705000000, 1710000000, 1715000000, 1720000000,
+       1725000000, 1730000000, 1735000000, 1740000000, 1745000000,
+       1750000000, 1755000000, 1760000000, 1765000000, 1770000000,
+       1775000000, 1780000000, 1785000000, 1790000000, 1795000000,
+       1800000000, 1805000000, 1810000000, 1815000000, 1820000000,
+       1825000000, 1830000000, 1835000000, 1840000000, 1845000000,
+       1850000000, 1855000000, 1860000000, 1865000000, 1870000000,
+       1875000000, 1880000000, 1885000000, 1890000000, 1895000000,
+       1900000000, 1905000000, 1910000000, 1915000000, 1920000000,
+       1925000000, 1930000000, 1935000000, 1940000000, 1945000000,
+       1950000000, 1955000000, 1960000000, 1965000000, 1970000000,
+       1975000000, 1980000000, 1985000000, 1990000000, 1995000000,
+       2000000000, 2005000000, 2010000000, 2015000000, 2020000000,
+       2025000000, 2030000000, 2035000000, 2040000000, 2045000000,
+       2050000000, 2055000000, 2060000000, 2065000000, 2070000000,
+       2075000000, 2080000000, 2085000000, 2090000000, 2095000000,
+       2100000000, 2105000000, 2110000000, 2115000000, 2120000000,
+       2125000000, 2130000000, 2135000000, 2140000000, 2145000000,
+       2150000000, 2155000000, 2160000000, 2165000000, 2170000000,
+       2175000000, 2180000000, 2185000000, 2190000000, 2195000000,
+       2200000000, 2205000000, 2210000000, 2215000000, 2220000000,
+       2225000000, 2230000000, 2235000000, 2240000000, 2245000000,
+       2250000000, 2255000000, 2260000000, 2265000000, 2270000000,
+       2275000000, 2280000000, 2285000000, 2290000000, 2295000000,
+       2300000000, 2305000000, 2310000000, 2315000000, 2320000000,
+       2325000000, 2330000000, 2335000000, 2340000000, 2345000000,
+       2350000000, 2355000000, 2360000000, 2365000000, 2370000000,
+       2375000000, 2380000000, 2385000000, 2390000000, 2395000000,
+       2400000000, 2405000000, 2410000000, 2415000000, 2420000000,
+       2425000000, 2430000000, 2435000000, 2440000000, 2445000000,
+       2450000000, 2455000000, 2460000000, 2465000000, 2470000000,
+       2475000000, 2480000000, 2485000000, 2490000000, 2495000000,
+       2500000000, 2505000000, 2510000000, 2515000000, 2520000000,
+       2525000000, 2530000000, 2535000000, 2540000000, 2545000000,
+       2550000000, 2555000000, 2560000000, 2565000000, 2570000000,
+       2575000000, 2580000000, 2585000000, 2590000000, 2595000000,
+       2600000000, 2605000000, 2610000000, 2615000000, 2620000000,
+       2625000000, 2630000000, 2635000000, 2640000000, 2645000000,
+       2650000000, 2655000000, 2660000000, 2665000000, 2670000000,
+       2675000000, 2680000000, 2685000000, 2690000000, 2695000000,
+       2700000000, 2705000000, 2710000000, 2715000000, 2720000000,
+       2725000000, 2730000000, 2735000000, 2740000000, 2745000000,
+       2750000000, 2755000000, 2760000000, 2765000000, 2770000000,
+       2775000000, 2780000000, 2785000000, 2790000000, 2795000000,
+       2800000000, 2805000000, 2810000000, 2815000000, 2820000000,
+       2825000000, 2830000000, 2835000000, 2840000000, 2845000000,
+       2850000000, 2855000000, 2860000000, 2865000000, 2870000000,
+       2875000000, 2880000000, 2885000000, 2890000000, 2895000000,
+       2900000000, 2905000000, 2910000000, 2915000000, 2920000000,
+       2925000000, 2930000000, 2935000000, 2940000000, 2945000000,
+       2950000000, 2955000000, 2960000000, 2965000000, 2970000000,
+       2975000000, 2980000000, 2985000000, 2990000000, 2995000000]), &#39;column_names&#39;: [&#39;pupil diameter left [mm]&#39;, &#39;eyeball center left x [mm]&#39;, &#39;eyeball center left y [mm]&#39;, &#39;eyeball center left z [mm]&#39;, &#39;optical axis left x&#39;, &#39;optical axis left y&#39;, &#39;optical axis left z&#39;, &#39;pupil diameter right [mm]&#39;, &#39;eyeball center right x [mm]&#39;, &#39;eyeball center right y [mm]&#39;, &#39;eyeball center right z [mm]&#39;, &#39;optical axis right x&#39;, &#39;optical axis right y&#39;, &#39;optical axis right z&#39;, &#39;eyelid angle top left [rad]&#39;, &#39;eyelid angle bottom left [rad]&#39;, &#39;eyelid aperture left [mm]&#39;, &#39;eyelid angle top right [rad]&#39;, &#39;eyelid angle bottom right [rad]&#39;, &#39;eyelid aperture right [mm]&#39;], &#39;nan_flag&#39;: np.False_}
 </pre></div></div>
 </div>
 <p>In this case, we have 10 epochs, 20 data channels, and 699 time steps—consistent with the 200 Hz sampling rate and the 3.5-second epoch window. The <code class="docutils literal notranslate"><span class="pre">info</span></code> object contains lists of column IDs and epoch times. Now, the grand average is easily computed:</p>
@@ -737,22 +845,21 @@ C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:275: RuntimeWarning: 
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Average the first channel (Pupil diameter left [mm]) across all epochs</span>
-<span class="n">pupil_mean</span> <span class="o">=</span> <span class="n">epochs_interp_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">pupil_std</span> <span class="o">=</span> <span class="n">epochs_interp_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Average the first channel (pupil diameter right [mm]) across all epochs</span>
+<span class="n">epoch_times</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;epoch_times&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e9</span>
+<span class="n">pupil_mean</span> <span class="o">=</span> <span class="n">epochs_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pupil_std</span> <span class="o">=</span> <span class="n">epochs_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 
 <span class="c1"># Show a vertical line at 0</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
 <span class="c1"># Plot the mean pupil diameter and standard deviation</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;epoch_times&quot;</span><span class="p">],</span> <span class="n">pupil_mean</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-    <span class="n">info</span><span class="p">[</span><span class="s2">&quot;epoch_times&quot;</span><span class="p">],</span> <span class="n">pupil_mean</span> <span class="o">-</span> <span class="n">pupil_std</span><span class="p">,</span> <span class="n">pupil_mean</span> <span class="o">+</span> <span class="n">pupil_std</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span>
-<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">epoch_times</span><span class="p">,</span> <span class="n">pupil_mean</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">epoch_times</span><span class="p">,</span> <span class="n">pupil_mean</span> <span class="o">-</span> <span class="n">pupil_std</span><span class="p">,</span> <span class="n">pupil_mean</span> <span class="o">+</span> <span class="n">pupil_std</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Flash onset time [s]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pupil Diameter left [mm]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;flash onset time [s]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;pupil diameter right [mm]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -767,51 +874,37 @@ C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:275: RuntimeWarning: 
 </section>
 <section id="Baseline-correction">
 <h2>Baseline correction<a class="headerlink" href="#Baseline-correction" title="Link to this heading">#</a></h2>
-<p>Optionally, we can also perform <code class="docutils literal notranslate"><span class="pre">baseline_correction()</span></code> on the data to address global fluctuations in data. approach is to subtract the mean of a pre-event baseline (<code class="docutils literal notranslate"><span class="pre">method=&quot;mean&quot;</span></code>). If there exists a linear trend in the baseline that extends into the entire epoch, <code class="docutils literal notranslate"><span class="pre">method=&quot;linear&quot;</span></code> will fit and remove it.</p>
-<p>Here, we apply <code class="docutils literal notranslate"><span class="pre">baseline_correction()</span></code> with <code class="docutils literal notranslate"><span class="pre">method=&quot;mean&quot;</span></code> to compare pupil size relative to a 500 ms pre-flash baseline, centering pre-flash values around zero and reducing variance.</p>
+<p>Optionally, apply <code class="docutils literal notranslate"><span class="pre">apply_baseline()</span></code> to reduce global fluctuations in the data. The default <code class="docutils literal notranslate"><span class="pre">method=&quot;mean&quot;</span></code> subtracts the mean of a pre-event baseline window. If there is a linear trend in the baseline, <code class="docutils literal notranslate"><span class="pre">method=&quot;regression&quot;</span></code> fits and removes it across the epoch.</p>
+<p>Here, we apply <code class="docutils literal notranslate"><span class="pre">apply_baseline()</span></code> with <code class="docutils literal notranslate"><span class="pre">method=&quot;mean&quot;</span></code> to compare pupil size relative to a 500 ms pre-flash baseline, centering pre-flash values around zero and reducing variance.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Perform baseline correction</span>
-<span class="n">epochs_interp</span><span class="o">.</span><span class="n">baseline_correction</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>
-<span class="n">epochs_interp_np</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">epochs_interp</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-
-<span class="c1"># Average the first channel (Pupil diameter left [mm]) across all epochs</span>
-<span class="n">pupil_mean</span> <span class="o">=</span> <span class="n">epochs_interp_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">pupil_std</span> <span class="o">=</span> <span class="n">epochs_interp_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-
-<span class="c1"># Show a vertical line at 0</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
-<span class="c1"># Plot the mean pupil diameter and standard deviation</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;epoch_times&quot;</span><span class="p">],</span> <span class="n">pupil_mean</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-    <span class="n">info</span><span class="p">[</span><span class="s2">&quot;epoch_times&quot;</span><span class="p">],</span> <span class="n">pupil_mean</span> <span class="o">-</span> <span class="n">pupil_std</span><span class="p">,</span> <span class="n">pupil_mean</span> <span class="o">+</span> <span class="n">pupil_std</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eye_ep</span><span class="o">.</span><span class="n">apply_baseline</span><span class="p">(</span>
+    <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Flash onset time [s]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pupil Diameter left [mm]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">eye_ep</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;pupil diameter right [mm]&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:275: RuntimeWarning: NaN values were found in the data.
-  warnings.warn(&#34;NaN values were found in the data.&#34;, RuntimeWarning)
-</pre></div></div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_pupil_size_and_epoching_25_0.png" src="../_images/tutorials_pupil_size_and_epoching_25_0.png" />
+</div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_pupil_size_and_epoching_25_1.png" src="../_images/tutorials_pupil_size_and_epoching_25_1.png" />
-</div>
+<div class="highlight"><pre>
+(&lt;Figure size 800x300 with 2 Axes&gt;,
+ &lt;Axes: xlabel=&#39;Epoch time (s)&#39;, ylabel=&#39;pupil diameter right [mm]&#39;&gt;)
+</pre></div></div>
 </div>
 </section>
 </section>
@@ -832,15 +925,15 @@ C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:275: RuntimeWarning: 
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Interpolate data and concatenate streams</p>
+        <p class="prev-next-title">Preprocessing: Cropping, Interpolation, and Concatenation</p>
       </div>
     </a>
     <a class="right-next"
-       href="video.html"
+       href="surface_mapping.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Scene video and scanpath mapping</p>
+        <p class="prev-next-title">Surface Mapping Using Fiducial Markers and Screen Corners</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -864,7 +957,7 @@ C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\epochs.py:275: RuntimeWarning: 
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Visualizing-raw-pupil-size-data-and-repairing-blink-artifacts">Visualizing raw pupil size data and repairing blink artifacts</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Defining-Epochs:-Creating-the-times_df-DataFrame">Defining Epochs: Creating the <code class="docutils literal notranslate"><span class="pre">times_df</span></code> DataFrame</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Defining-Epochs:-Creating-the-epochs_info-DataFrame">Defining Epochs: Creating the <code class="docutils literal notranslate"><span class="pre">epochs_info</span></code> DataFrame</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Creating-Epochs-objects">Creating <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> objects</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Visualizing-epoch-data">Visualizing epoch data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Converting-Stream-based-Epochs-to-a-Numpy-array">Converting <code class="docutils literal notranslate"><span class="pre">Stream</span></code>-based <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> to a Numpy array</a></li>

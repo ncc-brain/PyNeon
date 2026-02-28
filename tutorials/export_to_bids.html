@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Exporting to BIDS formats &#8212; PyNeon dev documentation</title>
+    <title>Exporting to BIDS Formats &#8212; PyNeon dev documentation</title>
   
   
   
@@ -49,7 +49,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="PyNeon API" href="../reference/index.html" />
-    <link rel="prev" title="Scene video and scanpath mapping" href="video.html" />
+    <link rel="prev" title="Scene Video and Scanpath Mapping" href="video.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -287,11 +287,13 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading a Pupil Cloud-format dataset/recording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Exporting to BIDS formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading Pupil Cloud-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_native.html">Reading Native-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Preprocessing: Cropping, Interpolation, and Concatenation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing and Epoching Pupil Size Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surface_mapping.html">Surface Mapping Using Fiducial Markers and Screen Corners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene Video and Scanpath Mapping</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Exporting to BIDS Formats</a></li>
 </ul>
 </div>
 </nav></div>
@@ -335,7 +337,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Exporting to BIDS formats</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Exporting to BIDS Formats</span></li>
   </ul>
 </nav>
 </div>
@@ -352,55 +354,89 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Exporting-to-BIDS-formats">
-<h1>Exporting to BIDS formats<a class="headerlink" href="#Exporting-to-BIDS-formats" title="Link to this heading">#</a></h1>
+  <section id="Exporting-to-BIDS-Formats">
+<h1>Exporting to BIDS Formats<a class="headerlink" href="#Exporting-to-BIDS-Formats" title="Link to this heading">#</a></h1>
+<section id="What-is-BIDS-and-Why-Use-It?">
+<h2>What is BIDS and Why Use It?<a class="headerlink" href="#What-is-BIDS-and-Why-Use-It?" title="Link to this heading">#</a></h2>
 <p>The <a class="reference external" href="https://bids.neuroimaging.io/index.html">Brain Imaging Data Structure (BIDS)</a> is a comprehensive framework designed to systematically organize and share diverse types of data, including behavioral, physiological, and neuroimaging information. Converting datasets into BIDS format is a widely adopted methodology, particularly in the process of curating datasets that adhere to the principles of FAIR (Findable, Accessible, Interoperable, Reusable).</p>
-<p>For datasets encompassing mobile eye-tracking data, it is essential to apply specific BIDS specifications tailored for such data. In this context, Motion-BIDS and Eye-Tracking-BIDS specifications are noteworthy. Motion-BIDS (<a class="reference external" href="https://github.com/bids-standard/bids-specification/pull/981">BEP029</a>) has been successfully integrated into the official BIDS specification, demonstrating its readiness for use in organizing motion-related data. On the other hand, Eye-Tracking-BIDS
-(<a class="reference external" href="https://github.com/bids-standard/bids-specification/pull/1128">BEP020</a>) is still undergoing development, reflecting ongoing efforts to provide a standardized format for eye-tracking data. You can find more information about these specifications in the following references:</p>
+<p><strong>Key benefits of using BIDS:</strong></p>
+<ul class="simple">
+<li><p><strong>Standardization</strong>: Consistent naming conventions and directory structures across datasets</p></li>
+<li><p><strong>Interoperability</strong>: Enables automated analysis pipelines and data sharing</p></li>
+<li><p><strong>Reproducibility</strong>: Comprehensive metadata ensures experiments can be understood and replicated</p></li>
+<li><p><strong>Community adoption</strong>: Widely accepted format in neuroscience research</p></li>
+</ul>
+<p>The general framework of BIDS is described in the following publication:</p>
 <blockquote>
 <div><p>Gorgolewski, K., Auer, T., Calhoun, V. et al. The brain imaging data structure, a format for organizing and describing outputs of neuroimaging experiments. Sci Data 3, 160044 (2016). <a class="reference external" href="https://doi.org/10.1038/sdata.2016.44">https://doi.org/10.1038/sdata.2016.44</a></p>
 </div></blockquote>
-<blockquote>
-<div><p>Jeung, S., Cockx, H., Appelhoff, S. et al. Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. Sci Data 11, 716 (2024). <a class="reference external" href="https://doi.org/10.1038/s41597-024-03559-8">https://doi.org/10.1038/s41597-024-03559-8</a></p>
-</div></blockquote>
-<p>In the ensuing section, we will delve into the procedure for exporting data to Motion-BIDS. This will be accomplished using the <code class="docutils literal notranslate"><span class="pre">export_motion_bids</span></code> method available within PyNeon’s <code class="docutils literal notranslate"><span class="pre">Recording</span></code> objects, offering a practical guide for researchers aiming to standardize their motion data in alignment with the BIDS framework.</p>
+</section>
+<section id="BIDS-Extensions-for-Neon-Data">
+<h2>BIDS Extensions for Neon Data<a class="headerlink" href="#BIDS-Extensions-for-Neon-Data" title="Link to this heading">#</a></h2>
+<p>For datasets from Pupil Labs Neon eye-tracker, we utilize two BIDS extensions:</p>
+<ol class="arabic simple">
+<li><p><strong>Motion-BIDS (BEP029)</strong>: Organizes motion data including acceleration, angular velocity (gyroscope), and orientation from the IMU sensor</p></li>
+<li><p><strong>Eye-Tracking-BIDS (BEP020)</strong>: Organizes gaze position, pupil size/diameter data, and eye-tracking events (fixations, saccades, blinks)</p></li>
+</ol>
+<p>In this tutorial, we demonstrate how to export Neon recordings to these BIDS formats using PyNeon’s <code class="docutils literal notranslate"><span class="pre">export_motion_bids()</span></code> and <code class="docutils literal notranslate"><span class="pre">export_eye_bids()</span></code> methods. These functions handle all file naming, metadata generation, and formatting requirements automatically.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">seedir</span><span class="w"> </span><span class="kn">import</span> <span class="n">seedir</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">get_sample_data</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
-
-<span class="n">rec_dir</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;screenFlash&quot;</span><span class="p">)</span>
-    <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
-    <span class="o">/</span> <span class="s2">&quot;screenflash-54b2f924&quot;</span>
-<span class="p">)</span>
-<span class="n">rec</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">rec_dir</span><span class="p">)</span>
+<span class="c1"># Load sample data</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;cloud&quot;</span><span class="p">))</span>
+<span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
-<p>To use <code class="docutils literal notranslate"><span class="pre">export_motion_bids</span></code> method, we need to specify the output directory where the BIDS dataset will be saved, and a string prefix to denote this session of data. The prefix follows the following format (Fields in [] are optional):</p>
+</section>
+<section id="Exporting-to-Motion-BIDS">
+<h2>Exporting to Motion-BIDS<a class="headerlink" href="#Exporting-to-Motion-BIDS" title="Link to this heading">#</a></h2>
+<p>The Motion-BIDS specification provides a standardized way to organize motion sensor data from devices like IMUs (Inertial Measurement Units):</p>
+<blockquote>
+<div><p>Jeung, S., Cockx, H., Appelhoff, S. et al. Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. Sci Data 11, 716 (2024). <a class="reference external" href="https://doi.org/10.1038/s41597-024-03559-8">https://doi.org/10.1038/s41597-024-03559-8</a></p>
+</div></blockquote>
+<section id="Understanding-the-BIDS-Prefix">
+<h3>Understanding the BIDS Prefix<a class="headerlink" href="#Understanding-the-BIDS-Prefix" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">export_motion_bids()</span></code> method requires a <strong>prefix</strong> string that specifies the experimental context. The prefix follows this standardized format (fields in brackets are optional):</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sub-&lt;label&gt;[_ses-&lt;label&gt;]_task-&lt;label&gt;_tracksys-&lt;label&gt;[_acq-&lt;label&gt;][_run-&lt;index&gt;]
 </pre></div>
 </div>
-<p>If you have any additional metadata that you would like to include, you can pass it as a dictionary to the <code class="docutils literal notranslate"><span class="pre">extra_metadata</span></code> argument. This metadata will be saved in the <code class="docutils literal notranslate"><span class="pre">dataset_description.json</span></code> file.</p>
-<p>Let’s see what files will be exported to the BIDS dataset directory:</p>
+<p><strong>Required fields:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sub-&lt;label&gt;</span></code>: Subject/participant identifier (e.g., <code class="docutils literal notranslate"><span class="pre">sub-01</span></code>, <code class="docutils literal notranslate"><span class="pre">sub-Alice</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">task-&lt;label&gt;</span></code>: Name of the experimental task (e.g., <code class="docutils literal notranslate"><span class="pre">task-Navigation</span></code>, <code class="docutils literal notranslate"><span class="pre">task-Reading</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tracksys-&lt;label&gt;</span></code>: Tracking system used (for Neon IMU: <code class="docutils literal notranslate"><span class="pre">tracksys-NeonIMU</span></code>)</p></li>
+</ul>
+<p><strong>Optional fields:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ses-&lt;label&gt;</span></code>: Session identifier for multi-session experiments</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">acq-&lt;label&gt;</span></code>: Acquisition parameters or protocol</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run-&lt;index&gt;</span></code>: Run number for repeated acquisitions</p></li>
+</ul>
+</section>
+<section id="Adding-Custom-Metadata">
+<h3>Adding Custom Metadata<a class="headerlink" href="#Adding-Custom-Metadata" title="Link to this heading">#</a></h3>
+<p>You can include additional experiment-specific metadata by passing a dictionary to the <code class="docutils literal notranslate"><span class="pre">extra_metadata</span></code> argument. This information will be saved in the JSON metadata file and is crucial for documenting your experimental setup.</p>
+<p>Let’s export the motion data:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a BIDS directory</span>
-<span class="n">motion_dir</span> <span class="o">=</span> <span class="n">rec_dir</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;BIDS&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-1&quot;</span> <span class="o">/</span> <span class="s2">&quot;motion&quot;</span>
-<span class="n">motion_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">motion_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;export&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;BIDS&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;ses-1&quot;</span> <span class="o">/</span> <span class="s2">&quot;motion&quot;</span>
 
 <span class="c1"># Export the motion data to BIDS format</span>
-<span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;sub-1_task-screenFlash_tracksys-NeonIMU_run-1&quot;</span>
+<span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1&quot;</span>
 <span class="n">extra_metadata</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;TaskName&quot;</span><span class="p">:</span> <span class="s2">&quot;screenFlash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TaskName&quot;</span><span class="p">:</span> <span class="s2">&quot;LabMuse&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TaskDescription&quot;</span><span class="p">:</span> <span class="s2">&quot;Watching artworks on the screen&quot;</span><span class="p">,</span>
     <span class="s2">&quot;InstitutionName&quot;</span><span class="p">:</span> <span class="s2">&quot;Streeling University&quot;</span><span class="p">,</span>
     <span class="s2">&quot;InstitutionAddress&quot;</span><span class="p">:</span> <span class="s2">&quot;Trantor, Galactic Empire&quot;</span><span class="p">,</span>
     <span class="s2">&quot;InstitutionalDepartmentName&quot;</span><span class="p">:</span> <span class="s2">&quot;Department of Psychohistory&quot;</span><span class="p">,</span>
@@ -408,9 +444,7 @@
 
 <span class="n">rec</span><span class="o">.</span><span class="n">export_motion_bids</span><span class="p">(</span><span class="n">motion_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">extra_metadata</span><span class="o">=</span><span class="n">extra_metadata</span><span class="p">)</span>
 
-<span class="c1"># Print all the conents of motion_dir</span>
-<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">motion_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="n">seedir</span><span class="p">(</span><span class="n">motion_dir</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -419,22 +453,43 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-sub-1_task-screenFlash_tracksys-NeonIMU_run-1_channels.json
-sub-1_task-screenFlash_tracksys-NeonIMU_run-1_channels.tsv
-sub-1_task-screenFlash_tracksys-NeonIMU_run-1_motion.json
-sub-1_task-screenFlash_tracksys-NeonIMU_run-1_motion.tsv
+sub-01/
+└─ses-1/
+  ├─motion/
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.json
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.tsv
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.json
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.tsv
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.json
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.tsv.gz
+  │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.json
+  │ └─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.tsv.gz
+  └─sub-01_ses-1_scans.tsv
 </pre></div></div>
 </div>
-<p>The contents of these files follow the Motion-BIDS specification at: <a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html</a>.</p>
-<p>For example, the <code class="docutils literal notranslate"><span class="pre">_motion.tsv</span></code> is a tab-separated values file that contains the (n_samples, n_channels) motion data without a header:</p>
+</section>
+<section id="Understanding-the-Motion-BIDS-File-Structure">
+<h3>Understanding the Motion-BIDS File Structure<a class="headerlink" href="#Understanding-the-Motion-BIDS-File-Structure" title="Link to this heading">#</a></h3>
+<p>The export creates four files that work together to fully describe the IMU data:</p>
+<ol class="arabic simple">
+<li><p><strong>``_motion.tsv``</strong>: Tab-separated file containing the raw IMU time-series data (no header)</p></li>
+<li><p><strong>``_motion.json``</strong>: Metadata describing the recording setup, device, and data characteristics</p></li>
+<li><p><strong>``_channels.tsv``</strong>: Information about each data channel (type, units, sampling rate)</p></li>
+<li><p><strong>``_channels.json``</strong>: Coordinate system information for the motion data</p></li>
+</ol>
+<p>Additionally, a <strong>``_scans.tsv``</strong> file is created in the parent directory to log all acquisitions for the subject/session.</p>
+<p>Let’s examine each file in detail.</p>
+<section id="1.-Motion-Time-Series-Data-(_motion.tsv)">
+<h4>1. Motion Time-Series Data (<code class="docutils literal notranslate"><span class="pre">_motion.tsv</span></code>)<a class="headerlink" href="#1.-Motion-Time-Series-Data-(_motion.tsv)" title="Link to this heading">#</a></h4>
+<p>This file contains the continuous IMU measurements. Each row is a sample, and each column is a sensor channel (13 total: 3 gyroscope + 3 accelerometer + 7 orientation quaternion):</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">motion_tsv_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_motion.tsv&quot;</span>
-<span class="n">motion_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">motion_tsv_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Motion data shape: </span><span class="si">{</span><span class="n">motion_df</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">motion_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">physio_tsv_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_motion.tsv&quot;</span>
+<span class="n">physio_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">physio_tsv_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Motion data shape: </span><span class="si">{</span><span class="n">physio_df</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">physio_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -443,45 +498,34 @@ sub-1_task-screenFlash_tracksys-NeonIMU_run-1_motion.tsv
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Motion data shape: (4944, 13)
-   -0.032425  1.249313  -1.062393  -0.027344  -0.378906  0.949707  \
-0   0.022678  1.190656  -1.119273  -0.019153  -0.377996  0.940606
-1   0.291978  1.451646  -1.228879  -0.024460  -0.373712  0.939519
-2   0.139505  1.396314  -1.294069  -0.030831  -0.371104  0.944893
-3   0.399156  1.061873  -1.306534  -0.030095  -0.371316  0.943091
-4   0.307300  1.362720  -1.348332  -0.027290  -0.373589  0.944235
+Motion data shape: (3579, 13)
+         0          1          2         3         4         5         6   \
+0 -4.850388  64.683914  37.141800  0.044434  0.021484  1.003906 -1.620918
+1 -5.055847  64.009297  36.934723  0.021241  0.007817  1.005563 -1.143437
+2 -5.092621  63.636188  37.067672  0.009610  0.004351  0.992939 -0.669902
+3 -5.049325  63.301292  37.320572 -0.005809  0.009269  0.995885  0.321108
+4 -4.925333  64.229119  37.439189 -0.008550  0.001859  0.989226  1.114043
 
-   1.1495382546655957  -22.014470833356658  131.97212848840843  \
-0            1.154530           -22.012730          131.961423
-1            1.161212           -22.009442          131.950870
-2            1.171125           -22.004620          131.941577
-3            1.178265           -21.998308          131.931277
-4            1.183449           -21.993049          131.918883
-
-   0.4012015163898468  -0.0866925716400146  -0.1703909933567047  \
-0            0.401294            -0.086741            -0.170352
-1            0.401388            -0.086798            -0.170295
-2            0.401478            -0.086873            -0.170215
-3            0.401573            -0.086922            -0.170133
-4            0.401681            -0.086962            -0.170064
-
-   0.895817220211029
-0           0.895779
-1           0.895742
-2           0.895709
-3           0.895678
-4           0.895638
+         7           8         9         10        11        12
+0 -0.014557 -101.157675  0.634954 -0.011007 -0.008884 -0.772421
+1 -0.052766 -100.864351  0.636961 -0.007987 -0.006000 -0.770828
+2 -0.092127 -100.564013  0.638999 -0.005013 -0.003115 -0.769180
+3 -0.166917  -99.932651  0.643222  0.001200  0.002926 -0.765656
+4 -0.223694  -99.436470  0.646499  0.006153  0.007776 -0.762848
 </pre></div></div>
 </div>
-<p>Its metadata is stored in the <code class="docutils literal notranslate"><span class="pre">_motion.json</span></code> file, which contains (note the extra metadata we added):</p>
+</section>
+<section id="2.-Motion-Metadata-(_motion.json)">
+<h4>2. Motion Metadata (<code class="docutils literal notranslate"><span class="pre">_motion.json</span></code>)<a class="headerlink" href="#2.-Motion-Metadata-(_motion.json)" title="Link to this heading">#</a></h4>
+<p>This file contains crucial metadata about the recording setup and data characteristics. Note how our custom metadata (TaskName, InstitutionName, etc.) has been included:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">motion_json</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_motion.json&quot;</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">motion_json</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">motion_json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">motion_json_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">motion_metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">motion_metadata</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -491,29 +535,40 @@ Motion data shape: (4944, 13)
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 {
-  &#34;TaskName&#34;: &#34;screenFlash&#34;,
-  &#34;TaskDescription&#34;: &#34;&#34;,
-  &#34;Instructions&#34;: &#34;&#34;,
-  &#34;DeviceSerialNumber&#34;: &#34;321970&#34;,
-  &#34;Manufacturer&#34;: &#34;TDK InvenSense &amp; Pupil Labs&#34;,
-  &#34;ManufacturersModelName&#34;: &#34;ICM-20948&#34;,
-  &#34;SoftwareVersions&#34;: &#34;App version: 2.9.3-prod; Pipeline version: 2.8.0&#34;,
-  &#34;InstitutionName&#34;: &#34;Streeling University&#34;,
-  &#34;InstitutionAddress&#34;: &#34;Trantor, Galactic Empire&#34;,
-  &#34;InstitutionalDepartmentName&#34;: &#34;Department of Psychohistory&#34;,
-  &#34;SamplingFrequency&#34;: 110,
-  &#34;ACCELChannelCount&#34;: 3,
-  &#34;GYROChannelCount&#34;: 3,
-  &#34;MissingValues&#34;: &#34;n/a&#34;,
-  &#34;MotionChannelCount&#34;: 13,
-  &#34;ORNTChannelCount&#34;: 7,
-  &#34;SubjectArtefactDescription&#34;: &#34;&#34;,
-  &#34;TrackedPointsCount&#34;: 0,
-  &#34;TrackingSystemName&#34;: &#34;IMU included in Neon&#34;
+    &#34;TaskName&#34;: &#34;LabMuse&#34;,
+    &#34;TaskDescription&#34;: &#34;Watching artworks on the screen&#34;,
+    &#34;Instructions&#34;: &#34;&#34;,
+    &#34;DeviceSerialNumber&#34;: &#34;114837&#34;,
+    &#34;Manufacturer&#34;: &#34;TDK InvenSense &amp; Pupil Labs&#34;,
+    &#34;ManufacturersModelName&#34;: &#34;ICM-20948&#34;,
+    &#34;SoftwareVersions&#34;: &#34;App version: 2.9.26-prod; Pipeline version: 2.8.0&#34;,
+    &#34;InstitutionName&#34;: &#34;Streeling University&#34;,
+    &#34;InstitutionAddress&#34;: &#34;Trantor, Galactic Empire&#34;,
+    &#34;InstitutionalDepartmentName&#34;: &#34;Department of Psychohistory&#34;,
+    &#34;SamplingFrequency&#34;: 110,
+    &#34;ACCELChannelCount&#34;: 3,
+    &#34;ANGACCELChannelCount&#34;: 0,
+    &#34;GYROChannelCount&#34;: 3,
+    &#34;JNTANGChannelCount&#34;: 0,
+    &#34;LATENCYChannelCount&#34;: 0,
+    &#34;MAGNChannelCount&#34;: 0,
+    &#34;MISCChannelCount&#34;: 0,
+    &#34;MissingValues&#34;: &#34;n/a&#34;,
+    &#34;MotionChannelCount&#34;: 0,
+    &#34;ORNTChannelCount&#34;: 7,
+    &#34;POSChannelCount&#34;: 0,
+    &#34;SamplingFrequencyEffective&#34;: 110.0000011,
+    &#34;SubjectArtefactDescription&#34;: &#34;&#34;,
+    &#34;TrackedPointsCount&#34;: 0,
+    &#34;TrackingSystemName&#34;: &#34;Neon IMU&#34;,
+    &#34;VELChannelCount&#34;: 0
 }
 </pre></div></div>
 </div>
-<p>The metadata for each channel (each column in the <code class="docutils literal notranslate"><span class="pre">_motion.tsv</span></code> file) is stored in <code class="docutils literal notranslate"><span class="pre">_channels.tsv</span></code> file:</p>
+</section>
+<section id="3.-Channel-Information-(_channels.tsv)">
+<h4>3. Channel Information (<code class="docutils literal notranslate"><span class="pre">_channels.tsv</span></code>)<a class="headerlink" href="#3.-Channel-Information-(_channels.tsv)" title="Link to this heading">#</a></h4>
+<p>This file provides detailed information about each channel in the motion data, including the sensor type, spatial component (x/y/z), units, and sampling frequency:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -539,36 +594,45 @@ Motion data shape: (4944, 13)
 6             roll         x   ORNT          Head        deg
 7            pitch         y   ORNT          Head        deg
 8              yaw         z   ORNT          Head        deg
-9     quaternion w         w   ORNT          Head  arbitrary
-10    quaternion x         x   ORNT          Head  arbitrary
-11    quaternion y         y   ORNT          Head  arbitrary
-12    quaternion z         z   ORNT          Head  arbitrary
+9     quaternion w    quat_w   ORNT          Head  arbitrary
+10    quaternion x    quat_x   ORNT          Head  arbitrary
+11    quaternion y    quat_y   ORNT          Head  arbitrary
+12    quaternion z    quat_z   ORNT          Head  arbitrary
 
-    sampling_frequency
-0                  110
-1                  110
-2                  110
-3                  110
-4                  110
-5                  110
-6                  110
-7                  110
-8                  110
-9                  110
-10                 110
-11                 110
-12                 110
+                    placement  sampling_frequency status  status_description
+0   Head-mounted Neon glasses          110.000001   good                 NaN
+1   Head-mounted Neon glasses          110.000001   good                 NaN
+2   Head-mounted Neon glasses          110.000001   good                 NaN
+3   Head-mounted Neon glasses          110.000001   good                 NaN
+4   Head-mounted Neon glasses          110.000001   good                 NaN
+5   Head-mounted Neon glasses          110.000001   good                 NaN
+6   Head-mounted Neon glasses          110.000001   good                 NaN
+7   Head-mounted Neon glasses          110.000001   good                 NaN
+8   Head-mounted Neon glasses          110.000001   good                 NaN
+9   Head-mounted Neon glasses          110.000001   good                 NaN
+10  Head-mounted Neon glasses          110.000001   good                 NaN
+11  Head-mounted Neon glasses          110.000001   good                 NaN
+12  Head-mounted Neon glasses          110.000001   good                 NaN
 </pre></div></div>
 </div>
-<p>Finally, the <code class="docutils literal notranslate"><span class="pre">_channels.json</span></code> file contains the coordinate system:</p>
+<p><strong>Sensor types in Neon IMU:</strong></p>
+<ul class="simple">
+<li><p><strong>GYRO</strong>: Angular velocity (rotation rate) in degrees/second</p></li>
+<li><p><strong>ACCEL</strong>: Linear acceleration in g-force units</p></li>
+<li><p><strong>ORNT</strong>: Orientation quaternion (w, x, y, z) in arbitrary units</p></li>
+</ul>
+</section>
+<section id="4.-Coordinate-System-(_channels.json)">
+<h4>4. Coordinate System (<code class="docutils literal notranslate"><span class="pre">_channels.json</span></code>)<a class="headerlink" href="#4.-Coordinate-System-(_channels.json)" title="Link to this heading">#</a></h4>
+<p>This file defines the reference frame for interpreting the motion data. For Neon, the global reference frame is defined by the IMU axes (X=right, Y=anterior, Z=superior):</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">channels_json_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_channels.json&quot;</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">channels_json_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">channels_json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">channels_json_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">channels_metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">channels_metadata</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -578,19 +642,289 @@ Motion data shape: (4944, 13)
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 {
-  &#34;reference_frame&#34;: {
-    &#34;Levels&#34;: {
-      &#34;global&#34;: {
-        &#34;SpatialAxes&#34;: &#34;RAS&#34;,
-        &#34;RotationOrder&#34;: &#34;ZXY&#34;,
-        &#34;RotationRule&#34;: &#34;right-hand&#34;,
-        &#34;Description&#34;: &#34;This global reference frame is defined by the IMU axes: X right, Y anterior, Z superior. The scene camera frame differs from this frame by a 102-degree rotation around the X-axis. All motion data are expressed relative to the IMU frame for consistency.&#34;
-      }
+    &#34;reference_frame&#34;: {
+        &#34;Levels&#34;: {
+            &#34;global&#34;: {
+                &#34;SpatialAxes&#34;: &#34;RAS&#34;,
+                &#34;RotationOrder&#34;: &#34;ZXY&#34;,
+                &#34;RotationRule&#34;: &#34;right-hand&#34;,
+                &#34;Description&#34;: &#34;This global reference frame is defined by the IMU axes: X right, Y anterior, Z superior. The scene camera frame differs from this frame by a 102-degree rotation around the X-axis. All motion data are expressed relative to the IMU frame for consistency.&#34;
+            }
+        }
     }
-  }
 }
 </pre></div></div>
 </div>
+</section>
+</section>
+</section>
+<section id="Exporting-to-Eye-Tracking-BIDS">
+<h2>Exporting to Eye-Tracking-BIDS<a class="headerlink" href="#Exporting-to-Eye-Tracking-BIDS" title="Link to this heading">#</a></h2>
+<p>The Eye-Tracking-BIDS specification standardizes how gaze position, pupil data, and eye-tracking events should be organized:</p>
+<blockquote>
+<div><p>Szinte, M., Bach, D. R., Draschkow, D., Esteban, O., Gagl, B., Gau, R., Gregorova, K., Halchenko, Y. O., Huberty, S., Kling, S. M., Kulkarni, S., Maintainers, T. B., Markiewicz, C. J., Mikkelsen, M., Oostenveld, R., &amp; Pfarr, J.-K. (2026). Eye-Tracking-BIDS: The Brain Imaging Data Structure extended to gaze position and pupil data. bioRxiv. <a class="reference external" href="https://doi.org/10.64898/2026.02.03.703514">https://doi.org/10.64898/2026.02.03.703514</a></p>
+</div></blockquote>
+<section id="Export-Configuration">
+<h3>Export Configuration<a class="headerlink" href="#Export-Configuration" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">export_eye_tracking_bids()</span></code> method has similar arguments to <code class="docutils literal notranslate"><span class="pre">export_motion_bids()</span></code>:</p>
+<ul class="simple">
+<li><p><strong>output_dir</strong>: Directory where files will be saved</p></li>
+<li><p><strong>prefix</strong>: BIDS naming prefix (must include <code class="docutils literal notranslate"><span class="pre">sub-&lt;label&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">task-&lt;label&gt;</span></code> at minimum). If not provided, the function will attempt to infer it from existing files in the output directory.</p></li>
+<li><p><strong>extra_metadata</strong>: Optional dictionary of additional metadata</p></li>
+</ul>
+<p><strong>Important</strong>: When exporting eye-tracking data, it’s best practice to use the same output directory as your motion (or other modality) data to link them together as part of the same recording session. The function will automatically detect and use the matching prefix from existing files, or you can explicitly provide one. Eye-tracking data is considered physiology data in BIDS.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span><span class="o">.</span><span class="n">export_eye_tracking_bids</span><span class="p">(</span><span class="n">motion_dir</span><span class="p">)</span>
+<span class="n">seedir</span><span class="p">(</span><span class="n">motion_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Warning: Duplicated indices found and removed.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 23 out of 6496 requested timestamps are outside the data time range and will have empty data.
+  warn(
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+motion/
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.json
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_channels.tsv
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.json
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_motion.tsv
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.json
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physio.tsv.gz
+├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.json
+└─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_run-1_physioevents.tsv.gz
+</pre></div></div>
+</div>
+</section>
+<section id="Understanding-the-Eye-Tracking-BIDS-File-Structure">
+<h3>Understanding the Eye-Tracking-BIDS File Structure<a class="headerlink" href="#Understanding-the-Eye-Tracking-BIDS-File-Structure" title="Link to this heading">#</a></h3>
+<p>Eye-Tracking-BIDS creates four main files:</p>
+<ol class="arabic simple">
+<li><p><strong>``_physio.tsv.gz``</strong>: Compressed time-series data for gaze and pupil measurements</p></li>
+<li><p><strong>``_physio.json``</strong>: Metadata describing the eye-tracking setup and data columns</p></li>
+<li><p><strong>``_physioevents.tsv.gz``</strong>: Event data (fixations, saccades, blinks, custom messages)</p></li>
+<li><p><strong>``_physioevents.json``</strong>: Metadata for the events file</p></li>
+</ol>
+<section id="1.-Physiological-Time-Series-Data-(_physio.tsv.gz)">
+<h4>1. Physiological Time-Series Data (<code class="docutils literal notranslate"><span class="pre">_physio.tsv.gz</span></code>)<a class="headerlink" href="#1.-Physiological-Time-Series-Data-(_physio.tsv.gz)" title="Link to this heading">#</a></h4>
+<p>This compressed file contains continuous gaze and pupil data with 5 columns:</p>
+<ul class="simple">
+<li><p><strong>timestamp</strong>: Time in nanoseconds</p></li>
+<li><p><strong>x_coordinate</strong>: Horizontal gaze position in pixels</p></li>
+<li><p><strong>y_coordinate</strong>: Vertical gaze position in pixels</p></li>
+<li><p><strong>left_pupil_diameter</strong>: Left pupil diameter in millimeters</p></li>
+<li><p><strong>right_pupil_diameter</strong>: Right pupil diameter in millimeters</p></li>
+</ul>
+<p>Let’s inspect the data:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">physio_tsv_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_physio.tsv.gz&quot;</span>
+<span class="n">physio_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">physio_tsv_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;gzip&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Eye-tracking data shape: </span><span class="si">{</span><span class="n">physio_df</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">physio_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Eye-tracking data shape: (6496, 5)
+                     0        1        2       3       4
+0  1758493906829570307  493.391  519.903  5.2033  4.4699
+1  1758493906839570307  483.811  509.177  5.2051  4.4298
+2  1758493906844570307  480.526  510.026  5.2209  4.4105
+3  1758493906849577307  480.566  511.044  5.2965  4.4155
+4  1758493906854570307  482.622  513.314  5.2680  4.4286
+</pre></div></div>
+</div>
+</section>
+<section id="2.-Physiological-Data-Metadata-(_physio.json)">
+<h4>2. Physiological Data Metadata (<code class="docutils literal notranslate"><span class="pre">_physio.json</span></code>)<a class="headerlink" href="#2.-Physiological-Data-Metadata-(_physio.json)" title="Link to this heading">#</a></h4>
+<p>This file provides comprehensive metadata about the eye-tracking data, including column definitions, sampling frequency, and device information:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">physio_json</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_physio.json&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">physio_json</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">physio_metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">physio_metadata</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{
+    &#34;SamplingFrequency&#34;: 199.66054326173642,
+    &#34;StartTime&#34;: 0,
+    &#34;Columns&#34;: [
+        &#34;timestamp&#34;,
+        &#34;x_coordinate&#34;,
+        &#34;y_coordinate&#34;,
+        &#34;left_pupil_diameter&#34;,
+        &#34;right_pupil_diameter&#34;
+    ],
+    &#34;DeviceSerialNumber&#34;: &#34;114837&#34;,
+    &#34;Manufacturer&#34;: &#34;Pupil Labs&#34;,
+    &#34;ManufacturersModelName&#34;: &#34;Neon&#34;,
+    &#34;SoftwareVersions&#34;: &#34;App version: 2.9.26-prod; Pipeline version: 2.8.0&#34;,
+    &#34;PhysioType&#34;: &#34;eyetrack&#34;,
+    &#34;EnvironmentCoorinates&#34;: &#34;top-left&#34;,
+    &#34;RecordedEye&#34;: &#34;cyclopean&#34;,
+    &#34;SampleCoordinateSystem&#34;: &#34;gaze-in-world&#34;,
+    &#34;EyeTrackingMethod&#34;: &#34;real-time neural network&#34;,
+    &#34;timestamp&#34;: {
+        &#34;Description&#34;: &#34;UTC timestamp in nanoseconds of the sample&#34;,
+        &#34;Units&#34;: &#34;ns&#34;
+    },
+    &#34;x_coordinate&#34;: {
+        &#34;Description&#34;: &#34;X-coordinate of the mapped gaze point in world camera pixel coordinates.&#34;,
+        &#34;Units&#34;: &#34;pixel&#34;
+    },
+    &#34;y_coordinate&#34;: {
+        &#34;Description&#34;: &#34;Y-coordinate of the mapped gaze point in world camera pixel coordinates.&#34;,
+        &#34;Units&#34;: &#34;pixel&#34;
+    },
+    &#34;left_pupil_diameter&#34;: {
+        &#34;Description&#34;: &#34;Physical diameter of the pupil of the left eye&#34;,
+        &#34;Units&#34;: &#34;mm&#34;
+    },
+    &#34;right_pupil_diameter&#34;: {
+        &#34;Description&#34;: &#34;Physical diameter of the pupil of the right eye&#34;,
+        &#34;Units&#34;: &#34;mm&#34;
+    },
+    &#34;TaskName&#34;: &#34;LabMuse&#34;
+}
+</pre></div></div>
+</div>
+</section>
+<section id="3.-Eye-Tracking-Events-(_physioevents.tsv.gz)">
+<h4>3. Eye-Tracking Events (<code class="docutils literal notranslate"><span class="pre">_physioevents.tsv.gz</span></code>)<a class="headerlink" href="#3.-Eye-Tracking-Events-(_physioevents.tsv.gz)" title="Link to this heading">#</a></h4>
+<p>This file contains all detected eye-tracking events and custom messages. Each row represents one event with columns:</p>
+<ul class="simple">
+<li><p><strong>onset</strong>: Event start time in nanoseconds</p></li>
+<li><p><strong>duration</strong>: Event duration in seconds (for fixations, saccades, blinks)</p></li>
+<li><p><strong>trial_type</strong>: Type of event (<code class="docutils literal notranslate"><span class="pre">fixation</span></code>, <code class="docutils literal notranslate"><span class="pre">saccade</span></code>, <code class="docutils literal notranslate"><span class="pre">blink</span></code>)</p></li>
+<li><p><strong>message</strong>: Custom event messages/markers (when applicable)</p></li>
+</ul>
+<p>PyNeon automatically exports all available events from the recording, including algorithmically detected events (fixations, saccades, blinks) and user-defined messages.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">physioevents_tsv_path</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_physioevents.tsv.gz&quot;</span>
+<span class="n">physioevents_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+    <span class="n">physioevents_tsv_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;gzip&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total events: </span><span class="si">{</span><span class="n">physioevents_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">physioevents_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Total events: 143
+                     0      1         2                3
+0  1758493904395000000    NaN       NaN  recording.begin
+1  1758493906489203307  0.270     blink              NaN
+2  1758493906839570307  0.180  fixation              NaN
+3  1758493907019693307  0.010   saccade              NaN
+4  1758493907029691307  0.576  fixation              NaN
+5  1758493907605304307  0.090   saccade              NaN
+6  1758493907695302307  0.150  fixation              NaN
+7  1758493907845424307  0.065   saccade              NaN
+8  1758493907910548307  0.210  fixation              NaN
+9  1758493908120793307  0.040   saccade              NaN
+</pre></div></div>
+</div>
+</section>
+<section id="4.-Events-Metadata-(_physioevents.json)">
+<h4>4. Events Metadata (<code class="docutils literal notranslate"><span class="pre">_physioevents.json</span></code>)<a class="headerlink" href="#4.-Events-Metadata-(_physioevents.json)" title="Link to this heading">#</a></h4>
+<p>This file describes the structure and meaning of the events data:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">physioevents_json</span> <span class="o">=</span> <span class="n">motion_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_physioevents.json&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">physioevents_json</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">physioevents_metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">physioevents_metadata</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{
+    &#34;Columns&#34;: [
+        &#34;onset&#34;,
+        &#34;duration&#34;,
+        &#34;trial_type&#34;,
+        &#34;message&#34;
+    ],
+    &#34;Description&#34;: &#34;Eye events and messages logged by Neon&#34;,
+    &#34;OnsetSource&#34;: &#34;timestamp&#34;,
+    &#34;onset&#34;: {
+        &#34;Description&#34;: &#34;UTC timestamp in nanoseconds of the start of the event&#34;,
+        &#34;Units&#34;: &#34;ns&#34;
+    },
+    &#34;duration&#34;: {
+        &#34;Description&#34;: &#34;Event duration&#34;,
+        &#34;Units&#34;: &#34;s&#34;
+    },
+    &#34;trial_type&#34;: {
+        &#34;Description&#34;: &#34;Type of trial event&#34;,
+        &#34;Levels&#34;: {
+            &#34;fixation&#34;: {
+                &#34;Description&#34;: &#34;Fixation event&#34;
+            },
+            &#34;saccade&#34;: {
+                &#34;Description&#34;: &#34;Saccade event&#34;
+            },
+            &#34;blink&#34;: {
+                &#34;Description&#34;: &#34;Blink event&#34;
+            }
+        }
+    },
+    &#34;TaskName&#34;: &#34;LabMuse&#34;
+}
+</pre></div></div>
+</div>
+</section>
+</section>
+</section>
 </section>
 
 
@@ -609,7 +943,7 @@ Motion data shape: (4944, 13)
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Scene video and scanpath mapping</p>
+        <p class="prev-next-title">Scene Video and Scanpath Mapping</p>
       </div>
     </a>
     <a class="right-next"
@@ -631,6 +965,42 @@ Motion data shape: (4944, 13)
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#What-is-BIDS-and-Why-Use-It?">What is BIDS and Why Use It?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#BIDS-Extensions-for-Neon-Data">BIDS Extensions for Neon Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Exporting-to-Motion-BIDS">Exporting to Motion-BIDS</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Understanding-the-BIDS-Prefix">Understanding the BIDS Prefix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Adding-Custom-Metadata">Adding Custom Metadata</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Understanding-the-Motion-BIDS-File-Structure">Understanding the Motion-BIDS File Structure</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Motion-Time-Series-Data-(_motion.tsv)">1. Motion Time-Series Data (<code class="docutils literal notranslate"><span class="pre">_motion.tsv</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Motion-Metadata-(_motion.json)">2. Motion Metadata (<code class="docutils literal notranslate"><span class="pre">_motion.json</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Channel-Information-(_channels.tsv)">3. Channel Information (<code class="docutils literal notranslate"><span class="pre">_channels.tsv</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Coordinate-System-(_channels.json)">4. Coordinate System (<code class="docutils literal notranslate"><span class="pre">_channels.json</span></code>)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Exporting-to-Eye-Tracking-BIDS">Exporting to Eye-Tracking-BIDS</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Export-Configuration">Export Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Understanding-the-Eye-Tracking-BIDS-File-Structure">Understanding the Eye-Tracking-BIDS File Structure</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Physiological-Time-Series-Data-(_physio.tsv.gz)">1. Physiological Time-Series Data (<code class="docutils literal notranslate"><span class="pre">_physio.tsv.gz</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Physiological-Data-Metadata-(_physio.json)">2. Physiological Data Metadata (<code class="docutils literal notranslate"><span class="pre">_physio.json</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Eye-Tracking-Events-(_physioevents.tsv.gz)">3. Eye-Tracking Events (<code class="docutils literal notranslate"><span class="pre">_physioevents.tsv.gz</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Events-Metadata-(_physioevents.json)">4. Events Metadata (<code class="docutils literal notranslate"><span class="pre">_physioevents.json</span></code>)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">

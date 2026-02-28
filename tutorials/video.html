@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Scene video and scanpath mapping &#8212; PyNeon dev documentation</title>
+    <title>Scene Video and Scanpath Mapping &#8212; PyNeon dev documentation</title>
   
   
   
@@ -48,8 +48,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/video';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Exporting to BIDS formats" href="export_to_bids.html" />
-    <link rel="prev" title="Processing pupil size data and epoching" href="pupil_size_and_epoching.html" />
+    <link rel="next" title="Exporting to BIDS Formats" href="export_to_bids.html" />
+    <link rel="prev" title="Surface Mapping Using Fiducial Markers and Screen Corners" href="surface_mapping.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -287,11 +287,13 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading a Pupil Cloud-format dataset/recording</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading Pupil Cloud-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_native.html">Reading Native-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Preprocessing: Cropping, Interpolation, and Concatenation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing and Epoching Pupil Size Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surface_mapping.html">Surface Mapping Using Fiducial Markers and Screen Corners</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Scene Video and Scanpath Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS Formats</a></li>
 </ul>
 </div>
 </nav></div>
@@ -335,7 +337,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Scene video and scanpath mapping</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Scene Video and Scanpath Mapping</span></li>
   </ul>
 </nav>
 </div>
@@ -352,12 +354,12 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Scene-video-and-scanpath-mapping">
-<h1>Scene video and scanpath mapping<a class="headerlink" href="#Scene-video-and-scanpath-mapping" title="Link to this heading">#</a></h1>
+  <section id="Scene-Video-and-Scanpath-Mapping">
+<h1>Scene Video and Scanpath Mapping<a class="headerlink" href="#Scene-Video-and-Scanpath-Mapping" title="Link to this heading">#</a></h1>
 <p>In this tutorial, we will map gaze data from an eye-tracking recording to video frames, estimate a scanpath, and overlay the gaze fixations on the video. We will use the <code class="docutils literal notranslate"><span class="pre">pyneon</span></code> library to work with Neon eye-tracking recordings, which contain video and event data, including gaze information.</p>
 <hr class="docutils" />
-<section id="1.-Setup:-Loading-a-Neon-Recording">
-<h2>1. Setup: Loading a Neon Recording<a class="headerlink" href="#1.-Setup:-Loading-a-Neon-Recording" title="Link to this heading">#</a></h2>
+<section id="Setup:-Loading-a-Neon-Recording">
+<h2>Setup: Loading a Neon Recording<a class="headerlink" href="#Setup:-Loading-a-Neon-Recording" title="Link to this heading">#</a></h2>
 <p>First, we load the Neon recording, which contains video and gaze data. Ensure that you have installed the required libraries such as <code class="docutils literal notranslate"><span class="pre">pyneon</span></code> and have the recording dataset available.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -429,12 +431,12 @@ scene_video       True  11f35cc2_0.0-357.538.mp4  C:\Users\jan-gabriel.hartel\Do
 </div>
 </section>
 <hr class="docutils" />
-<section id="2.-Mapping-Gaze-Data-to-Video-Frames">
-<h2>2. Mapping Gaze Data to Video Frames<a class="headerlink" href="#2.-Mapping-Gaze-Data-to-Video-Frames" title="Link to this heading">#</a></h2>
+<section id="Mapping-Gaze-Data-to-Video-Frames">
+<h2>Mapping Gaze Data to Video Frames<a class="headerlink" href="#Mapping-Gaze-Data-to-Video-Frames" title="Link to this heading">#</a></h2>
 <p>In Neon recordings, gaze events are not naturally synchronized with the video. To map gaze data to specific video frames, we can use the <code class="docutils literal notranslate"><span class="pre">map_gaze_to_video</span></code> method. This method requires the <code class="docutils literal notranslate"><span class="pre">pyneon.video</span></code> object for determination of video timestamps, the <code class="docutils literal notranslate"><span class="pre">pyneon.fixations</span></code> object to make use of PupilLabs fixation detection pipeline and the <code class="docutils literal notranslate"><span class="pre">pyneon.gaze</span></code> object for improved time resolution of gaze estimation.</p>
-<p>By default, Neon reports fixations with a single coordinate. This is computed as average between all gaze coordinates over the interval dennoted as a fixation. However, this clashes with the funcional definition of a fixation as <em>tracking a fixed point in space</em>, used by Neon.</p>
-<p>Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilised. As such, taking an average gaze coordinate over the enntire duration will not correspond to the location of the sign, or the fixation, ar any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.</p>
-<p>Therefore, we use partial averages of gaze locations around the respective frame’s timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimisation, by averaging over microsaccades around the actual fixation target as well as random errors.</p>
+<p>By default, Neon reports fixations with a single coordinate. This is computed as average between all gaze coordinates over the interval denoted as a fixation. However, this clashes with the functional definition of a fixation as <em>tracking a fixed point in space</em>, used by Neon.</p>
+<p>Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilized. As such, taking an average gaze coordinate over the entire duration will not correspond to the location of the sign, or the fixation, at any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.</p>
+<p>Therefore, we use partial averages of gaze locations around the respective frame’s timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimization, by averaging over microsaccades around the actual fixation target as well as random errors.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -485,11 +487,15 @@ timestamp [ns]
 flow estimation for each point. Only when they can no longer be tracked, will they be flagged as <code class="docutils literal notranslate"><span class="pre">lost</span></code> and subsequently dropped for the next frame.</p>
 <p>It should be noted that this algorithm is not optimised for performance and that it will take a considerable amount of time to run on limited hardware. For our computers, the algorithm takes roughly half the time of the video, though this benchmark heavily depends on the density of past fixation points and computational ressources</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Estimate the scanpath based on the mapped gaze data</span>
-<span class="n">scanpath</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">estimate_scanpath</span><span class="p">()</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon.video</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_scanpath</span>
+
+<span class="n">scanpath_df</span> <span class="o">=</span> <span class="n">estimate_scanpath</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">scene_video</span><span class="p">,</span> <span class="n">synced_gaze</span><span class="p">)</span>
+<span class="n">scanpath_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;timestamp [ns]&quot;</span>
+<span class="n">scanpath</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span><span class="n">scanpath_df</span><span class="p">)</span>
 
 <span class="c1"># Inspect the estimated scanpath</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">scanpath</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
@@ -576,11 +582,22 @@ possibility to use intuitive pandas indexing, allowing us, for example, to get a
 </ul>
 <p>Further, we draw connecting lines between past fixations to show the scanpath for the current video. The show_video option creates a live-output of the video rendering, but also increases the runtime.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Overlay the scanpath on the video and show the output</span>
-<span class="n">recording</span><span class="o">.</span><span class="n">overlay_scanpath</span><span class="p">(</span><span class="n">show_video</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon.vis</span><span class="w"> </span><span class="kn">import</span> <span class="n">overlay_scanpath</span>
+
+<span class="n">overlay_scanpath</span><span class="p">(</span>
+    <span class="n">recording</span><span class="o">.</span><span class="n">scene_video</span><span class="p">,</span>
+    <span class="n">scanpath</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">circle_radius</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">line_thickness</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">text_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_fixations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">show_video</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -600,8 +617,8 @@ Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
 <h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>Mapping Gaze to Video</strong>: We used the <code class="docutils literal notranslate"><span class="pre">map_gaze_to_video</span></code> method to match gaze data with video frames based on timestamps.</p></li>
-<li><p><strong>Estimating Scanpath</strong>: The scanpath was estimated using <code class="docutils literal notranslate"><span class="pre">estimate_scanpath</span></code>, which tracks fixations and uses optical flow to follow past fixations across scene changes.</p></li>
-<li><p><strong>Overlaying Fixations</strong>: The fixations were visualized on the video by calling <code class="docutils literal notranslate"><span class="pre">overlay_fixations_on_video</span></code>.</p></li>
+<li><p><strong>Estimating Scanpath</strong>: The scanpath was estimated using <code class="docutils literal notranslate"><span class="pre">pyneon.video.estimate_scanpath</span></code>, which tracks fixations and uses optical flow to follow past fixations across scene changes.</p></li>
+<li><p><strong>Overlaying Fixations</strong>: The fixations were visualized on the video by calling <code class="docutils literal notranslate"><span class="pre">pyneon.vis.overlay_scanpath</span></code>.</p></li>
 </ul>
 <p>This workflow can be used to process eye-tracking data, align it with video frames, and visualize gaze movements within video recordings.</p>
 </section>
@@ -618,12 +635,12 @@ Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="pupil_size_and_epoching.html"
+       href="surface_mapping.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Processing pupil size data and epoching</p>
+        <p class="prev-next-title">Surface Mapping Using Fiducial Markers and Screen Corners</p>
       </div>
     </a>
     <a class="right-next"
@@ -631,7 +648,7 @@ Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Exporting to BIDS formats</p>
+        <p class="prev-next-title">Exporting to BIDS Formats</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -654,8 +671,8 @@ Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Setup:-Loading-a-Neon-Recording">1. Setup: Loading a Neon Recording</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Mapping-Gaze-Data-to-Video-Frames">2. Mapping Gaze Data to Video Frames</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Setup:-Loading-a-Neon-Recording">Setup: Loading a Neon Recording</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Mapping-Gaze-Data-to-Video-Frames">Mapping Gaze Data to Video Frames</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Estimating-the-Scanpath">3. Estimating the Scanpath</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Understanding-Fixation-Status">4. Understanding Fixation Status</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Overlaying-Fixations-on-the-Video">5. Overlaying Fixations on the Video</a></li>

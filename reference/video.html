@@ -45,6 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'reference/video';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Utility functions" href="utils.html" />
     <link rel="prev" title="Epochs class" href="epochs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -290,6 +291,7 @@
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Video class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utility functions</a></li>
 </ul>
 </div>
 </nav></div>
@@ -352,28 +354,32 @@
                   
   <section id="video-class">
 <h1>Video class<a class="headerlink" href="#video-class" title="Link to this heading">#</a></h1>
+<p>This page documents the <a class="reference internal" href="#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> class, which provides an interface for working with video data in PyNeon.
+It also documents the <a class="reference internal" href="#pyneon.find_homographies" title="pyneon.find_homographies"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.find_homographies()</span></code></a> function, which computes homography transformations for video frames
+based on marker and contour layouts.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Video">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoCapture</span></code></p>
-<p>Loaded video file with timestamps.</p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>OpenCV VideoCapture wrapper that pairs a video with frame timestamps and
+camera metadata.</p>
+<p>The video is accessed via the <a class="reference internal" href="#pyneon.Video.cap" title="pyneon.Video.cap"><code class="xref py py-attr docutils literal notranslate"><span class="pre">cap</span></code></a> property, frame timestamps via
+<a class="reference internal" href="#pyneon.Video.timestamps" title="pyneon.Video.timestamps"><code class="xref py py-attr docutils literal notranslate"><span class="pre">timestamps</span></code></a>, and camera metadata via <code class="xref py py-attr docutils literal notranslate"><span class="pre">info</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>video_file</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the video file.</p>
+<dt><strong>video_file</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the video file on disk.</p>
 </dd>
-<dt><strong>timestamps</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Timestamps of the video frames in nanoseconds.
-Must have the same length as the number of frames in the video.</p>
+<dt><strong>timestamps</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Frame timestamps in nanoseconds. Must match the number of frames.</p>
 </dd>
-<dt><strong>info</strong><span class="classifier">dict</span></dt><dd><p>Dictionary containing video info, including camera matrix and distortion coefficients.</p>
+<dt><strong>info</strong><span class="classifier">dict or None</span></dt><dd><p>Camera metadata, typically including <a class="reference internal" href="#pyneon.Video.camera_matrix" title="pyneon.Video.camera_matrix"><code class="xref py py-attr docutils literal notranslate"><span class="pre">camera_matrix</span></code></a> and
+<a class="reference internal" href="#pyneon.Video.distortion_coefficients" title="pyneon.Video.distortion_coefficients"><code class="xref py py-attr docutils literal notranslate"><span class="pre">distortion_coefficients</span></code></a>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>timestamps</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Timestamps of the video frames in nanoseconds.</p>
-</dd>
-<dt><strong>ts</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Alias for timestamps.</p>
+<dt><strong>info</strong><span class="classifier">dict</span></dt><dd><p>Camera metadata dictionary.</p>
 </dd>
 </dl>
 </dd>
@@ -381,71 +387,234 @@ Must have the same length as the number of frames in the video.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.compute_intensity" title="pyneon.Video.compute_intensity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_intensity</span></code></a>()</p></td>
-<td><p>Generate a <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing the mean intensity of each video frame.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.close" title="pyneon.Video.close"><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code></a>()</p></td>
+<td><p>Close and release the video handle.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.detect_apriltags" title="pyneon.Video.detect_apriltags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_apriltags</span></code></a>([tag_family])</p></td>
-<td><p>Detect AprilTags in the video frames.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.compute_frame_brightness" title="pyneon.Video.compute_frame_brightness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_frame_brightness</span></code></a>([step, ...])</p></td>
+<td><p>Compute per-frame mean grayscale brightness.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(propId)</p></td>
-<td><p>.   &#64;brief Returns the specified VideoCapture property</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.detect_contour" title="pyneon.Video.detect_contour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_contour</span></code></a>([step, processing_window, ...])</p></td>
+<td><p>Detect bright rectangular regions (e.g., projected surfaces or monitors) in video frames using luminance-based contour detection.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBackendName</span></code>()</p></td>
-<td><p>.   &#64;brief Returns used backend API name</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.detect_markers" title="pyneon.Video.detect_markers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_markers</span></code></a>([marker_family, step, ...])</p></td>
+<td><p>Detect fiducial markers (AprilTag or ArUco) in the video frames.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExceptionMode</span></code>()</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.get" title="pyneon.Video.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>(propId)</p></td>
+<td><p>Query a video property value.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.get_frame" title="pyneon.Video.get_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_frame</span></code></a>(timestamp)</p></td>
-<td><p>Get the frame index corresponding to a given timestamp.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.grab" title="pyneon.Video.grab"><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab</span></code></a>()</p></td>
+<td><p>Grabs the next frame from video file or capturing device.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab</span></code>()</p></td>
-<td><p>.   &#64;brief Grabs the next frame from video file or capturing device.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.isOpened" title="pyneon.Video.isOpened"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isOpened</span></code></a>()</p></td>
+<td><p>Check if the video file is open.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isOpened</span></code>()</p></td>
-<td><p>.   &#64;brief Returns true if video capturing has been initialized already.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.overlay_detections" title="pyneon.Video.overlay_detections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_detections</span></code></a>(detections[, show_ids, ...])</p></td>
+<td><p>Overlay detections on the video frames.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code>(filename[, apiPreference])</p></td>
-<td><p>.   &#64;brief  Opens a video file or a capturing device or an IP video stream for video capturing.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.overlay_scanpath" title="pyneon.Video.overlay_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_scanpath</span></code></a>(scanpath[, circle_radius, ...])</p></td>
+<td><p>Overlay scanpath fixations on the video frames.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.overlay_scanpath" title="pyneon.Video.overlay_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_scanpath</span></code></a>(scanpath[, circle_radius, ...])</p></td>
-<td><p>Plot scanpath on top of the video frames.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.plot_detections" title="pyneon.Video.plot_detections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_detections</span></code></a>(detections, frame_index[, ...])</p></td>
+<td><p>Visualize detections on a frame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.plot_frame" title="pyneon.Video.plot_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_frame</span></code></a>([index, ax, auto_title, show])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.plot_frame" title="pyneon.Video.plot_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_frame</span></code></a>([frame_index, ax, show])</p></td>
 <td><p>Plot a frame from the video on a matplotlib axis.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code>([, image])</p></td>
-<td><p>.   &#64;brief Grabs, decodes and returns the next video frame.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.read" title="pyneon.Video.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>()</p></td>
+<td><p>Grabs, decodes and returns the next video frame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">release</span></code>()</p></td>
-<td><p>.   &#64;brief Closes video file or capturing device.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.read_frame_at" title="pyneon.Video.read_frame_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_frame_at</span></code></a>(frame_index)</p></td>
+<td><p>Read a single frame by index.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve</span></code>([, image[, flag]])</p></td>
-<td><p>.   &#64;brief Decodes and returns the grabbed video frame.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.release" title="pyneon.Video.release"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release</span></code></a>()</p></td>
+<td><p>Close and release the video handle (alias for <a class="reference internal" href="#pyneon.Video.close" title="pyneon.Video.close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">close()</span></code></a>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(propId, value)</p></td>
-<td><p>.   &#64;brief Sets a property in the VideoCapture.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.reset" title="pyneon.Video.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a>()</p></td>
+<td><p>Reopen the video file and reset to the first frame.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExceptionMode</span></code>(enable)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.retrieve" title="pyneon.Video.retrieve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve</span></code></a>()</p></td>
+<td><p>Decodes and returns the grabbed video frame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.undistort" title="pyneon.Video.undistort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undistort</span></code></a>([output_video_path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.set" title="pyneon.Video.set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code></a>(propId, value)</p></td>
+<td><p>Set a video property.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.timestamp_to_frame_index" title="pyneon.Video.timestamp_to_frame_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timestamp_to_frame_index</span></code></a>(timestamp)</p></td>
+<td><p>Map timestamps to frame indices (nearest frame).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Video.undistort_frame" title="pyneon.Video.undistort_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undistort_frame</span></code></a>(frame)</p></td>
+<td><p>Undistort a single frame (color or grayscale).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Video.undistort_video" title="pyneon.Video.undistort_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undistort_video</span></code></a>([show, output_path])</p></td>
 <td><p>Undistort a video using the known camera matrix and distortion coefficients.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">waitAny</span></code>(streams[, timeoutNs])</p></td>
-<td><p>.   &#64;brief Wait for ready frames from VideoCapture.</p></td>
-</tr>
 </tbody>
 </table>
 </div>
-<div class="pst-scrollable-table-container"><table class="table">
-<tbody>
-<tr class="row-odd"><td><p><strong>reset</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.timestamps">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">timestamps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.timestamps" title="Link to this definition">#</a></dt>
+<dd><p>Timestamps of the video frames in nanoseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>numpy.ndarray</dt><dd><p>Array of timestamps in nanoseconds (Unix time).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.ts">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.ts" title="Link to this definition">#</a></dt>
+<dd><p>Alias for <a class="reference internal" href="#pyneon.Video.timestamps" title="pyneon.Video.timestamps"><code class="xref py py-attr docutils literal notranslate"><span class="pre">timestamps</span></code></a> for convenience.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>numpy.ndarray</dt><dd><p>Array of timestamps in nanoseconds (Unix time).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.isOpened">
+<span class="sig-name descname"><span class="pre">isOpened</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#pyneon.Video.isOpened" title="Link to this definition">#</a></dt>
+<dd><p>Check if the video file is open.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>bool</dt><dd><p>True if open, False otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.grab">
+<span class="sig-name descname"><span class="pre">grab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#pyneon.Video.grab" title="Link to this definition">#</a></dt>
+<dd><p>Grabs the next frame from video file or capturing device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>bool</dt><dd><p>True if successful, False otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.retrieve">
+<span class="sig-name descname"><span class="pre">retrieve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.Video.retrieve" title="Link to this definition">#</a></dt>
+<dd><p>Decodes and returns the grabbed video frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>success</strong><span class="classifier">bool</span></dt><dd><p>True if successful, False otherwise.</p>
+</dd>
+<dt><strong>frame</strong><span class="classifier">numpy.ndarray or None</span></dt><dd><p>Frame as a 3D BGR array if successful, None otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.Video.read" title="Link to this definition">#</a></dt>
+<dd><p>Grabs, decodes and returns the next video frame.
+(equivalent to <a class="reference internal" href="#pyneon.Video.grab" title="pyneon.Video.grab"><code class="xref py py-meth docutils literal notranslate"><span class="pre">grab()</span></code></a> + <a class="reference internal" href="#pyneon.Video.retrieve" title="pyneon.Video.retrieve"><code class="xref py py-meth docutils literal notranslate"><span class="pre">retrieve()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>success</strong><span class="classifier">bool</span></dt><dd><p>True if successful, False otherwise.</p>
+</dd>
+<dt><strong>frame</strong><span class="classifier">numpy.ndarray or None</span></dt><dd><p>Frame as a 3D BGR array if successful, None otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">propId</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></span><a class="headerlink" href="#pyneon.Video.set" title="Link to this definition">#</a></dt>
+<dd><p>Set a video property.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>propId</strong><span class="classifier">int</span></dt><dd><p>OpenCV property ID (e.g., cv2.CAP_PROP_POS_FRAMES).</p>
+</dd>
+<dt><strong>value</strong><span class="classifier">Number</span></dt><dd><p>New value for the property.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p>True if successful, False otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Seeking frames with <code class="docutils literal notranslate"><span class="pre">cv2.CAP_PROP_POS_FRAMES</span></code> is unreliable for
+variable frame rate (VFR) videos. Neon recordings typically have
+non-constant FPS, making direct seeking unpredictable.
+See <a class="github reference external" href="https://github.com/opencv/opencv/issues/9053">opencv/opencv#9053</a>.</p>
+<p>For safe random frame access, use <a class="reference internal" href="#pyneon.Video.read_frame_at" title="pyneon.Video.read_frame_at"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_frame_at()</span></code></a> instead,
+which maintains internal frame counting and handles VFR timing
+correctly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good: Safe frame reading in VFR videos</span>
+<span class="n">frame</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">read_frame_at</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Risky: May not work reliably on VFR videos</span>
+<span class="n">video</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_POS_FRAMES</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ret</span><span class="p">,</span> <span class="n">frame</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
 </div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">propId</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></span><a class="headerlink" href="#pyneon.Video.get" title="Link to this definition">#</a></dt>
+<dd><p>Query a video property value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.first_ts">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">first_ts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#pyneon.Video.first_ts" title="Link to this definition">#</a></dt>
+<dd><p>First frame timestamp in nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.last_ts">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">last_ts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#pyneon.Video.last_ts" title="Link to this definition">#</a></dt>
+<dd><p>Last frame timestamp in nanoseconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.ts_diff">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ts_diff</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.ts_diff" title="Link to this definition">#</a></dt>
+<dd><p>Difference between consecutive timestamps.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.times">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">times</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.times" title="Link to this definition">#</a></dt>
+<dd><p>Timestamps converted to seconds relative to video start.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.duration">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#pyneon.Video.duration" title="Link to this definition">#</a></dt>
+<dd><p>Duration of the video in seconds.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Video.fps">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">fps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#pyneon.Video.fps" title="Link to this definition">#</a></dt>
@@ -476,49 +645,183 @@ Must have the same length as the number of frames in the video.</p>
 <dd><p>Distortion coefficients of the video camera.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.undistort_cache">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">undistort_cache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pyneon.Video.undistort_cache" title="Link to this definition">#</a></dt>
+<dd><p>Cached undistortion maps and the optimal new camera matrix.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.map1">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">map1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.map1" title="Link to this definition">#</a></dt>
+<dd><p>First undistortion map for use with <code class="docutils literal notranslate"><span class="pre">cv2.remap</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.map2">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">map2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.map2" title="Link to this definition">#</a></dt>
+<dd><p>Second undistortion map for use with <code class="docutils literal notranslate"><span class="pre">cv2.remap</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.undistortion_matrix">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">undistortion_matrix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Video.undistortion_matrix" title="Link to this definition">#</a></dt>
+<dd><p>Optimal new camera matrix used for undistortion.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.current_frame_index">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">current_frame_index</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#pyneon.Video.current_frame_index" title="Link to this definition">#</a></dt>
+<dd><p>Current frame index based on the video position.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Video.cap">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">cap</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">VideoCapture</span></span><a class="headerlink" href="#pyneon.Video.cap" title="Link to this definition">#</a></dt>
+<dd><p>The underlying OpenCV VideoCapture object.</p>
+<p>Access this property for OpenCV operations not covered by
+PyNeon convenience methods.</p>
+<p>For documentation of the <code class="docutils literal notranslate"><span class="pre">cv.VideoCapture</span></code> API, see:
+<a class="reference external" href="https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html">https://docs.opencv.org/master/d8/dfe/classcv_1_1VideoCapture.html</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>cv2.VideoCapture</dt><dd><p>The underlying video capture object.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Direct manipulation of this object may interfere with PyNeon’s frame
+synchronization and state management. Use with caution.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#pyneon.Video.read_frame_at" title="pyneon.Video.read_frame_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_frame_at</span></code></a></dt><dd><p>Recommended method for safe frame reading</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.Video.reset" title="pyneon.Video.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></dt><dd><p>Reset video state after direct cap manipulation</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>PyNeon provides convenience methods for most common video operations:
+<a class="reference internal" href="#pyneon.Video.read_frame_at" title="pyneon.Video.read_frame_at"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_frame_at()</span></code></a>, <a class="reference internal" href="#pyneon.Video.detect_markers" title="pyneon.Video.detect_markers"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect_markers()</span></code></a>, <a class="reference internal" href="#pyneon.Video.undistort_frame" title="pyneon.Video.undistort_frame"><code class="xref py py-meth docutils literal notranslate"><span class="pre">undistort_frame()</span></code></a>.
+These handle frame indexing, timestamp mapping, and state management
+automatically. For standard use cases, prefer these over direct cap access.</p>
+<p>For advanced OpenCV operations, common access patterns include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">video.cap.get(cv2.CAP_PROP_*)</span></code>: Query video properties</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">video.cap.get(cv2.CAP_PROP_FRAME_WIDTH)</span></code>: Get frame width</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">video.cap.grab()</span></code> and <code class="docutils literal notranslate"><span class="pre">video.cap.retrieve()</span></code>: Read frames directly</p></li>
+</ul>
+<p>Direct frame seeking via <code class="docutils literal notranslate"><span class="pre">video.cap.set(cv2.CAP_PROP_POS_FRAMES,</span> <span class="pre">...)</span></code>
+may break VFR timestamp alignment. Use <a class="reference internal" href="#pyneon.Video.read_frame_at" title="pyneon.Video.read_frame_at"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_frame_at()</span></code></a> instead.
+After direct cap manipulation, consider calling <a class="reference internal" href="#pyneon.Video.reset" title="pyneon.Video.reset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset()</span></code></a> to
+resynchronize internal state.</p>
+</dd></dl>
+
 <dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Video.get_frame">
-<span class="sig-name descname"><span class="pre">get_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></span><a class="headerlink" href="#pyneon.Video.get_frame" title="Link to this definition">#</a></dt>
-<dd><p>Get the frame index corresponding to a given timestamp.</p>
+<dt class="sig sig-object py" id="pyneon.Video.timestamp_to_frame_index">
+<span class="sig-name descname"><span class="pre">timestamp_to_frame_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></span><a class="headerlink" href="#pyneon.Video.timestamp_to_frame_index" title="Link to this definition">#</a></dt>
+<dd><p>Map timestamps to frame indices (nearest frame).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>timestamp</strong><span class="classifier">int</span></dt><dd><p>Timestamp in nanoseconds.</p>
+<dt><strong>timestamp</strong><span class="classifier">int or numpy.ndarray</span></dt><dd><p>Single timestamp or array of timestamps in nanoseconds.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>int</dt><dd><p>Frame index corresponding to the timestamp.</p>
+<dt>numpy.ndarray</dt><dd><p>Frame index or array of frame indices (always returned as array).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If any timestamp is earlier than the first video timestamp or
+later than the last video timestamp.</p>
 </dd>
 </dl>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.read_frame_at">
+<span class="sig-name descname"><span class="pre">read_frame_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.read_frame_at" title="Link to this definition">#</a></dt>
+<dd><p>Read a single frame by index.</p>
+<p>For forward jumps, grabs intermediate frames to maintain timestamp
+alignment in VFR videos. For backward jumps, resets to start.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>frame_index</strong><span class="classifier">int</span></dt><dd><p>Zero-based frame index to read.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.ndarray or None</dt><dd><p>Frame as a 3D array (BGR), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the frame cannot be read.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">frame_index</span></code> is out of bounds.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Recommended for all frame access in Neon videos with VFR. Automatically
+handles frame positioning and timestamp alignment, managing internal state
+correctly.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.reset" title="Link to this definition">#</a></dt>
+<dd><p>Reopen the video file and reset to the first frame.</p>
+<p>Recreates the internal VideoCapture object. Use this after direct
+<a class="reference internal" href="#pyneon.Video.cap" title="pyneon.Video.cap"><code class="xref py py-attr docutils literal notranslate"><span class="pre">cap</span></code></a> manipulation or to restart from the beginning.</p>
+<p class="rubric">Notes</p>
+<p>This discards any pending frame operations and reloads from disk.
+Useful after <a class="reference internal" href="#pyneon.Video.cap" title="pyneon.Video.cap"><code class="xref py py-attr docutils literal notranslate"><span class="pre">cap</span></code></a> manipulation to resynchronize state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.release" title="Link to this definition">#</a></dt>
+<dd><p>Close and release the video handle (alias for <a class="reference internal" href="#pyneon.Video.close" title="pyneon.Video.close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">close()</span></code></a>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.close" title="Link to this definition">#</a></dt>
+<dd><p>Close and release the video handle.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Video.plot_frame">
-<span class="sig-name descname"><span class="pre">plot_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.plot_frame" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">plot_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.plot_frame" title="Link to this definition">#</a></dt>
 <dd><p>Plot a frame from the video on a matplotlib axis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>index</strong><span class="classifier">int</span></dt><dd><p>Index of the frame to plot.</p>
+<dt><strong>frame_index</strong><span class="classifier">int</span></dt><dd><p>Index of the frame to plot.</p>
 </dd>
-<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes or None</span></dt><dd><p>Axis to plot the frame on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created.
-Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-<dt><strong>auto_title</strong><span class="classifier">bool</span></dt><dd><p>Whether to automatically set the title of the axis.
-The automatic title includes the video file name and the frame index.
-Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes or None</span></dt><dd><p>Axis to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure object containing the plot.</p>
+<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure instance containing the plot.</p>
 </dd>
-<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis object containing the plot.</p>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis instance containing the plot.</p>
 </dd>
 </dl>
 </dd>
@@ -526,25 +829,385 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Video.detect_apriltags">
-<span class="sig-name descname"><span class="pre">detect_apriltags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag_family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'tag36h11'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.Video.detect_apriltags" title="Link to this definition">#</a></dt>
-<dd><p>Detect AprilTags in the video frames.</p>
+<dt class="sig sig-object py" id="pyneon.Video.undistort_video">
+<span class="sig-name descname"><span class="pre">undistort_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.undistort_video" title="Link to this definition">#</a></dt>
+<dd><p>Undistort a video using the known camera matrix and distortion coefficients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>tag_family</strong><span class="classifier">str, optional</span></dt><dd><p>The AprilTag family to detect (default is ‘tag36h11’).</p>
+<dt><strong>output_path</strong><span class="classifier">pathlib.Path or str or None</span></dt><dd><p>Path to save the undistorted output video.
+If “default”, saves undistorted_video.mp4 to the derivatives folder under
+the recording directory. If None, no output video is written.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame</dt><dd><p>A DataFrame containing AprilTag detections, with columns:
-- ‘timestamp [ns]’: The timestamp of the frame in nanoseconds, as an index
-- ‘frame_idx’: The frame number
-- ‘tag_id’: The ID of the detected AprilTag
-- ‘corners’: A 4x2 array of the tag corner coordinates, in the order TL, TR, BR, BL. (x, y) from top-left corner of the video
-- ‘center’: A 1x2 array with the tag center coordinates. (x, y) from top-left corner of the video.</p>
+<dt>None</dt><dd></dd>
+</dl>
 </dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.undistort_frame">
+<span class="sig-name descname"><span class="pre">undistort_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></span><a class="headerlink" href="#pyneon.Video.undistort_frame" title="Link to this definition">#</a></dt>
+<dd><p>Undistort a single frame (color or grayscale).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>frame</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Input frame as a 2D (grayscale) or 3D (color) array.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.ndarray</dt><dd><p>Undistorted frame with the same shape as the input.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.compute_frame_brightness">
+<span class="sig-name descname"><span class="pre">compute_frame_brightness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_window_unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'frame'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'frame'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.compute_frame_brightness" title="Link to this definition">#</a></dt>
+<dd><p>Compute per-frame mean grayscale brightness.</p>
+<p>Each frame is converted to grayscale and averaged to yield a single
+brightness value per frame.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>step</strong><span class="classifier">int, optional</span></dt><dd><p>Process every Nth frame. For example, step=5 processes frames
+0, 5, 10, 15, …. Defaults to 1 (process all frames).</p>
+</dd>
+<dt><strong>processing_window</strong><span class="classifier">tuple[int | float, int | float] or None</span></dt><dd><p>Start and end of the processing window. Interpretation depends on
+<code class="docutils literal notranslate"><span class="pre">processing_window_unit</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (full duration).</p>
+</dd>
+<dt><strong>processing_window_unit</strong><span class="classifier">{“frame”, “time”, “timestamp”}, optional</span></dt><dd><p>Unit for values in <code class="docutils literal notranslate"><span class="pre">processing_window</span></code>. Possible values are:</p>
+<ul class="simple">
+<li><p>“timestamp”: Unix timestamps in nanoseconds</p></li>
+<li><p>“time”: Seconds relative to video start</p></li>
+<li><p>“frame”: video frame indices (0-based)</p></li>
+</ul>
+<p>Defaults to “frame”.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Stream</dt><dd><p>Stream indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code> with a single column
+<code class="docutils literal notranslate"><span class="pre">brightness</span></code> containing mean grayscale brightness values.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.detect_markers">
+<span class="sig-name descname"><span class="pre">detect_markers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker_family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'36h11'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_window_unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'frame'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'frame'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detector_parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DetectorParameters</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">undistort</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Video.detect_markers" title="Link to this definition">#</a></dt>
+<dd><p>Detect fiducial markers (AprilTag or ArUco) in the video frames.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>marker_family</strong><span class="classifier">str or list[str], optional</span></dt><dd><p>AprilTag family/ArUco dictionary to detect. Accepts a single family string
+(e.g., ‘36h11’) or a list of families (e.g., [‘36h11’, ‘6x6_250’]).</p>
+</dd>
+<dt><strong>step</strong><span class="classifier">int, optional</span></dt><dd><p>Process every Nth frame. For example, step=5 processes frames
+0, 5, 10, 15, …. Defaults to 1 (process all frames).</p>
+</dd>
+<dt><strong>processing_window</strong><span class="classifier">tuple[int | float, int | float] or None</span></dt><dd><p>Start and end of the processing window. Interpretation depends on
+<code class="docutils literal notranslate"><span class="pre">processing_window_unit</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (full duration).</p>
+</dd>
+<dt><strong>processing_window_unit</strong><span class="classifier">{“frame”, “time”, “timestamp”}, optional</span></dt><dd><p>Unit for values in <code class="docutils literal notranslate"><span class="pre">processing_window</span></code>. Possible values are:</p>
+<ul class="simple">
+<li><p>“timestamp”: Unix timestamps in nanoseconds</p></li>
+<li><p>“time”: Seconds relative to video start</p></li>
+<li><p>“frame”: video frame indices (0-based)</p></li>
+</ul>
+<p>Defaults to “frame”.</p>
+</dd>
+<dt><strong>detector_parameters</strong><span class="classifier">cv2.aruco.DetectorParameters, optional</span></dt><dd><p>Detector parameters to use for all marker families. If None, a default
+DetectorParameters instance is created. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>undistort</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, undistorts frames before detection, which can improve detection
+performance, then redistorts detected points. Returned coordinates remain
+in the original (distorted) video frame. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt>Stream</dt><dd><p>Stream of detected markers. Each row corresponds to a detected marker in a video frame
+indexed by “timestamp [ns]” and contains the following columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>frame index</p></td>
+<td><p>Frame number of the marker detection.</p></td>
+</tr>
+<tr class="row-odd"><td><p>marker family</p></td>
+<td><p>AprilTag family or ArUco dictionary
+of the detected marker (e.g., “36h11”, “6x6_250”).</p></td>
+</tr>
+<tr class="row-even"><td><p>marker id</p></td>
+<td><p>ID of the detected marker within its family (e.g., 0, 1, 2).</p></td>
+</tr>
+<tr class="row-odd"><td><p>marker name</p></td>
+<td><p>Full identifier combining family and id (e.g., “36h11_0”, “36h11_1”).</p></td>
+</tr>
+<tr class="row-even"><td><p>top left x [px]</p></td>
+<td><p>X coordinate of the top-left corner of the detected marker.</p></td>
+</tr>
+<tr class="row-odd"><td><p>top left y [px]</p></td>
+<td><p>Y coordinate of the top-left corner of the detected marker.</p></td>
+</tr>
+<tr class="row-even"><td><p>top right x [px]</p></td>
+<td><p>X coordinate of the top-right corner of the detected marker.</p></td>
+</tr>
+<tr class="row-odd"><td><p>top right y [px]</p></td>
+<td><p>Y coordinate of the top-right corner of the detected marker.</p></td>
+</tr>
+<tr class="row-even"><td><p>bottom right x [px]</p></td>
+<td><p>X coordinate of the bottom-right corner of the detected marker.</p></td>
+</tr>
+<tr class="row-odd"><td><p>bottom right y [px]</p></td>
+<td><p>Y coordinate of the bottom-right corner of the detected marker.</p></td>
+</tr>
+<tr class="row-even"><td><p>bottom left x [px]</p></td>
+<td><p>X coordinate of the bottom-left corner of the detected marker.</p></td>
+</tr>
+<tr class="row-odd"><td><p>bottom left y [px]</p></td>
+<td><p>Y coordinate of the bottom-left corner of the detected marker.</p></td>
+</tr>
+<tr class="row-even"><td><p>center x [px]</p></td>
+<td><p>X coordinate of the center of the detected marker.</p></td>
+</tr>
+<tr class="row-odd"><td><p>center y [px]</p></td>
+<td><p>Y coordinate of the center of the detected marker.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#pyneon.Video.detect_contour" title="pyneon.Video.detect_contour"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect_contour()</span></code></a></dt><dd><p>Alternative method to detect rectangular contours instead of fiducial markers.</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.Video.plot_detections" title="pyneon.Video.plot_detections"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_detections()</span></code></a></dt><dd><p>Visualize marker detections on video frames.</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.Video.overlay_detections" title="pyneon.Video.overlay_detections"><code class="xref py py-meth docutils literal notranslate"><span class="pre">overlay_detections()</span></code></a></dt><dd><p>Create a video with detected markers overlaid.</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.find_homographies" title="pyneon.find_homographies"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.find_homographies()</span></code></a></dt><dd><p>Compute homographies from detections.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.detect_contour">
+<span class="sig-name descname"><span class="pre">detect_contour</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_window_unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'frame'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'frame'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_area_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_area_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brightness_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">180</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">morph_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'largest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report_diagnostics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">undistort</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Video.detect_contour" title="Link to this definition">#</a></dt>
+<dd><p>Detect bright rectangular regions (e.g., projected surfaces or monitors)
+in video frames using luminance-based contour detection.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>step</strong><span class="classifier">int, optional</span></dt><dd><p>Process every Nth frame. For example, step=5 processes frames
+0, 5, 10, 15, …. Defaults to 1 (process all frames).</p>
+</dd>
+<dt><strong>processing_window</strong><span class="classifier">tuple[int | float, int | float] or None</span></dt><dd><p>Start and end of the processing window. Interpretation depends on
+<code class="docutils literal notranslate"><span class="pre">processing_window_unit</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (full duration).</p>
+</dd>
+<dt><strong>processing_window_unit</strong><span class="classifier">{“frame”, “time”, “timestamp”}, optional</span></dt><dd><p>Unit for values in <code class="docutils literal notranslate"><span class="pre">processing_window</span></code>. Possible values are:</p>
+<ul class="simple">
+<li><p>“timestamp”: Unix timestamps in nanoseconds</p></li>
+<li><p>“time”: Seconds relative to video start</p></li>
+<li><p>“frame”: video frame indices (0-based)</p></li>
+</ul>
+<p>Defaults to “frame”.</p>
+</dd>
+<dt><strong>min_area_ratio</strong><span class="classifier">float, optional</span></dt><dd><p>Minimum contour area relative to frame area. Contours smaller than this
+ratio are ignored. Default is 0.01 (1 percent of frame area).</p>
+</dd>
+<dt><strong>max_area_ratio</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum contour area relative to frame area. Contours larger than this
+ratio are ignored. Default is 0.98.</p>
+</dd>
+<dt><strong>brightness_threshold</strong><span class="classifier">int, optional</span></dt><dd><p>Fixed threshold for binarization when <cite>adaptive=False</cite>. Default is 180.</p>
+</dd>
+<dt><strong>adaptive</strong><span class="classifier">bool, optional</span></dt><dd><p>If True (default), use adaptive thresholding to handle varying
+illumination across frames.</p>
+</dd>
+<dt><strong>morph_kernel</strong><span class="classifier">int, optional</span></dt><dd><p>Kernel size for morphological closing (default 5). Use 0 to disable
+morphological operations.</p>
+</dd>
+<dt><strong>decimate</strong><span class="classifier">float, optional</span></dt><dd><p>Downsampling factor for faster processing (e.g., 0.5 halves resolution).
+Detected coordinates are automatically rescaled back. Default is 1.0.</p>
+</dd>
+<dt><strong>mode</strong><span class="classifier">{“largest”, “best”, “all”}, optional</span></dt><dd><p>Selection mode determining which contours to return per frame:</p>
+<ul class="simple">
+<li><p>“largest” : Return only the largest valid rectangular contour.
+Useful when the surface is the outermost bright region. (Default)</p></li>
+<li><p>“best” : Return the contour that most closely resembles a
+perfect rectangle (lowest corner-angle variance and balanced
+aspect ratio).</p></li>
+<li><p>“all” : Return all valid rectangular contours (outer and inner
+overlapping rectangles). Useful when both surface and inner
+projected content need to be distinguished.</p></li>
+</ul>
+</dd>
+<dt><strong>report_diagnostics</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, includes “area_ratio” and “score” columns in the output.
+Defaults to False.</p>
+</dd>
+<dt><strong>undistort</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, undistorts frames before detection, which can improve detection
+performance, then redistorts detected points. Returned coordinates remain
+in the original (distorted) video frame. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt>Stream</dt><dd><p>Stream of detected contour coordinates. Each row corresponds to a detected contour in a video frame
+indexed by “timestamp [ns]” and contains the following columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>frame index</p></td>
+<td><p>Frame number of the contour detection.</p></td>
+</tr>
+<tr class="row-odd"><td><p>contour name</p></td>
+<td><p>Identifier for the detected contour (e.g., “contour_0”).</p></td>
+</tr>
+<tr class="row-even"><td><p>top left x [px]</p></td>
+<td><p>X coordinate of the top-left corner of the detected contour.</p></td>
+</tr>
+<tr class="row-odd"><td><p>top left y [px]</p></td>
+<td><p>Y coordinate of the top-left corner of the detected contour.</p></td>
+</tr>
+<tr class="row-even"><td><p>top right x [px]</p></td>
+<td><p>X coordinate of the top-right corner of the detected contour.</p></td>
+</tr>
+<tr class="row-odd"><td><p>top right y [px]</p></td>
+<td><p>Y coordinate of the top-right corner of the detected contour.</p></td>
+</tr>
+<tr class="row-even"><td><p>bottom right x [px]</p></td>
+<td><p>X coordinate of the bottom-right corner of the detected contour.</p></td>
+</tr>
+<tr class="row-odd"><td><p>bottom right y [px]</p></td>
+<td><p>Y coordinate of the bottom-right corner of the detected contour.</p></td>
+</tr>
+<tr class="row-even"><td><p>bottom left x [px]</p></td>
+<td><p>X coordinate of the bottom-left corner of the detected contour.</p></td>
+</tr>
+<tr class="row-odd"><td><p>bottom left y [px]</p></td>
+<td><p>Y coordinate of the bottom-left corner of the detected contour.</p></td>
+</tr>
+<tr class="row-even"><td><p>center x [px]</p></td>
+<td><p>X coordinate of the center of the detected contour.</p></td>
+</tr>
+<tr class="row-odd"><td><p>center y [px]</p></td>
+<td><p>Y coordinate of the center of the detected contour.</p></td>
+</tr>
+<tr class="row-even"><td><p>area_ratio</p></td>
+<td><p>Area of the detected contour relative to frame area (if <cite>report_diagnostics</cite> is True).</p></td>
+</tr>
+<tr class="row-odd"><td><p>score</p></td>
+<td><p>Diagnostic score indicating how closely the detected contour resembles a perfect rectangle
+(if <cite>report_diagnostics</cite> is True).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#pyneon.Video.detect_markers" title="pyneon.Video.detect_markers"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect_markers()</span></code></a></dt><dd><p>Alternative method to detect fiducial markers.</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.Video.plot_detections" title="pyneon.Video.plot_detections"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_detections()</span></code></a></dt><dd><p>Visualize contour on a video frame.</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.Video.overlay_detections" title="pyneon.Video.overlay_detections"><code class="xref py py-meth docutils literal notranslate"><span class="pre">overlay_detections()</span></code></a></dt><dd><p>Create a video with the detected contour overlaid.</p>
+</dd>
+<dt><a class="reference internal" href="#pyneon.find_homographies" title="pyneon.find_homographies"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.find_homographies()</span></code></a></dt><dd><p>Compute homographies from detections.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.plot_detections">
+<span class="sig-name descname"><span class="pre">plot_detections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'magenta'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.plot_detections" title="Link to this definition">#</a></dt>
+<dd><p>Visualize detections on a frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>detections</strong><span class="classifier">Stream</span></dt><dd><p>Stream containing marker or contour detections.</p>
+</dd>
+<dt><strong>frame_index</strong><span class="classifier">int</span></dt><dd><p>Frame index to plot.</p>
+</dd>
+<dt><strong>show_ids</strong><span class="classifier">bool</span></dt><dd><p>Display detection IDs at their centers. Defaults to True.</p>
+</dd>
+<dt><strong>color</strong><span class="classifier">str</span></dt><dd><p>Matplotlib color for overlay. Defaults to “magenta”.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes or None</span></dt><dd><p>Axis to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>show</strong><span class="classifier">bool</span></dt><dd><p>Show the figure if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to True.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure instance containing the plot.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis instance containing the plot.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Video.overlay_detections">
+<span class="sig-name descname"><span class="pre">overlay_detections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(255,</span> <span class="pre">0,</span> <span class="pre">255)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.overlay_detections" title="Link to this definition">#</a></dt>
+<dd><p>Overlay detections on the video frames.
+The resulting video can be displayed and/or saved.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>detections</strong><span class="classifier">Stream</span></dt><dd><p>Stream containing marker or contour detections.</p>
+</dd>
+<dt><strong>show_ids</strong><span class="classifier">bool</span></dt><dd><p>Whether to overlay IDs at their centers when available. Defaults to True.</p>
+</dd>
+<dt><strong>color</strong><span class="classifier">tuple[int, int, int]</span></dt><dd><p>BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.</p>
+</dd>
+<dt><strong>show_video</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to display the video with overlays in real-time.
+Press ‘q’ to quit early. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>output_path</strong><span class="classifier">pathlib.Path or str or None, optional</span></dt><dd><p>Path to save the output video with overlays. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the video is not saved.
+Either this or <code class="docutils literal notranslate"><span class="pre">show_video=True</span></code> must be provided.</p>
+<p>If “default”, saves detections.mp4 to the derivatives folder under the
+recording directory. If None, no output video is written.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -552,8 +1215,9 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">True</s
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Video.overlay_scanpath">
-<span class="sig-name descname"><span class="pre">overlay_scanpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scanpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">circle_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_thickness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fixations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'derivatives/scanpath.mp4'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.overlay_scanpath" title="Link to this definition">#</a></dt>
-<dd><p>Plot scanpath on top of the video frames. The resulting video can be displayed and/or saved.</p>
+<span class="sig-name descname"><span class="pre">overlay_scanpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scanpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">circle_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_thickness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fixations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.overlay_scanpath" title="Link to this definition">#</a></dt>
+<dd><p>Overlay scanpath fixations on the video frames.</p>
+<p>The resulting video can be displayed and/or saved.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -568,44 +1232,112 @@ Defaults to 2.</p>
 </dd>
 <dt><strong>show_video</strong><span class="classifier">bool</span></dt><dd><p>Whether to display the video with fixations overlaid. Defaults to False.</p>
 </dd>
-<dt><strong>video_output_path</strong><span class="classifier">pathlib.Path or str or None</span></dt><dd><p>Path to save the video with fixations overlaid. If None, the video is not saved.
-Defaults to ‘scanpath.mp4’.</p>
+<dt><strong>output_path</strong><span class="classifier">pathlib.Path or str or None</span></dt><dd><p>Path to save the video with fixations overlaid. If None, the video is not saved.
+If “default”, saves scanpath.mp4 to the derivatives folder under the
+recording directory.</p>
 </dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
 </dl>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Video.undistort">
-<span class="sig-name descname"><span class="pre">undistort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_video_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'undistorted_video.mp4'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Video.undistort" title="Link to this definition">#</a></dt>
-<dd><p>Undistort a video using the known camera matrix and distortion coefficients.</p>
-<dl class="field-list simple">
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.find_homographies">
+<span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">find_homographies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_markers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ransacReprojThreshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxIters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.995</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.find_homographies" title="Link to this definition">#</a></dt>
+<dd><p>Compute a per-frame homography (3x3 matrix) from detections to
+a surface coordinate system.</p>
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>output_video_path</strong><span class="classifier">str</span></dt><dd><p>Path to save the undistorted output video.</p>
+<dd class="field-odd"><dl>
+<dt><strong>detections</strong><span class="classifier">Stream</span></dt><dd><p>Stream containing per-detection marker/contour coordinates returned
+by <a class="reference internal" href="#pyneon.Video.detect_markers" title="pyneon.Video.detect_markers"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Video.detect_markers()</span></code></a> or <a class="reference internal" href="#pyneon.Video.detect_contour" title="pyneon.Video.detect_contour"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Video.detect_contour()</span></code></a>.</p>
+</dd>
+<dt><strong>layout</strong><span class="classifier">pd.DataFrame or np.ndarray</span></dt><dd><p>Layout of markers/contour to provide reference surface coordinates for homography computation.
+The expected format depends on the type of detections:</p>
+<p><strong>Marker detections</strong>: provide a DataFrame (can be visually checked with
+<code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.plot_marker_layout()</span></code>) with following columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>marker name</p></td>
+<td><p>Full marker name (family_id, e.g., “36h11_1”)</p></td>
+</tr>
+<tr class="row-odd"><td><p>size</p></td>
+<td><p>Size of the marker in surface units</p></td>
+</tr>
+<tr class="row-even"><td><p>center x</p></td>
+<td><p>x-coordinate of the marker center in surface coordinates</p></td>
+</tr>
+<tr class="row-odd"><td><p>center y</p></td>
+<td><p>y-coordinate of the marker center in surface coordinates</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Contour detections</strong>: provide a 2D numpy array of shape (4, 2)
+containing the surface coordinates of the contour corners in the following order:
+top-left, top-right, bottom-right, bottom-left.</p>
+</dd>
+<dt><strong>min_markers</strong><span class="classifier">int, optional</span></dt><dd><p>Minimum number of marker detections required in a frame to compute a
+homography when using marker detections. Frames with fewer detections are
+skipped. Defaults to 2.</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">int, optional</span></dt><dd><p>Method used to compute a homography matrix. The following methods are possible:</p>
+<ul class="simple">
+<li><p>0 - a regular method using all the points, i.e., the least squares method</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cv2.RANSAC</span></code> - RANSAC-based robust method</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cv2.LMEDS</span></code> - Least-Median robust method</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cv2.RHO</span></code> - PROSAC-based robust method</p></li>
+</ul>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">cv2.LMEDS</span></code>.</p>
+</dd>
+<dt><strong>ransacReprojThreshold</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum allowed reprojection error to treat a point pair as an inlier
+(used in the RANSAC and RHO methods only). Defaults to 3.0.</p>
+</dd>
+<dt><strong>maxIters</strong><span class="classifier">int, optional</span></dt><dd><p>The maximum number of RANSAC iterations. Defaults to 2000.</p>
+</dd>
+<dt><strong>confidence</strong><span class="classifier">float, optional</span></dt><dd><p>Confidence level, between 0 and 1. Defaults to 0.995.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>homographies</strong><span class="classifier">Stream</span></dt><dd><p>Stream indexed by “timestamp [ns]” with columns “homography (0,0)”
+through “homography (2,2)”, corresponding to the 9 elements of the
+estimated 3x3 homography matrix for each retained frame.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Video.compute_intensity">
-<span class="sig-name descname"><span class="pre">compute_intensity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video.compute_intensity" title="Link to this definition">#</a></dt>
-<dd><p>Generate a <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing the
-mean intensity of each video frame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>pyneon.Stream</dt><dd><p>A <code class="docutils literal notranslate"><span class="pre">Stream</span></code> instance containing data indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>
-with a single column <code class="docutils literal notranslate"><span class="pre">intensity</span></code></p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
+<p class="rubric">Examples</p>
+<p>Compute homographies from marker detections:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">detections</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">detect_markers</span><span class="p">(</span><span class="s2">&quot;36h11&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">layout</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s2">&quot;marker name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;36h11_0&quot;</span><span class="p">,</span> <span class="s2">&quot;36h11_1&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s2">&quot;center x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">400</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s2">&quot;center y&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">],</span>
+<span class="gp">... </span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">homographies</span> <span class="o">=</span> <span class="n">find_homographies</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Compute homographies from contour detections:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">detections</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">detect_contour</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">layout</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">homographies</span> <span class="o">=</span> <span class="n">find_homographies</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -629,6 +1361,15 @@ with a single column <code class="docutils literal notranslate"><span class="pre
         <p class="prev-next-title">Epochs class</p>
       </div>
     </a>
+    <a class="right-next"
+       href="utils.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Utility functions</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               
@@ -649,19 +1390,47 @@ with a single column <code class="docutils literal notranslate"><span class="pre
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video"><code class="docutils literal notranslate"><span class="pre">Video</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.timestamps"><code class="docutils literal notranslate"><span class="pre">Video.timestamps</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.ts"><code class="docutils literal notranslate"><span class="pre">Video.ts</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.isOpened"><code class="docutils literal notranslate"><span class="pre">Video.isOpened()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.grab"><code class="docutils literal notranslate"><span class="pre">Video.grab()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.retrieve"><code class="docutils literal notranslate"><span class="pre">Video.retrieve()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.read"><code class="docutils literal notranslate"><span class="pre">Video.read()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.set"><code class="docutils literal notranslate"><span class="pre">Video.set()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.get"><code class="docutils literal notranslate"><span class="pre">Video.get()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.first_ts"><code class="docutils literal notranslate"><span class="pre">Video.first_ts</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.last_ts"><code class="docutils literal notranslate"><span class="pre">Video.last_ts</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.ts_diff"><code class="docutils literal notranslate"><span class="pre">Video.ts_diff</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.times"><code class="docutils literal notranslate"><span class="pre">Video.times</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.duration"><code class="docutils literal notranslate"><span class="pre">Video.duration</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.fps"><code class="docutils literal notranslate"><span class="pre">Video.fps</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.width"><code class="docutils literal notranslate"><span class="pre">Video.width</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.height"><code class="docutils literal notranslate"><span class="pre">Video.height</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.camera_matrix"><code class="docutils literal notranslate"><span class="pre">Video.camera_matrix</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.distortion_coefficients"><code class="docutils literal notranslate"><span class="pre">Video.distortion_coefficients</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.get_frame"><code class="docutils literal notranslate"><span class="pre">Video.get_frame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.undistort_cache"><code class="docutils literal notranslate"><span class="pre">Video.undistort_cache</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.map1"><code class="docutils literal notranslate"><span class="pre">Video.map1</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.map2"><code class="docutils literal notranslate"><span class="pre">Video.map2</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.undistortion_matrix"><code class="docutils literal notranslate"><span class="pre">Video.undistortion_matrix</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.current_frame_index"><code class="docutils literal notranslate"><span class="pre">Video.current_frame_index</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.cap"><code class="docutils literal notranslate"><span class="pre">Video.cap</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.timestamp_to_frame_index"><code class="docutils literal notranslate"><span class="pre">Video.timestamp_to_frame_index()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.read_frame_at"><code class="docutils literal notranslate"><span class="pre">Video.read_frame_at()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.reset"><code class="docutils literal notranslate"><span class="pre">Video.reset()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.release"><code class="docutils literal notranslate"><span class="pre">Video.release()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.close"><code class="docutils literal notranslate"><span class="pre">Video.close()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.plot_frame"><code class="docutils literal notranslate"><span class="pre">Video.plot_frame()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.detect_apriltags"><code class="docutils literal notranslate"><span class="pre">Video.detect_apriltags()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.undistort_video"><code class="docutils literal notranslate"><span class="pre">Video.undistort_video()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.undistort_frame"><code class="docutils literal notranslate"><span class="pre">Video.undistort_frame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.compute_frame_brightness"><code class="docutils literal notranslate"><span class="pre">Video.compute_frame_brightness()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.detect_markers"><code class="docutils literal notranslate"><span class="pre">Video.detect_markers()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.detect_contour"><code class="docutils literal notranslate"><span class="pre">Video.detect_contour()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.plot_detections"><code class="docutils literal notranslate"><span class="pre">Video.plot_detections()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.overlay_detections"><code class="docutils literal notranslate"><span class="pre">Video.overlay_detections()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.overlay_scanpath"><code class="docutils literal notranslate"><span class="pre">Video.overlay_scanpath()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.undistort"><code class="docutils literal notranslate"><span class="pre">Video.undistort()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Video.compute_intensity"><code class="docutils literal notranslate"><span class="pre">Video.compute_intensity()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.find_homographies"><code class="docutils literal notranslate"><span class="pre">find_homographies()</span></code></a></li>
 </ul>
   </nav></div>
 

@@ -291,6 +291,7 @@
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Video class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utility functions</a></li>
 </ul>
 </div>
 </nav></div>
@@ -356,9 +357,10 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Recording">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recording_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording" title="Link to this definition">#</a></dt>
-<dd><p>Container of a multi-modal recording with streams, events, and videos.</p>
+<dd><p>Container of a multi-modal recording with
+<a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></a>, <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a>, and <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">Video</span></code></a></p>
 <p>The recording directory is expected to follow either the Pupil Cloud format
-(tested with data format version &gt;= 2.3) or the native Pupil Labs format.
+(tested with data format version &gt;= 2.3) or the native Pupil Labs format
 (tested with data format version &gt;= 2.5).
 In both cases, the directory must contain an <code class="docutils literal notranslate"><span class="pre">info.json</span></code> file.</p>
 <p>Example Pupil Cloud recording directory structure:</p>
@@ -369,7 +371,6 @@ In both cases, the directory must contain an <code class="docutils literal notra
 ├── fixations.csv
 ├── gaze.csv
 ├── imu.csv
-├── saccades.csv
 ├── info.json (REQUIRED)
 ├── labels.csv
 ├── saccades.csv
@@ -403,7 +404,7 @@ In both cases, the directory must contain an <code class="docutils literal notra
 </pre></div>
 </div>
 <p>Streams, events, and scene video will be located but not loaded until
-accessed as properties such as <code class="docutils literal notranslate"><span class="pre">gaze</span></code>, <code class="docutils literal notranslate"><span class="pre">imu</span></code>, and <code class="docutils literal notranslate"><span class="pre">eye_states</span></code>.</p>
+accessed as properties such as <a class="reference internal" href="#pyneon.Recording.gaze" title="pyneon.Recording.gaze"><code class="xref py py-attr docutils literal notranslate"><span class="pre">gaze</span></code></a>, <a class="reference internal" href="#pyneon.Recording.fixations" title="pyneon.Recording.fixations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fixations</span></code></a>, and <a class="reference internal" href="#pyneon.Recording.scene_video" title="pyneon.Recording.scene_video"><code class="xref py py-attr docutils literal notranslate"><span class="pre">scene_video</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -417,7 +418,7 @@ accessed as properties such as <code class="docutils literal notranslate"><span 
 </dd>
 <dt><strong>recording_dir</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the recording directory.</p>
 </dd>
-<dt><strong>format</strong><span class="classifier">{‘cloud’, ‘native’}</span></dt><dd><p>Recording format, either “cloud” for Pupil Cloud format or “native” for
+<dt><strong>format</strong><span class="classifier">{“cloud”, “native”}</span></dt><dd><p>Recording format, either “cloud” for Pupil Cloud format or “native” for
 native format.</p>
 </dd>
 <dt><strong>info</strong><span class="classifier">dict</span></dt><dd><p>Information about the recording. Read from <code class="docutils literal notranslate"><span class="pre">info.json</span></code>. For details, see
@@ -431,64 +432,43 @@ native format.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.clear_der_dir" title="pyneon.Recording.clear_der_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_der_dir</span></code></a>([include, exclude])</p></td>
-<td><p>Clear the derived data directory by removing files and folders.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.close" title="pyneon.Recording.close"><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code></a>()</p></td>
+<td><p>Release cached video handles, if any.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.concat_events" title="pyneon.Recording.concat_events"><code class="xref py py-obj docutils literal notranslate"><span class="pre">concat_events</span></code></a>(event_names)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.concat_events" title="pyneon.Recording.concat_events"><code class="xref py py-obj docutils literal notranslate"><span class="pre">concat_events</span></code></a>(events_names)</p></td>
 <td><p>Concatenate different events.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.concat_streams" title="pyneon.Recording.concat_streams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">concat_streams</span></code></a>(stream_names[, ...])</p></td>
 <td><p>Concatenate data from different streams under common timestamps.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.detect_apriltags" title="pyneon.Recording.detect_apriltags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_apriltags</span></code></a>([tag_family, overwrite, ...])</p></td>
-<td><p>Detect AprilTags in a video and return their positions per frame.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.estimate_camera_pose" title="pyneon.Recording.estimate_camera_pose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimate_camera_pose</span></code></a>(tag_locations_df[, ...])</p></td>
-<td><p>Compute the camera pose (R|t) for every frame.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.estimate_scanpath" title="pyneon.Recording.estimate_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimate_scanpath</span></code></a>([sync_gaze, lk_params, ...])</p></td>
-<td><p>Estimate scanpaths by propagating fixations across frames with Lucas-Kanade.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.export_cloud_format" title="pyneon.Recording.export_cloud_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_cloud_format</span></code></a>(target_dir[, rebase])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.export_cloud_format" title="pyneon.Recording.export_cloud_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_cloud_format</span></code></a>(target_dir[, rebase])</p></td>
 <td><p>Export native data to cloud-like format.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.export_eye_bids" title="pyneon.Recording.export_eye_bids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_eye_bids</span></code></a>(output_dir[, prefix, ...])</p></td>
-<td><p>Export eye-tracking data to Eye-tracking-BIDS format.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.export_eye_tracking_bids" title="pyneon.Recording.export_eye_tracking_bids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_eye_tracking_bids</span></code></a>(output_dir[, ...])</p></td>
+<td><p>Export eye-tracking data to Eye-Tracking-BIDS format.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.export_motion_bids" title="pyneon.Recording.export_motion_bids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_motion_bids</span></code></a>(motion_dir[, prefix, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.export_motion_bids" title="pyneon.Recording.export_motion_bids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_motion_bids</span></code></a>(motion_dir[, prefix, ...])</p></td>
 <td><p>Export IMU data to Motion-BIDS format.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.find_homographies" title="pyneon.Recording.find_homographies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_homographies</span></code></a>(tag_info[, ...])</p></td>
-<td><p>Compute and return homographies for each frame using AprilTag detections and reference marker layout.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.fixations_on_surface" title="pyneon.Recording.fixations_on_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fixations_on_surface</span></code></a>([gaze_on_surface, ...])</p></td>
-<td><p>Project fixation events into surface space by summarizing gaze samples.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.gaze_on_surface" title="pyneon.Recording.gaze_on_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaze_on_surface</span></code></a>([homographies, tag_info, ...])</p></td>
-<td><p>Project gaze coordinates from eye space to surface space using homographies.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.overlay_detections_and_pose" title="pyneon.Recording.overlay_detections_and_pose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_detections_and_pose</span></code></a>(...[, ...])</p></td>
-<td><p>Overlay AprilTag detections and camera poses on the video frames.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.overlay_scanpath" title="pyneon.Recording.overlay_scanpath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overlay_scanpath</span></code></a>([scanpath, show_video, ...])</p></td>
-<td><p>Render a video with the scan-path overlaid.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.plot_distribution" title="pyneon.Recording.plot_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_distribution</span></code></a>([heatmap_source, ...])</p></td>
 <td><p>Plot a heatmap of gaze or fixation data on a matplotlib axis.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.smooth_camera_pose" title="pyneon.Recording.smooth_camera_pose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_camera_pose</span></code></a>([camera_pose_raw, ...])</p></td>
-<td><p>Kalman-smooth camera positions and gate outliers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Recording.sync_gaze_to_video" title="pyneon.Recording.sync_gaze_to_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sync_gaze_to_video</span></code></a>([window_size, overwrite, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Recording.sync_gaze_to_video" title="pyneon.Recording.sync_gaze_to_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sync_gaze_to_video</span></code></a>([window_size, inplace])</p></td>
 <td><p>Synchronize gaze data to video frames by applying windowed averaging around timestamps of each video frame.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Recording.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Recording.close" title="Link to this definition">#</a></dt>
+<dd><p>Release cached video handles, if any.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.gaze">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">gaze</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span><a class="headerlink" href="#pyneon.Recording.gaze" title="Link to this definition">#</a></dt>
-<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing gaze data.</p>
+<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></a> instance containing gaze data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">gaze.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">gaze_200hz.raw</span></code> (if present;
 otherwise from <code class="docutils literal notranslate"><span class="pre">gaze</span> <span class="pre">ps1.raw</span></code>) along with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and
@@ -498,7 +478,7 @@ otherwise from <code class="docutils literal notranslate"><span class="pre">gaze
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.imu">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">imu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span><a class="headerlink" href="#pyneon.Recording.imu" title="Link to this definition">#</a></dt>
-<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing IMU data.</p>
+<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></a> instance containing IMU data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">imu.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">imu</span> <span class="pre">ps1.raw</span></code>, along with
 the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
@@ -507,7 +487,7 @@ the corresponding <code class="docutils literal notranslate"><span class="pre">.
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.eye_states">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">eye_states</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span><a class="headerlink" href="#pyneon.Recording.eye_states" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Stream</span></code></a> object containing eye states data.</p>
+<dd><p>Return a cached <a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></a> instance containing eye states data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">3d_eye_states.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">eye_state</span> <span class="pre">ps1.raw</span></code>, along
 with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
@@ -516,7 +496,7 @@ with the corresponding <code class="docutils literal notranslate"><span class="p
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.blinks">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">blinks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span><a class="headerlink" href="#pyneon.Recording.blinks" title="Link to this definition">#</a></dt>
-<dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing blink event data.</p>
+<dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance containing blink event data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">blinks.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">blinks</span> <span class="pre">ps1.raw</span></code>, along with
 the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
@@ -525,7 +505,7 @@ the corresponding <code class="docutils literal notranslate"><span class="pre">.
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.fixations">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">fixations</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span><a class="headerlink" href="#pyneon.Recording.fixations" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing fixations data.</p>
+<dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance containing fixations data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations</span> <span class="pre">ps1.raw</span></code>,
 along with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
@@ -534,7 +514,7 @@ along with the corresponding <code class="docutils literal notranslate"><span cl
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.saccades">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">saccades</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span><a class="headerlink" href="#pyneon.Recording.saccades" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing saccades data.</p>
+<dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance containing saccades data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">saccades.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the data is loaded from <code class="docutils literal notranslate"><span class="pre">fixations</span> <span class="pre">ps1.raw</span></code>,
 along with the corresponding <code class="docutils literal notranslate"><span class="pre">.time</span></code> and <code class="docutils literal notranslate"><span class="pre">.dtype</span></code> files.</p>
@@ -543,7 +523,7 @@ along with the corresponding <code class="docutils literal notranslate"><span cl
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.events">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">events</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span><a class="headerlink" href="#pyneon.Recording.events" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Events</span></code></a> object containing events data.</p>
+<dd><p>Return a cached <a class="reference internal" href="events.html#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance containing events data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the events data is loaded from <code class="docutils literal notranslate"><span class="pre">events.csv</span></code>.</p>
 <p>For <strong>native</strong> recordings, the events data is loaded from <code class="docutils literal notranslate"><span class="pre">event.txt</span></code> and
 <code class="docutils literal notranslate"><span class="pre">event.time</span></code>.</p>
@@ -552,7 +532,7 @@ along with the corresponding <code class="docutils literal notranslate"><span cl
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.scene_video">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">scene_video</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></span><a class="headerlink" href="#pyneon.Recording.scene_video" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> object containing scene video data.</p>
+<dd><p>Return a cached <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">Video</span></code></a> instance containing scene video data.</p>
 <p>For <strong>Pupil Cloud</strong> recordings, the video is loaded from the only <code class="docutils literal notranslate"><span class="pre">*.mp4</span></code> file
 in the recording directory.</p>
 <p>For <strong>native</strong> recordings, the video is loaded from the <code class="docutils literal notranslate"><span class="pre">Neon</span> <span class="pre">Scene</span> <span class="pre">Camera*.mp4</span></code>
@@ -562,7 +542,7 @@ file in the recording directory.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Recording.eye_video">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">eye_video</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="video.html#pyneon.Video" title="pyneon.video.video.Video"><span class="pre">Video</span></a></span><a class="headerlink" href="#pyneon.Recording.eye_video" title="Link to this definition">#</a></dt>
-<dd><p>Returns a (cached) <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> object containing eye video data.</p>
+<dd><p>Return a cached <a class="reference internal" href="video.html#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">Video</span></code></a> instance containing eye video data.</p>
 <p>Eye video is only available for <strong>native</strong> recordings and is loaded from the
 <code class="docutils literal notranslate"><span class="pre">Neon</span> <span class="pre">Sensor</span> <span class="pre">Module*.mp4</span></code> file in the recording directory.</p>
 </dd></dl>
@@ -587,7 +567,7 @@ May not match the start time of each data stream.</p>
 <dd><p>Concatenate data from different streams under common timestamps.
 Since the streams may have different timestamps and sampling frequencies,
 resampling of all streams to a set of common timestamps is performed.
-The latest start timestamp and earliest last timestamp of the selected sreams
+The latest start timestamp and earliest last timestamp of the selected streams
 are used to define the common timestamps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -615,7 +595,7 @@ if <code class="docutils literal notranslate"><span class="pre">True</span></cod
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><p>Stream object containing concatenated data.</p>
+<dt>Stream</dt><dd><p>Stream instance containing concatenated data.</p>
 </dd>
 </dl>
 </dd>
@@ -624,7 +604,7 @@ if <code class="docutils literal notranslate"><span class="pre">True</span></cod
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Recording.concat_events">
-<span class="sig-name descname"><span class="pre">concat_events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span></span><a class="headerlink" href="#pyneon.Recording.concat_events" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">concat_events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span></span><a class="headerlink" href="#pyneon.Recording.concat_events" title="Link to this definition">#</a></dt>
 <dd><p>Concatenate different events. All columns in the selected event type will be
 present in the final DataFrame. An additional “type” column denotes the event
 type. If <code class="docutils literal notranslate"><span class="pre">events</span></code> is selected, its “timestamp [ns]” column will be
@@ -634,7 +614,7 @@ a more readable output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>event_names</strong><span class="classifier">list of str</span></dt><dd><p>List of event names to concatenate. Event names must be in
+<dt><strong>events_names</strong><span class="classifier">list of str</span></dt><dd><p>List of event names to concatenate. Event names must be in
 <code class="docutils literal notranslate"><span class="pre">{&quot;blinks&quot;,</span> <span class="pre">&quot;fixations&quot;,</span> <span class="pre">&quot;saccades&quot;,</span> <span class="pre">&quot;events&quot;}</span></code>
 (singular forms are tolerated).</p>
 </dd>
@@ -642,7 +622,7 @@ a more readable output.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Events</dt><dd><p>Events object containing concatenated data.</p>
+<dt>Events</dt><dd><p>Events instance containing concatenated data.</p>
 </dd>
 </dl>
 </dd>
@@ -651,15 +631,13 @@ a more readable output.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Recording.plot_distribution">
-<span class="sig-name descname"><span class="pre">plot_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">heatmap_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'gaze'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fixations'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaze'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scatter_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'gaze'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fixations'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'fixations'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.10.8)"><span class="pre">Figure</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><span class="pre">Axes</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.Recording.plot_distribution" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">plot_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">heatmap_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'gaze'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fixations'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaze'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scatter_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'gaze'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fixations'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'fixations'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1600,</span> <span class="pre">1200)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'inferno'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.10.8)"><span class="pre">Figure</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.8)"><span class="pre">Axes</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.Recording.plot_distribution" title="Link to this definition">#</a></dt>
 <dd><p>Plot a heatmap of gaze or fixation data on a matplotlib axis.
 Users can flexibly choose to generate a smoothed heatmap and/or scatter plot and
 the source of the data (gaze or fixation).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>rec</strong><span class="classifier">Recording</span></dt><dd><p>Recording object containing the gaze and video data.</p>
-</dd>
 <dt><strong>heatmap_source</strong><span class="classifier">{‘gaze’, ‘fixations’, None}</span></dt><dd><p>Source of the data to plot as a heatmap. If None, no heatmap is plotted.
 Defaults to ‘gaze’.</p>
 </dd>
@@ -667,26 +645,27 @@ Defaults to ‘gaze’.</p>
 Defaults to ‘fixations’. Gaze data is typically more dense and thus less suitable
 for scatter plots.</p>
 </dd>
+<dt><strong>step_size</strong><span class="classifier">int</span></dt><dd><p>Size of the grid cells in pixels. Defaults to 10.</p>
+</dd>
+<dt><strong>sigma</strong><span class="classifier">int or float</span></dt><dd><p>Standard deviation of the Gaussian kernel used to smooth the heatmap.
+If None or 0, no smoothing is applied. Defaults to 2.</p>
+</dd>
+<dt><strong>width_height</strong><span class="classifier">tuple[int, int]</span></dt><dd><p>If video is not available, the width and height of the scene camera frames to
+specify the heatmap dimensions. Defaults to (1600, 1200).</p>
+</dd>
+<dt><strong>cmap</strong><span class="classifier">str</span></dt><dd><p>Colormap to use for the heatmap. Defaults to ‘inferno’.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes or None</span></dt><dd><p>Axis to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
 <dt><strong>show</strong><span class="classifier">bool</span></dt><dd><p>Show the figure if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to True.</p>
-</dd>
-<dt><strong>**kwargs</strong><span class="classifier">keyword arguments</span></dt><dd><dl class="simple">
-<dt>Additional parameters for the plot, including:</dt><dd><ul class="simple">
-<li><p>‘step_size’: Step size for the heatmap grid. Default is 10.</p></li>
-<li><p>‘sigma’: Sigma value for Gaussian smoothing. Default is 2.</p></li>
-<li><p>‘width_height’: Width and height of the figure in pixels. Default is (1600, 1200).</p></li>
-<li><p>‘cmap’: Colormap for the heatmap. Default is ‘inferno’.</p></li>
-<li><p>‘ax’: Matplotlib axis to plot on. If None, a new figure and axis are created.</p></li>
-</ul>
-</dd>
-</dl>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure object containing the plot.</p>
+<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure instance containing the plot.</p>
 </dd>
-<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis object containing the plot.</p>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis instance containing the plot.</p>
 </dd>
 </dl>
 </dd>
@@ -695,7 +674,7 @@ for scatter plots.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Recording.sync_gaze_to_video">
-<span class="sig-name descname"><span class="pre">sync_gaze_to_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Recording.sync_gaze_to_video" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">sync_gaze_to_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Recording.sync_gaze_to_video" title="Link to this definition">#</a></dt>
 <dd><p>Synchronize gaze data to video frames by applying windowed averaging
 around timestamps of each video frame.</p>
 <dl class="field-list simple">
@@ -704,386 +683,15 @@ around timestamps of each video frame.</p>
 <dt><strong>window_size</strong><span class="classifier">int, optional</span></dt><dd><p>Size of the time window in nanoseconds used for averaging.
 If None, defaults to the median interval between video frame timestamps.</p>
 </dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, force recomputation even if saved data exists. Default is False.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Path to save the resulting CSV file. Defaults to <cite>&lt;der_dir&gt;/gaze_synced.csv</cite>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><dl class="simple">
-<dt>A Stream indexed by <cite>“timestamp [ns]”</cite>, containing:</dt><dd><ul class="simple">
-<li><p>‘gaze x [px]’: Gaze x-coordinate in pixels</p></li>
-<li><p>‘gaze y [px]’: Gaze y-coordinate in pixels</p></li>
-<li><p>‘frame_idx’: Index of the video frame corresponding to the gaze data</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.estimate_scanpath">
-<span class="sig-name descname"><span class="pre">estimate_scanpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sync_gaze</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lk_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Recording.estimate_scanpath" title="Link to this definition">#</a></dt>
-<dd><p>Estimate scanpaths by propagating fixations across frames with Lucas-Kanade.</p>
-<p>If a cached result exists and <code class="docutils literal notranslate"><span class="pre">overwrite</span></code> is False, it is loaded from disk.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>sync_gaze</strong><span class="classifier">Stream, optional</span></dt><dd><p>Gaze data synchronised to video frames. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, it is created with
-Recording.sync_gaze_to_video().</p>
-</dd>
-<dt><strong>lk_params</strong><span class="classifier">dict, optional</span></dt><dd><p>Parameters forwarded to the LK optical-flow call.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Where to save the pickle. Defaults to <code class="docutils literal notranslate"><span class="pre">&lt;der_dir&gt;/scanpath.pkl</span></code>.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>Force recomputation even if a pickle exists.</p>
+<dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, update the gaze stream in-place and return None.
+If False, return a new Stream. Defaults to False.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><p>Indexed by “timestamp [ns]” with one column “fixations”
-containing a nested DataFrame for each video frame.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.detect_apriltags">
-<span class="sig-name descname"><span class="pre">detect_apriltags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag_family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'tag36h11'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Recording.detect_apriltags" title="Link to this definition">#</a></dt>
-<dd><p>Detect AprilTags in a video and return their positions per frame.</p>
-<p>Runs AprilTag detection on video frames using the <cite>pupil_apriltags</cite> backend.
-Uses saved results if available unless <cite>overwrite=True</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>tag_family</strong><span class="classifier">str, optional</span></dt><dd><p>The AprilTag family to detect (e.g., “tag36h11”). Default is “tag36h11”.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, reruns detection even if saved results exist.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Path to save the detection JSON file. Defaults to <cite>&lt;der_dir&gt;/apriltags.json</cite>.</p>
-</dd>
-<dt><strong>**kwargs</strong><span class="classifier">keyword arguments</span></dt><dd><dl class="simple">
-<dt>Additional parameters for AprilTag detection, including:</dt><dd><ul class="simple">
-<li><p>‘nthreads’: Number of threads to use for detection. Default is 4.</p></li>
-<li><p>‘quad_decimate’: Decimation factor for the quad detection. Default is 1.0, thus no decimation.</p></li>
-<li><p>‘skip_frames’: Number of frames to skip between detections. Default is 1, thus no skipping.</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><dl class="simple">
-<dt>Stream indexed by <cite>“timestamp [ns]”</cite> with one row per detected tag, including:</dt><dd><ul class="simple">
-<li><p>‘frame_idx’: Index in the downsampled video sequence</p></li>
-<li><p>‘orig_frame_idx’: Original frame index in the full video</p></li>
-<li><p>‘tag_id’: ID of the detected AprilTag</p></li>
-<li><p>‘corners’: A 4x2 array of tag corner coordinates</p></li>
-<li><p>‘center’: A 1x2 array of the tag center</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.find_homographies">
-<span class="sig-name descname"><span class="pre">find_homographies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Recording.find_homographies" title="Link to this definition">#</a></dt>
-<dd><p>Compute and return homographies for each frame using AprilTag detections and reference marker layout.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>tag_info</strong><span class="classifier">pandas.DataFrame</span></dt><dd><dl class="simple">
-<dt>DataFrame containing AprilTag reference positions and orientations, with columns:</dt><dd><ul class="simple">
-<li><p>‘tag_id’: ID of the tag</p></li>
-<li><p>‘x’, ‘y’, ‘z’: 3D coordinates of the tag’s center</p></li>
-<li><p>‘normal_x’, ‘normal_y’, ‘normal_z’: Normal vector of the tag surface</p></li>
-<li><p>‘size’: Side length of the tag in meters</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-<dt><strong>all_detections</strong><span class="classifier">Stream, optional</span></dt><dd><p>Stream containing AprilTag detection results per frame. If None, detections are recomputed.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to force recomputation even if saved homographies exist.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Optional file path for saving the homographies as JSON. If None, defaults to <cite>&lt;der_dir&gt;/homographies.json</cite>.</p>
-</dd>
-<dt><strong>**kwargs</strong><span class="classifier">keyword arguments</span></dt><dd><dl class="simple">
-<dt>Additional parameters for homography computation, including:</dt><dd><ul class="simple">
-<li><p>‘coordinate_system’: Coordinate system for the homography (‘opencv’ or ‘psychopy’). Default is ‘opencv’.</p></li>
-<li><p>‘surface_size’: Size of the surface in pixels (width, height). Default is (1920, 1080).</p></li>
-<li><p>‘skip_frames’: Number of frames to skip between detections. Default is 1.</p></li>
-<li><p>‘settings’: Additional settings for the homography computation.</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><dl class="simple">
-<dt>A Stream object indexed by <cite>“timestamp [ns]”</cite> containing:</dt><dd><ul class="simple">
-<li><p>‘frame_idx’: Video frame index</p></li>
-<li><p>‘homography’: 3x3 NumPy array representing the homography matrix for that frame</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.gaze_on_surface">
-<span class="sig-name descname"><span class="pre">gaze_on_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">homographies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">synced_gaze</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Recording.gaze_on_surface" title="Link to this definition">#</a></dt>
-<dd><p>Project gaze coordinates from eye space to surface space using homographies.</p>
-<p>Computes or loads frame-wise homographies and applies them to the synchronized
-gaze data to transform it into surface coordinates. If a saved version exists
-and <cite>overwrite</cite> is False, the data is loaded from disk.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>homographies</strong><span class="classifier">Stream, optional</span></dt><dd><p>Stream containing precomputed homographies. If None, they are computed from <cite>tag_info</cite>.</p>
-</dd>
-<dt><strong>tag_info</strong><span class="classifier">pandas.DataFrame, optional</span></dt><dd><p>AprilTag marker info used to compute homographies. Required if <cite>homographies</cite> is None.</p>
-</dd>
-<dt><strong>synced_gaze</strong><span class="classifier">Stream, optional</span></dt><dd><p>Gaze data aligned to video frames. If None, will be computed using <cite>sync_gaze_to_video()</cite>.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, recompute and overwrite any existing surface-transformed gaze data. Default is False.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>File path to save the resulting CSV. Defaults to <cite>&lt;der_dir&gt;/gaze_on_surface.csv</cite>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><dl class="simple">
-<dt>A Stream containing gaze data with surface coordinates, including:</dt><dd><ul class="simple">
-<li><p>‘frame_idx’: Frame index</p></li>
-<li><p>‘x_trans’, ‘y_trans’: Gaze coordinates in surface pixel space</p></li>
-<li><p>Any additional columns from the synchronized gaze input</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.fixations_on_surface">
-<span class="sig-name descname"><span class="pre">fixations_on_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gaze_on_surface</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="events.html#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a></span></span><a class="headerlink" href="#pyneon.Recording.fixations_on_surface" title="Link to this definition">#</a></dt>
-<dd><p>Project fixation events into surface space by summarizing gaze samples.</p>
-<p>This function maps each fixation to surface coordinates by averaging the
-surface-transformed gaze points (<cite>x_trans</cite>, <cite>y_trans</cite>) associated with
-that fixation. If saved data exists and <cite>overwrite</cite> is False, it is loaded
-from disk instead of being recomputed.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>gaze_on_surface</strong><span class="classifier">pandas.DataFrame, optional</span></dt><dd><p>DataFrame of gaze coordinates already transformed to surface space.
-If None, will be computed via <cite>self.gaze_on_surface()</cite>.
-Must include ‘fixation id’, ‘x_trans’, and ‘y_trans’ columns.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, forces recomputation and overwrites any existing output file.
-Default is False.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Custom path to save the resulting fixation data as a CSV.
-If None, defaults to <cite>self.der_dir / “fixations_on_surface.csv”</cite>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Events</dt><dd><dl class="simple">
-<dt>An events object containing:</dt><dd><ul class="simple">
-<li><p>All columns from the raw fixations table</p></li>
-<li><dl class="simple">
-<dt>‘gaze x [surface coord]’<span class="classifier">float</span></dt><dd><p>Mean surface-space x-coordinate for the fixation.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘gaze y [surface coord]’<span class="classifier">float</span></dt><dd><p>Mean surface-space y-coordinate for the fixation.</p>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.estimate_camera_pose">
-<span class="sig-name descname"><span class="pre">estimate_camera_pose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag_locations_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a></span></span><a class="headerlink" href="#pyneon.Recording.estimate_camera_pose" title="Link to this definition">#</a></dt>
-<dd><p>Compute the camera pose (R|t) for every frame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>tag_locations_df</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>3-D positions, normals and size for every AprilTag (columns:
-‘tag_id’,’x’,’y’,’z’,’normal_x’,’normal_y’,’normal_z’,’size’).</p>
-</dd>
-<dt><strong>all_detections</strong><span class="classifier">Stream, optional</span></dt><dd><p>Per-frame AprilTag detections.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, they are produced by Recording.detect_apriltags().</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Path to save the resulting camera pose data as a JSON file. Defaults to <cite>&lt;der_dir&gt;/camera_pose.json</cite>.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, forces recomputation and overwrites any existing saved result. Default is False.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>Stream</dt><dd><p>Indexed by “timestamp [ns]” with columns
-<code class="docutils literal notranslate"><span class="pre">'frame_idx',</span> <span class="pre">'translation_vector',</span> <span class="pre">'rotation_vector',</span> <span class="pre">'camera_pos'</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.smooth_camera_pose">
-<span class="sig-name descname"><span class="pre">smooth_camera_pose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">camera_pose_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></span><a class="headerlink" href="#pyneon.Recording.smooth_camera_pose" title="Link to this definition">#</a></dt>
-<dd><p>Kalman-smooth camera positions and gate outliers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>camera_pose_raw</strong><span class="classifier">pandas.DataFrame, optional</span></dt><dd><p>Raw camera-pose table with columns <code class="docutils literal notranslate"><span class="pre">'frame_idx'</span></code> and <code class="docutils literal notranslate"><span class="pre">'camera_pos'</span></code>.
-If <em>None</em>, tries to load <em>camera_pose.json</em> from <code class="docutils literal notranslate"><span class="pre">self.der_dir</span></code> or
-computes it via Recording.estimate_camera_pose().</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, default False</span></dt><dd><p>Recompute even if a smoothed file already exists.</p>
-</dd>
-<dt><strong>output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Where to save the JSON (<code class="docutils literal notranslate"><span class="pre">smoothed_camera_pose.json</span></code> by default).</p>
-</dd>
-<dt><strong>kwargs</strong><span class="classifier">dict, optional</span></dt><dd><dl class="simple">
-<dt>Optional arguments:</dt><dd><ul class="simple">
-<li><p>initial_state_noise: float (default=0.1)</p></li>
-<li><p>process_noise: float (default=0.1)</p></li>
-<li><p>measurement_noise: float (default=0.01)</p></li>
-<li><p>gating_threshold: float (default=2.0)</p></li>
-<li><p>bidirectional: bool (default=False)</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame</dt><dd><p>Same rows as <em>camera_pose_raw</em> with the extra column
-<code class="docutils literal notranslate"><span class="pre">'smoothed_camera_pos'</span></code> (3-vector).</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.overlay_scanpath">
-<span class="sig-name descname"><span class="pre">overlay_scanpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scanpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.stream.Stream"><span class="pre">Stream</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Recording.overlay_scanpath" title="Link to this definition">#</a></dt>
-<dd><p>Render a video with the scan-path overlaid.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>scanpath</strong><span class="classifier">Stream, optional</span></dt><dd><p>Nested scan-path table (as from Recording.estimate_scanpath()).
-If <em>None</em>, it is loaded or computed automatically.</p>
-</dd>
-<dt><strong>show_video</strong><span class="classifier">bool</span></dt><dd><p>Display the video live while rendering.</p>
-</dd>
-<dt><strong>video_output_path</strong><span class="classifier">str or pathlib.Path, optional</span></dt><dd><p>Target MP4 path. Defaults to <cite>&lt;der_dir&gt;/scanpath.mp4</cite>.
-If <em>None</em>, no file is written.</p>
-</dd>
-<dt><strong>overwrite</strong><span class="classifier">bool, default False</span></dt><dd><p>Regenerate the overlay even if the MP4 already exists.</p>
-</dd>
-<dt><strong>kwargs</strong><span class="classifier">dict, optional</span></dt><dd><dl class="simple">
-<dt>Optional arguments:</dt><dd><ul class="simple">
-<li><dl class="simple">
-<dt>circle_radius: int, default 10</dt><dd><p>Radius of the fixation circles.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>line_thickness: int, default 2</dt><dd><p>Thickness of the fixation lines.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>text_size: int, default 1</dt><dd><p>Size of the fixation text.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>max_fixations: int, default 10</dt><dd><p>Maximum number of fixations to display.</p>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.overlay_detections_and_pose">
-<span class="sig-name descname"><span class="pre">overlay_detections_and_pose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">april_detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_positions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">room_corners</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([[0,</span> <span class="pre">0],</span> <span class="pre">[0,</span> <span class="pre">1],</span> <span class="pre">[1,</span> <span class="pre">1],</span> <span class="pre">[1,</span> <span class="pre">0]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([300,</span> <span class="pre">300])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.overlay_detections_and_pose" title="Link to this definition">#</a></dt>
-<dd><p>Overlay AprilTag detections and camera poses on the video frames. The resulting video can be displayed and/or saved.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>april_detections</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the AprilTag detections.</p>
-</dd>
-<dt><strong>camera_positions</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the camera positions.</p>
-</dd>
-<dt><strong>room_corners</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Array containing the room corners coordinates. Defaults to a unit square.</p>
-</dd>
-<dt><strong>video_output_path pathlib.Path or str</strong></dt><dd><p>Path to save the video with detections and poses overlaid. Defaults to ‘detection_and_pose.mp4’.</p>
-</dd>
-<dt><strong>graph_size</strong><span class="classifier">numpy.ndarray</span></dt><dd><p>Size of the graph to overlay on the video. Defaults to [300, 300].</p>
-</dd>
-<dt><strong>show_video</strong><span class="classifier">bool</span></dt><dd><p>Whether to display the video with detections and poses overlaid. Defaults to True.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.clear_der_dir">
-<span class="sig-name descname"><span class="pre">clear_der_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['all']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.clear_der_dir" title="Link to this definition">#</a></dt>
-<dd><p>Clear the derived data directory by removing files and folders.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>include</strong><span class="classifier">str or list of str, optional</span></dt><dd><p>Files or folders to delete. If [“all”], delete everything in the directory.
-Supports full names or base names without extensions (e.g. “scanpath” matches “scanpath.pkl”).</p>
-</dd>
-<dt><strong>exclude</strong><span class="classifier">str or list of str, optional</span></dt><dd><p>Files or folders to exclude. Applies only if include is [“all”].
-Also supports base names.</p>
+<dt>Stream or None</dt><dd><p>A Stream indexed by “timestamp [ns]” containing the window-averaged
+gaze data, or None if <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -1109,63 +717,119 @@ Also supports base names.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Recording.export_motion_bids">
 <span class="sig-name descname"><span class="pre">export_motion_bids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">motion_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.export_motion_bids" title="Link to this definition">#</a></dt>
-<dd><p>Export IMU data to Motion-BIDS format. Continuous samples are saved to a .tsv
-file and metadata (with template fields) are saved to a .json file.
-Users should later edit the metadata file according to the experiment to make
-it BIDS-compliant.</p>
-<dl class="field-list simple">
+<dd><p>Export IMU data to Motion-BIDS format.</p>
+<p>Motion-BIDS <a class="reference internal" href="#rfe93fe2e8ddd-1" id="id1">[1]</a> is an extension to the Brain Imaging Data Structure (BIDS) that
+standardizes motion sensor data from IMUs for reproducible research. This method
+creates motion time-series and metadata files, channels files, and updates the
+scans file in the subject/session directory. The output files are BIDS-compliant
+templates and may require additional metadata editing for full compliance with
+your specific use case.</p>
+<p>The exported files are:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;motion_dir&gt;/
+    &lt;prefix&gt;_channels.json
+    &lt;prefix&gt;_channels.tsv
+    &lt;prefix&gt;_motion.json
+    &lt;prefix&gt;_motion.tsv
+sub-&lt;label&gt;_[ses-&lt;label&gt;]_scans.tsv
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sub-01/
+    ses-1/
+        motion/
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_channels.json
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_channels.tsv
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_motion.json
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_motion.tsv
+        sub-01_ses-1_scans.tsv
+</pre></div>
+</div>
+<p>Motion-BIDS specification can be found at:
+<a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html</a></p>
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>motion_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Output directory to save the Motion-BIDS formatted data.</p>
+<dd class="field-odd"><dl>
+<dt><strong>motion_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Output directory to save the Motion-BIDS formatted data.
+The directory name itself should be “motion” as specified by Motion-BIDS.</p>
 </dd>
-<dt><strong>prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Prefix for the BIDS filenames, by default “sub-<code class="docutils literal notranslate"><span class="pre">wearer_name``_task-XXX_tracksys-NeonIMU&quot;.</span>
-<span class="pre">The</span> <span class="pre">format</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">&quot;sub-&lt;label&gt;[_ses-&lt;label&gt;]_task-&lt;label&gt;_tracksys-&lt;label&gt;[_acq-&lt;label&gt;][_run-&lt;index&gt;]&quot;</span>
-<span class="pre">(Fields</span> <span class="pre">in</span> <span class="pre">[]</span> <span class="pre">are</span> <span class="pre">optional).</span> <span class="pre">Files</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">saved</span> <span class="pre">as</span>
-<span class="pre">``{prefix}_motion.&lt;tsv|json&gt;</span></code>.</p>
+<dt><strong>prefix</strong><span class="classifier">str, optional</span></dt><dd><p>BIDS naming prefix. The format is:</p>
+<p><code class="docutils literal notranslate"><span class="pre">sub-&lt;label&gt;[_ses-&lt;label&gt;]_task-&lt;label&gt;_tracksys-&lt;label&gt;[_acq-&lt;label&gt;][_run-&lt;index&gt;]</span></code></p>
+<p>Required fields are <code class="docutils literal notranslate"><span class="pre">sub-&lt;label&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">task-&lt;label&gt;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">tracksys-&lt;label&gt;</span></code> (use <code class="docutils literal notranslate"><span class="pre">tracksys-NeonIMU</span></code> for Neon IMU data).
+If not provided, inferred from the directory structure (parent directories)
+or defaults to <code class="docutils literal notranslate"><span class="pre">sub-{wearer_name}_task-TaskName_tracksys-NeonIMU</span></code>.</p>
 </dd>
-<dt><strong>extra_metadata</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra metadata to include in the .json file. Keys must be valid BIDS fields.</p>
+<dt><strong>extra_metadata</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra metadata to include in the JSON metadata file. Keys must be valid
+BIDS fields (for example, <code class="docutils literal notranslate"><span class="pre">TaskName</span></code>).</p>
 </dd>
 </dl>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>Motion-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-standardize the organization of motion data for reproducible research <a class="reference internal" href="#rfe93fe2e8ddd-1" id="id1">[1]</a>.
-For more information, see
-<a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html</a>.</p>
 <p class="rubric">References</p>
 <div role="list" class="citation-list">
 <div class="citation" id="rfe93fe2e8ddd-1" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
-<p>Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., … &amp; Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. <em>Scientific Data</em>, 11(1), 716.</p>
+<p>Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., Warmerdam, E., Hansen, C., Oostenveld, R., &amp; Welzel, J. (2024). Motion-BIDS: An extension to the brain imaging data structure to organize motion data for reproducible research. Scientific Data, 11(1), 716. <a class="reference external" href="https://doi.org/10.1038/s41597-024-03559-8">https://doi.org/10.1038/s41597-024-03559-8</a></p>
 </div>
 </div>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Recording.export_eye_bids">
-<span class="sig-name descname"><span class="pre">export_eye_bids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.export_eye_bids" title="Link to this definition">#</a></dt>
-<dd><p>Export eye-tracking data to Eye-tracking-BIDS format. Continuous samples
-and events are saved to .tsv.gz files with accompanying .json metadata files.
-Users should later edit the metadata files according to the experiment.</p>
+<dt class="sig sig-object py" id="pyneon.Recording.export_eye_tracking_bids">
+<span class="sig-name descname"><span class="pre">export_eye_tracking_bids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Recording.export_eye_tracking_bids" title="Link to this definition">#</a></dt>
+<dd><p>Export eye-tracking data to Eye-Tracking-BIDS format.</p>
+<p>Eye-Tracking-BIDS <a class="reference internal" href="#r2003e0f7c944-2" id="id3">[2]</a> standardizes gaze position, pupil data, and eye-tracking
+events by treating eye-tracking data as physiological data that can be organized
+alongside most BIDS modalities. The export creates gaze (and pupil diameter)
+time-series and event data files with accompanying metadata.</p>
+<p>The exported files are:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;output_dir&gt;/
+    &lt;prefix&gt;_physio.tsv.gz
+    &lt;prefix&gt;_physio.json
+    &lt;prefix&gt;_physioevents.tsv.gz
+    &lt;prefix&gt;_physioevents.json
+sub-&lt;label&gt;_[ses-&lt;label&gt;]_scans.tsv
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sub-01/
+    ses-1/
+        motion/
+            &lt;existing motion files if motion export is performed&gt;
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physio.json
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physio.tsv.gz
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physioevents.json
+            sub-01_ses-1_task-MyTask_tracksys-NeonIMU_run-1_physioevents.tsv.gz
+</pre></div>
+</div>
+<p>BIDS specifications for physiological recordings and specifically eye-tracking data can be found at:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html</a></p></li>
+<li><p><a class="reference external" href="https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html#eye-tracking">https://bids-specification.readthedocs.io/en/stable/modality-specific-files/physiological-recordings.html#eye-tracking</a></p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>output_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Output directory to save the Eye-tracking-BIDS formatted data.</p>
 </dd>
-<dt><strong>prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Prefix for the BIDS filenames, by default “sub-XX_recording-eye”.
-The format should be <cite>&lt;matches&gt;[_recording-&lt;label&gt;]_&lt;physio|physioevents&gt;.&lt;tsv.gz|json&gt;</cite>
-(Fields in [] are optional). Files will be saved as
-<code class="docutils literal notranslate"><span class="pre">{prefix}_physio.&lt;tsv.gz|json&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">{prefix}_physioevents.&lt;tsv.gz|json&gt;</span></code>.</p>
+<dt><strong>prefix</strong><span class="classifier">str, optional</span></dt><dd><p>BIDS naming prefix. Must include <code class="docutils literal notranslate"><span class="pre">sub-&lt;label&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">task-&lt;label&gt;</span></code>.
+If not provided, the function attempts to infer it from the directory
+structure or detect it from existing files (e.g., from <code class="docutils literal notranslate"><span class="pre">export_motion_bids()</span></code>).
+Defaults to <code class="docutils literal notranslate"><span class="pre">sub-{wearer_name}_task-TaskName</span></code> if no existing files are found.</p>
+</dd>
+<dt><strong>extra_metadata</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra metadata to include in the JSON metadata file. Keys must be valid
+BIDS fields.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>Eye-tracking-BIDS is an extension to the Brain Imaging Data Structure (BIDS) to
-standardize the organization of eye-tracking data for reproducible research.
-The extension is still being finalized. This method follows the latest standards
-outlined in <a class="github reference external" href="https://github.com/bids-standard/bids-specification/pull/1128">bids-standard/bids-specification#1128</a>.</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="r2003e0f7c944-2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">2</a><span class="fn-bracket">]</span></span>
+<p>Szinte, M., Bach, D. R., Draschkow, D., Esteban, O., Gagl, B., Gau, R., Gregorova, K., Halchenko, Y. O., Huberty, S., Kling, S. M., Kulkarni, S., Maintainers, T. B., Markiewicz, C. J., Mikkelsen, M., Oostenveld, R., &amp; Pfarr, J.-K. (2026). Eye-Tracking-BIDS: The Brain Imaging Data Structure extended to gaze position and pupil data. bioRxiv. <a class="reference external" href="https://doi.org/10.64898/2026.02.03.703514">https://doi.org/10.64898/2026.02.03.703514</a></p>
+</div>
+</div>
 </dd></dl>
 
 </dd></dl>
@@ -1220,6 +884,7 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording"><code class="docutils literal notranslate"><span class="pre">Recording</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.close"><code class="docutils literal notranslate"><span class="pre">Recording.close()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.gaze"><code class="docutils literal notranslate"><span class="pre">Recording.gaze</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.imu"><code class="docutils literal notranslate"><span class="pre">Recording.imu</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.eye_states"><code class="docutils literal notranslate"><span class="pre">Recording.eye_states</span></code></a></li>
@@ -1235,19 +900,9 @@ outlined in <a class="github reference external" href="https://github.com/bids-s
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.concat_events"><code class="docutils literal notranslate"><span class="pre">Recording.concat_events()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.plot_distribution"><code class="docutils literal notranslate"><span class="pre">Recording.plot_distribution()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.sync_gaze_to_video"><code class="docutils literal notranslate"><span class="pre">Recording.sync_gaze_to_video()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.estimate_scanpath"><code class="docutils literal notranslate"><span class="pre">Recording.estimate_scanpath()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.detect_apriltags"><code class="docutils literal notranslate"><span class="pre">Recording.detect_apriltags()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.find_homographies"><code class="docutils literal notranslate"><span class="pre">Recording.find_homographies()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.gaze_on_surface"><code class="docutils literal notranslate"><span class="pre">Recording.gaze_on_surface()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.fixations_on_surface"><code class="docutils literal notranslate"><span class="pre">Recording.fixations_on_surface()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.estimate_camera_pose"><code class="docutils literal notranslate"><span class="pre">Recording.estimate_camera_pose()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.smooth_camera_pose"><code class="docutils literal notranslate"><span class="pre">Recording.smooth_camera_pose()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.overlay_scanpath"><code class="docutils literal notranslate"><span class="pre">Recording.overlay_scanpath()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.overlay_detections_and_pose"><code class="docutils literal notranslate"><span class="pre">Recording.overlay_detections_and_pose()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.clear_der_dir"><code class="docutils literal notranslate"><span class="pre">Recording.clear_der_dir()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_cloud_format"><code class="docutils literal notranslate"><span class="pre">Recording.export_cloud_format()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_motion_bids"><code class="docutils literal notranslate"><span class="pre">Recording.export_motion_bids()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_eye_bids"><code class="docutils literal notranslate"><span class="pre">Recording.export_eye_bids()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Recording.export_eye_tracking_bids"><code class="docutils literal notranslate"><span class="pre">Recording.export_eye_tracking_bids()</span></code></a></li>
 </ul>
 </li>
 </ul>

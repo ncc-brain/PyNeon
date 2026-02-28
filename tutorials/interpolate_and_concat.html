@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Interpolate data and concatenate streams &#8212; PyNeon dev documentation</title>
+    <title>Preprocessing: Cropping, Interpolation, and Concatenation &#8212; PyNeon dev documentation</title>
   
   
   
@@ -48,8 +48,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/interpolate_and_concat';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Processing pupil size data and epoching" href="pupil_size_and_epoching.html" />
-    <link rel="prev" title="Reading a Pupil Cloud-format dataset/recording" href="read_recording_cloud.html" />
+    <link rel="next" title="Processing and Epoching Pupil Size Data" href="pupil_size_and_epoching.html" />
+    <link rel="prev" title="Reading Native-Format Recordings" href="read_recording_native.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -287,11 +287,13 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading a Pupil Cloud-format dataset/recording</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Interpolate data and concatenate streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing pupil size data and epoching</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Scene video and scanpath mapping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading Pupil Cloud-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_native.html">Reading Native-Format Recordings</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Preprocessing: Cropping, Interpolation, and Concatenation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing and Epoching Pupil Size Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surface_mapping.html">Surface Mapping Using Fiducial Markers and Screen Corners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene Video and Scanpath Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS Formats</a></li>
 </ul>
 </div>
 </nav></div>
@@ -335,7 +337,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Interpolate data and concatenate streams</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Preprocessing: Cropping, Interpolation, and Concatenation</span></li>
   </ul>
 </nav>
 </div>
@@ -352,10 +354,15 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Interpolate-data-and-concatenate-streams">
-<h1>Interpolate data and concatenate streams<a class="headerlink" href="#Interpolate-data-and-concatenate-streams" title="Link to this heading">#</a></h1>
-<p>Raw Neon data is not always easy to work with. A data stream (e.g., gaze, eye states, IMU) might not have been sampled at a constant rate. Additionally, streams may have differing sampling rates and lack synchronized start timestamps. All of these issues add complexity to continuous data analysis and sensor fusion.</p>
-<p>This tutorial demonstrates how to deal with these issues by interpolating data streams and concatenating them into a single DataFrame. We will use the same <code class="docutils literal notranslate"><span class="pre">boardView</span></code> dataset as in the <a class="reference external" href="read_recording.ipynb">previous tutorial</a>.</p>
+  <section id="Preprocessing:-Cropping,-Interpolation,-and-Concatenation">
+<h1>Preprocessing: Cropping, Interpolation, and Concatenation<a class="headerlink" href="#Preprocessing:-Cropping,-Interpolation,-and-Concatenation" title="Link to this heading">#</a></h1>
+<p>Data streams from Neon devices (gaze, eye states, IMU) present three common challenges:</p>
+<ol class="arabic simple">
+<li><p><strong>Irregular sampling</strong>: Device limitations cause non-uniform time intervals between samples</p></li>
+<li><p><strong>Different sampling rates</strong>: Each stream type has its own nominal frequency (gaze: 200 Hz, eye states: 200 Hz, IMU: 110 Hz)</p></li>
+<li><p><strong>Misaligned timestamps</strong>: Streams may start and end at different times</p></li>
+</ol>
+<p>This tutorial shows how to address these challenges using PyNeon’s preprocessing tools: <code class="docutils literal notranslate"><span class="pre">crop()</span></code> and <code class="docutils literal notranslate"><span class="pre">restrict()</span></code> for temporal selection, <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> for resampling, and <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> for combining multiple streams. We use the same dataset as in the <a class="reference internal" href="read_recording_cloud.html"><span class="doc">previous tutorial</span></a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -363,43 +370,24 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">get_sample_data</span>
 
-<span class="n">recording_dir</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;boardView&quot;</span><span class="p">)</span>
-    <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
-    <span class="o">/</span> <span class="s2">&quot;boardview1-d4fd9a27&quot;</span>
-<span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;native&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
-<p>We now access raw data from gaze, eye states, and IMU streams.</p>
+<p>Load the gaze, eye states, and IMU streams from the recording. Each <code class="docutils literal notranslate"><span class="pre">Stream</span></code> object contains continuous time-series data indexed by nanosecond-precision timestamps.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">recording_dir</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">gaze</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">gaze</span>
 <span class="n">eye_states</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">eye_states</span>
 <span class="n">imu</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">imu</span>
-</pre></div>
-</div>
-</div>
-<section id="Irregular-sampling-in-data-streams">
-<h2>Irregular sampling in data streams<a class="headerlink" href="#Irregular-sampling-in-data-streams" title="Link to this heading">#</a></h2>
-<p>Data points from each stream are indexed by <code class="docutils literal notranslate"><span class="pre">timestamp</span> <span class="pre">[ns]</span></code>, which denotes the UTC time of the sample in nanoseconds. Are these samples uniformly distributed over time? We can examine the initial samples from each stream to assess their distribution, where, due to device boot-up, the sampling may be irregular.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Take the first 0.3 seconds of gaze data</span>
-<span class="n">gaze_begin</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-<span class="c1"># And the corresponding eye states and IMU data</span>
-<span class="n">eye_states_begin</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">)</span>
-<span class="n">imu_begin</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">)</span>
 
 
-<span class="c1"># Define a function to plot the timestamps of the gaze, eye states, and IMU data</span>
+<span class="c1"># Define a function to visualize the timestamp distribution across streams</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_timestamps</span><span class="p">(</span><span class="n">gaze</span><span class="p">,</span> <span class="n">eye_states</span><span class="p">,</span> <span class="n">imu</span><span class="p">,</span> <span class="n">concat_stream</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">gaze</span><span class="o">.</span><span class="n">ts</span><span class="p">),</span> <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
@@ -417,9 +405,40 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Timestamp (ns)&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<section id="Selecting-Time-Windows-with-crop()-and-restrict()">
+<h2>Selecting Time Windows with <code class="docutils literal notranslate"><span class="pre">crop()</span></code> and <code class="docutils literal notranslate"><span class="pre">restrict()</span></code><a class="headerlink" href="#Selecting-Time-Windows-with-crop()-and-restrict()" title="Link to this heading">#</a></h2>
+<p>Analyzing specific time windows requires selecting subsets of your data. PyNeon provides two complementary methods:</p>
+<ul class="simple">
+<li><p><strong>``crop()``</strong>: Extract data within a specified temporal range</p></li>
+<li><p><strong>``restrict()``</strong>: Align one stream to match another’s temporal boundaries</p></li>
+</ul>
+<section id="Using-crop()-to-Extract-Time-Ranges">
+<h3>Using <code class="docutils literal notranslate"><span class="pre">crop()</span></code> to Extract Time Ranges<a class="headerlink" href="#Using-crop()-to-Extract-Time-Ranges" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">crop()</span></code> method accepts <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> bounds (both inclusive). The <code class="docutils literal notranslate"><span class="pre">by</span></code> parameter determines how these bounds are interpreted:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">by=&quot;timestamp&quot;</span></code>: Absolute Unix timestamps in nanoseconds</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">by=&quot;time&quot;</span></code>: Relative time in seconds from the stream’s first sample</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">by=&quot;sample&quot;</span></code>: Zero-based sample indices</p></li>
+</ul>
+<p>Let’s crop the gaze stream to the start of the recording:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>..
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Crop to the first 0.3 seconds of gaze data using relative time</span>
+<span class="n">gaze_300ms</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="c1"># Alternatively, crop to the first 200 data points</span>
+<span class="n">gaze_200samples</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;sample&quot;</span><span class="p">)</span>
 
-
-<span class="n">plot_timestamps</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">,</span> <span class="n">eye_states_begin</span><span class="p">,</span> <span class="n">imu_begin</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaze stream length before cropping: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaze stream length after cropping (0.3 seconds): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze_300ms</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaze stream length after cropping (200 samples): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze_200samples</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -427,20 +446,24 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_5_0.png" src="../_images/tutorials_interpolate_and_concat_5_0.png" />
+<div class="highlight"><pre>
+Gaze stream length before cropping: 1048
+Gaze stream length after cropping (0.3 seconds): 60
+Gaze stream length after cropping (200 samples): 201
+</pre></div></div>
 </div>
-</div>
-<p>As shown in the figure above, in addition to the apparently later onset of IMU data, the first 0.3 second of gaze and eye states data indeed suffers from dropouts.</p>
-<p>In addition to dropouts, irregular sampling may also occur, especially for IMU data from our experience. For example, it can be observed in the middle of this recording (5 - 5.3 seconds):</p>
+</section>
+<section id="Using-restrict()-to-Align-Streams">
+<h3>Using <code class="docutils literal notranslate"><span class="pre">restrict()</span></code> to Align Streams<a class="headerlink" href="#Using-restrict()-to-Align-Streams" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">restrict()</span></code> method aligns one stream to match another’s temporal boundaries. It’s a convenience wrapper equivalent to <code class="docutils literal notranslate"><span class="pre">crop(tmin=other.first_ts,</span> <span class="pre">tmax=other.last_ts,</span> <span class="pre">by=&quot;timestamp&quot;)</span></code>.</p>
+<p>This is particularly useful when streams have different start/end times. In our recording, the raw IMU stream starts earlier than gaze and eye states:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_middle</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">5.3</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-<span class="n">eye_states_middle</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
-<span class="n">imu_middle</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
-
-<span class="n">plot_timestamps</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">,</span> <span class="n">eye_states_middle</span><span class="p">,</span> <span class="n">imu_middle</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_timestamps</span><span class="p">(</span>
+    <span class="n">gaze_300ms</span><span class="p">,</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">imu</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -451,9 +474,33 @@
 <img alt="../_images/tutorials_interpolate_and_concat_7_0.png" src="../_images/tutorials_interpolate_and_concat_7_0.png" />
 </div>
 </div>
-<p>How frequent are these irregularities? We now examine the distribution of the time differences between consecutive samples, and compare them to the expected time difference for a regular, nominal (as specified by Pupil Labs) sampling rate.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">restrict()</span></code> to trim the eye states and IMU data to match gaze’s temporal range:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Restrict eye_states and imu data to match gaze_300ms&#39;s time range</span>
+<span class="n">eye_states_300ms</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_300ms</span><span class="p">)</span>
+<span class="n">imu_300ms</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_300ms</span><span class="p">)</span>
+
+<span class="n">plot_timestamps</span><span class="p">(</span><span class="n">gaze_300ms</span><span class="p">,</span> <span class="n">eye_states_300ms</span><span class="p">,</span> <span class="n">imu_300ms</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_interpolate_and_concat_9_0.png" src="../_images/tutorials_interpolate_and_concat_9_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Understanding-Sampling-Irregularities">
+<h2>Understanding Sampling Irregularities<a class="headerlink" href="#Understanding-Sampling-Irregularities" title="Link to this heading">#</a></h2>
+<p>To quantify sampling irregularities, let’s examine the distribution of time intervals between consecutive samples and compare them to the nominal sampling rates specified by Pupil Labs:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
@@ -497,26 +544,31 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Nominal sampling frequency of gaze: 200 Hz. Actual: 199.4 Hz
-Nominal sampling frequency of eye states: 200 Hz. Actual: 199.4 Hz
-Nominal sampling frequency of IMU: 110 Hz. Actual: 113.9 Hz
+Nominal sampling frequency of gaze: 200 Hz. Actual: 199.1 Hz
+Nominal sampling frequency of eye states: 200 Hz. Actual: 199.1 Hz
+Nominal sampling frequency of IMU: 110 Hz. Actual: 114.7 Hz
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_9_1.png" src="../_images/tutorials_interpolate_and_concat_9_1.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_11_1.png" src="../_images/tutorials_interpolate_and_concat_11_1.png" />
 </div>
 </div>
-<p>For gaze and eye states data, the empirical distribution of time differences is close to the expected value. However, some integer multiples of the nominal sampling rate suggest possible eye video frame drops. For IMU data, the distribution is much wider.</p>
+<p>The histograms reveal that while most intervals cluster around the nominal rate (red line), all three streams show irregularities:</p>
+<ul class="simple">
+<li><p><strong>Gaze and eye states</strong>: Integer multiples of the nominal interval indicate occasional dropped frames from the eye camera</p></li>
+<li><p><strong>IMU</strong>: Broader distribution suggests more variable sampling intervals</p></li>
+</ul>
+<p>These irregularities motivate the need for interpolation when analyses require uniform sampling.</p>
 </section>
-<section id="Interpolating-data-streams">
-<h2>Interpolating data streams<a class="headerlink" href="#Interpolating-data-streams" title="Link to this heading">#</a></h2>
-<p>Given the presence of irregular sampling, if you want to perform analyses that assume continuous data streams, interpolation is necessary. PyNeon uses the <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html">(API reference)</a> function to interpolate data streams. The <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> method of <code class="docutils literal notranslate"><span class="pre">Stream</span></code> creates a new object with interpolated data.</p>
-<p>With the default parameters, the interpolated data will have the same start timestamp as the original data, and the sampling rate is set to the nominal sampling frequency specified by Pupil Labs (200 Hz for gaze and eye states, 110 Hz for IMU).</p>
+<section id="Resampling-to-Uniform-Timestamps-with-interpolate()">
+<h2>Resampling to Uniform Timestamps with <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code><a class="headerlink" href="#Resampling-to-Uniform-Timestamps-with-interpolate()" title="Link to this heading">#</a></h2>
+<p>Many analyses require uniformly-sampled data. The <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> method resamples streams to regular intervals using <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d</span></code> <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html">(API reference)</a>.</p>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code> generates uniformly-spaced timestamps at the stream’s nominal sampling frequency (200 Hz for gaze/eye states, 110 Hz for IMU), starting from the first sample and ending at the last.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interpolate to the nominal sampling frequency</span>
@@ -547,17 +599,14 @@ The new gaze stream is uniformly sampled: True
 gaze x [px]        float64
 gaze y [px]        float64
 worn               float64
-fixation id        float64
-blink id           float64
 azimuth [deg]      float64
 elevation [deg]    float64
 dtype: object
 </pre></div></div>
 </div>
-<p>Note that after interpolation, the data types of the columns are preserved.</p>
-<p>Alternatively, one can also interpolate the gaze data to any desired timestamps by specifying the <code class="docutils literal notranslate"><span class="pre">new_ts</span></code> parameter. This is especially helpful when synchronizing different data streams. For example, we can interpolate the gaze data (~200Hz) to the timestamps of the IMU data (~110Hz).</p>
+<p>Column data types are preserved during interpolation. You can also resample to custom timestamps using the <code class="docutils literal notranslate"><span class="pre">new_ts</span></code> parameter—useful for synchronizing streams with different sampling rates. For example, resample gaze data (~200 Hz) to IMU timestamps (~110 Hz):</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original gaze data length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -574,9 +623,9 @@ dtype: object
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Original gaze data length: 6091
-Original IMU data length: 3459
-Gaze data length after interpolating to IMU timestamps: 3459
+Original gaze data length: 1048
+Original IMU data length: 622
+Gaze data length after interpolating to IMU timestamps: 622
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -584,26 +633,29 @@ Gaze data length after interpolating to IMU timestamps: 3459
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-D:\GitHub\PyNeon\pyneon\preprocess\preprocess.py:66: UserWarning: new_ts contains timestamps after the data end time; These samples will be NaN.
+C:\Users\User\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 18 out of 622 requested timestamps are outside the data time range and will have empty data.
   warn(
 </pre></div></div>
 </div>
-<p>By default, float-type data is interpolated using the <code class="docutils literal notranslate"><span class="pre">'linear'</span></code> method. We are examine its behavior by comparing interpolated data with the raw data.</p>
+<p>The warning above is expected: remember that IMU recording starts earlier than gaze, so interpolating gaze to IMU timestamps will include extrapolation for the initial IMU samples. The resulting <code class="docutils literal notranslate"><span class="pre">interpolated_gaze</span></code> stream contains values at all IMU timestamps, with NaNs for timestamps outside the original gaze range.</p>
+<section id="How-Interpolation-Works">
+<h3>How Interpolation Works<a class="headerlink" href="#How-Interpolation-Works" title="Link to this heading">#</a></h3>
+<p>By default, float columns use linear interpolation (<code class="docutils literal notranslate"><span class="pre">float_kind='linear'</span></code>), while non-float columns use nearest-neighbor (<code class="docutils literal notranslate"><span class="pre">other_kind='nearest'</span></code>). Linear interpolation estimates values at new timestamps by drawing straight lines between existing data points:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_interp_begin</span> <span class="o">=</span> <span class="n">gaze_interp</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">imu_500ms</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gaze_begin</span><span class="p">[</span><span class="s2">&quot;gaze x [px]&quot;</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">imu_500ms</span><span class="p">[</span><span class="s2">&quot;acceleration x [g]&quot;</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">gaze_interp_begin</span><span class="p">[</span><span class="s2">&quot;gaze x [px]&quot;</span><span class="p">],</span>
+    <span class="n">imu_500ms</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()[</span><span class="s2">&quot;acceleration x [g]&quot;</span><span class="p">],</span>
     <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Interpolated&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Timestamp [ns]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Gaze x [px]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Acceleration x [g]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -613,17 +665,23 @@ D:\GitHub\PyNeon\pyneon\preprocess\preprocess.py:66: UserWarning: new_ts contain
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_16_0.png" src="../_images/tutorials_interpolate_and_concat_16_0.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_19_0.png" src="../_images/tutorials_interpolate_and_concat_19_0.png" />
 </div>
 </div>
+<p>Interpolation creates new uniformly-spaced samples (orange triangles) while preserving most original data points (blue circles) that happen to fall near the new timestamps.</p>
 </section>
-<section id="Concatenating-different-streams">
-<h2>Concatenating different streams<a class="headerlink" href="#Concatenating-different-streams" title="Link to this heading">#</a></h2>
-<p>There might be cases where you want to concatenate different streams into a single one to facilitate further analysis (e.g., <a class="reference internal" href="pupil_size_and_epoching.html"><span class="doc">epoching</span></a>). This is possible by interpolating the streams’ data to common timestamps and concatenating them into a single DataFrame.</p>
-<p>The method <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> of <code class="docutils literal notranslate"><span class="pre">Recording</span></code> provides such functionality. It takes a list of stream names and interpolate them to common timestamps, defined by the latest start and earliest end timestamps of the streams. The new sampling frequency can either be directly specified or taken from the lowest/highest sampling frequency of the streams.</p>
-<p>In the following example, we concatenate the gaze, eye states, and IMU streams into a single DataFrame using the default parameters.</p>
+</section>
+<section id="Combining-Streams-with-concat_streams()">
+<h2>Combining Streams with <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code><a class="headerlink" href="#Combining-Streams-with-concat_streams()" title="Link to this heading">#</a></h2>
+<p>Joint analysis of multiple sensors requires combining streams into a single DataFrame. The <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code> method:</p>
+<ol class="arabic simple">
+<li><p>Determines the common temporal overlap (from the latest start to the earliest end across all streams)</p></li>
+<li><p>Interpolates all streams to uniform timestamps within this range</p></li>
+<li><p>Combines columns into a single <code class="docutils literal notranslate"><span class="pre">Stream</span></code> object</p></li>
+</ol>
+<p>The sampling rate defaults to the lowest nominal frequency among the selected streams (110 Hz when including IMU).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_stream</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">concat_streams</span><span class="p">([</span><span class="s2">&quot;gaze&quot;</span><span class="p">,</span> <span class="s2">&quot;eye_states&quot;</span><span class="p">,</span> <span class="s2">&quot;imu&quot;</span><span class="p">])</span>
@@ -641,79 +699,107 @@ Concatenating streams:
         gaze
         eye_states
         imu
-Using lowest sampling rate: 110 Hz ([&#39;imu&#39;])
-Using latest start timestamp: 1732621490607650343 ([&#39;imu&#39;])
-Using earliest last timestamp: 1732621520979070343 ([&#39;gaze&#39; &#39;eye_states&#39;])
-                     gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
+Using lowest sampling rate: 110 Hz (&lt;StringArray&gt;
+[&#39;imu&#39;]
+Length: 1, dtype: str)
+Using latest start timestamp: 1766074431275967547 (&lt;StringArray&gt;
+[&#39;gaze&#39;, &#39;eye_states&#39;]
+Length: 2, dtype: str)
+Using earliest last timestamp: 1766074436535834547 (&lt;StringArray&gt;
+[&#39;gaze&#39;, &#39;eye_states&#39;]
+Length: 2, dtype: str)
+                     gaze x [px]  gaze y [px]  worn  azimuth [deg]  \
 timestamp [ns]
-1732621490607650343   705.518840   554.991000     1            1      &lt;NA&gt;
-1732621490616741252   704.882473   553.793142     1            1      &lt;NA&gt;
-1732621490625832161   707.703762   556.712119     1            1      &lt;NA&gt;
-1732621490634923070   711.389933   553.846792     1            1      &lt;NA&gt;
-1732621490644013979   709.281792   555.543786     1            1      &lt;NA&gt;
+1766074431275967547   731.885864   503.253845    -1      -4.384848
+1766074431285058456   735.780922   499.996515    -1      -4.134103
+1766074431294149365   735.862011   502.149531    -1      -4.128883
+1766074431303240274   737.018387   503.200361    -1      -4.054441
+1766074431312331183   739.273033   502.726029    -1      -3.909299
 
-                     azimuth [deg]  elevation [deg]  pupil diameter left [mm]  \
+                     elevation [deg]  pupil diameter left [mm]  \
 timestamp [ns]
-1732621490607650343      -7.085339         3.473196                  3.346414
-1732621490616741252      -7.126717         3.550039                  3.363306
-1732621490625832161      -6.944035         3.363050                  3.368352
-1732621490634923070      -6.707335         3.547818                  3.365432
-1732621490644013979      -6.842681         3.438366                  3.374732
+1766074431275967547         6.207878                  4.582340
+1766074431285058456         6.416890                  4.536907
+1766074431294149365         6.278738                  4.528555
+1766074431303240274         6.211310                  4.611737
+1766074431312331183         6.241746                  4.558960
 
-                     pupil diameter right [mm]  eyeball center left x [mm]  \
+                     eyeball center left x [mm]  eyeball center left y [mm]  \
 timestamp [ns]
-1732621490607650343                   3.360563                  -32.282935
-1732621490616741252                   3.359459                  -32.249418
-1732621490625832161                   3.350918                  -32.216782
-1732621490634923070                   3.361014                  -32.249156
-1732621490644013979                   3.365781                  -32.234158
+1766074431275967547                  -30.562500                   14.062500
+1766074431285058456                  -30.448863                   14.085226
+1766074431294149365                  -30.534090                   14.082387
+1766074431303240274                  -30.613637                   14.096591
+1766074431312331183                  -30.596600                   14.073850
 
-                     ...  acceleration x [g]  acceleration y [g]  \
-timestamp [ns]       ...
-1732621490607650343  ...           -0.067383           -0.340820
-1732621490616741252  ...           -0.062619           -0.315917
-1732621490625832161  ...           -0.052682           -0.329993
-1732621490634923070  ...           -0.058795           -0.334090
-1732621490644013979  ...           -0.060815           -0.322199
+                     eyeball center left z [mm]  optical axis left x  ...  \
+timestamp [ns]                                                        ...
+1766074431275967547                  -32.062500            -0.098742  ...
+1766074431285058456                  -32.056819            -0.100264  ...
+1766074431294149365                  -32.058237            -0.091252  ...
+1766074431303240274                  -32.144887            -0.097646  ...
+1766074431312331183                  -32.011375            -0.082156  ...
 
-                     acceleration z [g]  roll [deg]  pitch [deg]   yaw [deg]  \
+                     gyro x [deg/s]  gyro y [deg/s]  gyro z [deg/s]  \
 timestamp [ns]
-1732621490607650343            0.932129    1.923968   -20.230545  132.920122
-1732621490616741252            0.925714    1.923949   -20.227639  132.924402
-1732621490625832161            0.924432    1.920479   -20.228228  132.927574
-1732621490634923070            0.931812    1.916587   -20.228839  132.931756
-1732621490644013979            0.925476    1.916104   -20.227092  132.937429
+1766074431275967547        0.270761       -3.295624        1.393119
+1766074431285058456       -0.352645       -3.417501        1.581498
+1766074431294149365       -0.661864       -3.321655        1.665359
+1766074431303240274       -1.197607       -3.654104        1.829147
+1766074431312331183       -1.479553       -3.961838        1.829147
 
-                     quaternion w  quaternion x  quaternion y  quaternion z
+                     acceleration x [g]  acceleration y [g]  \
 timestamp [ns]
-1732621490607650343      0.395828     -0.085287     -0.154390      0.901227
-1732621490616741252      0.395796     -0.085271     -0.154370      0.901246
-1732621490625832161      0.395766     -0.085242     -0.154389      0.901258
-1732621490634923070      0.395728     -0.085207     -0.154411      0.901275
-1732621490644013979      0.395683     -0.085190     -0.154403      0.901297
+1766074431275967547           -0.033417            0.028384
+1766074431285058456           -0.046604            0.024029
+1766074431294149365           -0.029812            0.024873
+1766074431303240274           -0.033384            0.013343
+1766074431312331183           -0.034372            0.017812
 
-[5 rows x 34 columns]
-Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixation id&#39;, &#39;blink id&#39;,
-       &#39;azimuth [deg]&#39;, &#39;elevation [deg]&#39;, &#39;pupil diameter left [mm]&#39;,
-       &#39;pupil diameter right [mm]&#39;, &#39;eyeball center left x [mm]&#39;,
-       &#39;eyeball center left y [mm]&#39;, &#39;eyeball center left z [mm]&#39;,
-       &#39;eyeball center right x [mm]&#39;, &#39;eyeball center right y [mm]&#39;,
-       &#39;eyeball center right z [mm]&#39;, &#39;optical axis left x&#39;,
-       &#39;optical axis left y&#39;, &#39;optical axis left z&#39;, &#39;optical axis right x&#39;,
-       &#39;optical axis right y&#39;, &#39;optical axis right z&#39;, &#39;gyro x [deg/s]&#39;,
-       &#39;gyro y [deg/s]&#39;, &#39;gyro z [deg/s]&#39;, &#39;acceleration x [g]&#39;,
-       &#39;acceleration y [g]&#39;, &#39;acceleration z [g]&#39;, &#39;roll [deg]&#39;, &#39;pitch [deg]&#39;,
-       &#39;yaw [deg]&#39;, &#39;quaternion w&#39;, &#39;quaternion x&#39;, &#39;quaternion y&#39;,
-       &#39;quaternion z&#39;],
-      dtype=&#39;object&#39;)
+                     acceleration z [g]  quaternion w  quaternion x  \
+timestamp [ns]
+1766074431275967547            1.012492      0.130887     -0.010311
+1766074431285058456            1.014113      0.131004     -0.010321
+1766074431294149365            1.006813      0.131136     -0.010400
+1766074431303240274            1.016316      0.131278     -0.010472
+1766074431312331183            1.007866      0.131435     -0.010574
+
+                     quaternion y  quaternion z
+timestamp [ns]
+1766074431275967547     -0.010332     -0.991290
+1766074431285058456     -0.010347     -0.991274
+1766074431294149365     -0.010343     -0.991256
+1766074431303240274     -0.010282     -0.991237
+1766074431312331183     -0.010180     -0.991216
+
+[5 rows x 35 columns]
+Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;azimuth [deg]&#39;,
+       &#39;elevation [deg]&#39;, &#39;pupil diameter left [mm]&#39;,
+       &#39;eyeball center left x [mm]&#39;, &#39;eyeball center left y [mm]&#39;,
+       &#39;eyeball center left z [mm]&#39;, &#39;optical axis left x&#39;,
+       &#39;optical axis left y&#39;, &#39;optical axis left z&#39;,
+       &#39;pupil diameter right [mm]&#39;, &#39;eyeball center right x [mm]&#39;,
+       &#39;eyeball center right y [mm]&#39;, &#39;eyeball center right z [mm]&#39;,
+       &#39;optical axis right x&#39;, &#39;optical axis right y&#39;, &#39;optical axis right z&#39;,
+       &#39;eyelid angle top left [rad]&#39;, &#39;eyelid angle bottom left [rad]&#39;,
+       &#39;eyelid aperture left [mm]&#39;, &#39;eyelid angle top right [rad]&#39;,
+       &#39;eyelid angle bottom right [rad]&#39;, &#39;eyelid aperture right [mm]&#39;,
+       &#39;gyro x [deg/s]&#39;, &#39;gyro y [deg/s]&#39;, &#39;gyro z [deg/s]&#39;,
+       &#39;acceleration x [g]&#39;, &#39;acceleration y [g]&#39;, &#39;acceleration z [g]&#39;,
+       &#39;quaternion w&#39;, &#39;quaternion x&#39;, &#39;quaternion y&#39;, &#39;quaternion z&#39;],
+      dtype=&#39;str&#39;)
 </pre></div></div>
 </div>
-<p>We show an exemplary sampling of eye, imu and concatenated data below. It can be seen that the concatenated data is regularly sampled at the nominal sampling rate of IMU.</p>
+<p>Compare a 0.3-second window from the middle of the recording. The concatenated stream (bottom row) shows perfectly uniform timestamps that roughly matches the sampling rate of IMU (110 Hz).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">concat_stream_middle</span> <span class="o">=</span> <span class="n">concat_stream</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract a time window from the middle of the recording to highlight sampling differences</span>
+<span class="n">gaze_middle</span> <span class="o">=</span> <span class="n">gaze</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">3.3</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="n">eye_states_middle</span> <span class="o">=</span> <span class="n">eye_states</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
+<span class="n">imu_middle</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
+<span class="n">concat_stream_middle</span> <span class="o">=</span> <span class="n">concat_stream</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">)</span>
 <span class="n">plot_timestamps</span><span class="p">(</span><span class="n">gaze_middle</span><span class="p">,</span> <span class="n">eye_states_middle</span><span class="p">,</span> <span class="n">imu_middle</span><span class="p">,</span> <span class="n">concat_stream_middle</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -722,12 +808,12 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_20_0.png" src="../_images/tutorials_interpolate_and_concat_20_0.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_24_0.png" src="../_images/tutorials_interpolate_and_concat_24_0.png" />
 </div>
 </div>
-<p>Despite different sampling from the original streams, the concatenated data still respects the original values of the data. For example, the <code class="docutils literal notranslate"><span class="pre">gaze</span> <span class="pre">x</span> <span class="pre">[px]</span></code> and <code class="docutils literal notranslate"><span class="pre">acceleration</span> <span class="pre">x</span> <span class="pre">[g]</span></code> data from the raw and concatenated stream are quite comparable.</p>
+<p>Despite resampling to uniform timestamps, interpolation preserves the data’s essential characteristics. Comparing the same columns before (blue circles) and after (orange triangles) concatenation shows how values remain faithful to the originals:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -764,7 +850,7 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_interpolate_and_concat_22_0.png" src="../_images/tutorials_interpolate_and_concat_22_0.png" />
+<img alt="../_images/tutorials_interpolate_and_concat_26_0.png" src="../_images/tutorials_interpolate_and_concat_26_0.png" />
 </div>
 </div>
 </section>
@@ -781,12 +867,12 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="read_recording_cloud.html"
+       href="read_recording_native.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Reading a Pupil Cloud-format dataset/recording</p>
+        <p class="prev-next-title">Reading Native-Format Recordings</p>
       </div>
     </a>
     <a class="right-next"
@@ -794,7 +880,7 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Processing pupil size data and epoching</p>
+        <p class="prev-next-title">Processing and Epoching Pupil Size Data</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -817,9 +903,17 @@ Index([&#39;gaze x [px]&#39;, &#39;gaze y [px]&#39;, &#39;worn&#39;, &#39;fixati
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Irregular-sampling-in-data-streams">Irregular sampling in data streams</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Interpolating-data-streams">Interpolating data streams</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Concatenating-different-streams">Concatenating different streams</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Selecting-Time-Windows-with-crop()-and-restrict()">Selecting Time Windows with <code class="docutils literal notranslate"><span class="pre">crop()</span></code> and <code class="docutils literal notranslate"><span class="pre">restrict()</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-crop()-to-Extract-Time-Ranges">Using <code class="docutils literal notranslate"><span class="pre">crop()</span></code> to Extract Time Ranges</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-restrict()-to-Align-Streams">Using <code class="docutils literal notranslate"><span class="pre">restrict()</span></code> to Align Streams</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Understanding-Sampling-Irregularities">Understanding Sampling Irregularities</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Resampling-to-Uniform-Timestamps-with-interpolate()">Resampling to Uniform Timestamps with <code class="docutils literal notranslate"><span class="pre">interpolate()</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#How-Interpolation-Works">How Interpolation Works</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Combining-Streams-with-concat_streams()">Combining Streams with <code class="docutils literal notranslate"><span class="pre">concat_streams()</span></code></a></li>
 </ul>
   </nav></div>
 

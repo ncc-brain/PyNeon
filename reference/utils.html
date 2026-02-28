@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Dataset class &#8212; PyNeon dev documentation</title>
+    <title>Utility functions &#8212; PyNeon dev documentation</title>
   
   
   
@@ -42,11 +42,10 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/dataset';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/utils';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Recording class" href="recording.html" />
-    <link rel="prev" title="PyNeon API" href="index.html" />
+    <link rel="prev" title="Video class" href="video.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -284,14 +283,14 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Dataset class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recording.html">Recording class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="base_tabular.html">BaseTabular Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Stream class (gaze, eye states, IMU)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Video class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utility functions</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Utility functions</a></li>
 </ul>
 </div>
 </nav></div>
@@ -335,7 +334,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Dataset class</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Utility functions</span></li>
   </ul>
 </nav>
 </div>
@@ -352,83 +351,57 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="dataset-class">
-<h1>Dataset class<a class="headerlink" href="#dataset-class" title="Link to this heading">#</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="pyneon.Dataset">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset" title="Link to this definition">#</a></dt>
-<dd><p>Container for multiple recordings. Reads from a directory containing multiple
-recordings.</p>
-<p>For example, a dataset with 2 recordings downloaded from Pupil Cloud
-would have the following folder structure:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
-├── recording_dir_1/
-│   ├── info.json
-│   ├── gaze.csv
-|   └── ...
-├── recording_dir_2/
-│   ├── info.json
-│   ├── gaze.csv
-|   └── ...
-├── ...
-├── enrichment_info.txt
-└── sections.csv
-</pre></div>
-</div>
-<p>Or a dataset with multiple native recordings:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
-├── recording_dir_1/
-│   ├── info.json
-│   ├── blinks ps1.raw
-|   ├── blinks ps1.time
-|   ├── blinks.dtype
-|   └── ...
-└── recording_dir_2/
-    ├── info.json
-    ├── blinks ps1.raw
-    ├── blinks ps1.time
-    ├── blinks.dtype
-    └── ...
-</pre></div>
-</div>
-<p>Individual recordings will be read into <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recording</span></code></a> instances
-(based on <code class="docutils literal notranslate"><span class="pre">sections.csv</span></code>, if available) and accessible through the
-<code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute.</p>
+  <section id="module-pyneon.utils">
+<span id="utility-functions"></span><h1>Utility functions<a class="headerlink" href="#module-pyneon.utils" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.utils.get_sample_data">
+<span class="sig-prename descclassname"><span class="pre">pyneon.utils.</span></span><span class="sig-name descname"><span class="pre">get_sample_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'cloud'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'native'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></span><a class="headerlink" href="#pyneon.utils.get_sample_data" title="Link to this definition">#</a></dt>
+<dd><p>Download and retrieve sample data for PyNeon.</p>
+<p>This function downloads sample data from predefined URLs if not already present,
+and returns the path to the data directory. Optionally, it can return paths to
+specific recording formats.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>dataset_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
+<dt><strong>data_name</strong><span class="classifier">str</span></dt><dd><p>Name of the sample dataset to retrieve. Must be one of:
+- “simple”: Basic sample recording
+- “PLR”: Pupil light reflex data
+- “markers”: Recording with fiducial markers for surface mapping</p>
+</dd>
+<dt><strong>replace</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, re-download the data even if it already exists locally.
+Defaults to False.</p>
+</dd>
+<dt><strong>format</strong><span class="classifier">{‘cloud’, ‘native’}, optional</span></dt><dd><p>If specified, returns the path to a specific recording format:
+- “cloud”: Returns path to “Timeseries Data + Scene Video” directory
+- “native”: Returns path to “Native Recording Data” directory
+If None, returns the root data directory. Defaults to None.</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>dataset_dir</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
+<dt>Path</dt><dd><p>Path to the requested data directory.</p>
 </dd>
-<dt><strong>recordings</strong><span class="classifier">list of Recording</span></dt><dd><p>List of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recording</span></code></a> instances for each recording in the dataset.</p>
+</dl>
 </dd>
-<dt><strong>sections</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the sections of the dataset.</p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If <cite>data_name</cite> is not one of the available sample datasets.</p>
 </dd>
 </dl>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="s2">&quot;path/to/dataset&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data_path</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+<span class="go">.../data/simple</span>
 </pre></div>
 </div>
-<p>Dataset | 2 recordings</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cloud_path</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;PLR&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;cloud&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cloud_path</span><span class="p">)</span>
+<span class="go">.../data/PLR/Timeseries Data + Scene Video</span>
 </pre></div>
 </div>
-<p>Data format: cloud
-Recording ID: 56fcec49-d660-4d67-b5ed-ba8a083a448a
-Wearer ID: 028e4c69-f333-4751-af8c-84a09af079f5
-Wearer name: Pilot
-Recording start time: 2025-12-18 17:13:49.460000
-Recording duration: 8235000000 ns (8.235 s)</p>
 </dd></dl>
 
 </section>
@@ -444,22 +417,13 @@ Recording duration: 8235000000 ns (8.235 s)</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="video.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">PyNeon API</p>
+        <p class="prev-next-title">Video class</p>
       </div>
-    </a>
-    <a class="right-next"
-       href="recording.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Recording class</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>
@@ -480,7 +444,7 @@ Recording duration: 8235000000 ns (8.235 s)</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.utils.get_sample_data"><code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code></a></li>
 </ul>
   </nav></div>
 
@@ -488,7 +452,7 @@ Recording duration: 8235000000 ns (8.235 s)</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/reference/dataset.rst.txt"
+      <li><a href="../_sources/reference/utils.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

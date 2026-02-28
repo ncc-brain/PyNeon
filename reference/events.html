@@ -291,6 +291,7 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Events class (blinks, fixations, saccades, events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">Video class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utility functions</a></li>
 </ul>
 </div>
 </nav></div>
@@ -389,10 +390,7 @@ saccade events. Ignored for other formats.</p>
 </dd>
 <dt><strong>data</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>Event data with standardized column names.</p>
 </dd>
-<dt><strong>type</strong><span class="classifier">{“blinks”, “fixations”, “saccades”, “events”, “custom”}</span></dt><dd><p>Inferred event type based on data columns.</p>
-</dd>
-<dt><strong>id_name</strong><span class="classifier">str or None</span></dt><dd><p>Column name holding event IDs (e.g., <code class="docutils literal notranslate"><span class="pre">blink</span> <span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">fixation</span> <span class="pre">id</span></code>,
-<code class="docutils literal notranslate"><span class="pre">saccade</span> <span class="pre">id</span></code>). <code class="docutils literal notranslate"><span class="pre">None</span></code> for <code class="docutils literal notranslate"><span class="pre">events</span></code> and <code class="docutils literal notranslate"><span class="pre">custom</span></code> types.</p>
+<dt><strong>type</strong><span class="classifier">str</span></dt><dd><p>Inferred event type based on data columns.</p>
 </dd>
 </dl>
 </dd>
@@ -400,17 +398,26 @@ saccade events. Ignored for other formats.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Events.apply_homographies" title="pyneon.Events.apply_homographies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_homographies</span></code></a>(homographies[, ...])</p></td>
+<td><p>Compute fixation locations in surface coordinates using provided homographies based on fixation pixel coordinates and append them to the events data.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code>()</p></td>
 <td><p>Create a deep copy of the instance.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Events.crop" title="pyneon.Events.crop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crop</span></code></a>([tmin, tmax, by, inplace])</p></td>
-<td><p>Crop data to a specific time range based on timestamps or row numbers.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Events.crop" title="pyneon.Events.crop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crop</span></code></a>([tmin, tmax, by, inplace])</p></td>
+<td><p>Extract a subset of events within a specified temporal range.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Events.filter_by_duration" title="pyneon.Events.filter_by_duration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_by_duration</span></code></a>([dur_min, dur_max, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Events.filter_by_duration" title="pyneon.Events.filter_by_duration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_by_duration</span></code></a>([dur_min, dur_max, ...])</p></td>
 <td><p>Filter events by their durations.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyneon.Events.filter_by_name" title="pyneon.Events.filter_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_by_name</span></code></a>(names[, col_name, reset_id, ...])</p></td>
+<td><p>Filter events by matching values in a specified column.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#pyneon.Events.restrict" title="pyneon.Events.restrict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restrict</span></code></a>(other[, inplace])</p></td>
-<td><p>Temporally crop the events to the range of timestamps a stream.</p></td>
+<td><p>Align events to match a stream's temporal range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code>(output_path)</p></td>
+<td><p>Save the data to a CSV file.</p></td>
 </tr>
 </tbody>
 </table>
@@ -432,6 +439,21 @@ saccade events. Ignored for other formats.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">saccades</span> <span class="o">=</span> <span class="n">Events</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Events.data">
+<span class="sig-name descname"><span class="pre">data</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.1)"><span class="pre">DataFrame</span></a></span><a class="headerlink" href="#pyneon.Events.data" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Events.file">
+<span class="sig-name descname"><span class="pre">file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#pyneon.Events.file" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyneon.Events.type">
+<span class="sig-name descname"><span class="pre">type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#pyneon.Events.type" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Events.start_ts">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">start_ts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Events.start_ts" title="Link to this definition">#</a></dt>
@@ -477,11 +499,18 @@ saccade events. Ignored for other formats.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="pyneon.Events.id">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pyneon.Events.id" title="Link to this definition">#</a></dt>
-<dd><p>Event ID.</p>
+<dd><p>Event IDs.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyneon.Events.id_name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">id_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#pyneon.Events.id_name" title="Link to this definition">#</a></dt>
+<dd><p>Name of the event ID column based on event type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt>ValueError</dt><dd><p>If no ID column (e.g., <code class="docutils literal notranslate"><span class="pre">&lt;xxx&gt;</span> <span class="pre">id</span></code>) is found in the instance.</p>
+<dt>str or None</dt><dd><p>The ID column name (e.g., <code class="docutils literal notranslate"><span class="pre">&quot;blink</span> <span class="pre">id&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;fixation</span> <span class="pre">id&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;saccade</span> <span class="pre">id&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;event</span> <span class="pre">id&quot;</span></code>) for known event types, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for custom event types.</p>
 </dd>
 </dl>
 </dd>
@@ -490,20 +519,23 @@ saccade events. Ignored for other formats.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Events.crop">
-<span class="sig-name descname"><span class="pre">crop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'row'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.crop" title="Link to this definition">#</a></dt>
-<dd><p>Crop data to a specific time range based on timestamps or row numbers.</p>
+<span class="sig-name descname"><span class="pre">crop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'timestamp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'sample'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.crop" title="Link to this definition">#</a></dt>
+<dd><p>Extract a subset of events within a specified temporal range.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">by</span></code> parameter determines how <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> are interpreted:
+- <code class="docutils literal notranslate"><span class="pre">&quot;timestamp&quot;</span></code>: Absolute Unix timestamps in nanoseconds (based on event start times)
+- <code class="docutils literal notranslate"><span class="pre">&quot;sample&quot;</span></code>: Zero-based event indices</p>
+<p>Both bounds are inclusive. If either bound is omitted, it defaults to the
+events’ natural boundary (earliest or latest event).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>tmin</strong><span class="classifier">number, optional</span></dt><dd><p>Start timestamp/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the minimum timestamp/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt><strong>tmin</strong><span class="classifier">numbers.Number, optional</span></dt><dd><p>Lower bound of the range to extract (inclusive). If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+starts from the first event. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
-<dt><strong>tmax</strong><span class="classifier">number, optional</span></dt><dd><p>End timestamp/row to crop the data to. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-the maximum timestamp/row in the data is used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt><strong>tmax</strong><span class="classifier">numbers.Number, optional</span></dt><dd><p>Upper bound of the range to extract (inclusive). If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+extends to the last event. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
-<dt><strong>by</strong><span class="classifier">“timestamp” or “row”, optional</span></dt><dd><p>Whether tmin and tmax are UTC timestamps in nanoseconds
-or row numbers of the stream data.
-Defaults to “timestamp”.</p>
+<dt><strong>by</strong><span class="classifier">{“timestamp”, “sample”}, optional</span></dt><dd><p>Unit used to interpret <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;timestamp&quot;</span></code>.</p>
 </dd>
 <dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
 Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
@@ -512,22 +544,46 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Events or None</dt><dd><p>Cropped events if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt>Events or None</dt><dd><p>A new <a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance with modified data
+if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If both <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> are <code class="docutils literal notranslate"><span class="pre">None</span></code>, or if no events
+fall within the specified range.</p>
 </dd>
 </dl>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<p>Crop fixations to the first 5 seconds:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fixations_5s</span> <span class="o">=</span> <span class="n">fixations</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="n">rec</span><span class="o">.</span><span class="n">gaze</span><span class="o">.</span><span class="n">first_ts</span><span class="p">,</span>
+<span class="gp">... </span>                               <span class="n">tmax</span><span class="o">=</span><span class="n">rec</span><span class="o">.</span><span class="n">gaze</span><span class="o">.</span><span class="n">first_ts</span> <span class="o">+</span> <span class="mf">5e9</span><span class="p">,</span>
+<span class="gp">... </span>                               <span class="n">by</span><span class="o">=</span><span class="s2">&quot;timestamp&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Extract the first 100 blinks:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">first_100</span> <span class="o">=</span> <span class="n">blinks</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">99</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;sample&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyneon.Events.restrict">
 <span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.restrict" title="Link to this definition">#</a></dt>
-<dd><p>Temporally crop the events to the range of timestamps a stream.
-Equivalent to <code class="docutils literal notranslate"><span class="pre">crop(other.first_ts,</span> <span class="pre">other.last_ts)</span></code>.</p>
+<dd><p>Align events to match a stream’s temporal range.</p>
+<p>This method filters events to include only those whose start times fall
+between the first and last timestamps of the reference stream. It is
+equivalent to calling
+<code class="docutils literal notranslate"><span class="pre">crop(tmin=other.first_ts,</span> <span class="pre">tmax=other.last_ts,</span> <span class="pre">by=&quot;timestamp&quot;)</span></code>.</p>
+<p>Useful for limiting event analysis to periods when a particular data stream
+is available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>other</strong><span class="classifier">Stream</span></dt><dd><p>Stream to restrict to.</p>
+<dt><strong>other</strong><span class="classifier">Stream</span></dt><dd><p>Reference stream whose temporal boundaries define the cropping range.</p>
 </dd>
 <dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
 Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
@@ -536,7 +592,44 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Events or None</dt><dd><p>Restricted events if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt>Events or None</dt><dd><p>A new <a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance with modified data
+if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Analyze only blinks that occurred during recorded gaze data:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">blinks_with_gaze</span> <span class="o">=</span> <span class="n">blinks</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">gaze</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Events.filter_by_duration">
+<span class="sig-name descname"><span class="pre">filter_by_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dur_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dur_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.filter_by_duration" title="Link to this definition">#</a></dt>
+<dd><p>Filter events by their durations. Useful for removing very short or long events.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dur_min</strong><span class="classifier">number, optional</span></dt><dd><p>Minimum duration (in milliseconds) of events to keep (inclusive).
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no minimum duration filter is applied. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>dur_max</strong><span class="classifier">number, optional</span></dt><dd><p>Maximum duration (in milliseconds) of events to keep (inclusive).
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no maximum duration filter is applied. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>reset_id</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to reset event IDs after filtering.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Events or None</dt><dd><p>A new <a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance with modified data
+if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -544,20 +637,25 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pyneon.Events.filter_by_duration">
-<span class="sig-name descname"><span class="pre">filter_by_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dur_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dur_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.filter_by_duration" title="Link to this definition">#</a></dt>
-<dd><p>Filter events by their durations. Useful for removing very short or long events.</p>
+<dt class="sig sig-object py" id="pyneon.Events.filter_by_name">
+<span class="sig-name descname"><span class="pre">filter_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'name'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.events.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.filter_by_name" title="Link to this definition">#</a></dt>
+<dd><p>Filter events by matching values in a specified column.
+Designed primarily for filtering <a class="reference internal" href="recording.html#pyneon.Recording.events" title="pyneon.Recording.events"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Recording.events</span></code></a> by their names.</p>
+<p>This method selects only the events whose value in <code class="docutils literal notranslate"><span class="pre">col_name</span></code> matches
+one or more of the provided <code class="docutils literal notranslate"><span class="pre">names</span></code>. If no events match, a
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> is raised.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>dur_min</strong><span class="classifier">number, optional</span></dt><dd><p>Minimum duration (in milliseconds) of events to keep.
-If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no minimum duration filter is applied. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt><strong>names</strong><span class="classifier">str or list of str</span></dt><dd><p>Event name or list of event names to keep. Matching is exact
+and case-sensitive.</p>
 </dd>
-<dt><strong>dur_max</strong><span class="classifier">number, optional</span></dt><dd><p>Maximum duration (in milliseconds) of events to keep.
-If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no maximum duration filter is applied. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt><strong>col_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the column in <code class="docutils literal notranslate"><span class="pre">self.data</span></code> to use for filtering.
+Must exist in the <code class="docutils literal notranslate"><span class="pre">Events</span></code> instance’s DataFrame.
+Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code>.</p>
 </dd>
-<dt><strong>reset_id</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to reset event IDs after filtering. Also resets the DataFrame index.
-Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<dt><strong>reset_id: bool = False, optional</strong></dt><dd><p>Whether to reset event IDs after filtering.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 <dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
 Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
@@ -566,7 +664,53 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Events or None</dt><dd><p>Filtered events if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt>Events or None</dt><dd><p>A new <a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance with modified data
+if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyneon.Events.apply_homographies">
+<span class="sig-name descname"><span class="pre">apply_homographies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">homographies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stream.html#pyneon.Stream" title="pyneon.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_gap_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/numbers.html#numbers.Number" title="(in Python v3.14)"><span class="pre">Number</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><span class="pre">Events</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pyneon.Events.apply_homographies" title="Link to this definition">#</a></dt>
+<dd><p>Compute fixation locations in surface coordinates using provided homographies
+based on fixation pixel coordinates and append them to the events data.</p>
+<p>Since homographies are estimated per video frame and might not be available
+for every frame, they need to be resampled/interpolated to the timestamps of the
+fixation data before application.</p>
+<p>The events data must contain the required fixation columns:
+<code class="docutils literal notranslate"><span class="pre">fixation</span> <span class="pre">x</span> <span class="pre">[px]</span></code> and <code class="docutils literal notranslate"><span class="pre">fixation</span> <span class="pre">y</span> <span class="pre">[px]</span></code>.
+The output events will contain two new columns:
+<code class="docutils literal notranslate"><span class="pre">fixation</span> <span class="pre">x</span> <span class="pre">[surface</span> <span class="pre">coord]</span></code> and <code class="docutils literal notranslate"><span class="pre">fixation</span> <span class="pre">y</span> <span class="pre">[surface</span> <span class="pre">coord]</span></code>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>homographies</strong><span class="classifier">Stream</span></dt><dd><p>Stream indexed by “timestamp [ns]” with columns “homography (0,0)”
+through “homography (2,2)”, corresponding to the 9 elements of the
+estimated 3x3 homography matrix for each retained frame.</p>
+<p>Returned by <a class="reference internal" href="video.html#pyneon.find_homographies" title="pyneon.find_homographies"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.find_homographies()</span></code></a>.</p>
+</dd>
+<dt><strong>max_gap_ms</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum allowed distance (in milliseconds) to both adjacent original
+timestamps (left and right). A requested new timestamp will be ignored
+if its distance to the immediate left OR right original timestamp is
+greater than or equal to <code class="docutils literal notranslate"><span class="pre">max_gap_ms</span></code> (no interpolation will be
+performed at that timestamp). Defaults to 500.</p>
+</dd>
+<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>Only applicable if surface fixation columns already exist.
+If <code class="docutils literal notranslate"><span class="pre">True</span></code>, overwrite existing columns. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, raise an error.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>inplace</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace current data. Otherwise returns a new instance.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Events or None</dt><dd><p>A new <a class="reference internal" href="#pyneon.Events" title="pyneon.Events"><code class="xref py py-class docutils literal notranslate"><span class="pre">Events</span></code></a> instance with modified data
+if <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -625,13 +769,19 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">False</
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events"><code class="docutils literal notranslate"><span class="pre">Events</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.data"><code class="docutils literal notranslate"><span class="pre">Events.data</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.file"><code class="docutils literal notranslate"><span class="pre">Events.file</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.type"><code class="docutils literal notranslate"><span class="pre">Events.type</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.start_ts"><code class="docutils literal notranslate"><span class="pre">Events.start_ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.end_ts"><code class="docutils literal notranslate"><span class="pre">Events.end_ts</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.durations"><code class="docutils literal notranslate"><span class="pre">Events.durations</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.id"><code class="docutils literal notranslate"><span class="pre">Events.id</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.id_name"><code class="docutils literal notranslate"><span class="pre">Events.id_name</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.crop"><code class="docutils literal notranslate"><span class="pre">Events.crop()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.restrict"><code class="docutils literal notranslate"><span class="pre">Events.restrict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.filter_by_duration"><code class="docutils literal notranslate"><span class="pre">Events.filter_by_duration()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.filter_by_name"><code class="docutils literal notranslate"><span class="pre">Events.filter_by_name()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Events.apply_homographies"><code class="docutils literal notranslate"><span class="pre">Events.apply_homographies()</span></code></a></li>
 </ul>
 </li>
 </ul>

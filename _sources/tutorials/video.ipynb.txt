@@ -4,15 +4,15 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "# Scene video and scanpath mapping\n",
+    "# Scene Video and Scanpath Mapping\n",
     "\n",
     "In this tutorial, we will map gaze data from an eye-tracking recording to video frames, estimate a scanpath, and overlay the gaze fixations on the video. We will use the `pyneon` library to work with Neon eye-tracking recordings, which contain video and event data, including gaze information.\n",
     "\n",
     "---\n",
     "\n",
-    "## 1. Setup: Loading a Neon Recording\n",
+    "## Setup: Loading a Neon Recording\n",
     "\n",
-    "First, we load the Neon recording, which contains video and gaze data. Ensure that you have installed the required libraries such as `pyneon` and have the recording dataset available.\n"
+    "First, we load the Neon recording, which contains video and gaze data. Ensure that you have installed the required libraries such as `pyneon` and have the recording dataset available."
    ]
   },
   {
@@ -91,15 +91,15 @@
    "source": [
     "---\n",
     "\n",
-    "## 2. Mapping Gaze Data to Video Frames\n",
+    "## Mapping Gaze Data to Video Frames\n",
     "\n",
     "In Neon recordings, gaze events are not naturally synchronized with the video. To map gaze data to specific video frames, we can use the `map_gaze_to_video` method. This method requires the `pyneon.video` object for determination of video timestamps, the `pyneon.fixations` object to make use of PupilLabs fixation detection pipeline and the `pyneon.gaze` object for improved time resolution of gaze estimation.\n",
     "\n",
-    "By default, Neon reports fixations with a single coordinate. This is computed as average between all gaze coordinates over the interval dennoted as a fixation. However, this clashes with the funcional definition of a fixation as _tracking a fixed point in space_, used by Neon.\n",
+    "By default, Neon reports fixations with a single coordinate. This is computed as average between all gaze coordinates over the interval denoted as a fixation. However, this clashes with the functional definition of a fixation as _tracking a fixed point in space_, used by Neon.\n",
     "\n",
-    "Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilised. As such, taking an average gaze coordinate over the enntire duration will not correspond to the location of the sign, or the fixation, ar any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.\n",
+    "Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilized. As such, taking an average gaze coordinate over the entire duration will not correspond to the location of the sign, or the fixation, at any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.\n",
     "\n",
-    "Therefore, we use partial averages of gaze locations around the respective frame's timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimisation, by averaging over microsaccades around the actual fixation target as well as random errors."
+    "Therefore, we use partial averages of gaze locations around the respective frame's timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimization, by averaging over microsaccades around the actual fixation target as well as random errors."
    ]
   },
   {
@@ -167,7 +167,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 3,
+   "execution_count": null,
    "metadata": {},
    "outputs": [
     {
@@ -195,7 +195,11 @@
    ],
    "source": [
     "# Estimate the scanpath based on the mapped gaze data\n",
-    "scanpath = recording.estimate_scanpath()\n",
+    "from pyneon.video import estimate_scanpath\n",
+    "\n",
+    "scanpath_df = estimate_scanpath(recording.scene_video, synced_gaze)\n",
+    "scanpath_df.index.name = \"timestamp [ns]\"\n",
+    "scanpath = Stream(scanpath_df)\n",
     "\n",
     "# Inspect the estimated scanpath\n",
     "print(scanpath.data.head())"
@@ -272,7 +276,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": null,
    "metadata": {},
    "outputs": [
     {
@@ -287,7 +291,18 @@
    ],
    "source": [
     "# Overlay the scanpath on the video and show the output\n",
-    "recording.overlay_scanpath(show_video=True)"
+    "from pyneon.vis import overlay_scanpath\n",
+    "\n",
+    "overlay_scanpath(\n",
+    "    recording.scene_video,\n",
+    "    scanpath.data,\n",
+    "    circle_radius=10,\n",
+    "    line_thickness=2,\n",
+    "    text_size=1,\n",
+    "    max_fixations=10,\n",
+    "    show_video=True,\n",
+    "    output_path=None,\n",
+    ")"
    ]
   },
   {
@@ -299,8 +314,8 @@
     "## Summary\n",
     "\n",
     "- **Mapping Gaze to Video**: We used the `map_gaze_to_video` method to match gaze data with video frames based on timestamps.\n",
-    "- **Estimating Scanpath**: The scanpath was estimated using `estimate_scanpath`, which tracks fixations and uses optical flow to follow past fixations across scene changes.\n",
-    "- **Overlaying Fixations**: The fixations were visualized on the video by calling `overlay_fixations_on_video`.\n",
+    "- **Estimating Scanpath**: The scanpath was estimated using `pyneon.video.estimate_scanpath`, which tracks fixations and uses optical flow to follow past fixations across scene changes.\n",
+    "- **Overlaying Fixations**: The fixations were visualized on the video by calling `pyneon.vis.overlay_scanpath`.\n",
     "\n",
     "This workflow can be used to process eye-tracking data, align it with video frames, and visualize gaze movements within video recordings.\n"
    ]

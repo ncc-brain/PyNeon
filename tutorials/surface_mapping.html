@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surface Mapping using Apriltags &#8212; PyNeon dev documentation</title>
+    <title>Surface Mapping Using Fiducial Markers and Screen Corners &#8212; PyNeon dev documentation</title>
   
   
   
@@ -48,6 +48,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/surface_mapping';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Scene Video and Scanpath Mapping" href="video.html" />
+    <link rel="prev" title="Processing and Epoching Pupil Size Data" href="pupil_size_and_epoching.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -126,7 +128,7 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
+<li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
   </a>
@@ -212,10 +214,8 @@
       
       
       
-        
-      
       <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -230,7 +230,7 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
+<li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
   </a>
@@ -281,6 +281,24 @@
     
   </div>
   
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="read_recording_cloud.html">Reading Pupil Cloud-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="read_recording_native.html">Reading Native-Format Recordings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolate_and_concat.html">Preprocessing: Cropping, Interpolation, and Concatenation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil_size_and_epoching.html">Processing and Epoching Pupil Size Data</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Surface Mapping Using Fiducial Markers and Screen Corners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">Scene Video and Scanpath Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_to_bids.html">Exporting to BIDS Formats</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
       <div class="sidebar-primary-item">
@@ -316,7 +334,10 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Surface Mapping using Apriltags</span></li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Surface Mapping Using Fiducial Markers and Screen Corners</span></li>
   </ul>
 </nav>
 </div>
@@ -333,24 +354,40 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="Surface-Mapping-using-Apriltags">
-<h1>Surface Mapping using Apriltags<a class="headerlink" href="#Surface-Mapping-using-Apriltags" title="Link to this heading">#</a></h1>
-<p>In this notebook, we show how to use AprilTags to map from gaze-to screen coordinates. Along the way, we will also show some additional epoching functionalities.</p>
-<p>To do so, we have collected a dataset where a participant freely views artworks presented on screen. Each artwork is shown for 4s, followed by a 0.5s inter trial intervall and a 0.5s central fixation cross. We can download this dataset using <code class="docutils literal notranslate"><span class="pre">get_sample_data()</span></code>.</p>
-<div class="nbinput docutils container">
+  <section id="Surface-Mapping-Using-Fiducial-Markers-and-Screen-Corners">
+<h1>Surface Mapping Using Fiducial Markers and Screen Corners<a class="headerlink" href="#Surface-Mapping-Using-Fiducial-Markers-and-Screen-Corners" title="Link to this heading">#</a></h1>
+<section id="What-are-Fiducial-Markers?">
+<h2>What are Fiducial Markers?<a class="headerlink" href="#What-are-Fiducial-Markers?" title="Link to this heading">#</a></h2>
+<p>Fiducial markers (for a review see <a class="reference external" href="https://doi.org/10.1007/s10846-020-01307-9">1</a>) are specially designed visual patterns that serve as reference points for establishing coordinate correspondence. They are reliably detected in images, enabling transformation between image/video coordinates and real-world coordinates. In eye-tracking, they allow us to transform gaze from the camera’s perspective to the observed surface (for example, a computer screen).</p>
+<p>PyNeon supports two widely-adopted marker systems:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://april.eecs.umich.edu/software/apriltag">AprilTag</a> (references<a class="reference external" href="https://doi.org/10.1109/ICRA.2011.5979561">2</a>,<a class="reference external" href="https://doi.org/10.1109/IROS.2016.7759617">3</a>): Also used by <a class="reference external" href="https://docs.pupil-labs.com/neon/neon-player/surface-tracker/">Pupil Labs Neon Player</a> and <a class="reference external" href="https://docs.pupil-labs.com/neon/pupil-cloud/enrichments/marker-mapper/">Pupil Cloud</a>.</p></li>
+<li><p><a class="reference external" href="https://www.uco.es/investiga/grupos/ava/portfolio/aruco/">ArUco</a> (reference<a class="reference external" href="https://doi.org/10.1016/j.patcog.2014.01.005">4</a>): Integrated into OpenCV, enabling marker detection via <a class="reference external" href="https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html">cv2.aruco</a>.</p></li>
+</ul>
+<p><p><img alt="Comparison of augmented reality fiducial markers.svg" class="no-scaled-link" src="https://upload.wikimedia.org/wikipedia/commons/8/81/Comparison_of_augmented_reality_fiducial_markers.svg" width="600" /></p>
+</section>
+<section id="Sample-Dataset">
+<h2>Sample Dataset<a class="headerlink" href="#Sample-Dataset" title="Link to this heading">#</a></h2>
+<p>We use a sample dataset called “markers” containing two recordings: one with AprilTag markers and one with ArUco markers. In both, a participant viewed artworks on a computer screen. Specifically, the participant moved their head often to test robustness under larger head motion. We will map gaze and fixation data onto the screen using markers visible in the scene video. The sample data is fetched via <code class="docutils literal notranslate"><span class="pre">get_sample_data(...)</span></code> and stored locally after download.</p>
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Recording</span><span class="p">,</span> <span class="n">get_sample_data</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">get_sample_data</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="c1"># Load a sample recording</span>
-<span class="n">rec_dir</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;Artworks&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span> <span class="o">/</span> <span class="s2">&quot;artworks-9a141750&quot;</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading sample recording from:&quot;</span><span class="p">,</span> <span class="n">rec_dir</span><span class="p">)</span>
-<span class="n">rec</span> <span class="o">=</span> <span class="n">Recording</span><span class="p">(</span><span class="n">rec_dir</span><span class="p">)</span>
+<span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;cloud&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s start with the AprilTag recording (recording index 0).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -360,95 +397,86 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Loading sample recording from: C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750
 
-Recording ID: 9a141750-95ca-48ee-9693-53bbb896b87e
-Wearer ID: c4f68887-e96c-467f-a901-0fc9fce09c0a
-Wearer name: JGH
-Recording start time: 2025-06-16 12:49:27.817000
-Recording duration: 357.538s
-                 exist                  filename                                                                                                                                        path
-3d_eye_states     True         3d_eye_states.csv         C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\3d_eye_states.csv
-blinks            True                blinks.csv                C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\blinks.csv
-events            True                events.csv                C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\events.csv
-fixations         True             fixations.csv             C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\fixations.csv
-gaze              True                  gaze.csv                  C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\gaze.csv
-imu               True                   imu.csv                   C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\imu.csv
-labels            True                labels.csv                C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\labels.csv
-saccades          True              saccades.csv              C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\saccades.csv
-world_timestamps  True      world_timestamps.csv      C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\world_timestamps.csv
-scene_video_info  True         scene_camera.json         C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\scene_camera.json
-scene_video       True  11f35cc2_0.0-357.538.mp4  C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\11f35cc2_0.0-357.538.mp4
+Data format: cloud (version: 2.5)
+Recording ID: 16841adb-da58-4c42-be02-f052c3c43db3
+Wearer ID: 028e4c69-f333-4751-af8c-84a09af079f5
+Wearer name: Pilot
+Recording start time: 2025-09-22 00:25:14.096000
+Recording duration: 244820000000 ns (244.82 s)
 
 </pre></div></div>
 </div>
-<p>Let us take a closer look at the events file, populated with triggers sent during the initial viewing</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">event_data</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">data</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">event_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-                                                                  name  \
-timestamp [ns]
-1750070967817000000                                    recording.begin
-1750070973028401000                                     fixation onset
-1750070973726906000   image onset 8c63372e-dfd6-ab25-cfc8-a6569f25f0c8
-1750070977877138000  image offset 8c63372e-dfd6-ab25-cfc8-a6569f25f0c8
-1750070978659847000                                     fixation onset
-1750070979391162000   image onset 29a102da-4838-432b-7373-a3c7f5679d75
-1750070983510925000  image offset 29a102da-4838-432b-7373-a3c7f5679d75
-1750070984367660000                                     fixation onset
-1750070985019038000   image onset 9c15b0f6-c5d3-ffa3-a853-0a62a4520400
-1750070989241548000  image offset 9c15b0f6-c5d3-ffa3-a853-0a62a4520400
-
-                          type
-timestamp [ns]
-1750070967817000000  recording
-1750070973028401000  recording
-1750070973726906000  recording
-1750070977877138000  recording
-1750070978659847000  recording
-1750070979391162000  recording
-1750070983510925000  recording
-1750070984367660000  recording
-1750070985019038000  recording
-1750070989241548000  recording
-</pre></div></div>
-</div>
-<p>We can see that the name column holds the information ofinterest to us. As the column ontains both information about the event_type as well as its name, we will first parse these apart. This process is a bit lengthy, but necessary to make sense of our data</p>
+</section>
+<section id="AprilTag-Example">
+<h2>AprilTag Example<a class="headerlink" href="#AprilTag-Example" title="Link to this heading">#</a></h2>
+<section id="Visualizing-Markers-in-Video">
+<h3>Visualizing Markers in Video<a class="headerlink" href="#Visualizing-Markers-in-Video" title="Link to this heading">#</a></h3>
+<p>First, inspect a few frames to confirm the markers are clearly visible and well lit. Below are three example frames: fixation cross, artwork presentation, and inter-trial interval.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># parse the name column, look for the key words image onset and image offset</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_event_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="k">if</span> <span class="s2">&quot;image onset&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-        <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;image onset&quot;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;image onset &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="s2">&quot;image offset&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-        <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;image offset&quot;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;image offset &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;other&quot;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">scene_video</span>
 
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">380</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">520</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Fixation&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;ISI&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_surface_mapping_6_0.png" src="../_images/tutorials_surface_mapping_6_0.png" />
+</div>
+</div>
+</section>
+<section id="Step-1:-Detect-Markers">
+<h3>Step 1: Detect Markers<a class="headerlink" href="#Step-1:-Detect-Markers" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">detect_markers()</span></code> method automatically detects AprilTag or ArUco markers. The only required argument is <code class="docutils literal notranslate"><span class="pre">marker_family</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">'36h11'</span></code> for AprilTag tag36h11, omitting “tag”).</p>
+<p>Optional parameters allow customization:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">processing_window</span></code>: restrict detection to a specific time range</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">processing_window_unit</span></code>: interpret the window as frames, seconds, or timestamps</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">step</span></code>: process every Nth frame to speed up detection</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">detector_parameters</span></code>: pass custom <code class="docutils literal notranslate"><span class="pre">cv2.aruco.DetectorParameters</span></code> for fine-tuning</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">undistort</span></code>: optionally undistort frames before detection</p></li>
+</ul>
+<p>Here we use default settings, processing all frames:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Stream</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">event_data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-    <span class="nb">type</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">parse_event_name</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
-    <span class="n">event_data</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;event_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
-    <span class="n">event_data</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;image_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="n">event_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">detection_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;export&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;detected_markers.csv&quot;</span>
+<span class="k">if</span> <span class="n">detection_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="n">detected_markers</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span><span class="n">detection_path</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">detection_path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">detected_markers</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">detect_markers</span><span class="p">(</span><span class="s2">&quot;36h11&quot;</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">detected_markers</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">detection_path</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Verifying-Detection">
+<h3>Verifying Detection<a class="headerlink" href="#Verifying-Detection" title="Link to this heading">#</a></h3>
+<p>Detected markers are stored in a PyNeon <code class="docutils literal notranslate"><span class="pre">Stream</span></code> with timestamps from the video frames. Each row corresponds to a detection and includes the marker id and corner coordinates in the video frame.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">detected_markers</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -457,47 +485,179 @@ timestamp [ns]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-                                                                  name  \
+                     frame index marker family marker id marker name  \
 timestamp [ns]
-1750070967817000000                                    recording.begin
-1750070973028401000                                     fixation onset
-1750070973726906000   image onset 8c63372e-dfd6-ab25-cfc8-a6569f25f0c8
-1750070977877138000  image offset 8c63372e-dfd6-ab25-cfc8-a6569f25f0c8
-1750070978659847000                                     fixation onset
+1758493517123422222           65         36h11         0     36h11_0
+1758493517123422222           65         36h11         5     36h11_5
+1758493517123422222           65         36h11         4     36h11_4
+1758493517623233333           80         36h11         0     36h11_0
+1758493517623233333           80         36h11         1     36h11_1
+1758493517623233333           80         36h11         2     36h11_2
+1758493517623233333           80         36h11         5     36h11_5
+1758493517623233333           80         36h11         4     36h11_4
+1758493517623233333           80         36h11         3     36h11_3
+1758493517789844444           85         36h11         0     36h11_0
+1758493517789844444           85         36h11         1     36h11_1
+1758493517789844444           85         36h11         5     36h11_5
+1758493517789844444           85         36h11         2     36h11_2
+1758493517789844444           85         36h11         4     36h11_4
+1758493517789844444           85         36h11         3     36h11_3
+1758493517956444444           90         36h11         0     36h11_0
+1758493517956444444           90         36h11         1     36h11_1
+1758493517956444444           90         36h11         2     36h11_2
+1758493517956444444           90         36h11         5     36h11_5
+1758493517956444444           90         36h11         4     36h11_4
 
-                          type    event_type  \
+                     top left x [px]  top left y [px]  top right x [px]  \
 timestamp [ns]
-1750070967817000000  recording         other
-1750070973028401000  recording         other
-1750070973726906000  recording   image onset
-1750070977877138000  recording  image offset
-1750070978659847000  recording         other
+1758493517123422222            969.0            200.0            1031.0
+1758493517123422222            991.0            380.0            1050.0
+1758493517123422222           1008.0            546.0            1063.0
+1758493517623233333            443.0            539.0             502.0
+1758493517623233333           1201.0            482.0            1259.0
+1758493517623233333           1204.0            672.0            1261.0
+1758493517623233333            467.0            722.0             525.0
+1758493517623233333            497.0            888.0             552.0
+1758493517623233333           1198.0            846.0            1252.0
+1758493517789844444            403.0            535.0             465.0
+1758493517789844444           1182.0            458.0            1242.0
+1758493517789844444            433.0            723.0             493.0
+1758493517789844444           1188.0            653.0            1247.0
+1758493517789844444            470.0            893.0             527.0
+1758493517789844444           1185.0            830.0            1241.0
+1758493517956444444            358.0            531.0             420.0
+1758493517956444444           1152.0            448.0            1213.0
+1758493517956444444           1159.0            645.0            1219.0
+1758493517956444444            392.0            722.0             451.0
+1758493517956444444            431.0            895.0             489.0
 
-                                               image_name
+                     top right y [px]  bottom right x [px]  \
 timestamp [ns]
-1750070967817000000                                  None
-1750070973028401000                                  None
-1750070973726906000  8c63372e-dfd6-ab25-cfc8-a6569f25f0c8
-1750070977877138000  8c63372e-dfd6-ab25-cfc8-a6569f25f0c8
-1750070978659847000                                  None
+1758493517123422222             192.0               1037.0
+1758493517123422222             377.0               1055.0
+1758493517123422222             547.0               1067.0
+1758493517623233333             533.0                509.0
+1758493517623233333             480.0               1260.0
+1758493517623233333             666.0               1259.0
+1758493517623233333             720.0                534.0
+1758493517623233333             888.0                563.0
+1758493517623233333             837.0               1247.0
+1758493517789844444             526.0                473.0
+1758493517789844444             455.0               1245.0
+1758493517789844444             719.0                504.0
+1758493517789844444             646.0               1246.0
+1758493517789844444             892.0                539.0
+1758493517789844444             820.0               1237.0
+1758493517956444444             522.0                431.0
+1758493517956444444             445.0               1216.0
+1758493517956444444             638.0               1218.0
+1758493517956444444             718.0                463.0
+1758493517956444444             894.0                503.0
+
+                     bottom right y [px]  bottom left x [px]  \
+timestamp [ns]
+1758493517123422222                257.0               976.0
+1758493517123422222                438.0               997.0
+1758493517123422222                600.0              1010.0
+1758493517623233333                599.0               450.0
+1758493517623233333                546.0              1203.0
+1758493517623233333                727.0              1202.0
+1758493517623233333                780.0               477.0
+1758493517623233333                942.0               508.0
+1758493517623233333                890.0              1192.0
+1758493517789844444                593.0               412.0
+1758493517789844444                521.0              1186.0
+1758493517789844444                780.0               444.0
+1758493517789844444                708.0              1189.0
+1758493517789844444                944.0               483.0
+1758493517789844444                873.0              1183.0
+1758493517956444444                592.0               370.0
+1758493517956444444                513.0              1155.0
+1758493517956444444                701.0              1160.0
+1758493517956444444                781.0               403.0
+1758493517956444444                948.0               445.0
+
+                     bottom left y [px]  center x [px]  center y [px]
+timestamp [ns]
+1758493517123422222               262.0        1003.25         227.75
+1758493517123422222               438.0        1023.25         408.25
+1758493517123422222               598.0        1037.00         572.75
+1758493517623233333               604.0         476.00         568.75
+1758493517623233333               550.0        1230.75         514.50
+1758493517623233333               734.0        1231.50         699.75
+1758493517623233333               783.0         500.75         751.25
+1758493517623233333               941.0         530.00         914.75
+1758493517623233333               898.0        1222.25         867.75
+1758493517789844444               600.0         438.25         563.50
+1758493517789844444               526.0        1213.75         490.00
+1758493517789844444               784.0         468.50         751.50
+1758493517789844444               716.0        1217.50         680.75
+1758493517789844444               947.0         504.75         919.00
+1758493517789844444               884.0        1211.50         851.75
+1758493517956444444               597.0         394.75         560.50
+1758493517956444444               517.0        1184.00         480.75
+1758493517956444444               709.0        1189.00         673.25
+1758493517956444444               783.0         427.25         751.00
+1758493517956444444               947.0         467.00         921.00
 </pre></div></div>
 </div>
+<p>Spot-check detections by plotting markers on selected frames. This makes it easy to confirm that ids are correct and corners line up with the visual markers:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot a few frames with detected markers</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axs</span> <span class="o">=</span> <span class="n">axs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_detections</span><span class="p">(</span><span class="n">detected_markers</span><span class="p">,</span> <span class="n">frame_index</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_detections</span><span class="p">(</span><span class="n">detected_markers</span><span class="p">,</span> <span class="n">frame_index</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_detections</span><span class="p">(</span><span class="n">detected_markers</span><span class="p">,</span> <span class="n">frame_index</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">video</span><span class="o">.</span><span class="n">plot_detections</span><span class="p">(</span><span class="n">detected_markers</span><span class="p">,</span> <span class="n">frame_index</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_surface_mapping_12_0.png" src="../_images/tutorials_surface_mapping_12_0.png" />
+</div>
+</div>
+</section>
+<section id="Step-2:-Define-Real-World-Marker-Coordinates">
+<h3>Step 2: Define Real-World Marker Coordinates<a class="headerlink" href="#Step-2:-Define-Real-World-Marker-Coordinates" title="Link to this heading">#</a></h3>
+<p>To establish the mapping, provide a dataframe with real-world coordinates for each marker. This requires:</p>
+<ul class="simple">
+<li><p><strong>Marker name</strong>: must match the ids reported by <code class="docutils literal notranslate"><span class="pre">detect_markers()</span></code></p></li>
+<li><p><strong>Center coordinates</strong>: where the marker is located in the target surface coordinate system (here, screen pixels)</p></li>
+<li><p><strong>Size</strong>: physical marker size in the same units as the target surface</p></li>
+</ul>
+<p>In this experiment (screen resolution 2560x1440), markers were placed near the screen corners with a 50 px margin and 200x200 px size. They are also placed in a clockwise order, starting from the top-left corner.</p>
+<p>Once a <code class="docutils literal notranslate"><span class="pre">marker_info</span></code> dataframe is defined, we can preview it to make sure the coordinates look correct using the <code class="docutils literal notranslate"><span class="pre">plot_marker_layout()</span></code> function:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon.vis</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_marker_layout</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
-<span class="n">video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">video</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mi">2560</span>
+<span class="n">height</span> <span class="o">=</span> <span class="mi">1440</span>
+<span class="n">marker_layout</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;marker name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;36h11_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)],</span>
+        <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="s2">&quot;center x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">150</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">150</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">],</span>
+        <span class="s2">&quot;center y&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">150</span><span class="p">,</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">150</span><span class="p">,</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">marker_layout</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">170</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">auto_title</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">auto_title</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">video</span><span class="o">.</span><span class="n">plot_frame</span><span class="p">(</span><span class="mi">320</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">auto_title</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Fixation&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;ISI&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plot_marker_layout</span><span class="p">(</span><span class="n">marker_layout</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">show_marker_names</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -507,382 +667,291 @@ timestamp [ns]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Resetting video...
-Resetting video...
-Resetting video...
+  marker name  size  center x  center y
+0     36h11_0   200       150     150.0
+1     36h11_1   200      2410     150.0
+2     36h11_2   200      2410     720.0
+3     36h11_3   200      2410    1290.0
+4     36h11_4   200       150    1290.0
+5     36h11_5   200       150     720.0
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_surface_mapping_6_1.png" src="../_images/tutorials_surface_mapping_6_1.png" />
+<img alt="../_images/tutorials_surface_mapping_14_1.png" src="../_images/tutorials_surface_mapping_14_1.png" />
 </div>
 </div>
-<p>In all of the frames shown above, we can see QR-code like markers at the borders of the screen. These are called apriltags and can be used as fiducial markers to relate video to real-world coordinates. PyNeon wraps a function that performs the detection of these. For computational efficiency, we only perform one detection every 30 frames.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">all_detections</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">detect_apriltags</span><span class="p">(</span><span class="n">skip_frames</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">all_detections</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Detecting AprilTags (random access): 100%|██████████| 357/357 [00:13&lt;00:00, 26.76it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-                     processed_frame_idx  frame_idx  tag_id  \
-timestamp [ns]
-1750070971664700000                    3         90       0
-1750070971664700000                    3         90       1
-1750070971664700000                    3         90       2
-1750070971664700000                    3         90       3
-1750070971664700000                    3         90       4
-
-                                                               corners  \
-timestamp [ns]
-1750070971664700000  [[275.7712707519531, 479.94992065429693], [327...
-1750070971664700000  [[322.27392578125006, 724.976806640625], [372....
-1750070971664700000  [[380.61767578125006, 928.1921386718751], [427...
-1750070971664700000  [[1137.983520507812, 410.68994140624994], [118...
-1750070971664700000  [[1130.1645507812498, 646.8099975585936], [117...
-
-                                                      center
-timestamp [ns]
-1750070971664700000  [297.9236297607422, 446.27796936035156]
-1750070971664700000   [341.2054595947265, 696.6286163330078]
-1750070971664700000   [397.3332290649414, 906.3801879882812]
-1750070971664700000   [1161.822448730469, 382.8709182739258]
-1750070971664700000   [1154.548095703125, 618.6701049804688]
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-
-</pre></div></div>
-</div>
-<p>Having detected the apriltags, we now need to provide information on the real-world coordinates of our apriltags. This is solved via a tag_info dataframe, which we generate below.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">generate_tag_info</span><span class="p">(</span><span class="n">win_size</span><span class="p">,</span> <span class="n">tag_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tag_size</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Generate marker information for a given window size.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        win_size (tuple): The width and height of the window.</span>
-<span class="sd">        tag_ids (list, optional): List of tag IDs. Defaults to [0, 1, 2, 3, 4, 5].</span>
-<span class="sd">        tag_size (int, optional): Size of the tags. Defaults to 200.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        pd.DataFrame: A DataFrame containing marker IDs and their corner positions.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">tag_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tag_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>  <span class="c1"># Default tag IDs</span>
-
-    <span class="n">win_half_width</span><span class="p">,</span> <span class="n">win_half_height</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">win_size</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="n">half_tag_size</span> <span class="o">=</span> <span class="n">tag_size</span> <span class="o">/</span> <span class="mi">2</span>
-
-    <span class="n">positions</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="o">-</span><span class="n">win_half_width</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="n">win_half_height</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">),</span>  <span class="c1"># top-left</span>
-        <span class="p">(</span><span class="o">-</span><span class="n">win_half_width</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># middle-left</span>
-        <span class="p">(</span>
-            <span class="o">-</span><span class="n">win_half_width</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span>
-            <span class="o">-</span><span class="n">win_half_height</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span>
-        <span class="p">),</span>  <span class="c1"># bottom-left</span>
-        <span class="p">(</span><span class="n">win_half_width</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="n">win_half_height</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">),</span>  <span class="c1"># top-right</span>
-        <span class="p">(</span><span class="n">win_half_width</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># middle-right</span>
-        <span class="p">(</span>
-            <span class="n">win_half_width</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">,</span>
-            <span class="o">-</span><span class="n">win_half_height</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span>
-        <span class="p">),</span>  <span class="c1"># bottom-right</span>
-    <span class="p">]</span>
-
-    <span class="n">marker_corners</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">:</span>
-        <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">pos</span>
-        <span class="n">corners</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">[</span><span class="n">cx</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">],</span>  <span class="c1"># top-left</span>
-            <span class="p">[</span><span class="n">cx</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">],</span>  <span class="c1"># top-right</span>
-            <span class="p">[</span><span class="n">cx</span> <span class="o">+</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="n">cy</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">],</span>  <span class="c1"># bottom-right</span>
-            <span class="p">[</span><span class="n">cx</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">,</span> <span class="n">cy</span> <span class="o">-</span> <span class="n">half_tag_size</span><span class="p">],</span>  <span class="c1"># bottom-left</span>
-        <span class="p">]</span>
-        <span class="n">marker_corners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corners</span><span class="p">)</span>
-
-    <span class="n">tag_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;marker_id&quot;</span><span class="p">:</span> <span class="n">tag_ids</span><span class="p">,</span> <span class="s2">&quot;marker_corners&quot;</span><span class="p">:</span> <span class="n">marker_corners</span><span class="p">})</span>
-
-    <span class="k">return</span> <span class="n">tag_info</span>
-
-
-<span class="n">tag_info</span> <span class="o">=</span> <span class="n">generate_tag_info</span><span class="p">((</span><span class="mi">1920</span><span class="p">,</span> <span class="mi">1080</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">tag_info</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-   marker_id                                     marker_corners
-0          0  [[-960.0, 540.0], [-760.0, 540.0], [-760.0, 34...
-1          1  [[-960.0, 100.0], [-760.0, 100.0], [-760.0, -1...
-2          2  [[-960.0, -340.0], [-760.0, -340.0], [-760.0, ...
-3          3  [[760.0, 540.0], [960.0, 540.0], [960.0, 340.0...
-4          4  [[760.0, 100.0], [960.0, 100.0], [960.0, -100....
-5          5  [[760.0, -340.0], [960.0, -340.0], [960.0, -54...
-</pre></div></div>
-</div>
-<p>With this, we can now run the <code class="docutils literal notranslate"><span class="pre">find_homograpghy()</span></code> method. This method finds the map between the detections and the provided coordinates for each frame. As we did not do detections in every frame, we further provide the skip_frames as used before so that the homographies can be interpolated.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">homographies</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">find_homographies</span><span class="p">(</span>
-    <span class="n">tag_info</span><span class="o">=</span><span class="n">tag_info</span><span class="p">,</span> <span class="n">all_detections</span><span class="o">=</span><span class="n">all_detections</span><span class="p">,</span> <span class="n">skip_frames</span><span class="o">=</span><span class="mi">30</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Computing homographies for frames: 100%|██████████| 353/353 [00:00&lt;00:00, 597.75it/s]
-Interpolating homographies: 100%|██████████| 352/352 [00:00&lt;00:00, 15188.47it/s]
-</pre></div></div>
-</div>
-<p>with this, we can finally transform both gaze and fixation coordinates into the screen’s reference frame:</p>
+</section>
+<section id="Step-3:-Compute-Homography-Transformation">
+<h3>Step 3: Compute Homography Transformation<a class="headerlink" href="#Step-3:-Compute-Homography-Transformation" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">find_homographies()</span></code> method computes a frame-by-frame 2D transformation (homography) between detected marker locations and their real-world coordinates. The result is a <code class="docutils literal notranslate"><span class="pre">Stream</span></code> of 3x3 homography matrices, one per frame where enough markers are available. These matrices enable mapping any point from camera coordinates to screen coordinates.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">synced_gaze</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">sync_gaze_to_video</span><span class="p">()</span>
-<span class="n">gaze_on_screen</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">gaze_on_surface</span><span class="p">(</span><span class="n">homographies</span><span class="o">=</span><span class="n">homographies</span><span class="p">,</span> <span class="n">synced_gaze</span><span class="o">=</span><span class="n">synced_gaze</span><span class="p">)</span>
-<span class="n">fixations_on_screen</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">fixations_on_surface</span><span class="p">(</span><span class="n">gaze_on_surface</span><span class="o">=</span><span class="n">gaze_on_screen</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Applying homography to gaze points: 100%|██████████| 10695/10695 [00:06&lt;00:00, 1596.87it/s]
-</pre></div></div>
-</div>
-<p>Besides the step-by-step process we have shown here, calling <code class="docutils literal notranslate"><span class="pre">gaze_on_screen</span></code> or <code class="docutils literal notranslate"><span class="pre">fixations_on_screen</span></code>, computes derivatives with default values.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_on_screen</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">gaze_on_surface</span><span class="p">(</span><span class="n">tag_info</span><span class="o">=</span><span class="n">tag_info</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">fixations_on_screen</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">fixations_on_surface</span><span class="p">(</span><span class="n">gaze_on_surface</span><span class="o">=</span><span class="n">gaze_on_screen</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<p>Conveniently, on screen fixation data can be epoched just as well as any other type of data.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Epochs</span><span class="p">,</span> <span class="n">events_to_times_df</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon.video</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_homographies</span>
 
-<span class="n">event_times</span> <span class="o">=</span> <span class="n">events_to_times_df</span><span class="p">(</span>
-    <span class="n">rec</span><span class="o">.</span><span class="n">events</span><span class="p">,</span> <span class="n">t_before</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">t_after</span><span class="o">=</span><span class="mf">4.5</span><span class="p">,</span> <span class="n">event_name</span><span class="o">=</span><span class="s2">&quot;fixation onset&quot;</span>
+<span class="n">homographies</span> <span class="o">=</span> <span class="n">find_homographies</span><span class="p">(</span>
+    <span class="n">detected_markers</span><span class="p">,</span>
+    <span class="n">layout</span><span class="o">=</span><span class="n">marker_layout</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="n">gaze_on_screen_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">gaze_on_screen</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-<span class="n">fixation_on_screen_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">fixations_on_screen</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-<span class="n">eye_states_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">eye_states</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-<span class="n">gaze_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">gaze</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-<span class="n">saccades_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">saccades</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-<span class="n">blinks_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">blinks</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 0.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 1.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 2.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 3.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 36.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\pyneon\epochs.py:445: RuntimeWarning: No data found for epoch 50.
-  warnings.warn(f&#34;No data found for epoch {i}.&#34;, RuntimeWarning)
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">saccades_epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-<span class="n">blinks_epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">homographies</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Computing surface-mapping homographies: 100%|██████████| 1408/1408 [00:04&lt;00:00, 294.15it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+                     homography (0,0)  homography (0,1)  homography (0,2)  \
+timestamp [ns]
+1758493517123422222          5.314940         -0.583451      -4959.439257
+1758493517623233333          2.598597         -0.442606       -850.410264
+1758493517789844444          2.466307         -0.499194       -665.028851
+1758493517956444444          2.398689         -0.518810       -521.535770
+1758493518123044444          2.349698         -0.485569       -470.320079
+
+                     homography (1,0)  homography (1,1)  homography (1,2)  \
+timestamp [ns]
+1758493517123422222          0.617168          4.761420      -1464.540605
+1758493517623233333          0.186317          2.581638      -1427.930238
+1758493517789844444          0.231569          2.461035      -1360.495722
+1758493517956444444          0.241472          2.405991      -1316.174140
+1758493518123044444          0.238705          2.379632      -1263.913540
+
+                     homography (2,0)  homography (2,1)  homography (2,2)
+timestamp [ns]
+1758493517123422222          0.000712         -0.000454               1.0
+1758493517623233333         -0.000007         -0.000212               1.0
+1758493517789844444         -0.000023         -0.000216               1.0
+1758493517956444444         -0.000029         -0.000218               1.0
+1758493518123044444         -0.000047         -0.000200               1.0
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+</section>
+<section id="Step-4:-Apply-Transformation-to-Gaze-Data">
+<h3>Step 4: Apply Transformation to Gaze Data<a class="headerlink" href="#Step-4:-Apply-Transformation-to-Gaze-Data" title="Link to this heading">#</a></h3>
+<p>Now apply the homography transformation to project gaze and fixations onto screen coordinates. This is done using the <code class="docutils literal notranslate"><span class="pre">apply_homographies()</span></code> method of gaze and fixation objects. Internally, PyNeon interpolates the homographies to the timestamps of the gaze and fixation samples and applies the closest valid transform.</p>
+<p>You might notice warning messages. They are expected when homographies are missing for some frames (for example, markers were not visible or were blurred). If the nearest homography is too far from a sample time (default 500 ms), the sample is dropped. You can change this behavior with the <code class="docutils literal notranslate"><span class="pre">max_gap_ms</span></code> argument.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gaze_on_surface</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">gaze</span><span class="o">.</span><span class="n">apply_homographies</span><span class="p">(</span><span class="n">homographies</span><span class="p">)</span>
+<span class="n">fixations_on_surface</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">fixations</span><span class="o">.</span><span class="n">apply_homographies</span><span class="p">(</span><span class="n">homographies</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 134 out of 48219 requested timestamps are outside the data time range and will have empty data.
+  warn(
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:110: UserWarning: 601 out of 48219 requested timestamps exceed max_gap_ms=500 relative to neighboring samples and will have empty data.
+  warn(
+Applying homographies to gaze points: 100%|██████████| 47484/47484 [01:22&lt;00:00, 572.47it/s]
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 1 out of 476 requested timestamps are outside the data time range and will have empty data.
+  warn(
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:110: UserWarning: 9 out of 476 requested timestamps exceed max_gap_ms=500 relative to neighboring samples and will have empty data.
+  warn(
+</pre></div></div>
+</div>
+<p>Now let’s plot all the mapped gaze and fixation data in the screen’s reference frame (origin at top-left, y increases downward):</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plot_marker_layout</span><span class="p">(</span><span class="n">marker_layout</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">show_marker_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">gaze_on_surface</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;gaze x [surface coord]&quot;</span><span class="p">],</span>
+    <span class="n">gaze_on_surface</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;gaze y [surface coord]&quot;</span><span class="p">],</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">fixations_on_surface</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;fixation x [surface coord]&quot;</span><span class="p">],</span>
+    <span class="n">fixations_on_surface</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;fixation y [surface coord]&quot;</span><span class="p">],</span>
+    <span class="n">s</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Plot where the artworks were</span>
+<span class="c1"># There were 1200 x 800 pixels in size, centered on the screen (2560 x 1440)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="p">[</span><span class="mi">680</span><span class="p">,</span> <span class="mi">1880</span><span class="p">,</span> <span class="mi">1880</span><span class="p">,</span> <span class="mi">680</span><span class="p">,</span> <span class="mi">680</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">320</span><span class="p">,</span> <span class="mi">320</span><span class="p">,</span> <span class="mi">1120</span><span class="p">,</span> <span class="mi">1120</span><span class="p">,</span> <span class="mi">320</span><span class="p">],</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Image outline&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Screen x coordinate&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Screen y coordinate&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2560</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1440</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <img alt="../_images/tutorials_surface_mapping_20_0.png" src="../_images/tutorials_surface_mapping_20_0.png" />
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/tutorials_surface_mapping_20_1.png" src="../_images/tutorials_surface_mapping_20_1.png" />
-</div>
-</div>
-<div class="nboutput nblast docutils container">
+</section>
+</section>
+<section id="Example-2:-ArUco-Markers">
+<h2>Example 2: ArUco Markers<a class="headerlink" href="#Example-2:-ArUco-Markers" title="Link to this heading">#</a></h2>
+<p>The same workflow applies to ArUco markers. Instead of a family name, ArUco dictionaries are specified by their pattern (for example, <code class="docutils literal notranslate"><span class="pre">'5x5_50'</span></code>). The same four steps (detect, define coordinates, compute homography, transform) apply; only the marker family changes.</p>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-(&lt;Figure size 640x480 with 1 Axes&gt;,
- &lt;Axes: xlabel=&#39;Epoch time (s)&#39;, ylabel=&#39;Epoch index&#39;&gt;)
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eye_states_interpolated</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">eye_states</span><span class="o">.</span><span class="n">interpolate_events</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">blinks</span><span class="p">)</span>
-<span class="n">eye_states_epochs</span> <span class="o">=</span> <span class="n">Epochs</span><span class="p">(</span><span class="n">eye_states_interpolated</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
-<span class="n">eye_states_epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s2">&quot;pupil diameter left [mm]&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/tutorials_surface_mapping_21_0.png" src="../_images/tutorials_surface_mapping_21_0.png" />
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-(&lt;Figure size 640x480 with 2 Axes&gt;,
- &lt;Axes: xlabel=&#39;Epoch time (s)&#39;, ylabel=&#39;pupil diameter left [mm]&#39;&gt;)
-</pre></div></div>
-</div>
-<p>To plot anything more meaningful, we need to actually manually manipulate data</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span> <span class="o">=</span> <span class="n">fixation_on_screen_epochs</span><span class="o">.</span><span class="n">epochs</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">data</span>
-<span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">video</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">scene_video</span>
+<span class="n">detected_markers</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">detect_markers</span><span class="p">(</span><span class="s2">&quot;5x5_50&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Index([&#39;fixation id&#39;, &#39;end timestamp [ns]&#39;, &#39;duration [ms]&#39;, &#39;fixation x [px]&#39;,
-       &#39;fixation y [px]&#39;, &#39;azimuth [deg]&#39;, &#39;elevation [deg]&#39;,
-       &#39;gaze x [surface coord]&#39;, &#39;gaze y [surface coord]&#39;, &#39;epoch time&#39;],
-      dtype=&#39;object&#39;)
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">fixation_on_screen_epochs</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">epoch</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
-
-    <span class="c1"># show x and y coordinates of all fixations as scatter plot</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
-        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;gaze x [surface coord]&quot;</span><span class="p">],</span>
-        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;gaze y [surface coord]&quot;</span><span class="p">],</span>
-        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-    <span class="p">)</span>
-
-<span class="c1"># add the image outline to the polt (image has size of 1200x800, centered at 0, 0)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="p">[</span><span class="o">-</span><span class="mi">600</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="o">-</span><span class="mi">600</span><span class="p">,</span> <span class="o">-</span><span class="mi">600</span><span class="p">],</span>
-    <span class="p">[</span><span class="o">-</span><span class="mi">400</span><span class="p">,</span> <span class="o">-</span><span class="mi">400</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="o">-</span><span class="mi">400</span><span class="p">],</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Image outline&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;X Coordinate (surface coord)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Y Coordinate (surface coord)&quot;</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">800</span><span class="p">,</span> <span class="mi">800</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">600</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-C:\Users\jan-gabriel.hartel\AppData\Local\Temp\ipykernel_28488\3893021640.py:5: UserWarning: No data for colormapping provided via &#39;c&#39;. Parameters &#39;cmap&#39; will be ignored
-  plt.scatter(
+Detecting markers: 100%|██████████| 1044/1044 [00:26&lt;00:00, 38.84it/s]
 </pre></div></div>
+</div>
+<p>Using the shorter ArUco video, we will visualize detections across the full recording. Set <code class="docutils literal notranslate"><span class="pre">show_video=False</span></code> to avoid the interactive preview window and instead save the overlay to <code class="docutils literal notranslate"><span class="pre">output_path</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">video</span><span class="o">.</span><span class="n">overlay_detections</span><span class="p">(</span>
+    <span class="n">detected_markers</span><span class="p">,</span> <span class="n">show_video</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;export/marker_detections.mp4&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Overlaying detections on video: 100%|██████████| 1044/1044 [00:18&lt;00:00, 55.21it/s]
+</pre></div></div>
+</div>
+</section>
+<section id="Alternative:-Contour-Based-Screen-Corner-Detection">
+<h2>Alternative: Contour-Based Screen-Corner Detection<a class="headerlink" href="#Alternative:-Contour-Based-Screen-Corner-Detection" title="Link to this heading">#</a></h2>
+<p>When fiducial markers are unavailable, estimate the homography from bright screen corners. The <code class="docutils literal notranslate"><span class="pre">detect_contour()</span></code> method looks for a bright rectangular contour per frame and returns its four corners. This works best when the screen is brighter than the background. You can tune <code class="docutils literal notranslate"><span class="pre">brightness_threshold</span></code>, <code class="docutils literal notranslate"><span class="pre">adaptive</span></code>, or <code class="docutils literal notranslate"><span class="pre">morph_kernel</span></code>, and use <code class="docutils literal notranslate"><span class="pre">step</span></code> or <code class="docutils literal notranslate"><span class="pre">processing_window</span></code> to speed up processing.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon.video</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_homographies</span>
+
+<span class="n">screen_detections</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">detect_contour</span><span class="p">()</span>
+
+<span class="n">contour_layout</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">width</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">homographies_screen</span> <span class="o">=</span> <span class="n">find_homographies</span><span class="p">(</span>
+    <span class="n">screen_detections</span><span class="p">,</span>
+    <span class="n">layout</span><span class="o">=</span><span class="n">contour_layout</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Detecting contour corners: 100%|██████████| 1044/1044 [00:21&lt;00:00, 48.54it/s]
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\tabular.py:67: UserWarning: Following columns not in known data types, using default data types: contour name
+  warn(
+Computing surface-mapping homographies: 100%|██████████| 870/870 [00:00&lt;00:00, 1514.39it/s]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">video</span><span class="o">.</span><span class="n">plot_detections</span><span class="p">(</span><span class="n">screen_detections</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
+<img alt="../_images/tutorials_surface_mapping_27_0.png" src="../_images/tutorials_surface_mapping_27_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-(-600.0, 600.0)
+(&lt;Figure size 640x480 with 1 Axes&gt;, &lt;Axes: &gt;)
 </pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">video</span><span class="o">.</span><span class="n">overlay_detections</span><span class="p">(</span>
+    <span class="n">screen_detections</span><span class="p">,</span>
+    <span class="n">show_video</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">show_ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;export/contour_detections.mp4&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
-<img alt="../_images/tutorials_surface_mapping_24_2.png" src="../_images/tutorials_surface_mapping_24_2.png" />
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Overlaying detections on video: 100%|██████████| 1044/1044 [00:20&lt;00:00, 50.38it/s]
+</pre></div></div>
 </div>
-</div>
+</section>
 </section>
 
 
@@ -895,6 +964,24 @@ C:\Users\jan-gabriel.hartel\AppData\Local\Temp\ipykernel_28488\3893021640.py:5: 
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="pupil_size_and_epoching.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Processing and Epoching Pupil Size Data</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="video.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Scene Video and Scanpath Mapping</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               
@@ -905,6 +992,30 @@ C:\Users\jan-gabriel.hartel\AppData\Local\Temp\ipykernel_28488\3893021640.py:5: 
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#What-are-Fiducial-Markers?">What are Fiducial Markers?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Sample-Dataset">Sample Dataset</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#AprilTag-Example">AprilTag Example</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Visualizing-Markers-in-Video">Visualizing Markers in Video</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-1:-Detect-Markers">Step 1: Detect Markers</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Verifying-Detection">Verifying Detection</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-2:-Define-Real-World-Marker-Coordinates">Step 2: Define Real-World Marker Coordinates</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-3:-Compute-Homography-Transformation">Step 3: Compute Homography Transformation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-4:-Apply-Transformation-to-Gaze-Data">Step 4: Apply Transformation to Gaze Data</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Example-2:-ArUco-Markers">Example 2: ArUco Markers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Alternative:-Contour-Based-Screen-Corner-Detection">Alternative: Contour-Based Screen-Corner Detection</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">
