@@ -94,7 +94,7 @@ DOC["detect_contour_params"] = """
 %(window_params)s
 min_area_ratio : float, optional
     Minimum contour area relative to frame area. Contours smaller than this
-    ratio are ignored. Default is 0.01 (1% of frame area).
+    ratio are ignored. Default is 0.01 (1 percent of frame area).
 max_area_ratio : float, optional
     Maximum contour area relative to frame area. Contours larger than this
     ratio are ignored. Default is 0.98.
