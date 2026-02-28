@@ -403,7 +403,7 @@ class Epochs:
         inplace: bool = True,
     ) -> dict | None:
         """
-        Apply baseline correction on epochs. Only applied to columns of float type.
+        Apply baseline correction to epochs. Only applied to columns of float type.
 
         The baseline data is extracted and used to compute the correction.
         When ``method="mean"``, the mean of the baseline window is subtracted from the entire epoch.
@@ -414,15 +414,16 @@ class Epochs:
 
         Parameters
         ----------
-        baseline : tuple of Number
+        baseline : tuple[Number or None, Number or None], optional
             Time window (relative to reference) for baseline computation in seconds.
-        method : Literal["mean", "regression"]
-            Baseline correction method: "mean" or "regression".
-        exclude_cols : list of str
-            Columns to exclude from baseline correction.
+            Defaults to (None, 0), which uses all data before the reference time.
+        method : {"mean", "regression"}, optional
+            Baseline correction method. Defaults to "mean".
+        exclude_cols : list of str, optional
+            Columns to exclude from baseline correction. Defaults to [].
         inplace : bool, optional
             If ``True``, replace :attr:`epochs_dict`. Otherwise returns a new instance of dict.
-            Defaults to ``False``.
+            Defaults to ``True``.
 
         Returns
         -------
@@ -644,8 +645,8 @@ def construct_epochs_info(
     global_t_ref: int = 0,
 ) -> pd.DataFrame:
     """
-    Handles the construction of the ``epochs_info`` DataFrame for creating epochs. It populates
-    single values for ``t_before``, ``t_after``, and ``description`` to match the length of `t_ref`.
+    Construct the ``epochs_info`` DataFrame for creating epochs. It populates
+    single values for ``t_before``, ``t_after``, and ``description`` to match the length of ``t_ref``
     and converts all times to Unix timestamps in nanoseconds.
 
     Parameters

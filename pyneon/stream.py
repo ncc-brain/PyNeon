@@ -747,11 +747,12 @@ Columns: {list(self.data.columns)}
         inplace: bool = False,
     ) -> Optional["Stream"]:
         """
-        Compute gaze azimuth and elevation angles (in degrees)
+        Compute gaze azimuth and elevation angles (in degrees) from pixel coordinates
         based on gaze pixel coordinates and append them to the stream data.
 
         The stream data must contain the required gaze columns:
         ``gaze x [px]`` and ``gaze y [px]``.
+
 
         Parameters
         ----------
@@ -795,12 +796,13 @@ Columns: {list(self.data.columns)}
 
         The stream data must contain the required gaze columns:
         ``gaze x [px]`` and ``gaze y [px]``.
+        The output stream will contain two new columns:
+        ``gaze x [surface coord]`` and ``gaze y [surface coord]``.
 
         Parameters
         ----------
-        homographies : Stream
-            Stream containing homography matrices with columns ``'homography (0,0)'`` through
-            ``'homography (2,2)'`` as returned by :func:`pyneon.video.find_homographies`.
+        %(homographies)s
+            Returned by :func:`pyneon.find_homographies`.
         %(max_gap_ms_param)s
         overwrite : bool, optional
             Only applicable if surface gaze columns already exist.

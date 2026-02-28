@@ -120,8 +120,8 @@ class BaseTabular:
 
         Parameters
         ----------
-        output_path : str | Path
-            Path to save the CSV file.
+        output_path : str or pathlib.Path
+            Path to the output CSV file.
 
         Examples
         --------

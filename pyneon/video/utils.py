@@ -24,12 +24,14 @@ def _validate_marker_layout(marker_layout: pd.DataFrame) -> None:
             f"Duplicate marker names found in layout: {duplicates.tolist()}"
         )
 
+
 def _validate_contour_layout(contour_layout: np.ndarray) -> None:
     """Validate contour layout corners array."""
     if contour_layout.shape != (4, 2):
         raise ValueError(
             f"Contour layout must have shape (4, 2), got {contour_layout.shape}."
         )
+
 
 def get_undistort_maps(
     video: Any,

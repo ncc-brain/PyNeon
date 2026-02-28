@@ -187,6 +187,25 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
         return False
 
     def _load_property(self, property_name: str, loader):
+        """Load a property using the provided loader function.
+
+        Parameters
+        ----------
+        property_name : str
+            Name of the property being loaded (for error messages).
+        loader : callable
+            Function that loads and returns the property.
+
+        Returns
+        -------
+        object
+            The loaded property.
+
+        Raises
+        ------
+        ValueError
+            If the loader function raises an exception.
+        """
         try:
             return loader()
         except Exception as e:

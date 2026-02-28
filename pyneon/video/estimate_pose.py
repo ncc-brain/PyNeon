@@ -14,24 +14,27 @@ def estimate_camera_pose(
     detected_markers: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """
-    Estimate the camera pose for every frame by solving a Perspective-n-Point
-    (PnP) problem based on marker detections.
+    Estimate camera pose for each frame by solving a Perspective-n-Point (PnP)
+    problem using marker detections.
+
+    This function computes the camera's position and orientation in 3D world
+    coordinates based on detected marker positions in the video frames.
 
     Parameters
     ----------
-    video :
-        ``Video`` instance providing the frames' timestamps and the
-        intrinsic matrices ``camera_matrix`` and ``distortion_coefficients``.
-    marker_locations_df :
-        pandas.DataFrame describing the world-coordinates of each marker.
+    video : Video
+        Video instance providing frame timestamps and intrinsic camera parameters
+        (``camera_matrix`` and ``distortion_coefficients``).
+    marker_locations_df : pandas.DataFrame
+        DataFrame describing the world coordinates of each marker.
         Required columns::
 
             "marker_id"   : int
-            "pos_vec"  : list[float] length 3, [x, y, z] position of the marker
-            "norm_vec" : list[float] length 3, [nx, ny, nz] front-face normal
+            "pos_vec"  : list[float] of length 3, [x, y, z] position of the marker
+            "norm_vec" : list[float] of length 3, [nx, ny, nz] front-face normal
             "size"     : float, edge length in meters
     detected_markers : Stream or pandas.DataFrame, optional
-        Per-frame marker detections. If *None* the function calls ``detect_markers(video)``.
+        Per-frame marker detections. If None, the function calls ``detect_markers(video)``.
         Expected columns::
 
             "frame index" : int
@@ -49,7 +52,12 @@ def estimate_camera_pose(
             "frame index"       : int
             "translation_vector" : ndarray (3,)
             "rotation_vector"    : ndarray (3,)
-            "camera_pos"         : ndarray (3,) camera position in world coord.
+            "camera_pos"         : ndarray (3,) camera position in world coordinates
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing from marker_locations_df.
     """
 
     # prepare detections

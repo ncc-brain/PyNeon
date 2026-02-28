@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
-from ..utils import _validate_neon_tabular_data, _validate_df_columns
+from ..utils import _validate_df_columns, _validate_neon_tabular_data
 from ..utils.doc_decorators import fill_doc
 
 if TYPE_CHECKING:
@@ -167,7 +167,7 @@ def interpolate_events(
         Events instance containing the events to interpolate.
         The events must have ``start timestamp [ns]`` and
         ``end timestamp [ns]`` columns.
-    buffer : numbers.Number or , optional
+    buffer : numbers.Number or tuple[numbers.Number, numbers.Number], optional
         The time before and after an event (in seconds) to consider invalid.
         If a single number is provided, the same buffer is applied
         to both before and after the event.
@@ -300,6 +300,9 @@ def compute_azimuth_and_elevation(
     method : str, optional
         Method to compute gaze angles. Currently only "linear" is supported.
         Defaults to "linear".
+    overwrite : bool, optional
+        If ``True``, overwrite existing azimuth and elevation columns.
+        Defaults to ``False``.
 
     Returns
     -------

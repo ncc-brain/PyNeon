@@ -519,12 +519,13 @@ Columns: {list(self.data.columns)}
 
         The events data must contain the required fixation columns:
         ``fixation x [px]`` and ``fixation y [px]``.
+        The output events will contain two new columns:
+        ``fixation x [surface coord]`` and ``fixation y [surface coord]``.
 
         Parameters
         ----------
-        homographies : Stream
-            Stream containing homography matrices with columns ``'homography (0,0)'`` through
-            ``'homography (2,2)'`` as returned by :func:`pyneon.video.find_homographies`.
+        %(homographies)s
+            Returned by :func:`pyneon.find_homographies`.
         %(max_gap_ms_param)s
         overwrite : bool, optional
             Only applicable if surface fixation columns already exist.

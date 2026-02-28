@@ -11,13 +11,15 @@ def smooth_camera_pose(
     bidirectional: bool = False,
 ) -> pd.DataFrame:
     """
-    Apply a Kalman filter to smooth camera positions, with optional forward-backward smoothing (RTS smoother).
-    Handles missing measurements and propagates predictions.
+    Smooth camera position estimates using a Kalman filter with optional
+    forward-backward smoothing (RTS smoother).
+
+    This function handles missing measurements and propagates predictions across frames.
 
     Parameters
     ----------
     camera_position_raw : pandas.DataFrame
-        DataFrame containing 'frame index' and 'camera_pos' columns.
+        DataFrame containing ``frame index`` and ``camera_pos`` columns.
     initial_state_noise : float, optional
         Initial state covariance scaling factor. Defaults to 0.1.
     process_noise : float, optional
@@ -31,8 +33,9 @@ def smooth_camera_pose(
 
     Returns
     -------
-    pd.DataFrame
-        A DataFrame with 'frame index' and 'smoothed_camera_pos'.
+    pandas.DataFrame
+        A DataFrame with ``frame index`` and ``smoothed_camera_pos`` columns,
+        or ``camera_pos`` if bidirectional is False.
     """
 
     state_dim = 3

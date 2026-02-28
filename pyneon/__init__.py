@@ -8,6 +8,7 @@ from .recording import Recording
 from .stream import Stream
 from .utils import *
 from .video import Video, find_homographies
+from .vis import plot_marker_layout
 
 __all__ = [
     "Dataset",
@@ -16,6 +17,7 @@ __all__ = [
     "Events",
     "Epochs",
     "Video",
+    "plot_marker_layout",
     "find_homographies",
     "construct_epochs_info",
     "events_to_epochs_info",

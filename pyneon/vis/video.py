@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from ..utils.doc_decorators import fill_doc
 from ..utils import _validate_df_columns
+from ..utils.doc_decorators import fill_doc
 from ..video.variables import DETECTION_COLUMNS_BASE
 
 if TYPE_CHECKING:

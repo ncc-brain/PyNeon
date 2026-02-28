@@ -1,7 +1,7 @@
 from functools import cached_property
+from numbers import Number
 from pathlib import Path
 from typing import Literal, Optional, Union
-from numbers import Number
 from warnings import warn
 
 import cv2
@@ -19,8 +19,8 @@ from ..vis.video import (
     plot_detections,
     plot_frame,
 )
-from .marker import detect_markers
 from .detect_contour import detect_contour
+from .marker import detect_markers
 from .utils import get_undistort_maps, resolve_processing_window
 
 
@@ -98,7 +98,7 @@ Effective FPS: {self.fps:.2f}
             Array of timestamps in nanoseconds (Unix time).
         """
         return self._timestamps
-    
+
     @property
     def ts(self) -> np.ndarray:
         """Alias for :attr:`timestamps` for convenience.
@@ -476,206 +476,6 @@ Effective FPS: {self.fps:.2f}
         """
         return plot_frame(self, frame_index, ax, show)
 
-    @fill_doc
-    def detect_markers(
-        self,
-        marker_family: str | list[str] = "36h11",
-        step: int = 1,
-        processing_window: Optional[tuple[int | float, int | float]] = None,
-        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
-        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
-        undistort: bool = False,
-    ) -> Stream:
-        """
-        Detect fiducial markers (AprilTag or ArUco) in the video frames.
-
-        Parameters
-        ----------
-        %(detect_markers_params)s
-
-        Returns
-        -------
-        %(detect_markers_returns)s
-        """
-        return detect_markers(
-            self,
-            marker_family=marker_family,
-            step=step,
-            processing_window=processing_window,
-            processing_window_unit=processing_window_unit,
-            detector_parameters=detector_parameters,
-            undistort=undistort,
-        )
-
-    @fill_doc
-    def detect_contour(
-        self,
-        step: int = 1,
-        processing_window: tuple[int | float, int | float] | None = None,
-        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
-        min_area_ratio: float = 0.01,
-        max_area_ratio: float = 0.98,
-        brightness_threshold: int = 180,
-        adaptive: bool = True,
-        morph_kernel: int = 5,
-        decimate: float = 1.0,
-        mode: str = "largest",
-        report_diagnostics: bool = False,
-        undistort: bool = False,
-    ) -> Stream:
-        """
-        Detect bright rectangular regions (e.g., projected surfaces or monitors)
-        in video frames using luminance-based contour detection.
-
-        Parameters
-        ----------
-        %(detect_contour_params)s
-
-        Returns
-        -------
-        %(detect_contour_returns)s
-        """
-        return detect_contour(
-            self,
-            step=step,
-            processing_window=processing_window,
-            processing_window_unit=processing_window_unit,
-            min_area_ratio=min_area_ratio,
-            max_area_ratio=max_area_ratio,
-            brightness_threshold=brightness_threshold,
-            adaptive=adaptive,
-            morph_kernel=morph_kernel,
-            decimate=decimate,
-            mode=mode,
-            report_diagnostics=report_diagnostics,
-            undistort=undistort,
-        )
-
-    @fill_doc
-    def plot_detections(
-        self,
-        detections: Stream,
-        frame_index: int,
-        show_ids: bool = True,
-        color: str = "magenta",
-        ax: Optional[plt.Axes] = None,
-        show: bool = True,
-    ):
-        """
-        Visualize detections on a frame.
-
-        Parameters
-        ----------
-        detections : Stream
-            Stream containing marker or contour detections.
-        frame_index : int
-            Frame index to plot.
-        show_ids : bool
-            Display detection IDs at their centers. Defaults to True.
-        color : str
-            Matplotlib color for overlay. Defaults to "magenta".
-        %(ax_param)s
-        %(show_param)s
-
-        Returns
-        -------
-        %(fig_ax_returns)s
-        """
-        return plot_detections(
-            self,
-            detections=detections,
-            frame_index=frame_index,
-            show_ids=show_ids,
-            color=color,
-            ax=ax,
-            show=show,
-        )
-
-    def overlay_scanpath(
-        self,
-        scanpath: pd.DataFrame,
-        circle_radius: int = 10,
-        line_thickness: int = 2,
-        max_fixations: int = 10,
-        show_video: bool = False,
-        output_path: Path | str = None,
-    ) -> None:
-        """
-        Overlay scanpath fixations on the video frames.
-
-        The resulting video can be displayed and/or saved.
-
-        Parameters
-        ----------
-        scanpath : pandas.DataFrame
-            DataFrame containing the fixations and gaze data.
-        circle_radius : int
-            Radius of the fixation circles in pixels. Defaults to 10.
-        line_thickness : int or None
-            Thickness of the lines connecting fixations. If None, no lines are drawn.
-            Defaults to 2.
-        max_fixations : int
-            Maximum number of fixations to plot per frame. Defaults to 10.
-        show_video : bool
-            Whether to display the video with fixations overlaid. Defaults to False.
-        output_path : pathlib.Path or str or None
-            Path to save the video with fixations overlaid. If None, the video is not saved.
-            If "default", saves scanpath.mp4 to the derivatives folder under the
-            recording directory.
-
-        Returns
-        -------
-        None
-        """
-        overlay_scanpath(
-            self,
-            scanpath,
-            circle_radius,
-            line_thickness,
-            max_fixations,
-            show_video,
-            output_path,
-        )
-
-    @fill_doc
-    def overlay_detections(
-        self,
-        detections: "Stream",
-        show_ids: bool = True,
-        color: tuple[int, int, int] = (255, 0, 255),
-        show_video: bool = False,
-        output_path: Optional[Path | str] = None,
-    ) -> None:
-        """
-        Overlay detections on the video frames.
-        The resulting video can be displayed and/or saved.
-
-        Parameters
-        ----------
-        detections : Stream
-            Stream containing marker or contour detections.
-        show_ids : bool
-            Whether to overlay IDs at their centers when available. Defaults to True.
-        color : tuple[int, int, int]
-            BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
-        %(show_video_param)s
-        %(output_path_param)s
-            If "default", saves detections.mp4 to the derivatives folder under the
-            recording directory. If None, no output video is written.
-
-        Returns
-        -------
-        None
-        """
-        overlay_detections(
-            self,
-            detections=detections,
-            show_ids=show_ids,
-            color=color,
-            show_video=show_video,
-            output_path=output_path,
-        )
-
     def undistort_video(
         self,
         show: bool = False,
@@ -815,3 +615,218 @@ Effective FPS: {self.fps:.2f}
             )
         )
         return stream
+
+    @fill_doc
+    def detect_markers(
+        self,
+        marker_family: str | list[str] = "36h11",
+        step: int = 1,
+        processing_window: Optional[tuple[int | float, int | float]] = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+        detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
+        undistort: bool = False,
+    ) -> Stream:
+        """
+        Detect fiducial markers (AprilTag or ArUco) in the video frames.
+
+        Parameters
+        ----------
+        %(detect_markers_params)s
+
+        Returns
+        -------
+        %(detect_markers_returns)s
+
+        See also
+        --------
+        :meth:`detect_contour` : Alternative method to detect rectangular contours instead of fiducial markers.
+        :meth:`plot_detections` : Visualize marker detections on video frames.
+        :meth:`overlay_detections` : Create a video with detected markers overlaid.
+        :func:`pyneon.find_homographies` : Compute homographies from detections.
+
+        """
+        return detect_markers(
+            self,
+            marker_family=marker_family,
+            step=step,
+            processing_window=processing_window,
+            processing_window_unit=processing_window_unit,
+            detector_parameters=detector_parameters,
+            undistort=undistort,
+        )
+
+    @fill_doc
+    def detect_contour(
+        self,
+        step: int = 1,
+        processing_window: tuple[int | float, int | float] | None = None,
+        processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
+        min_area_ratio: float = 0.01,
+        max_area_ratio: float = 0.98,
+        brightness_threshold: int = 180,
+        adaptive: bool = True,
+        morph_kernel: int = 5,
+        decimate: float = 1.0,
+        mode: str = "largest",
+        report_diagnostics: bool = False,
+        undistort: bool = False,
+    ) -> Stream:
+        """
+        Detect bright rectangular regions (e.g., projected surfaces or monitors)
+        in video frames using luminance-based contour detection.
+
+        Parameters
+        ----------
+        %(detect_contour_params)s
+
+        Returns
+        -------
+        %(detect_contour_returns)s
+
+        See also
+        --------
+        :meth:`detect_markers` : Alternative method to detect fiducial markers.
+        :meth:`plot_detections` : Visualize contour on a video frame.
+        :meth:`overlay_detections` : Create a video with the detected contour overlaid.
+        :func:`pyneon.find_homographies` : Compute homographies from detections.
+        """
+        return detect_contour(
+            self,
+            step=step,
+            processing_window=processing_window,
+            processing_window_unit=processing_window_unit,
+            min_area_ratio=min_area_ratio,
+            max_area_ratio=max_area_ratio,
+            brightness_threshold=brightness_threshold,
+            adaptive=adaptive,
+            morph_kernel=morph_kernel,
+            decimate=decimate,
+            mode=mode,
+            report_diagnostics=report_diagnostics,
+            undistort=undistort,
+        )
+
+    @fill_doc
+    def plot_detections(
+        self,
+        detections: Stream,
+        frame_index: int,
+        show_ids: bool = True,
+        color: str = "magenta",
+        ax: Optional[plt.Axes] = None,
+        show: bool = True,
+    ):
+        """
+        Visualize detections on a frame.
+
+        Parameters
+        ----------
+        detections : Stream
+            Stream containing marker or contour detections.
+        frame_index : int
+            Frame index to plot.
+        show_ids : bool
+            Display detection IDs at their centers. Defaults to True.
+        color : str
+            Matplotlib color for overlay. Defaults to "magenta".
+        %(ax_param)s
+        %(show_param)s
+
+        Returns
+        -------
+        %(fig_ax_returns)s
+        """
+        return plot_detections(
+            self,
+            detections=detections,
+            frame_index=frame_index,
+            show_ids=show_ids,
+            color=color,
+            ax=ax,
+            show=show,
+        )
+
+    @fill_doc
+    def overlay_detections(
+        self,
+        detections: "Stream",
+        show_ids: bool = True,
+        color: tuple[int, int, int] = (255, 0, 255),
+        show_video: bool = False,
+        output_path: Optional[Path | str] = None,
+    ) -> None:
+        """
+        Overlay detections on the video frames.
+        The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        detections : Stream
+            Stream containing marker or contour detections.
+        show_ids : bool
+            Whether to overlay IDs at their centers when available. Defaults to True.
+        color : tuple[int, int, int]
+            BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
+        %(show_video_param)s
+        %(output_path_param)s
+            If "default", saves detections.mp4 to the derivatives folder under the
+            recording directory. If None, no output video is written.
+
+        Returns
+        -------
+        None
+        """
+        overlay_detections(
+            self,
+            detections=detections,
+            show_ids=show_ids,
+            color=color,
+            show_video=show_video,
+            output_path=output_path,
+        )
+
+    def overlay_scanpath(
+        self,
+        scanpath: pd.DataFrame,
+        circle_radius: int = 10,
+        line_thickness: int = 2,
+        max_fixations: int = 10,
+        show_video: bool = False,
+        output_path: Path | str = None,
+    ) -> None:
+        """
+        Overlay scanpath fixations on the video frames.
+
+        The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        scanpath : pandas.DataFrame
+            DataFrame containing the fixations and gaze data.
+        circle_radius : int
+            Radius of the fixation circles in pixels. Defaults to 10.
+        line_thickness : int or None
+            Thickness of the lines connecting fixations. If None, no lines are drawn.
+            Defaults to 2.
+        max_fixations : int
+            Maximum number of fixations to plot per frame. Defaults to 10.
+        show_video : bool
+            Whether to display the video with fixations overlaid. Defaults to False.
+        output_path : pathlib.Path or str or None
+            Path to save the video with fixations overlaid. If None, the video is not saved.
+            If "default", saves scanpath.mp4 to the derivatives folder under the
+            recording directory.
+
+        Returns
+        -------
+        None
+        """
+        overlay_scanpath(
+            self,
+            scanpath,
+            circle_radius,
+            line_thickness,
+            max_fixations,
+            show_video,
+            output_path,
+        )

@@ -5,7 +5,8 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils.doc_decorators import fill_doc
-from .utils import _validate_marker_layout, _validate_contour_layout
+from .utils import _validate_contour_layout, _validate_marker_layout
+
 
 def _reshape_corners(detection: pd.Series) -> np.ndarray:
     return np.array(
@@ -18,6 +19,7 @@ def _reshape_corners(detection: pd.Series) -> np.ndarray:
         dtype=np.float32,
     )
 
+
 @fill_doc
 def find_homographies(
     detections: Stream,
@@ -29,21 +31,70 @@ def find_homographies(
     confidence: float = 0.995,
 ) -> Stream:
     """
-    Compute a homography (3x3 matrix) for each frame using marker
-    or contour detections.
+    Compute a per-frame homography (3x3 matrix) from detections to
+    a surface coordinate system.
 
     Parameters
     ----------
     detections : Stream
-        Stream containing per-frame detections with corner coordinates.
-        Obtained from :meth:`Video.detect_markers` or :meth:`Video.detect_contour`.
+        Stream containing per-detection marker/contour coordinates returned
+        by :meth:`Video.detect_markers` or :meth:`Video.detect_contour`.
     layout : pd.DataFrame or np.ndarray
-        If using marker detections, provide a DataFrame with columns:
-    %(find_homographies_params)s
+        Layout of markers/contour to provide reference surface coordinates for homography computation.
+        The expected format depends on the type of detections:
+
+        **Marker detections**: provide a DataFrame (can be visually checked with
+        :func:`pyneon.plot_marker_layout`) with following columns:
+
+            %(marker_layout_table)s
+
+        **Contour detections**: provide a 2D numpy array of shape (4, 2)
+        containing the surface coordinates of the contour corners in the following order:
+        top-left, top-right, bottom-right, bottom-left.
+
+    min_markers : int, optional
+        Minimum number of marker detections required in a frame to compute a
+        homography when using marker detections. Frames with fewer detections are
+        skipped. Defaults to 2.
+    method : int, optional
+        Method used to compute a homography matrix. The following methods are possible:
+
+        - 0 - a regular method using all the points, i.e., the least squares method
+        - ``cv2.RANSAC`` - RANSAC-based robust method
+        - ``cv2.LMEDS`` - Least-Median robust method
+        - ``cv2.RHO`` - PROSAC-based robust method
+
+        Defaults to ``cv2.LMEDS``.
+    ransacReprojThreshold : float, optional
+        Maximum allowed reprojection error to treat a point pair as an inlier
+        (used in the RANSAC and RHO methods only). Defaults to 3.0.
+    maxIters : int, optional
+        The maximum number of RANSAC iterations. Defaults to 2000.
+    confidence : float, optional
+        Confidence level, between 0 and 1. Defaults to 0.995.
 
     Returns
     -------
-    %(find_homographies_returns)s
+    %(homographies)s
+
+    Examples
+    --------
+    Compute homographies from marker detections:
+
+    >>> detections = video.detect_markers("36h11")
+    >>> layout = pd.DataFrame({
+    ...     "marker name": ["36h11_0", "36h11_1"],
+    ...     "size": [100, 100],
+    ...     "center x": [200, 400],
+    ...     "center y": [200, 200],
+    ... })
+    >>> homographies = find_homographies(detections, layout)
+
+    Compute homographies from contour detections:
+
+    >>> detections = video.detect_contour()
+    >>> layout = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
+    >>> homographies = find_homographies(detections, layout)
     """
     detection_df = detections.data
     is_marker_detection = isinstance(layout, pd.DataFrame)
@@ -79,7 +130,9 @@ def find_homographies(
             axis=1,
         )
         # Construct a lookup dictionary with marker name being key and corners being value
-        surface_pts_lookup = {row["marker name"]: row["corners"] for _, row in layout.iterrows()}
+        surface_pts_lookup = {
+            row["marker name"]: row["corners"] for _, row in layout.iterrows()
+        }
     else:
         _validate_contour_layout(layout)
         surface_pts_lookup = {"contour_0": layout}
@@ -91,7 +144,7 @@ def find_homographies(
         frame_detections = detection_df.loc[ts]
         if isinstance(frame_detections, pd.Series):
             frame_detections = frame_detections.to_frame().T
-        
+
         if is_marker_detection and len(frame_detections) < min_markers:
             continue
 

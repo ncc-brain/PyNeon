@@ -23,7 +23,7 @@ inplace : bool, optional
 DOC["step_param"] = """\
 step : int, optional
     Process every Nth frame. For example, step=5 processes frames
-    0, 5, 10, 15, ...). Defaults to 1 (process all frames)."""
+    0, 5, 10, 15, .... Defaults to 1 (process all frames)."""
 
 DOC["window_params"] = """\
 processing_window : tuple[int | float, int | float] or None
@@ -129,43 +129,30 @@ undistort : bool, optional
     in the original (distorted) video frame. Defaults to ``False``.
 """
 
-DOC["find_homographies_params"] = """
-valid_markers : int, optional
-    Minimum number of markers required to compute a homography. Defaults to 2.
-method : int, optional
-    Method used to compute a homography matrix. The following methods are possible:
-
-    - 0 - a regular method using all the points, i.e., the least squares method
-    - ``cv2.RANSAC`` - RANSAC-based robust method
-    - ``cv2.LMEDS`` - Least-Median robust method
-    - ``cv2.RHO`` - PROSAC-based robust method
-
-    Defaults to ``cv2.LMEDS``.
-ransacReprojThreshold : float, optional
-    Maximum allowed reprojection error to treat a point pair as an inlier
-    (used in the RANSAC and RHO methods only). Defaults to 3.0.
-maxIters : int, optional
-    The maximum number of RANSAC iterations. Defaults to 2000.
-confidence : float, optional
-    Confidence level, between 0 and 1, for the estimated homography.
-    Defaults to 0.995.
-"""
-
 DOC["marker_layout"] = """
 marker_layout : pandas.DataFrame
-    DataFrame describing the layout. Must include columns:
+    DataFrame describing the spatial layout of the markers on the surface.
+    Must contain the following columns:
 
-    - "marker name": full marker identifier (family + id, e.g., "tag36h11_1")\n
-    - "size": marker size in the reference plane units\n
-    - "center x": x center of the marker in surface coordinates\n
-    - "center y": y center of the marker in surface coordinates
+    %(marker_layout_table)s
 """
 
-DOC["find_homographies_returns"] = """
-Stream
-    A Stream indexed by 'timestamp [ns]' with columns
-    'homography (0,0)' through 'homography (2,2)': The 9 elements of the
-    flattened 3x3 homography matrix.
+DOC["marker_layout_table"] = """
+    =========== =========================================================
+    Column      Description
+    =========== =========================================================
+    marker name Full marker name (family_id, e.g., "36h11_1")
+    size        Size of the marker in surface units
+    center x    x-coordinate of the marker center in surface coordinates
+    center y    y-coordinate of the marker center in surface coordinates
+    =========== =========================================================
+"""
+
+DOC["homographies"] = """
+homographies : Stream
+    Stream indexed by "timestamp [ns]" with columns "homography (0,0)"
+    through "homography (2,2)", corresponding to the 9 elements of the
+    estimated 3x3 homography matrix for each retained frame.
 """
 
 DOC["detect_markers_returns"] = """
@@ -196,18 +183,28 @@ Stream
 
 DOC["detect_contour_returns"] = """
 Stream
-    Stream indexed by "timestamp [ns]" with columns:
+    Stream of detected contour coordinates. Each row corresponds to a detected contour in a video frame
+    indexed by "timestamp [ns]" and contains the following columns:
 
-    - "frame index": The frame number\n
-    - "contour name": identifier like "contour_0"\n
-    - "top left x [px]", "top left y [px]"\n
-    - "top right x [px]", "top right y [px]"\n
-    - "bottom right x [px]", "bottom right y [px]"\n
-    - "bottom left x [px]", "bottom left y [px]"\n
-    - "center x [px]": X-coordinate of center in pixels\n
-    - "center y [px]": Y-coordinate of center in pixels\n
-    - "area_ratio": float (if `report_diagnostics` is True)\n
-    - "score": float (if `report_diagnostics` is True)
+    =================== =========================================================
+    Column              Description
+    =================== =========================================================
+    frame index         Frame number of the contour detection.
+    contour name        Identifier for the detected contour (e.g., "contour_0").
+    top left x [px]     X coordinate of the top-left corner of the detected contour.
+    top left y [px]     Y coordinate of the top-left corner of the detected contour.
+    top right x [px]    X coordinate of the top-right corner of the detected contour.
+    top right y [px]    Y coordinate of the top-right corner of the detected contour.
+    bottom right x [px] X coordinate of the bottom-right corner of the detected contour.
+    bottom right y [px] Y coordinate of the bottom-right corner of the detected contour.
+    bottom left x [px]  X coordinate of the bottom-left corner of the detected contour.
+    bottom left y [px]  Y coordinate of the bottom-left corner of the detected contour.
+    center x [px]       X coordinate of the center of the detected contour.
+    center y [px]       Y coordinate of the center of the detected contour.
+    area_ratio          Area of the detected contour relative to frame area (if `report_diagnostics` is True).
+    score               Diagnostic score indicating how closely the detected contour resembles a perfect rectangle
+                        (if `report_diagnostics` is True).
+    =================== =========================================================
 """
 
 DOC["fig_ax_returns"] = """

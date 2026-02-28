@@ -16,21 +16,35 @@ def estimate_scanpath(
     lk_params: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
-    Map fixations to video frames using optical flow.
+    Map fixations to video frames using Lucas-Kanade optical flow tracking.
+
+    This function tracks fixation points across video frames using optical flow,
+    allowing fixations to be mapped to their locations even as the scene changes.
 
     Parameters
     ----------
     video : Video
         Video instance containing the frames.
     sync_gaze : Stream
-        Gaze data synchronized with the video frames.
+        Gaze data synchronized with the video frames. Must contain
+        ``fixation id``, ``gaze x [px]``, and ``gaze y [px]`` columns.
+        Timestamps must match video timestamps.
     lk_params : dict, optional
         Parameters for the Lucas-Kanade optical flow algorithm.
+        If None, uses default parameters from Pupil Labs.
+        Defaults to None.
 
     Returns
     -------
     pandas.DataFrame
-        DataFrame containing the scanpath with updated fixation points.
+        DataFrame containing the scanpath with updated fixation points,
+        indexed by ``timestamp [ns]`` with a ``fixations`` column and
+        a ``frame index`` column.
+
+    Raises
+    ------
+    ValueError
+        If gaze and video timestamps do not match.
     """
     if not np.allclose(sync_gaze.ts, video.ts):
         raise ValueError("Gaze and video timestamps do not match.")

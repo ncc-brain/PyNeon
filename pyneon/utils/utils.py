@@ -1,6 +1,7 @@
+from typing import Iterable, Optional
+
 import numpy as np
 import pandas as pd
-from typing import Iterable, Optional
 
 
 def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
@@ -26,8 +27,20 @@ def _apply_homography(points: np.ndarray, H: np.ndarray) -> np.ndarray:
 
 
 def _validate_neon_tabular_data(data: pd.DataFrame) -> None:
-    """
-    Check if the data is in the correct format.
+    """Validate that a DataFrame follows PyNeon tabular data conventions.
+
+    Checks for correct index name, removes duplicates, converts to int64,
+    and sorts by index.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Data to validate.
+
+    Raises
+    ------
+    ValueError
+        If index name is incorrect or index cannot be converted to int64.
     """
     # Check if index name is timestamp [ns]
     if (data.index.name != "timestamp [ns]") and (
@@ -62,7 +75,24 @@ def _validate_df_columns(
     include_index_name: bool = False,
     df_name: Optional[str] = None,
 ) -> None:
-    """Verify that the DataFrame contains all expected columns (including index)."""
+    """Verify that a DataFrame contains all expected columns.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame to validate.
+    required_columns : Iterable of str
+        Column names that must be present.
+    include_index_name : bool, optional
+        If True, also check the index name. Defaults to False.
+    df_name : str, optional
+        Name to use in error messages. Defaults to None.
+
+    Raises
+    ------
+    ValueError
+        If any required column is missing.
+    """
     for required_col in required_columns:
         df_cols = set(df.columns)
         if include_index_name and df.index.name:

@@ -6,14 +6,14 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
+from ..utils import _validate_df_columns
 from ..utils.doc_decorators import fill_doc
-from .variables import CONTOUR_DETECTION_COLUMNS
 from .utils import (
     distort_points,
     get_undistort_valid_fraction,
     resolve_processing_window,
 )
-from ..utils import _validate_df_columns
+from .variables import CONTOUR_DETECTION_COLUMNS
 
 if TYPE_CHECKING:
     from .video import Video

@@ -12,11 +12,11 @@ be taken to avoid interfering with PyNeon's internal state management.
 See :class:`Video` documentation for details on using the ``_cap`` attribute safely.
 """
 
+from .detect_contour import detect_contour
 from .estimate_pose import estimate_camera_pose
 from .homography import find_homographies
 from .marker import detect_markers
 from .scanpath import estimate_scanpath
-from .detect_contour import detect_contour
 from .video import Video
 
 __all__ = [

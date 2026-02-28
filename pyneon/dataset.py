@@ -152,9 +152,23 @@ class Dataset:
             self.sections = pd.DataFrame(sections)
 
     def __repr__(self):
+        """Return a string representation of the Dataset.
+
+        Returns
+        -------
+        str
+            Summary showing the number of recordings.
+        """
         return f"Dataset | {len(self.recordings)} recordings"
 
     def __len__(self):
+        """Return the number of recordings in the dataset.
+
+        Returns
+        -------
+        int
+            Number of recordings.
+        """
         return len(self.recordings)
 
     def __getitem__(self, index: int) -> Recording:

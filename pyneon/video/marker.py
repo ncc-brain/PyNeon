@@ -7,17 +7,17 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
-from ..utils.doc_decorators import fill_doc
 from ..utils import _validate_df_columns
+from ..utils.doc_decorators import fill_doc
+from .utils import (
+    distort_points,
+    resolve_processing_window,
+)
 from .variables import (
     APRILTAG_FAMILIES,
     ARUCO_NUMBERS,
     ARUCO_SIZES,
     MARKER_DETECTION_COLUMNS,
-)
-from .utils import (
-    distort_points,
-    resolve_processing_window,
 )
 
 if TYPE_CHECKING:
