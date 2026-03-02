@@ -599,7 +599,7 @@ Effective FPS: {self.fps:.2f}
         ):
             frame = self.read_frame_at(frame_index)
             if frame is None:
-                break
+                continue
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             brightness = np.mean(gray_frame)
             vals.append(brightness)

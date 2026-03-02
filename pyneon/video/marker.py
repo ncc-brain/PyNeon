@@ -174,9 +174,9 @@ def detect_markers(
 
     for frame_index in tqdm(frames_to_process, desc="Detecting markers"):
         frame = video.read_frame_at(frame_index)
+        if frame is None:
+            continue
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        if gray_frame is None:
-            break
         if undistort:
             gray_frame = video.undistort_frame(gray_frame)
         records = _process_frame(frame_index, gray_frame)

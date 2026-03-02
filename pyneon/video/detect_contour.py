@@ -81,9 +81,9 @@ def detect_contour(
 
     for actual_frame_idx in tqdm(frames_to_process, desc="Detecting contour corners"):
         frame = video.read_frame_at(actual_frame_idx)
+        if frame is None:
+            continue
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        if gray_frame is None:
-            break
 
         if undistort:
             gray_frame = video.undistort_frame(gray_frame)
