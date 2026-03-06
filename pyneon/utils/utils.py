@@ -50,11 +50,6 @@ def _validate_neon_tabular_data(data: pd.DataFrame) -> None:
             "Index name must be 'timestamp [ns]' or 'start timestamp [ns]'"
         )
 
-    # Check if index has duplicates
-    if data.index.duplicated().any():
-        data = data[~data.index.duplicated(keep="first")]
-        print("Warning: Duplicated indices found and removed.")
-
     # Try to convert the index to int64
     try:
         data.index = data.index.astype("int64")
