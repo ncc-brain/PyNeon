@@ -391,7 +391,7 @@
 
 <span class="c1"># Load sample data</span>
 <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;cloud&quot;</span><span class="p">))</span>
-<span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -498,20 +498,20 @@ sub-01/
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Motion data shape: (3579, 13)
-         0          1          2         3         4         5         6   \
-0 -4.850388  64.683914  37.141800  0.044434  0.021484  1.003906 -1.620918
-1 -5.055847  64.009297  36.934723  0.021241  0.007817  1.005563 -1.143437
-2 -5.092621  63.636188  37.067672  0.009610  0.004351  0.992939 -0.669902
-3 -5.049325  63.301292  37.320572 -0.005809  0.009269  0.995885  0.321108
-4 -4.925333  64.229119  37.439189 -0.008550  0.001859  0.989226  1.114043
+Motion data shape: (26556, 13)
+          0         1          2         3         4         5         6   \
+0 -51.717758 -2.668381  60.407639 -0.239258 -0.118164  0.899902  7.143754
+1 -57.800365 -2.150263  66.800467 -0.232189 -0.139369  0.913207  7.205822
+2 -63.838428 -1.759561  73.407542 -0.214823 -0.143753  0.923766  7.273488
+3 -72.211448 -0.018978  84.477888 -0.208008 -0.153056  0.926946  7.357109
+4 -77.977801  2.357307  92.820179 -0.196248 -0.166075  0.932501  7.462461
 
          7           8         9         10        11        12
-0 -0.014557 -101.157675  0.634954 -0.011007 -0.008884 -0.772421
-1 -0.052766 -100.864351  0.636961 -0.007987 -0.006000 -0.770828
-2 -0.092127 -100.564013  0.638999 -0.005013 -0.003115 -0.769180
-3 -0.166917  -99.932651  0.643222  0.001200  0.002926 -0.765656
-4 -0.223694  -99.436470  0.646499  0.006153  0.007776 -0.762848
+0 -3.179328 -106.205219  0.597605  0.033180  0.059532 -0.798889
+1 -3.592368 -105.606506  0.601491  0.031118  0.062889 -0.795788
+2 -4.038350 -104.953976  0.605699  0.028853  0.066495 -0.792377
+3 -4.546941 -104.196205  0.610548  0.026258  0.070614 -0.788375
+4 -5.104590 -103.347745  0.615927  0.023435  0.075171 -0.783844
 </pre></div></div>
 </div>
 </section>
@@ -685,17 +685,9 @@ Motion data shape: (3579, 13)
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Warning: Duplicated indices found and removed.
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 23 out of 6496 requested timestamps are outside the data time range and will have empty data.
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 23 out of 48219 requested timestamps are outside the data time range and will have empty data.
   warn(
 </pre></div></div>
 </div>
@@ -752,13 +744,13 @@ motion/
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Eye-tracking data shape: (6496, 5)
-                     0        1        2       3       4
-0  1758493906829570307  493.391  519.903  5.2033  4.4699
-1  1758493906839570307  483.811  509.177  5.2051  4.4298
-2  1758493906844570307  480.526  510.026  5.2209  4.4105
-3  1758493906849577307  480.566  511.044  5.2965  4.4155
-4  1758493906854570307  482.622  513.314  5.2680  4.4286
+Eye-tracking data shape: (48219, 5)
+                     0        1         2       3       4
+0  1758493516475391023  535.360  1016.989  4.6517  4.5655
+1  1758493516480394023  519.555  1033.236  4.0452  4.5209
+2  1758493516485390023  521.541  1045.861  3.4693  4.5801
+3  1758493516490390023  503.323  1049.000  4.1283  4.7350
+4  1758493516495406023  498.538  1065.085  4.5646  4.8635
 </pre></div></div>
 </div>
 </section>
@@ -782,7 +774,7 @@ Eye-tracking data shape: (6496, 5)
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 {
-    &#34;SamplingFrequency&#34;: 199.66054326173642,
+    &#34;SamplingFrequency&#34;: 199.71919360432685,
     &#34;StartTime&#34;: 0,
     &#34;Columns&#34;: [
         &#34;timestamp&#34;,
@@ -853,18 +845,18 @@ Eye-tracking data shape: (6496, 5)
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Total events: 143
+Total events: 1101
                      0      1         2                3
-0  1758493904395000000    NaN       NaN  recording.begin
-1  1758493906489203307  0.270     blink              NaN
-2  1758493906839570307  0.180  fixation              NaN
-3  1758493907019693307  0.010   saccade              NaN
-4  1758493907029691307  0.576  fixation              NaN
-5  1758493907605304307  0.090   saccade              NaN
-6  1758493907695302307  0.150  fixation              NaN
-7  1758493907845424307  0.065   saccade              NaN
-8  1758493907910548307  0.210  fixation              NaN
-9  1758493908120793307  0.040   saccade              NaN
+0  1758493514096000000    NaN       NaN  recording.begin
+1  1758493516475391023  0.105   saccade              NaN
+2  1758493516580513023  0.535  fixation              NaN
+3  1758493517116002023  0.110   saccade              NaN
+4  1758493517226130023  0.135  fixation              NaN
+5  1758493517326259023  0.180     blink              NaN
+6  1758493517361251023  0.115   saccade              NaN
+7  1758493517476369023  0.585  fixation              NaN
+8  1758493518061856023  0.055   saccade              NaN
+9  1758493518116984023  0.075  fixation              NaN
 </pre></div></div>
 </div>
 </section>
@@ -924,6 +916,80 @@ Total events: 143
 </div>
 </section>
 </section>
+</section>
+<section id="Batch-Exporting-Multiple-Recordings">
+<h2>Batch Exporting Multiple Recordings<a class="headerlink" href="#Batch-Exporting-Multiple-Recordings" title="Link to this heading">#</a></h2>
+<p>In real studies, a dataset often contains multiple recordings from the same participant (for example, repeated sessions or separate acquisitions). PyNeon makes this straightforward: iterate over <code class="docutils literal notranslate"><span class="pre">dataset.recordings</span></code>, generate a session-specific BIDS prefix, and export each recording into its own <code class="docutils literal notranslate"><span class="pre">ses-*</span></code> directory.</p>
+<p>This workflow:</p>
+<ul class="simple">
+<li><p>Keeps all recordings grouped under one subject (<code class="docutils literal notranslate"><span class="pre">sub-01</span></code>)</p></li>
+<li><p>Creates a separate BIDS session folder for each recording (<code class="docutils literal notranslate"><span class="pre">ses-1</span></code>, <code class="docutils literal notranslate"><span class="pre">ses-2</span></code>, …)</p></li>
+<li><p>Exports both Motion-BIDS and Eye-Tracking-BIDS outputs in a consistent structure</p></li>
+</ul>
+<p>A similar logic applies to multi-participant datasets: add an outer loop over participants and update the <code class="docutils literal notranslate"><span class="pre">sub-*</span></code> entity in both the prefix and output path.</p>
+<p>Let’s perform a complete batch export for all recordings in the dataset:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">):</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;sub-01_ses-</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">_task-LabMuse_tracksys-NeonIMU&quot;</span>
+    <span class="nb">dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;export&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;BIDS_complete&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;ses-</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">/</span> <span class="s2">&quot;motion&quot;</span>
+    <span class="n">rec</span><span class="o">.</span><span class="n">export_motion_bids</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">extra_metadata</span><span class="o">=</span><span class="n">extra_metadata</span><span class="p">)</span>
+    <span class="n">rec</span><span class="o">.</span><span class="n">export_eye_tracking_bids</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+<span class="n">seedir</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;export&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;BIDS_complete&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 23 out of 48219 requested timestamps are outside the data time range and will have empty data.
+  warn(
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BIDS_complete/
+└─sub-01/
+  ├─ses-1/
+  │ ├─motion/
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_channels.json
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_channels.tsv
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_motion.json
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_motion.tsv
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_physio.json
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_physio.tsv.gz
+  │ │ ├─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_physioevents.json
+  │ │ └─sub-01_ses-1_task-LabMuse_tracksys-NeonIMU_physioevents.tsv.gz
+  │ └─sub-01_ses-1_scans.tsv
+  └─ses-2/
+    ├─motion/
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_channels.json
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_channels.tsv
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_motion.json
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_motion.tsv
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_physio.json
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_physio.tsv.gz
+    │ ├─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_physioevents.json
+    │ └─sub-01_ses-2_task-LabMuse_tracksys-NeonIMU_physioevents.tsv.gz
+    └─sub-01_ses-2_scans.tsv
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\preprocess\preprocess.py:67: UserWarning: 23 out of 6496 requested timestamps are outside the data time range and will have empty data.
+  warn(
+</pre></div></div>
+</div>
 </section>
 </section>
 
@@ -999,6 +1065,7 @@ Total events: 143
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Batch-Exporting-Multiple-Recordings">Batch Exporting Multiple Recordings</a></li>
 </ul>
   </nav></div>
 

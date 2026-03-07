@@ -84,7 +84,7 @@
     "- `by=\"time\"`: Relative time in seconds from the stream's first sample\n",
     "- `by=\"sample\"`: Zero-based sample indices\n",
     "\n",
-    "Let's crop the gaze stream to the start of the recording::"
+    "Let's crop the gaze stream to the start of the recording:"
    ]
   },
   {
