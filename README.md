@@ -30,13 +30,17 @@ We also created a few sample datasets containing short Neon recordings for testi
 
 ## Installation
 
-To install the development version of PyNeon:
+To install PyNeon via `pip`:
+
+```bash
+pip install pyneon
+```
+
+To install the latest development version of PyNeon directly from GitHub:
 
 ```bash
 pip install git+https://github.com/ncc-brain/PyNeon.git
 ```
-
-A PyPI release is planned for the future.
 
 ## Citing PyNeon
 
@@ -47,11 +51,11 @@ as follows:
 ```bibtex
 @misc{pyneon,
     title={PyNeon: A Python package for the analysis of Neon multimodal mobile eye-tracking data},
-    url={osf.io/preprints/psyarxiv/y5jmg_v2},
-    DOI={10.31234/osf.io/y5jmg_v2},
+    url={osf.io/preprints/psyarxiv/y5jmg_v3},
+    DOI={10.31234/osf.io/y5jmg_v3},
     publisher={PsyArXiv},
     author={Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia},
-    year={2025},
-    month={August}
+    year={2026},
+    month={Mar}
 }
 ```
