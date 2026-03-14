@@ -7,7 +7,7 @@ where = ["."]
 
 [project]
 name = "pyneon"
-version = "0.1.0"
+dynamic = ["version"]
 description = "A Python library for reading, preprocessing and exporting Pupil Labs Neon data"
 readme = "README.md"
 authors = [
@@ -55,6 +55,11 @@ full = ["pyneon[dev,doc]"]
 [project.urls]
 Homepage = "https://ncc-brain.github.io/PyNeon/"
 Issues = "https://github.com/ncc-brain/PyNeon/issues"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+fallback_version = "0.0.0"
 
 [tool.pytest.ini_options]
 addopts = "--code-highlight=no"
