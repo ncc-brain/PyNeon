@@ -1,0 +1,52 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: PyNeon
+message: >-
+  If you use PyNeon in your research, please cite it as
+  below.
+type: software
+authors:
+  - family-names: Chu
+    given-names: Qian
+    orcid: 'https://orcid.org/0000-0003-2308-6102'
+  - family-names: Hartel
+    given-names: Jan-Gabriel
+    orcid: 'https://orcid.org/0000-0002-3836-194X'
+  - family-names: Lepauvre
+    given-names: Alex
+    orcid: 'https://orcid.org/0000-0002-4191-1578'
+  - family-names: Melloni
+    given-names: Lucia
+    orcid: 'https://orcid.org/0000-0001-8743-5071'
+url: 'https://github.com/ncc-brain/pyneon'
+keywords:
+  - eye movements
+  - eye-tracking
+  - mobile eye-tracking
+  - computer vision
+  - Brain Imaging Data Structure
+license: MIT
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Chu
+      given-names: Qian
+      orcid: 'https://orcid.org/0000-0003-2308-6102'
+    - family-names: Hartel
+      given-names: Jan-Gabriel
+      orcid: 'https://orcid.org/0000-0002-3836-194X'
+    - family-names: Lepauvre
+      given-names: Alex
+      orcid: 'https://orcid.org/0000-0002-4191-1578'
+    - family-names: Melloni
+      given-names: Lucia
+      orcid: 'https://orcid.org/0000-0001-8743-5071'
+  doi: 10.31234/osf.io/y5jmg_v3
+  journal: PsyArXiv
+  month: 3
+  title: >-
+    PyNeon: A Python package for the analysis of Neon multimodal mobile
+    eye-tracking data
+  year: 2026
