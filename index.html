@@ -309,6 +309,7 @@
                 <article class="bd-article">
                   
   <p id="module-pyneon"><img alt="GitHub License" src="https://img.shields.io/github/license/ncc-brain/PyNeon?style=plastic" />
+<img alt="Python Version" src="https://img.shields.io/badge/python-3.10%2B-blue?style=plastic" />
 <img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fncc-brain.github.io%2FPyNeon%2F&amp;up_message=online&amp;style=plastic&amp;label=Documentation" />
 <a class="reference external" href="https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml"><img alt="PyNeon CI" src="https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml/badge.svg" /></a></p>
 <section id="pyneon">
@@ -340,12 +341,27 @@ concatenation, etc.</p></li>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<p>To install PyNeon via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<p>PyNeon requires Python &gt;= 3.10. Install using <code class="docutils literal notranslate"><span class="pre">pip</span></code> or <a class="reference external" href="https://docs.astral.sh/uv/"><code class="docutils literal notranslate"><span class="pre">uv</span></code></a>:</p>
+<p><strong>From PyPI:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pyneon
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pyneon
 </pre></div>
 </div>
-<p>To install the latest development version of PyNeon directly from GitHub:</p>
+<p><strong>From GitHub (latest development version):</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/ncc-brain/PyNeon.git
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/ncc-brain/PyNeon.git
+</pre></div>
+</div>
+<p><strong>Editable install:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p><strong>Optional dependencies</strong> (<code class="docutils literal notranslate"><span class="pre">dev</span></code>, <code class="docutils literal notranslate"><span class="pre">doc</span></code>, <code class="docutils literal notranslate"><span class="pre">full</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pyneon[dev]&quot;</span><span class="w">        </span><span class="c1"># or [doc] or [full]</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span><span class="w">          </span><span class="c1"># editable with extras</span>
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pyneon[dev]&quot;</span>
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </pre></div>
 </div>
 </section>
