@@ -1,4 +1,5 @@
 ![GitHub License](https://img.shields.io/github/license/ncc-brain/PyNeon?style=plastic)
+![Python Version](https://img.shields.io/badge/python-3.10%2B-blue?style=plastic)
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fncc-brain.github.io%2FPyNeon%2F&up_message=online&style=plastic&label=Documentation)
 [![PyNeon CI](https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml/badge.svg)](https://github.com/ncc-brain/PyNeon/actions/workflows/main.yml)
 
@@ -30,16 +31,36 @@ We also created a few sample datasets containing short Neon recordings for testi
 
 ## Installation
 
-To install PyNeon via `pip`:
+PyNeon requires Python >= 3.10. Install using `pip` or [`uv`](https://docs.astral.sh/uv/):
+
+**From PyPI:**
 
 ```bash
 pip install pyneon
+uv pip install pyneon
 ```
 
-To install the latest development version of PyNeon directly from GitHub:
+**From GitHub (latest development version):**
 
 ```bash
 pip install git+https://github.com/ncc-brain/PyNeon.git
+uv pip install git+https://github.com/ncc-brain/PyNeon.git
+```
+
+**Editable install:**
+
+```bash
+pip install -e .
+uv pip install -e .
+```
+
+**Optional dependencies** (`dev`, `doc`, `full`):
+
+```bash
+pip install "pyneon[dev]"        # or [doc] or [full]
+pip install -e ".[dev]"          # editable with extras
+uv pip install "pyneon[dev]"
+uv pip install -e ".[dev]"
 ```
 
 ## Citing PyNeon
