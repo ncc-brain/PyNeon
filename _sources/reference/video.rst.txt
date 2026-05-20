@@ -1,4 +1,4 @@
-Video class
+Video Class
 ===========
 
 This page documents the :class:`pyneon.Video` class, which provides an interface for working with video data in PyNeon.

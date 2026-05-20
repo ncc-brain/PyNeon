@@ -1,4 +1,4 @@
-Recording class
+Recording Class
 ===================
 
 .. autoclass:: pyneon.Recording

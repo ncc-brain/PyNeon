@@ -27,17 +27,17 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=0790524f97105ba85085"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=0790524f97105ba85085" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085" />
 
     <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
@@ -148,6 +148,13 @@
   </a>
 </li>
 
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../development/index.html">
+    Development
+  </a>
+</li>
+
   </ul>
 </nav></div>
       
@@ -169,11 +176,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
         <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -186,8 +200,7 @@
           
           
           
-          <a href="https://github.com/ncc-brain/PyNeon" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/ncc-brain/PyNeon" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
 </ul></div>
       
@@ -250,6 +263,13 @@
   </a>
 </li>
 
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../development/index.html">
+    Development
+  </a>
+</li>
+
   </ul>
 </nav></div>
           
@@ -262,11 +282,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
           <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -279,8 +306,7 @@
           
           
           
-          <a href="https://github.com/ncc-brain/PyNeon" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/ncc-brain/PyNeon" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
 </ul></div>
         
@@ -376,21 +402,17 @@
 <h2>Setup: Loading a Neon Recording<a class="headerlink" href="#Setup:-Loading-a-Neon-Recording" title="Link to this heading">#</a></h2>
 <p>First, we load the Neon recording, which contains video and gaze data. Ensure that you have installed the required libraries such as <code class="docutils literal notranslate"><span class="pre">pyneon</span></code> and have the recording dataset available.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import necessary libraries</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">get_sample_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">get_sample_data</span><span class="p">,</span> <span class="n">Stream</span>
 
-<span class="c1"># Download sample data (if not existing) and return the path</span>
-<span class="n">sample_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;Artworks&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sample_dir</span><span class="p">)</span>
-
-<span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">sample_dir</span> <span class="o">/</span> <span class="s2">&quot;Timeseries Data + Scene Video&quot;</span>
+<span class="c1"># Load a sample recording</span>
+<span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">get_sample_data</span><span class="p">(</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;cloud&quot;</span><span class="p">)</span>
 <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
 
-<span class="n">recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">recording</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">recording</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -400,47 +422,14 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks
-Dataset | 1 recordings
 
-Recording ID: 9a141750-95ca-48ee-9693-53bbb896b87e
-Wearer ID: c4f68887-e96c-467f-a901-0fc9fce09c0a
-Wearer name: JGH
-Recording start time: 2025-06-16 12:49:27.817000
-Recording duration: 357.538s
-                 exist                  filename                                                                                                                                        path
-3d_eye_states     True         3d_eye_states.csv         C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\3d_eye_states.csv
-blinks            True                blinks.csv                C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\blinks.csv
-events            True                events.csv                C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\events.csv
-fixations         True             fixations.csv             C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\fixations.csv
-gaze              True                  gaze.csv                  C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\gaze.csv
-imu               True                   imu.csv                   C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\imu.csv
-labels            True                labels.csv                C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\labels.csv
-saccades          True              saccades.csv              C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\saccades.csv
-world_timestamps  True      world_timestamps.csv      C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\world_timestamps.csv
-scene_video_info  True         scene_camera.json         C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\scene_camera.json
-scene_video       True  11f35cc2_0.0-357.538.mp4  C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\11f35cc2_0.0-357.538.mp4
+Data format: cloud (version: 2.5)
+Recording ID: c17cd630-764e-4e61-87ee-95be3d6b8181
+Wearer ID: 028e4c69-f333-4751-af8c-84a09af079f5
+Wearer name: Pilot
+Recording start time: 2025-09-22 00:31:44.395000
+Recording duration: 35977000000 ns (35.977 s)
 
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">av</span>
-
-<span class="n">container</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">recording</span><span class="o">.</span><span class="n">video</span><span class="o">.</span><span class="n">video_file</span><span class="p">)</span>
-<span class="n">audio_stream</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="n">streams</span><span class="o">.</span><span class="n">audio</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">audio_stream</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>  <span class="c1"># ← sampling rate</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-44100
 </pre></div></div>
 </div>
 </section>
@@ -451,39 +440,14 @@ scene_video       True  11f35cc2_0.0-357.538.mp4  C:\Users\jan-gabriel.hartel\Do
 <p>By default, Neon reports fixations with a single coordinate. This is computed as average between all gaze coordinates over the interval denoted as a fixation. However, this clashes with the functional definition of a fixation as <em>tracking a fixed point in space</em>, used by Neon.</p>
 <p>Imagine looking at a fixed point, for example a street sign, while you are walking past it. Despite the movement of your body and the relative movement of the sign, the fixation will be stabilized. As such, taking an average gaze coordinate over the entire duration will not correspond to the location of the sign, or the fixation, at any given point in time. Feeding this point into an optical flow algorithm would, with high likelihood, lead to tracking anything but the sign.</p>
 <p>Therefore, we use partial averages of gaze locations around the respective frame’s timestamp. As the video is sampled at 30Hz while the gaze output nominally reaches 200Hz, we expect to take the average over 6 subsequent gaze points. This achieves a trade-off between recency of the reported gaze position at the given frame and error minimization, by averaging over microsaccades around the actual fixation target as well as random errors.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Map gaze data to the video timestamps</span>
-<span class="n">synced_gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">sync_gaze_to_video</span><span class="p">(</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Inspect the mapped gaze data</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">synced_gaze</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">tail</span><span class="p">())</span>
+<span class="n">synced_gaze</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">sync_gaze_to_video</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-                     gaze x [px]  gaze y [px]  worn  fixation id  blink id  \
-timestamp [ns]
-1750071325151422222          NaN          NaN  &lt;NA&gt;         &lt;NA&gt;      &lt;NA&gt;
-1750071325201422222          NaN          NaN  &lt;NA&gt;         &lt;NA&gt;      &lt;NA&gt;
-1750071325251422222          NaN          NaN  &lt;NA&gt;         &lt;NA&gt;      &lt;NA&gt;
-1750071325301422222          NaN          NaN  &lt;NA&gt;         &lt;NA&gt;      &lt;NA&gt;
-1750071325351422222          NaN          NaN  &lt;NA&gt;         &lt;NA&gt;      &lt;NA&gt;
-
-                     azimuth [deg]  elevation [deg]  frame_idx
-timestamp [ns]
-1750071325151422222            NaN              NaN      10690
-1750071325201422222            NaN              NaN      10691
-1750071325251422222            NaN              NaN      10692
-1750071325301422222            NaN              NaN      10693
-1750071325351422222            NaN              NaN      10694
-</pre></div></div>
 </div>
 <p>Above, we can see that each frame gets a current gaze position as well as a fixation status. Currently, three types of fixation status are used:</p>
 <ol class="arabic simple">
@@ -493,15 +457,14 @@ timestamp [ns]
 </ol>
 <p>This determination will become relevant for tracking the scanpath with optical flow. After all, while a fixation is still active, we get up-to-date gaze information. Only after its end, tracking becomes necessary.</p>
 </section>
-<hr class="docutils" />
 <section id="3.-Estimating-the-Scanpath">
 <h2>3. Estimating the Scanpath<a class="headerlink" href="#3.-Estimating-the-Scanpath" title="Link to this heading">#</a></h2>
-<p>Having matched every frame with a gaze coordinate, we can now get into the meat of the scanpath estimation. In dynamic scenes, the same object will not occupy the same scene-camera location over time. Therefore, we need to continuously map past fixation points as long as they are still visible in the frame.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">estimate_scanpath</span></code> method achieves this by feeding fixation point denoted as <code class="docutils literal notranslate"><span class="pre">end</span></code> into a Lucas-Kanade sparse optical flow algorithm. This algorithm compares the video in vicinity of the point with the subsequent frame, updating the location in dependence of its movement. While a point is tracked, its status is flagged as <code class="docutils literal notranslate"><span class="pre">tracked</span></code>. In practice, many scene frames will have multiple simultaneously present past fixations. Our implementation carries them and repeately performs an optical
-flow estimation for each point. Only when they can no longer be tracked, will they be flagged as <code class="docutils literal notranslate"><span class="pre">lost</span></code> and subsequently dropped for the next frame.</p>
-<p>It should be noted that this algorithm is not optimised for performance and that it will take a considerable amount of time to run on limited hardware. For our computers, the algorithm takes roughly half the time of the video, though this benchmark heavily depends on the density of past fixation points and computational ressources</p>
+<p>Having matched every frame with a gaze coordinate, we can now get into the core of scanpath estimation. In dynamic scenes, the same object will not occupy the same scene-camera location over time. Therefore, we need to continuously map past fixation points as long as they are still visible in the frame.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">estimate_scanpath</span></code> method achieves this by feeding fixation points (those marked as <code class="docutils literal notranslate"><span class="pre">end</span></code>) into a Lucas-Kanade sparse optical flow algorithm. This algorithm compares the video region around each point with the subsequent frame, updating the point location according to its motion. While a point is tracked, its status is set to <code class="docutils literal notranslate"><span class="pre">tracked</span></code>. In practice, many scene frames will contain multiple past fixations; our implementation tracks them and repeatedly performs an optical flow estimation
+for each point. When a point can no longer be tracked it is marked <code class="docutils literal notranslate"><span class="pre">lost</span></code> and dropped for subsequent frames.</p>
+<p>Note: this algorithm is not optimized for performance and may take considerable time on limited hardware. On our machines it runs at roughly 0.5x real-time (about half the video length), but this benchmark depends heavily on the density of past fixation points and available computational resources.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Estimate the scanpath based on the mapped gaze data</span>
@@ -516,38 +479,54 @@ flow estimation for each point. Only when they can no longer be tracked, will th
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Estimating scanpath:  98%|█████████▊| 1023/1044 [00:35&lt;00:00, 29.25it/s]C:\Users\qian.chu\Documents\GitHub\PyNeon\pyneon\video\scanpath.py:149: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  curr_fixations = pd.concat(
+Estimating scanpath: 100%|██████████| 1044/1044 [00:35&lt;00:00, 29.01it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Loading saved scanpath from C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\derivatives\scanpath.pkl
                                                              fixations  \
 timestamp [ns]
-1750070967817000000    fixation id gaze x [px] gaze y [px] fixation...
-1750070967867000000    fixation id gaze x [px] gaze y [px] fixation...
-1750070967917000000    fixation id gaze x [px] gaze y [px] fixation...
-1750070967967000000    fixation id gaze x [px] gaze y [px] fixation...
-1750070968017000000    fixation id gaze x [px] gaze y [px] fixation...
+1758493904395000000    fixation id gaze x [px] gaze y [px] fixation...
+1758493904445000000    fixation id gaze x [px] gaze y [px] fixation...
+1758493904495000000    fixation id gaze x [px] gaze y [px] fixation...
+1758493904545000000    fixation id gaze x [px] gaze y [px] fixation...
+1758493904595000000    fixation id gaze x [px] gaze y [px] fixation...
 
-                     frame_idx
+                     frame index
 timestamp [ns]
-1750070967817000000          0
-1750070967867000000          1
-1750070967917000000          2
-1750070967967000000          3
-1750070968017000000          4
+1758493904395000000            0
+1758493904445000000            1
+1758493904495000000            2
+1758493904545000000            3
+1758493904595000000            4
 </pre></div></div>
 </div>
-<p>We should take a moment to understand the format of the <code class="docutils literal notranslate"><span class="pre">scanpath.data</span></code>. As we care about getting a scanpath mapped on every single video-frame, we create it as a dataframe of dataframes. As such, every row carries both the timestamp as well as the frame index of the underlying video and saves a dataframe in the <code class="docutils literal notranslate"><span class="pre">fixations</span></code> cell. In this dataframe, every present fixation is provided with an id, coordinates and a fixation status, as seen below. The benefit of treating is a dataframe is the
-possibility to use intuitive pandas indexing, allowing us, for example, to get a list of fixations at frame 2000.</p>
-<p>As a quirk of Neon taking some time to start up, the first frames will usually not yield any usable results. Still, we carry them for consistency.</p>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<p>We should take a moment to understand the format of the <code class="docutils literal notranslate"><span class="pre">scanpath.data</span></code>. To map a scanpath to every video frame, we create it as a dataframe of dataframes. Each row contains the timestamp and the frame index of the underlying video and stores a dataframe in the <code class="docutils literal notranslate"><span class="pre">fixations</span></code> cell. In that dataframe, every present fixation has an id, coordinates, and a fixation status. Treating it as a dataframe enables intuitive pandas indexing; for example, you can get the list of fixations at frame 2000.</p>
+<p>Because Neon can take some time to start, the first frames usually do not yield usable results. We keep them for consistency.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print fixations when column frame_idx is 1334. Frame_idx is not the idx of the dataframe, but the index of the video frame.</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">scanpath</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">scanpath</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;frame_idx&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2000</span><span class="p">,</span> <span class="s2">&quot;fixations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scanpath</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">scanpath</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;frame index&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;fixations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -556,20 +535,17 @@ possibility to use intuitive pandas indexing, allowing us, for example, to get a
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-   fixation id gaze x [px] gaze y [px] fixation status
-0          174  903.107571  428.153429          during
-1          173  924.962036  437.257629         tracked
-2          172  922.353638  493.392975         tracked
-3          171  960.446289  465.010101         tracked
-4          170  835.920654  440.765076         tracked
-5          169  833.580444  467.248718         tracked
-6          168   698.10437  662.543335         tracked
-7          167  693.992065  630.123047         tracked
-8          166  713.760315  561.713867         tracked
-9          165  543.353333  473.653381         tracked
-10         164  698.986816   486.05957         tracked
-11         163  704.265442  439.653992         tracked
-12         162  750.842773  539.532349         tracked
+  fixation id  gaze x [px] gaze y [px] fixation status
+0          32   794.401571  622.680714          during
+1          31    828.15155  648.225586         tracked
+2          20   319.503265  492.966797         tracked
+3          19   372.389526  775.100464         tracked
+4          18  1205.629761   745.42688         tracked
+5          17  1214.341553  401.155457         tracked
+6          16  1181.176392  460.626556         tracked
+7          10    415.88559  809.316284         tracked
+8           7  1187.457275  749.382629         tracked
+9           5  1210.753784  408.591949         tracked
 </pre></div></div>
 </div>
 </section>
@@ -596,7 +572,7 @@ possibility to use intuitive pandas indexing, allowing us, for example, to get a
 </ul>
 <p>Further, we draw connecting lines between past fixations to show the scanpath for the current video. The show_video option creates a live-output of the video rendering, but also increases the runtime.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Overlay the scanpath on the video and show the output</span>
@@ -618,11 +594,9 @@ possibility to use intuitive pandas indexing, allowing us, for example, to get a
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Loading saved scanpath from C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\derivatives\scanpath.pkl
-Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyNeon\data\Artworks\Timeseries Data + Scene Video\artworks-9a141750\derivatives\scanpath.mp4; skipping render.
-`show_video=True` has no effect because rendering was skipped.
+Plotting scanpath on scene video: 100%|██████████| 1044/1044 [00:25&lt;00:00, 40.55it/s]
 </pre></div></div>
 </div>
 </section>
@@ -716,8 +690,8 @@ Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=0790524f97105ba85085"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -751,7 +725,7 @@ Overlay video already exists at C:\Users\jan-gabriel.hartel\Documents\GitHub\PyN
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.18.0.
 </p></div>
       
     </div>

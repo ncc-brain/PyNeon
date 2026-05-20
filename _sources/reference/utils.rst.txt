@@ -1,4 +1,4 @@
-Utility functions
+Utility Functions
 =================
 
 .. automodule:: pyneon.utils

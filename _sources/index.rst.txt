@@ -11,3 +11,4 @@
 
    Tutorials <tutorials/index>
    API reference <reference/index>
+   Development <development/index>

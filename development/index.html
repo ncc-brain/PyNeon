@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Dataset Class &#8212; PyNeon dev documentation</title>
+    <title>Contributing to PyNeon &#8212; PyNeon dev documentation</title>
   
   
   
@@ -42,12 +42,12 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/dataset';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'development/index';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Recording Class" href="recording.html" />
-    <link rel="prev" title="PyNeon API" href="index.html" />
+    <link rel="next" title="Project Governance" href="governance.html" />
+    <link rel="prev" title="Utility Functions" href="../reference/utils.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -139,15 +139,15 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../reference/index.html">
     API reference
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../development/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
     Development
   </a>
 </li>
@@ -217,10 +217,6 @@
   
 
   
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
-      <span class="fa-solid fa-outdent"></span>
-    </button>
-  
 </div>
 
     </header>
@@ -254,15 +250,15 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../reference/index.html">
     API reference
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../development/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
     Development
   </a>
 </li>
@@ -323,15 +319,8 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Dataset Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recording.html">Recording Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="base_tabular.html">BaseTabular Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stream.html">Stream Class (Gaze, Eye States, IMU)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Events Class (Blinks, Fixations, Saccades, Events)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="video.html">Video Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utility Functions</a></li>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="governance.html">Project Governance</a></li>
 </ul>
 </div>
 </nav></div>
@@ -372,10 +361,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
-    
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Dataset Class</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Contributing to PyNeon</span></li>
   </ul>
 </nav>
 </div>
@@ -392,86 +378,54 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="dataset-class">
-<h1>Dataset Class<a class="headerlink" href="#dataset-class" title="Link to this heading">#</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="pyneon.Dataset">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Dataset" title="Link to this definition">#</a></dt>
-<dd><p>Container for multiple recordings. Reads from a directory containing multiple
-recordings.</p>
-<p>For example, a dataset with 2 recordings downloaded from Pupil Cloud
-would have the following folder structure:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
-├── recording_dir_1/
-│   ├── info.json
-│   ├── gaze.csv
-|   └── ...
-├── recording_dir_2/
-│   ├── info.json
-│   ├── gaze.csv
-|   └── ...
-├── ...
-├── enrichment_info.txt
-└── sections.csv
-</pre></div>
-</div>
-<p>Or a dataset with multiple native recordings:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dataset_dir/
-├── recording_dir_1/
-│   ├── info.json
-│   ├── blinks ps1.raw
-|   ├── blinks ps1.time
-|   ├── blinks.dtype
-|   └── ...
-└── recording_dir_2/
-    ├── info.json
-    ├── blinks ps1.raw
-    ├── blinks ps1.time
-    ├── blinks.dtype
-    └── ...
-</pre></div>
-</div>
-<p>Individual recordings will be read into <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recording</span></code></a> instances
-(based on <code class="docutils literal notranslate"><span class="pre">sections.csv</span></code>, if available) and accessible through the
-<code class="docutils literal notranslate"><span class="pre">recordings</span></code> attribute.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>dataset_dir</strong><span class="classifier">str or pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>dataset_dir</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path to the directory containing the dataset.</p>
-</dd>
-<dt><strong>recordings</strong><span class="classifier">list of Recording</span></dt><dd><p>List of <a class="reference internal" href="recording.html#pyneon.Recording" title="pyneon.Recording"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recording</span></code></a> instances for each recording in the dataset.</p>
-</dd>
-<dt><strong>sections</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame containing the sections of the dataset.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pyneon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="s2">&quot;path/to/dataset&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Dataset | 2 recordings</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rec</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">recordings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Data format: cloud
-Recording ID: 56fcec49-d660-4d67-b5ed-ba8a083a448a
-Wearer ID: 028e4c69-f333-4751-af8c-84a09af079f5
-Wearer name: Pilot
-Recording start time: 2025-12-18 17:13:49.460000
-Recording duration: 8235000000 ns (8.235 s)</p>
-</dd></dl>
-
+  <section id="contributing-to-pyneon">
+<h1>Contributing to PyNeon<a class="headerlink" href="#contributing-to-pyneon" title="Link to this heading">#</a></h1>
+<p>Thank you for your interest in contributing to PyNeon. We welcome bug reports, feature requests, documentation improvements, and code changes from everyone.</p>
+<section id="use-issues-to-report-problems-or-suggest-features">
+<h2>Use Issues to Report Problems or Suggest Features<a class="headerlink" href="#use-issues-to-report-problems-or-suggest-features" title="Link to this heading">#</a></h2>
+<p>Even if you do not plan to submit code, you can still help by reporting bugs or suggesting new features. Please check existing issues before opening a new one to avoid duplicates.</p>
+<p>We provide GitHub issue templates for both bug reports and feature requests to help you include the right details. Click “New issue” and select the appropriate template to get started.</p>
 </section>
+<section id="contributing-code-or-documentation">
+<h2>Contributing Code or Documentation<a class="headerlink" href="#contributing-code-or-documentation" title="Link to this heading">#</a></h2>
+<p>If you would like to contribute code or documentation, you will need to set up a development environment, make your changes, and submit a Pull Request (PR). The general process is as follows:</p>
+<section id="create-a-development-environment">
+<h3>Create a Development Environment<a class="headerlink" href="#create-a-development-environment" title="Link to this heading">#</a></h3>
+<p>We recommend using a virtual environment to manage your development dependencies. For example, with <code class="docutils literal notranslate"><span class="pre">conda</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>pyneon-dev<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
+</pre></div>
+</div>
+<p>Make sure to create the environment with a Python version supported by PyNeon (&gt;=3.10).</p>
+</section>
+<section id="fork-the-repository-and-clone-your-fork-locally">
+<h3>Fork the Repository and Clone Your Fork Locally<a class="headerlink" href="#fork-the-repository-and-clone-your-fork-locally" title="Link to this heading">#</a></h3>
+<p>Fork the repository on GitHub and then clone your fork to your local machine:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;username&gt;/PyNeon.git
+<span class="nb">cd</span><span class="w"> </span>PyNeon
+</pre></div>
+</div>
+</section>
+<section id="install-pyneon-in-editable-mode-e-with-development-dependencies">
+<h3>Install PyNeon in Editable Mode (<code class="docutils literal notranslate"><span class="pre">-e</span></code>) with Development Dependencies<a class="headerlink" href="#install-pyneon-in-editable-mode-e-with-development-dependencies" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="pull-requests-and-testing">
+<h3>Pull Requests and Testing<a class="headerlink" href="#pull-requests-and-testing" title="Link to this heading">#</a></h3>
+<p>Once you have made your changes, open a Pull Request (PR) against the <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch of the original repository (<code class="docutils literal notranslate"><span class="pre">ncc-brain/PyNeon</span></code>). Please include a clear description of your changes and the motivation behind them.</p>
+<p>On GitHub, we run tests and check code formatting automatically on every PR. This helps ensure that contributions meet our quality standards before they are merged. If you would like to run the tests and formatter locally before submitting your PR, use the following commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests<span class="w"> </span>-q
+isort<span class="w"> </span>--profile<span class="w"> </span>black<span class="w"> </span>.
+ruff<span class="w"> </span>format<span class="w"> </span>.
+</pre></div>
+</div>
+<p>The maintainers will review your PR and may request changes or ask questions. We appreciate your help in improving PyNeon!</p>
+</section>
+</section>
+</section>
+<div class="toctree-wrapper compound">
+</div>
 
 
                 </article>
@@ -484,20 +438,20 @@ Recording duration: 8235000000 ns (8.235 s)</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="../reference/utils.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">PyNeon API</p>
+        <p class="prev-next-title">Utility Functions</p>
       </div>
     </a>
     <a class="right-next"
-       href="recording.html"
+       href="governance.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Recording Class</p>
+        <p class="prev-next-title">Project Governance</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -507,33 +461,6 @@ Recording duration: 8235000000 ns (8.235 s)</p>
             </div>
             
             
-              
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-
-  <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
-</ul>
-  </nav></div>
-
-  <div class="sidebar-secondary-item">
-
-  <div class="tocsection sourcelink">
-    <a href="../_sources/reference/dataset.rst.txt">
-      <i class="fa-solid fa-file-lines"></i> Show Source
-    </a>
-  </div>
-</div>
-
-</div></div>
               
             
           </div>

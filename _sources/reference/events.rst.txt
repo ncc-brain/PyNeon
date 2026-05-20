@@ -1,4 +1,4 @@
-Events class (blinks, fixations, saccades, events)
+Events Class (Blinks, Fixations, Saccades, Events)
 ==================================================
 
 .. autoclass:: pyneon.Events
