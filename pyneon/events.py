@@ -9,7 +9,7 @@ import pandas as pd
 
 from .tabular import BaseTabular
 from .utils import _apply_homography, _validate_df_columns
-from .utils.doc_decorators import fill_doc
+from .utils.docstring_templating import fill_doc
 from .utils.variables import native_to_cloud_column_map
 
 if TYPE_CHECKING:
@@ -228,8 +228,7 @@ Columns: {list(self.data.columns)}
 
     @property
     def start_ts(self) -> np.ndarray:
-        """
-        Start timestamps of events in nanoseconds.
+        """Start timestamps of events in nanoseconds.
 
         Raises
         ------
@@ -245,8 +244,7 @@ Columns: {list(self.data.columns)}
 
     @property
     def end_ts(self) -> np.ndarray:
-        """
-        End timestamps of events in nanoseconds.
+        """End timestamps of events in nanoseconds.
 
         Raises
         ------
@@ -260,8 +258,7 @@ Columns: {list(self.data.columns)}
 
     @property
     def durations(self) -> np.ndarray:
-        """
-        Duration of events in milliseconds.
+        """Duration of events in milliseconds.
 
         Raises
         ------
@@ -275,15 +272,18 @@ Columns: {list(self.data.columns)}
 
     @property
     def id(self) -> np.ndarray:
-        """
-        Event IDs.
+        """Event IDs.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of event IDs as 32-bit integers.
         """
         return self.data.index.to_numpy(np.int32)
 
     @property
     def id_name(self) -> Optional[str]:
-        """
-        Name of the event ID column based on event type.
+        """Name of the event ID column based on event type.
 
         Returns
         -------
@@ -328,11 +328,11 @@ Columns: {list(self.data.columns)}
         by : {"timestamp", "sample"}, optional
             Unit used to interpret ``tmin`` and ``tmax``. Defaults to ``"timestamp"``.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(events_or_none_returns)s
+        {events_or_none_returns}
 
         Raises
         ------
@@ -386,11 +386,11 @@ Columns: {list(self.data.columns)}
         other : Stream
             Reference stream whose temporal boundaries define the cropping range.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(events_or_none_returns)s
+        {events_or_none_returns}
 
         Examples
         --------
@@ -423,11 +423,11 @@ Columns: {list(self.data.columns)}
             Whether to reset event IDs after filtering.
             Defaults to ``False``.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(events_or_none_returns)s
+        {events_or_none_returns}
         """
         if "duration [ms]" not in self.data.columns:
             raise ValueError("No `duration [ms]` column found in the instance.")
@@ -477,11 +477,11 @@ Columns: {list(self.data.columns)}
         reset_id: bool = False, optional
             Whether to reset event IDs after filtering.
             Defaults to ``False``.
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(events_or_none_returns)s
+        {events_or_none_returns}
         """
         if col_name not in self.data.columns:
             raise KeyError(f"No `{col_name}` column found in the instance.")
@@ -524,18 +524,18 @@ Columns: {list(self.data.columns)}
 
         Parameters
         ----------
-        %(homographies)s
+        {homographies}
             Returned by :func:`pyneon.find_homographies`.
-        %(max_gap_ms_param)s
+        {max_gap_ms_param}
         overwrite : bool, optional
             Only applicable if surface fixation columns already exist.
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(events_or_none_returns)s
+        {events_or_none_returns}
         """
         inst = self if inplace else self.copy()
         data = inst.data

@@ -16,7 +16,7 @@ from .preprocess import (
 )
 from .tabular import BaseTabular
 from .utils import _apply_homography, _validate_df_columns
-from .utils.doc_decorators import fill_doc
+from .utils.docstring_templating import fill_doc
 from .utils.variables import native_to_cloud_column_map, nominal_sampling_rates
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ def _apply_homographies_on_gaze(
     homographies : Stream
         Stream containing homography matrices with columns 'homography (0,0)' through
         'homography (2,2)' as returned by :func:`pyneon.video.find_homographies`.
-    %(max_gap_ms_param)s
+    {max_gap_ms_param}
     overwrite : bool, optional
         If True, overwrite existing surface coordinate columns. Defaults to False.
 
@@ -374,10 +374,14 @@ Columns: {list(self.data.columns)}
 
     @property
     def sampling_freq_nominal(self) -> Optional[int]:
-        """
-        Nominal sampling frequency in Hz as specified by Pupil Labs
-        (see https://pupil-labs.com/products/neon/specs).
+        """Nominal sampling frequency in Hz as specified by Pupil Labs.
+
         ``None`` for custom or unknown stream types.
+
+        Returns
+        -------
+        int or None
+            Nominal sampling frequency in Hz or ``None`` if unknown.
         """
         return nominal_sampling_rates.get(self.type, None)
 
@@ -438,11 +442,11 @@ Columns: {list(self.data.columns)}
         by : {"timestamp", "time", "sample"}, optional
             Unit used to interpret ``tmin`` and ``tmax``. Defaults to ``"timestamp"``.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Raises
         ------
@@ -505,11 +509,11 @@ Columns: {list(self.data.columns)}
         other : Stream
             Reference stream whose temporal boundaries define the cropping range.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Examples
         --------
@@ -544,13 +548,13 @@ Columns: {list(self.data.columns)}
             timestamps are auto-generated at uniform intervals based on
             :attr:`sampling_freq_nominal`. Defaults to ``None``.
 
-        %(interp_kind_params)s
-        %(max_gap_ms_param)s
-        %(inplace_param)s
+        {interp_kind_params}
+        {max_gap_ms_param}
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Notes
         -----
@@ -602,11 +606,11 @@ Columns: {list(self.data.columns)}
             If ``True``, overwrite existing event ID annotations in the stream data.
             Defaults to ``False``.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Raises
         ------
@@ -677,13 +681,13 @@ Columns: {list(self.data.columns)}
             to both before and after the event.
             Defaults to 0.05.
 
-        %(interp_kind_params)s
-        %(max_gap_ms_param)s
-        %(inplace_param)s
+        {interp_kind_params}
+        {max_gap_ms_param}
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Examples
         --------
@@ -729,11 +733,11 @@ Columns: {list(self.data.columns)}
             The window size must be larger than the median interval between the original data timestamps,
             i.e., ``window_size > np.median(np.diff(data.index))``.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
         """
         inst = self if inplace else self.copy()
         inst.data = window_average(new_ts, self.data, window_size)
@@ -763,11 +767,11 @@ Columns: {list(self.data.columns)}
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
 
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Raises
         ------
@@ -801,18 +805,18 @@ Columns: {list(self.data.columns)}
 
         Parameters
         ----------
-        %(homographies)s
+        {homographies}
             Returned by :func:`pyneon.find_homographies`.
-        %(max_gap_ms_param)s
+        {max_gap_ms_param}
         overwrite : bool, optional
             Only applicable if surface gaze columns already exist.
             If ``True``, overwrite existing columns. If ``False``, raise an error.
             Defaults to ``False``.
-        %(inplace_param)s
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
         """
         inst = self if inplace else self.copy()
         _apply_homographies_on_gaze(inst, homographies, max_gap_ms, overwrite)
@@ -837,13 +841,13 @@ Columns: {list(self.data.columns)}
         other : Stream
             The other stream to concatenate.
 
-        %(interp_kind_params)s
-        %(max_gap_ms_param)s
-        %(inplace_param)s
+        {interp_kind_params}
+        {max_gap_ms_param}
+        {inplace_param}
 
         Returns
         -------
-        %(stream_or_none_returns)s
+        {stream_or_none_returns}
 
         Notes
         -----

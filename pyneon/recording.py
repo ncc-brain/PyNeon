@@ -14,7 +14,7 @@ from .events import Events
 from .export import export_cloud_format, export_eye_tracking_bids, export_motion_bids
 from .preprocess import concat_events, concat_streams
 from .stream import Stream
-from .utils.doc_decorators import fill_doc
+from .utils.docstring_templating import fill_doc
 from .utils.variables import calib_dtype, expected_files_cloud, expected_files_native
 from .video import Video
 from .vis import plot_distribution
@@ -571,12 +571,12 @@ Recording duration: {self.info["duration"]} ns ({self.info["duration"] / 1e9} s)
             specify the heatmap dimensions. Defaults to (1600, 1200).
         cmap : str
             Colormap to use for the heatmap. Defaults to 'inferno'.
-        %(ax_param)s
-        %(show_param)s
+        {ax_param}
+        {show_param}
 
         Returns
         -------
-        %(fig_ax_returns)s
+        {fig_ax_returns}
         """
         return plot_distribution(
             self,

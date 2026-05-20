@@ -9,7 +9,7 @@ from matplotlib.colors import Normalize
 from PIL import Image
 from scipy.ndimage import gaussian_filter
 
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 from ..video.marker import marker_family_to_dict
 from ..video.utils import _validate_marker_layout
 
@@ -33,15 +33,15 @@ def plot_marker_layout(
 
     Parameters
     ----------
-    %(marker_layout)s
+    {marker_layout}
     show_marker_names : bool
         Whether to overlay marker names at their centers. Defaults to True.
-    %(ax_param)s
-    %(show_param)s
+    {ax_param}
+    {show_param}
 
     Returns
     -------
-    %(fig_ax_returns)s
+    {fig_ax_returns}
     layout: np.ndarray
         The rendered marker layout as a 2D numpy array (grayscale image).
     """
@@ -148,12 +148,12 @@ def plot_distribution(
         specify the heatmap dimensions. Defaults to (1600, 1200).
     cmap : str
         Colormap to use for the heatmap. Defaults to 'inferno'.
-    %(ax_param)s
-    %(show_param)s
+    {ax_param}
+    {show_param}
 
     Returns
     -------
-    %(fig_ax_returns)s
+    {fig_ax_returns}
     """
     if heatmap_source is None and scatter_source is None:
         raise ValueError(
@@ -242,12 +242,12 @@ def plot_epochs(
         from a :class:`pyneon.Events`, this parameter is ignored. Defaults to None.
     cmap_name : str
         Colormap to use for different epochs. Defaults to 'cool'.
-    %(ax_param)s
-    %(show_param)s
+    {ax_param}
+    {show_param}
 
     Returns
     -------
-    %(fig_ax_returns)s
+    {fig_ax_returns}
     """
     if ax is None:
         fig, ax = plt.subplots()

@@ -5,6 +5,7 @@
 PyNeon is a lightweight Python package for reading, preprocessing, and exporting multimodal data from the [Pupil Labs Neon eye-tracking system](https://pupil-labs.com/products/neon). It supports both **native** (companion device) and **Pupil Cloud** data formats.
 
 Key capabilities:
+
 - Reading datasets, recordings, and individual data modalities (gaze, eye states, IMU, events, video)
 - Preprocessing: cropping, interpolation, concatenation, window averaging
 - Flexible epoch-based trial analysis
@@ -62,10 +63,11 @@ source/              # Sphinx documentation source
 ## Docstrings
 
 - Use **NumPy docstring format** throughout (enforced via `numpydoc` in Sphinx).
+- For documentation headings (ReST/Markdown), use Title Case for consistency.
 - Reuse common parameter/return documentation via the `fill_doc` decorator:
 
   ```python
-  from .utils.doc_decorators import fill_doc
+  from .utils.docstring_templating import fill_doc
 
   @fill_doc
   def my_func(max_gap_ms: int = 500):
@@ -74,11 +76,11 @@ source/              # Sphinx documentation source
 
       Parameters
       ----------
-      %(max_gap_ms_param)s
+      {max_gap_ms_param}
       """
   ```
 
-  Add new reusable snippets to `pyneon/utils/doc_decorators.py` in the `DOC` dict.
+  Add new reusable snippets to `pyneon/utils/docstring_templating.py` in the `DOC` dict.
 
 ## Data Conventions
 

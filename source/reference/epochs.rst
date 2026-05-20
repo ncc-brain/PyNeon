@@ -1,4 +1,4 @@
-Epochs class
+Epochs Class
 ============
 
 This page documents the :class:`pyneon.Epochs` class, which segments :class:`pyneon.Stream` or :class:`pyneon.Events` data

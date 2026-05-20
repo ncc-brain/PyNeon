@@ -1,38 +1,38 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report a bug or unexpected behavior in PyNeon
 title: ''
-labels: ''
+labels: '[BUG]'
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Describe the bug
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Provide a concise description of the incorrect or unexpected behavior.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Minimal reproducible example
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+Include a short, minimal code snippet or steps that reproduce the issue.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+```python
+# minimal example that reproduces the problem
+```
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+## Expected behavior
 
-**Additional context**
-Add any other context about the problem here.
+Describe what you expected to happen.
+
+## Actual behavior
+
+Describe what happened instead and include the full error traceback if available.
+
+## Environment
+
+- Operating system:
+- Python version:
+- PyNeon version:
+
+*(Check Python and PyNeon versions with `python --version` and `pip show pyneon`)*
+
+## Additional context

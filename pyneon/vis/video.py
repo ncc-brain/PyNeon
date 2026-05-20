@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..utils import _validate_df_columns
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 from ..video.variables import DETECTION_COLUMNS_BASE
 
 if TYPE_CHECKING:
@@ -33,12 +33,12 @@ def plot_frame(
         Video instance to plot the frame from.
     frame_index : int
         Index of the frame to plot.
-    %(ax_param)s
-    %(show_param)s
+    {ax_param}
+    {show_param}
 
     Returns
     -------
-    %(fig_ax_returns)s
+    {fig_ax_returns}
     """
     if frame_index >= len(video.ts) or frame_index < 0:
         raise IndexError(f"Frame index {frame_index} out of range")
@@ -137,12 +137,12 @@ def plot_detections(
         Index of the frame to plot.
     show_ids : bool
         Display detection IDs at their centers when available.
-    %(ax_param)s
-    %(show_param)s
+    {ax_param}
+    {show_param}
 
     Returns
     -------
-        %(fig_ax_returns)s
+        {fig_ax_returns}
     """
     fig, ax = plot_frame(video, frame_index=frame_index, ax=ax, show=False)
     detections_df = detections.data
@@ -202,8 +202,8 @@ def overlay_detections(
         Whether to overlay IDs at their centers when available. Defaults to True.
     color : tuple[int, int, int]
         BGR color tuple for marker overlays. Defaults to (255, 0, 255) which is magenta.
-    %(show_video_param)s
-    %(output_path_param)s
+    {show_video_param}
+    {output_path_param}
         If "default", saves detections.mp4 to the derivatives folder under the
         recording directory. If None, no output video is written.
     """

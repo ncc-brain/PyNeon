@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils import _validate_df_columns
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 from .utils import (
     distort_points,
     resolve_processing_window,
@@ -98,8 +98,8 @@ def detect_markers(
     ----------
     video : Video
         Scene video to detect markers from.
-    %(detect_markers_params)s
-    %(detect_markers_returns)s
+    {detect_markers_params}
+    {detect_markers_returns}
     """
     # Normalize marker family input to a list and create detectors for each
     families: list[str] = (

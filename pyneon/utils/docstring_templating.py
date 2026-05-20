@@ -1,5 +1,85 @@
-import re
+"""Docstring templating and rendering engine for PyNeon.
 
+This module provides:
+- `render_doc()`: Low-level utility for rendering docstring templates with
+  `{}`-style placeholders and nested template resolution.
+- `fill_doc`: Decorator for applying PyNeon's `DOC` registry to function docstrings.
+- `DOC`: PyNeon's central registry of reusable docstring snippets.
+
+The system supports nested templates (e.g., `{detect_markers_params}` containing
+`{step_param}` and `{window_params}`) with multi-pass recursive resolution.
+"""
+
+from __future__ import annotations
+
+from typing import Mapping
+
+
+class _SafeDict(dict):
+    def __missing__(self, key: str) -> str:  # pragma: no cover - trivial
+        # Leave unknown placeholders intact to avoid KeyError during
+        # incremental migration.
+        return "{" + key + "}"
+
+
+def render_doc(
+    template: str,
+    *,
+    mapping: Mapping[str, str] | None = None,
+    max_passes: int = 10,
+) -> str:
+    """Render a documentation template.
+
+    Parameters
+    ----------
+    template : str
+        Docstring template using ``{key}`` placeholders.
+    mapping : Mapping[str, str], optional
+        Mapping of keys available to format into the template.
+    max_passes : int, optional
+        Maximum number of recursive formatting passes used to resolve nested
+        placeholders (e.g., ``{outer}`` -> ``{inner}`` -> value).
+        Defaults to 10.
+
+    Returns
+    -------
+    str
+        The rendered docstring.
+    """
+    if not template:
+        return template
+
+    rendered = template
+
+    fmt_map = _SafeDict()
+    if mapping:
+        fmt_map.update(mapping)
+
+    # Resolve placeholders with multiple passes so nested templates in mapping
+    # entries are expanded (e.g., {detect_markers_params} containing {step_param}).
+    seen: set[str] = {rendered}
+    for _ in range(max_passes):
+        try:
+            next_rendered = rendered.format_map(fmt_map)
+        except Exception:
+            # If formatting fails for any reason, return the most recent
+            # successfully rendered string so docs remain available.
+            return rendered
+
+        if next_rendered == rendered:
+            break
+
+        rendered = next_rendered
+
+        # Stop if a previous intermediate state repeats (cyclic template refs).
+        if rendered in seen:
+            break
+        seen.add(rendered)
+
+    return rendered
+
+
+# PyNeon's central registry of reusable docstring snippets
 DOC = dict()
 
 DOC["interp_kind_params"] = """\
@@ -78,8 +158,8 @@ DOC["detect_markers_params"] = """
 marker_family : str or list[str], optional
     AprilTag family/ArUco dictionary to detect. Accepts a single family string
     (e.g., '36h11') or a list of families (e.g., ['36h11', '6x6_250']).
-%(step_param)s
-%(window_params)s
+{step_param}
+{window_params}
 detector_parameters : cv2.aruco.DetectorParameters, optional
     Detector parameters to use for all marker families. If None, a default
     DetectorParameters instance is created. Defaults to ``None``.
@@ -90,8 +170,8 @@ undistort : bool, optional
 """
 
 DOC["detect_contour_params"] = """
-%(step_param)s
-%(window_params)s
+{step_param}
+{window_params}
 min_area_ratio : float, optional
     Minimum contour area relative to frame area. Contours smaller than this
     ratio are ignored. Default is 0.01 (1 percent of frame area).
@@ -134,7 +214,7 @@ marker_layout : pandas.DataFrame
     DataFrame describing the spatial layout of the markers on the surface.
     Must contain the following columns:
 
-    %(marker_layout_table)s
+    {marker_layout_table}
 """
 
 DOC["marker_layout_table"] = """
@@ -237,37 +317,32 @@ output_path : pathlib.Path or str or None, optional
 """
 
 
-# Automatically fill nested %(...)s placeholders in DOC values
-
-
-def _fill_nested_placeholders(doc_dict, max_depth=5):
-    """Recursively fill nested %(...)s placeholders in documentation strings."""
-    pattern = re.compile(r"%\([^)]+\)s")
-
-    for depth in range(max_depth):
-        changed = False
-        for key, value in doc_dict.items():
-            if isinstance(value, str) and pattern.search(value):
-                try:
-                    new_value = value % doc_dict
-                    if new_value != value:
-                        doc_dict[key] = new_value
-                        changed = True
-                except (KeyError, ValueError, TypeError):
-                    # Skip if placeholder references don't exist yet or format fails
-                    pass
-        if not changed:
-            break
-    return doc_dict
-
-
-DOC = _fill_nested_placeholders(DOC)
-
-
 def fill_doc(func):
-    """Fill a function docstring with common doc snippets using %-format."""
+    """Apply the project's `DOC` mapping to a function's docstring.
+
+    This decorator resolves brace-style placeholders (e.g., `{key}`) from
+    the project's `DOC` registry into the docstring. Supports nested
+    placeholders (e.g., `{detect_markers_params}` expands to include
+    `{step_param}`, `{window_params}`, etc.).
+
+    Examples
+    --------
+    Basic usage::
+
+        @fill_doc
+        def detect_markers(marker_family="36h11"):
+            '''Detect markers.
+
+            Parameters
+            ----------
+            {detect_markers_params}
+            '''
+
+    When applied, `{detect_markers_params}` is replaced with the full
+    parameter documentation from `DOC["detect_markers_params"]`.
+    """
     if func.__doc__:
-        func.__doc__ = func.__doc__ % DOC
+        func.__doc__ = render_doc(func.__doc__, mapping=DOC)
     return func
 
 

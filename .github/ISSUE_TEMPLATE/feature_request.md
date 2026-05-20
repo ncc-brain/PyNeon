@@ -1,20 +1,27 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest an enhancement or new feature for PyNeon
 title: ''
-labels: ''
+labels: '[FEATURE]'
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Feature description
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+Describe the user problem or limitation this feature would address.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed solution
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Describe the desired behavior, API, or CLI change. Provide short examples of expected usage.
+
+```python
+# example usage of the proposed feature
+from pyneon.some_module import new_feature
+new_feature(args)
+```
+
+## Alternatives considered (if any)
+
+List other approaches or workarounds you evaluated and why they are insufficient.
+
+## Additional context

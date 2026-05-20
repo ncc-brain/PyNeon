@@ -67,6 +67,9 @@ def export_motion_bids(
     For more information, see
     https://bids-specification.readthedocs.io/en/stable/modality-specific-files/motion.html.
 
+    During export, IMU data is interpolated with no gap restriction to ensure
+    complete and continuous coverage in the output file.
+
     References
     ----------
     .. [1] Jeung, S., Cockx, H., Appelhoff, S., Berg, T., Gramann, K., Grothkopp, S., ... & Welzel, J. (2024). Motion-BIDS: an extension to the brain imaging data structure to organize motion data for reproducible research. *Scientific Data*, 11(1), 716.
@@ -228,6 +231,9 @@ def export_eye_tracking_bids(
 
     The function automatically detects and uses matching prefixes from existing files
     in the output directory, allowing seamless integration with other modalities (e.g., motion).
+
+    Eye state data (pupil diameter) is interpolated to match gaze timestamps for
+    alignment in the output file.
     """
     gaze = rec.gaze
     try:

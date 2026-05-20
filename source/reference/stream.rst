@@ -1,4 +1,4 @@
-Stream class (gaze, eye states, IMU)
+Stream Class (Gaze, Eye States, IMU)
 ====================================
 
 .. autoclass:: pyneon.Stream

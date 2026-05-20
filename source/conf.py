@@ -25,6 +25,7 @@ release = "dev"
 extensions = [
     "numpydoc",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "nbsphinx",
     "myst_parser",

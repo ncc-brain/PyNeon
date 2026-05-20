@@ -8,7 +8,7 @@ from pandas.api.types import is_float_dtype
 from scipy.interpolate import interp1d
 
 from ..utils import _validate_df_columns, _validate_neon_tabular_data
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 
 if TYPE_CHECKING:
     from ..events import Events
@@ -39,8 +39,8 @@ def interpolate(
         Source data to interpolate. Must have a monotonically increasing
         index named ``timestamp [ns]``.
 
-    %(interp_kind_params)s
-    %(max_gap_ms_param)s
+    {interp_kind_params}
+    {max_gap_ms_param}
 
     Returns
     -------
@@ -173,8 +173,8 @@ def interpolate_events(
         to both before and after the event.
         Defaults to 0.05.
 
-    %(interp_kind_params)s
-    %(max_gap_ms_param)s
+    {interp_kind_params}
+    {max_gap_ms_param}
 
     Returns
     -------
@@ -371,9 +371,14 @@ def concat_streams(
         of the selected streams will be used.
         If "max", the highest nominal sampling frequency will be used.
 
-    %(interp_kind_params)s
+    {interp_kind_params}
 
-    %(inplace_param)s
+    {inplace_param}
+
+    Notes
+    -----
+    During interpolation to common timestamps, all gaps in the selected streams are filled
+    (no maximum gap restriction). This ensures a complete and aligned time grid across all streams.
 
     Returns
     -------

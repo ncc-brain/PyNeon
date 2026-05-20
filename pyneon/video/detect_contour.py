@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from ..stream import Stream
 from ..utils import _validate_df_columns
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 from .utils import (
     distort_points,
     get_undistort_valid_fraction,
@@ -52,11 +52,11 @@ def detect_contour(
     video : Video
         Video instance supporting OpenCV-like `set()` and `read()` methods,
         and providing frame timestamps (`video.ts`).
-    %(detect_contour_params)s
+    {detect_contour_params}
 
     Returns
     -------
-    %(detect_contour_returns)s
+    {detect_contour_returns}
     """
 
     if step < 1:

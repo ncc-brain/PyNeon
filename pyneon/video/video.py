@@ -11,7 +11,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 from ..utils.variables import default_camera_info
 from ..vis.video import (
     overlay_detections,
@@ -468,11 +468,11 @@ Effective FPS: {self.fps:.2f}
         ----------
         frame_index : int
             Index of the frame to plot.
-        %(ax_param)s
+        {ax_param}
 
         Returns
         -------
-        %(fig_ax_returns)s
+        {fig_ax_returns}
         """
         return plot_frame(self, frame_index, ax, show)
 
@@ -574,8 +574,8 @@ Effective FPS: {self.fps:.2f}
 
         Parameters
         ----------
-        %(step_param)s
-        %(window_params)s
+        {step_param}
+        {window_params}
 
         Returns
         -------
@@ -631,11 +631,11 @@ Effective FPS: {self.fps:.2f}
 
         Parameters
         ----------
-        %(detect_markers_params)s
+        {detect_markers_params}
 
         Returns
         -------
-        %(detect_markers_returns)s
+        {detect_markers_returns}
 
         See also
         --------
@@ -677,11 +677,11 @@ Effective FPS: {self.fps:.2f}
 
         Parameters
         ----------
-        %(detect_contour_params)s
+        {detect_contour_params}
 
         Returns
         -------
-        %(detect_contour_returns)s
+        {detect_contour_returns}
 
         See also
         --------
@@ -729,12 +729,12 @@ Effective FPS: {self.fps:.2f}
             Display detection IDs at their centers. Defaults to True.
         color : str
             Matplotlib color for overlay. Defaults to "magenta".
-        %(ax_param)s
-        %(show_param)s
+        {ax_param}
+        {show_param}
 
         Returns
         -------
-        %(fig_ax_returns)s
+        {fig_ax_returns}
         """
         return plot_detections(
             self,
@@ -767,8 +767,8 @@ Effective FPS: {self.fps:.2f}
             Whether to overlay IDs at their centers when available. Defaults to True.
         color : tuple[int, int, int]
             BGR color tuple for overlays. Defaults to (255, 0, 255) which is magenta.
-        %(show_video_param)s
-        %(output_path_param)s
+        {show_video_param}
+        {output_path_param}
             If "default", saves detections.mp4 to the derivatives folder under the
             recording directory. If None, no output video is written.
 

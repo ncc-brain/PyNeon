@@ -9,7 +9,7 @@ import pandas as pd
 
 from .events import Events
 from .stream import Stream
-from .utils.doc_decorators import fill_doc
+from .utils.docstring_templating import fill_doc
 from .utils.variables import circular_columns
 from .vis import plot_epochs
 
@@ -17,14 +17,14 @@ from .vis import plot_epochs
 @fill_doc
 class Epochs:
     """
-    Class to create and analyze epochs in the data streams.
+    Create and analyze epochs in data streams.
 
     Parameters
     ----------
     source : Stream or Events
         Data to create epochs from. Can be either a :class:`Stream` or
         a :class:`Events` instance.
-    %(epochs_info)s
+    {epochs_info}
 
         Must not have empty values.
 
@@ -43,7 +43,7 @@ class Epochs:
 
     Attributes
     ----------
-    %(epochs_info)s
+    {epochs_info}
 
         ======= ================================
         Column  Description
@@ -103,9 +103,10 @@ class Epochs:
     @cached_property
     def epochs_dict(self) -> dict[int, Stream | Events | None]:
         """
-        Dictionary of epochs indexed by epoch index. Each epoch contains
-        data cropped from the source between ``t_start`` and ``t_end``.
-        If no data is found for an epoch, its value is ``None``.
+        Return a dictionary of epochs indexed by epoch index.
+
+        Each entry contains data cropped from the source between ``t_start``
+        and ``t_end``. If no data is found for an epoch, its value is ``None``.
 
         Returns
         -------
@@ -242,7 +243,13 @@ class Epochs:
 
     @property
     def dtypes(self) -> pd.Series:
-        """Data types of the epoched data."""
+        """Data types of the epoched data.
+
+        Returns
+        -------
+        pandas.Series
+            Series of dtypes for the epoched data columns.
+        """
         if self.data.empty:
             return pd.Series(dtype=object)
         return self.data.drop(columns=["epoch time [ns]"], errors="ignore").dtypes
@@ -290,12 +297,12 @@ class Epochs:
             from a :class:`Events`, this parameter is ignored. Defaults to None.
         cmap_name : str
             Colormap to use for different epochs. Defaults to 'cool'.
-        %(ax_param)s
-        %(show_param)s
+        {ax_param}
+        {show_param}
 
         Returns
         -------
-        %(fig_ax_returns)s
+        {fig_ax_returns}
         """
         fig_ax = plot_epochs(
             self,
@@ -330,7 +337,12 @@ class Epochs:
             Desired sampling rate in Hz for the output NumPy array.
             If None, the nominal sampling rate of the source Stream is used.
             Defaults to None.
-        %(interp_kind_params)s
+        {interp_kind_params}
+
+        Notes
+        -----
+        During interpolation, all gaps in the source data are filled (no maximum gap restriction).
+        This ensures complete coverage across all epochs regardless of data gaps.
 
         Returns
         -------
@@ -579,7 +591,7 @@ def events_to_epochs_info(
 
     Returns
     -------
-    %(epochs_info)s
+    {epochs_info}
 
     Examples
     --------
@@ -678,7 +690,7 @@ def construct_epochs_info(
 
     Returns
     -------
-    %(epochs_info)s
+    {epochs_info}
     """
 
     if (n_epoch := len(t_ref)) == 0:

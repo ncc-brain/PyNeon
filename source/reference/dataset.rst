@@ -1,4 +1,4 @@
-Dataset class
+Dataset Class
 =============
 
 .. autoclass:: pyneon.Dataset

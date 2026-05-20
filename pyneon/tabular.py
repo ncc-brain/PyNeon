@@ -76,7 +76,7 @@ class BaseTabular:
 
     @property
     def shape(self) -> tuple[int, int]:
-        """Return a tuple representing the shape of the data.
+        """Tuple representing the shape of the data.
 
         Returns
         -------
@@ -87,7 +87,7 @@ class BaseTabular:
 
     @property
     def columns(self) -> pd.Index:
-        """Return the column labels of the data.
+        """Column labels of the data.
 
         Returns
         -------
@@ -98,7 +98,7 @@ class BaseTabular:
 
     @property
     def dtypes(self) -> pd.Series:
-        """Return the data types of the columns in the data.
+        """Data types of the columns in the data.
 
         Returns
         -------

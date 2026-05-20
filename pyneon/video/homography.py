@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..stream import Stream
-from ..utils.doc_decorators import fill_doc
+from ..utils.docstring_templating import fill_doc
 from .utils import _validate_contour_layout, _validate_marker_layout
 
 
@@ -46,7 +46,7 @@ def find_homographies(
         **Marker detections**: provide a DataFrame (can be visually checked with
         :func:`pyneon.plot_marker_layout`) with following columns:
 
-            %(marker_layout_table)s
+            {marker_layout_table}
 
         **Contour detections**: provide a 2D numpy array of shape (4, 2)
         containing the surface coordinates of the contour corners in the following order:
@@ -75,7 +75,7 @@ def find_homographies(
 
     Returns
     -------
-    %(homographies)s
+    {homographies}
 
     Examples
     --------
