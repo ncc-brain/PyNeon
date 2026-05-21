@@ -1,9 +1,11 @@
 ---
 name: Contribute sample data
 about: Suggest a new sample dataset for testing and documentation
-title: ''
-labels: '[SAMPLE-DATA]'
-assignees: ''
+title: "[DATA] "
+labels: sample_data
+assignees: qian-chu
+type: Feature
+
 ---
 
 ## Basic Information

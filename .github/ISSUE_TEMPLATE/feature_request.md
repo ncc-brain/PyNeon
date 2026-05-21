@@ -1,9 +1,11 @@
 ---
 name: Feature request
 about: Suggest an enhancement or new feature for PyNeon
-title: ''
-labels: '[FEATURE]'
-assignees: ''
+title: "[FEATURE] "
+labels: new feature
+assignees: qian-chu
+type: Feature
+
 ---
 
 ## Feature description

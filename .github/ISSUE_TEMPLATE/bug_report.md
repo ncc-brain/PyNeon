@@ -1,9 +1,10 @@
 ---
 name: Bug report
 about: Report a bug or unexpected behavior in PyNeon
-title: ''
-labels: '[BUG]'
-assignees: ''
+title: "[BUG] "
+labels: bug
+assignees: qian-chu
+type: Bug
 
 ---
 
