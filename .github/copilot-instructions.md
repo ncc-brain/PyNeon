@@ -53,8 +53,8 @@ source/              # Sphinx documentation source
 
 ## Code Style
 
+- **Import order**: [isort](https://pycqa.github.io/isort/) with `--profile black` — run `isort --profile black .` (run this before formatting)
 - **Formatter**: [Ruff](https://docs.astral.sh/ruff/) — run `ruff format .`
-- **Import order**: [isort](https://pycqa.github.io/isort/) with `--profile black` — run `isort --profile black .`
 - Both are enforced automatically in CI (`.github/workflows/main.yml`) on every push to `main` or `dev`.
 - Line length follows Ruff defaults (88 characters).
 - Prefer `pathlib.Path` over raw strings for filesystem paths.

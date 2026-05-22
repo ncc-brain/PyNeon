@@ -8,22 +8,24 @@ type: Feature
 
 ---
 
-## Feature description
+## Feature Description
 
-Describe the user problem or limitation this feature would address.
+<!-- Describe the user problem or limitation this feature would address. -->
 
-## Proposed solution
+## Proposed Solution
 
-Describe the desired behavior, API, or CLI change. Provide short examples of expected usage.
+<!-- Describe the desired behavior, API, or CLI change. Provide short examples of expected usage. -->
 
+<!--
 ```python
 # example usage of the proposed feature
 from pyneon.some_module import new_feature
 new_feature(args)
 ```
+-->
 
-## Alternatives considered (if any)
+## Alternatives Considered (if any)
 
-List other approaches or workarounds you evaluated and why they are insufficient.
+<!-- List other approaches or workarounds you evaluated and why they are insufficient. -->
 
-## Additional context
+## Additional Context

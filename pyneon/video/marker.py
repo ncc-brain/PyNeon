@@ -9,10 +9,7 @@ from tqdm import tqdm
 from ..stream import Stream
 from ..utils import _validate_df_columns
 from ..utils.docstring_templating import fill_doc
-from .utils import (
-    distort_points,
-    resolve_processing_window,
-)
+from .utils import distort_points, resolve_processing_window
 from .variables import (
     APRILTAG_FAMILIES,
     ARUCO_NUMBERS,

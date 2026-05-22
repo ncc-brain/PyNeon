@@ -1,6 +1,8 @@
 # ruff: noqa: E402
 from importlib.metadata import PackageNotFoundError, version
 
+from typeguard import install_import_hook
+
 from .dataset import Dataset
 from .epochs import Epochs, construct_epochs_info, events_to_epochs_info
 from .events import Events
@@ -9,6 +11,8 @@ from .stream import Stream
 from .utils import *
 from .video import Video, find_homographies
 from .vis import plot_marker_layout
+
+install_import_hook("pyneon")
 
 try:
     __version__ = version("pyneon")
