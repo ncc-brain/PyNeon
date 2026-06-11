@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 @fill_doc
 def plot_frame(
     video: "Video",
-    frame_index: int = 0,
+    frame_index: int,
+    grayscale: bool = False,
     ax: Optional[plt.Axes] = None,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -33,6 +34,9 @@ def plot_frame(
         Video instance to plot the frame from.
     frame_index : int
         Index of the frame to plot.
+    grayscale : bool, optional
+        Whether to convert the frame to grayscale before plotting.
+        Defaults to False.
     {ax_param}
     {show_param}
 
@@ -49,7 +53,11 @@ def plot_frame(
     frame = video.read_frame_at(frame_index)
     if frame is None:
         raise RuntimeError(f"Could not read frame {frame_index}")
-    ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    if grayscale:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        ax.imshow(frame, cmap="gray")
+    else:
+        ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     ax.axis("off")
     if show:
         plt.show()

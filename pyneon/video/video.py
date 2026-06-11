@@ -457,7 +457,8 @@ Effective FPS: {self.fps:.2f}
     @fill_doc
     def plot_frame(
         self,
-        frame_index: int = 0,
+        frame_index: int,
+        grayscale: bool = False,
         ax: Optional[plt.Axes] = None,
         show: bool = True,
     ):
@@ -468,13 +469,17 @@ Effective FPS: {self.fps:.2f}
         ----------
         frame_index : int
             Index of the frame to plot.
+        grayscale : bool, optional
+            Whether to convert the frame to grayscale before plotting.
+            Defaults to False.
         {ax_param}
+        {show_param}
 
         Returns
         -------
         {fig_ax_returns}
         """
-        return plot_frame(self, frame_index, ax, show)
+        return plot_frame(self, frame_index, grayscale, ax, show)
 
     def undistort_video(
         self,

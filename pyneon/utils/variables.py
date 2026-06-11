@@ -115,11 +115,12 @@ data_types = {
     # Events columns after concatenation
     "message name": "string",
     "message type": "string",
-    # Marker detections
+    # Detections
     "frame index": "Int64",
     "marker family": "string",
     "marker id": "string",
     "marker name": "string",
+    "contour name": "string",
     "top left x [px]": float,
     "top left y [px]": float,
     "top right x [px]": float,
