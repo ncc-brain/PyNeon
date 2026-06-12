@@ -10,6 +10,7 @@ data_url_dict = {
     "simple": "https://osf.io/download/gv46n/",
     "markers": "https://osf.io/download/t56b2/",
     "PLR": "https://osf.io/download/5kmwp/",
+    "audiovisual": "https://osf.io/download/dmjpf/",
 }
 
 
@@ -32,6 +33,7 @@ def get_sample_data(
         - "simple": Basic sample recording
         - "PLR": Pupil light reflex data
         - "markers": Recording with fiducial markers for surface mapping
+        - "audiovisual": Concurrent audiovisual stimuli
     replace : bool, optional
         If True, re-download the data even if it already exists locally.
         Defaults to False.
