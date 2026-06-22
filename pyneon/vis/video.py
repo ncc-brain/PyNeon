@@ -97,8 +97,14 @@ def _overlay_detections_on_frame(
 
         cv2.polylines(frame, [corners], True, color, 2)
 
-        if show_ids and "marker id" in detection.index:
-            text = str(int(detection["marker id"]))
+        text = None
+        if show_ids:
+            if "marker id" in detection.index:
+                text = str(detection["marker id"])
+            elif "contour name" in detection.index:
+                text = str(detection["contour name"])
+
+        if text is not None:
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 0.6
             thickness = 2
