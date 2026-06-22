@@ -35,12 +35,16 @@ def test_video_basics(request, dataset_fixture):
             random_frames = np.append(random_frames, [0, n_frames - 1])
             for frame_idx in random_frames:
                 frame_idx = int(frame_idx)
-                frame = video.read_frame_at(frame_idx)
-                assert frame_idx == video.current_frame_index
                 if frame_idx == 0:
+                    with pytest.warns(
+                        UserWarning, match="Failed to retrieve frame at index 0"
+                    ):
+                        frame = video.read_frame_at(frame_idx)
                     assert frame is None
                 else:
+                    frame = video.read_frame_at(frame_idx)
                     assert frame.shape == (video.height, video.width, 3)
+                assert frame_idx == video.current_frame_index
 
             with pytest.raises(ValueError, match="is out of bounds."):
                 video.read_frame_at(-5)

@@ -65,7 +65,7 @@ def plot_frame(
     return fig, ax
 
 
-def _overlay_marker_detections_on_frame(
+def _overlay_detections_on_frame(
     frame: np.ndarray,
     frame_detections: pd.DataFrame,
     show_ids: bool,
@@ -94,12 +94,17 @@ def _overlay_marker_detections_on_frame(
             [detection["center x [px]"], detection["center y [px]"]],
             dtype=np.int32,
         ).reshape(-1)
-        label = str(int(detection["marker id"])) if show_ids else None
 
         cv2.polylines(frame, [corners], True, color, 2)
 
-        if label is not None:
-            text = label
+        text = None
+        if show_ids:
+            if "marker id" in detection.index:
+                text = str(detection["marker id"])
+            elif "contour name" in detection.index:
+                text = str(detection["contour name"])
+
+        if text is not None:
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 0.6
             thickness = 2
@@ -248,10 +253,13 @@ def overlay_detections(
         # Read the next frame sequentially
         frame = video.read_frame_at(frame_index)
 
+        if frame is None:  # Replace frame with all gray if it cannot be read
+            frame = np.full((video.height, video.width, 3), 128, dtype=np.uint8)
+
         if frame_index in detections_by_frame:
             frame_detections = detections_by_frame[frame_index]
             # Draw each detection on the frame
-            frame = _overlay_marker_detections_on_frame(
+            frame = _overlay_detections_on_frame(
                 frame, frame_detections, show_ids, color
             )
 
@@ -346,7 +354,7 @@ def overlay_scanpath(
         # Read the current frame from the video
         ret, frame = video.read()
         if not ret:
-            raise RuntimeError(f"Failed to read frame {idx} from the video.")
+            frame = np.full((video.height, video.width, 3), 128, dtype=np.uint8)
 
         # Extract fixations and gaze data
         fixations = row["fixations"]
