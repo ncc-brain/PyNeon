@@ -1,9 +1,9 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 from matplotlib import pyplot as plt
 
-from pyneon import find_homographies, plot_marker_layout, Video
+from pyneon import Video, find_homographies, plot_marker_layout
 
 pytestmark = [
     pytest.mark.filterwarnings(
