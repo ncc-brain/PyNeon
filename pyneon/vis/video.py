@@ -247,6 +247,9 @@ def overlay_detections(
         # Read the next frame sequentially
         frame = video.read_frame_at(frame_index)
 
+        if frame is None:  # Replace frame with all gray if it cannot be read
+            frame = np.full((video.height, video.width, 3), 128, dtype=np.uint8)
+
         if frame_index in detections_by_frame:
             frame_detections = detections_by_frame[frame_index]
             # Draw each detection on the frame
@@ -345,7 +348,7 @@ def overlay_scanpath(
         # Read the current frame from the video
         ret, frame = video.read()
         if not ret:
-            raise RuntimeError(f"Failed to read frame {idx} from the video.")
+            frame = np.full((video.height, video.width, 3), 128, dtype=np.uint8)
 
         # Extract fixations and gaze data
         fixations = row["fixations"]

@@ -8,18 +8,6 @@ from ..utils.docstring_templating import fill_doc
 from .utils import _validate_contour_layout, _validate_marker_layout
 
 
-def _reshape_corners(detection: pd.Series) -> np.ndarray:
-    return np.array(
-        [
-            [detection["top left x [px]"], detection["top left y [px]"]],
-            [detection["top right x [px]"], detection["top right y [px]"]],
-            [detection["bottom right x [px]"], detection["bottom right y [px]"]],
-            [detection["bottom left x [px]"], detection["bottom left y [px]"]],
-        ],
-        dtype=np.float32,
-    )
-
-
 @fill_doc
 def find_homographies(
     detections: Stream,
@@ -103,47 +91,53 @@ def find_homographies(
     if is_marker_detection:
         # Validate marker layout
         _validate_marker_layout(layout)
-        # Compute corner coordinates for each marker in the layout
+        # Compute corner coordinates for each marker in the layout using vectorized arrays.
         layout = layout.copy()
-        layout["corners"] = layout.apply(
-            lambda row: np.array(
-                [
-                    [
-                        row["center x"] - row["size"] / 2,
-                        row["center y"] - row["size"] / 2,
-                    ],
-                    [
-                        row["center x"] + row["size"] / 2,
-                        row["center y"] - row["size"] / 2,
-                    ],
-                    [
-                        row["center x"] + row["size"] / 2,
-                        row["center y"] + row["size"] / 2,
-                    ],
-                    [
-                        row["center x"] - row["size"] / 2,
-                        row["center y"] + row["size"] / 2,
-                    ],
-                ],
-                dtype=np.float32,
-            ),
+        center_x = layout["center x"].to_numpy()
+        center_y = layout["center y"].to_numpy()
+        half_size = layout["size"].to_numpy() / 2
+        corners_array = np.stack(
+            [
+                np.column_stack((center_x - half_size, center_y - half_size)),
+                np.column_stack((center_x + half_size, center_y - half_size)),
+                np.column_stack((center_x + half_size, center_y + half_size)),
+                np.column_stack((center_x - half_size, center_y + half_size)),
+            ],
             axis=1,
         )
+        layout["corners"] = list(corners_array)
         # Construct a lookup dictionary with marker name being key and corners being value
         surface_pts_lookup = {
-            row["marker name"]: row["corners"] for _, row in layout.iterrows()
+            marker_name: corners
+            for marker_name, corners in layout[["marker name", "corners"]].itertuples(
+                index=False, name=None
+            )
         }
     else:
         _validate_contour_layout(layout)
         surface_pts_lookup = {"contour_0": layout}
 
-    homography_per_frame = {}
-    unique_timestamps = detection_df.index.unique()
+    corner_columns = [
+        "top left x [px]",
+        "top left y [px]",
+        "top right x [px]",
+        "top right y [px]",
+        "bottom right x [px]",
+        "bottom right y [px]",
+        "bottom left x [px]",
+        "bottom left y [px]",
+    ]
 
-    for ts in tqdm(unique_timestamps, desc="Computing surface-mapping homographies"):
-        frame_detections = detection_df.loc[ts]
-        if isinstance(frame_detections, pd.Series):
-            frame_detections = frame_detections.to_frame().T
+    homography_per_frame = {}
+    grouped_detections = detection_df.groupby(level=0, sort=False)
+
+    for ts, frame_detections in tqdm(
+        grouped_detections,
+        total=grouped_detections.ngroups,
+        desc="Computing surface-mapping homographies",
+    ):
+        if isinstance(frame_detections.index, pd.MultiIndex):
+            frame_detections = frame_detections.droplevel(0)
 
         if is_marker_detection and len(frame_detections) < min_markers:
             continue
@@ -151,9 +145,27 @@ def find_homographies(
         camera_pts_all = []
         surface_pts_all = []
 
-        for _, detection in frame_detections.iterrows():
-            camera_pts = _reshape_corners(detection)
-            name = detection["marker name"] if is_marker_detection else "contour_0"
+        corner_rows = frame_detections[corner_columns].itertuples(
+            index=False, name=None
+        )
+        if is_marker_detection:
+            detection_iter = zip(
+                frame_detections["marker name"].to_numpy(),
+                corner_rows,
+            )
+        else:
+            detection_iter = (("contour_0", corners) for corners in corner_rows)
+
+        for name, corners in detection_iter:
+            camera_pts = np.array(
+                [
+                    [corners[0], corners[1]],
+                    [corners[2], corners[3]],
+                    [corners[4], corners[5]],
+                    [corners[6], corners[7]],
+                ],
+                dtype=np.float32,
+            )
             surface_pts = surface_pts_lookup[name]
             if camera_pts.shape != (4, 2):
                 raise ValueError(
