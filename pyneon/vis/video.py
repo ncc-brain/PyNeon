@@ -65,7 +65,7 @@ def plot_frame(
     return fig, ax
 
 
-def _overlay_marker_detections_on_frame(
+def _overlay_detections_on_frame(
     frame: np.ndarray,
     frame_detections: pd.DataFrame,
     show_ids: bool,
@@ -94,12 +94,11 @@ def _overlay_marker_detections_on_frame(
             [detection["center x [px]"], detection["center y [px]"]],
             dtype=np.int32,
         ).reshape(-1)
-        label = str(int(detection["marker id"])) if show_ids else None
 
         cv2.polylines(frame, [corners], True, color, 2)
 
-        if label is not None:
-            text = label
+        if show_ids and "marker id" in detection.index:
+            text = str(int(detection["marker id"]))
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 0.6
             thickness = 2
@@ -251,7 +250,7 @@ def overlay_detections(
         if frame_index in detections_by_frame:
             frame_detections = detections_by_frame[frame_index]
             # Draw each detection on the frame
-            frame = _overlay_marker_detections_on_frame(
+            frame = _overlay_detections_on_frame(
                 frame, frame_detections, show_ids, color
             )
 

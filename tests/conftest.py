@@ -237,3 +237,23 @@ def cloud_fixations(simple_dataset_cloud):
 @pytest.fixture(scope="package")
 def native_fixations(simple_dataset_native):
     return simple_dataset_native.recordings[0].fixations
+
+
+@pytest.fixture(scope="package")
+def mapping_dataset_native():
+    dataset_dir = get_sample_data("markers", format="native")
+    dataset = Dataset(dataset_dir)
+    assert len(dataset) == dataset.sections.shape[0] == 2
+    yield dataset
+    for recording in dataset.recordings:
+        recording.close()
+
+
+@pytest.fixture(scope="package")
+def mapping_dataset_cloud():
+    dataset_dir = get_sample_data("markers", format="cloud")
+    dataset = Dataset(dataset_dir)
+    assert len(dataset) == dataset.sections.shape[0] == 2
+    yield dataset
+    for recording in dataset.recordings:
+        recording.close()

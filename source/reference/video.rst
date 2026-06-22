@@ -11,3 +11,4 @@ based on marker and contour layouts.
 
 .. autofunction:: pyneon.find_homographies
 
+.. autofunction:: pyneon.plot_marker_layout

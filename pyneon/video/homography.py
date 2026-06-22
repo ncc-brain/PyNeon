@@ -46,7 +46,7 @@ def find_homographies(
         **Marker detections**: provide a DataFrame (can be visually checked with
         :func:`pyneon.plot_marker_layout`) with following columns:
 
-            {marker_layout_table}
+        {marker_layout_table}
 
         **Contour detections**: provide a 2D numpy array of shape (4, 2)
         containing the surface coordinates of the contour corners in the following order:
@@ -82,12 +82,12 @@ def find_homographies(
     Compute homographies from marker detections:
 
     >>> detections = video.detect_markers("36h11")
-    >>> layout = pd.DataFrame({
+    >>> layout = pd.DataFrame({{
     ...     "marker name": ["36h11_0", "36h11_1"],
     ...     "size": [100, 100],
     ...     "center x": [200, 400],
     ...     "center y": [200, 200],
-    ... })
+    ... }})
     >>> homographies = find_homographies(detections, layout)
 
     Compute homographies from contour detections:
