@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Video Class &#8212; PyNeon dev documentation</title>
+    <title>Video Class and Mapping Functions &#8212; PyNeon dev documentation</title>
   
   
   
@@ -27,16 +27,16 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=0790524f97105ba85085"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=0790524f97105ba85085" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
 
     <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
@@ -330,7 +330,7 @@
 <li class="toctree-l1"><a class="reference internal" href="stream.html">Stream Class (Gaze, Eye States, IMU)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="events.html">Events Class (Blinks, Fixations, Saccades, Events)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="epochs.html">Epochs Class</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Video Class</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Video Class and Mapping Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utility Functions</a></li>
 </ul>
 </div>
@@ -375,7 +375,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">PyNeon API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Video Class</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Video Class and Mapping Functions</span></li>
   </ul>
 </nav>
 </div>
@@ -392,11 +392,10 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="video-class">
-<h1>Video Class<a class="headerlink" href="#video-class" title="Link to this heading">#</a></h1>
+  <section id="video-class-and-mapping-functions">
+<h1>Video Class and Mapping Functions<a class="headerlink" href="#video-class-and-mapping-functions" title="Link to this heading">#</a></h1>
 <p>This page documents the <a class="reference internal" href="#pyneon.Video" title="pyneon.Video"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyneon.Video</span></code></a> class, which provides an interface for working with video data in PyNeon.
-It also documents the <a class="reference internal" href="#pyneon.find_homographies" title="pyneon.find_homographies"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.find_homographies()</span></code></a> function, which computes homography transformations for video frames
-based on marker and contour layouts.</p>
+It also documents the mapping related functions such as <a class="reference internal" href="#pyneon.find_homographies" title="pyneon.find_homographies"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.find_homographies()</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pyneon.Video">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">Video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyneon.Video" title="Link to this definition">#</a></dt>
@@ -1307,10 +1306,29 @@ by <a class="reference internal" href="#pyneon.Video.detect_markers" title="pyne
 <dt><strong>layout</strong><span class="classifier">pd.DataFrame or np.ndarray</span></dt><dd><p>Layout of markers/contour to provide reference surface coordinates for homography computation.
 The expected format depends on the type of detections:</p>
 <p><strong>Marker detections</strong>: provide a DataFrame (can be visually checked with
-<code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.plot_marker_layout()</span></code>) with following columns:</p>
-<blockquote>
-<div><p>{marker_layout_table}</p>
-</div></blockquote>
+<a class="reference internal" href="#pyneon.plot_marker_layout" title="pyneon.plot_marker_layout"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyneon.plot_marker_layout()</span></code></a>) with following columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>marker name</p></td>
+<td><p>Full marker name (family_id, e.g., “36h11_1”)</p></td>
+</tr>
+<tr class="row-odd"><td><p>size</p></td>
+<td><p>Size of the marker in surface units</p></td>
+</tr>
+<tr class="row-even"><td><p>center x</p></td>
+<td><p>x-coordinate of the marker center in surface coordinates</p></td>
+</tr>
+<tr class="row-odd"><td><p>center y</p></td>
+<td><p>y-coordinate of the marker center in surface coordinates</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p><strong>Contour detections</strong>: provide a 2D numpy array of shape (4, 2)
 containing the surface coordinates of the contour corners in the following order:
 top-left, top-right, bottom-right, bottom-left.</p>
@@ -1339,7 +1357,10 @@ skipped. Defaults to 2.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>{homographies}</dt><dd></dd>
+<dt><strong>homographies</strong><span class="classifier">Stream</span></dt><dd><p>Stream indexed by “timestamp [ns]” with columns “homography (0,0)”
+through “homography (2,2)”, corresponding to the 9 elements of the
+estimated 3x3 homography matrix for each retained frame.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -1361,6 +1382,61 @@ skipped. Defaults to 2.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">homographies</span> <span class="o">=</span> <span class="n">find_homographies</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyneon.plot_marker_layout">
+<span class="sig-prename descclassname"><span class="pre">pyneon.</span></span><span class="sig-name descname"><span class="pre">plot_marker_layout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_marker_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.0)"><span class="pre">Axes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.11.0)"><span class="pre">Figure</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.0)"><span class="pre">Axes</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyneon.plot_marker_layout" title="Link to this definition">#</a></dt>
+<dd><p>Plot a 2D marker layout on a matplotlib axis.</p>
+<p>This renders the marker images on a white canvas using the marker metadata
+in <code class="docutils literal notranslate"><span class="pre">marker_layout</span></code> and overlays marker names at their centers.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>marker_layout</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame describing the spatial layout of the markers on the surface.
+Must contain the following columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>marker name</p></td>
+<td><p>Full marker name (family_id, e.g., “36h11_1”)</p></td>
+</tr>
+<tr class="row-odd"><td><p>size</p></td>
+<td><p>Size of the marker in surface units</p></td>
+</tr>
+<tr class="row-even"><td><p>center x</p></td>
+<td><p>x-coordinate of the marker center in surface coordinates</p></td>
+</tr>
+<tr class="row-odd"><td><p>center y</p></td>
+<td><p>y-coordinate of the marker center in surface coordinates</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+<dt><strong>show_marker_names</strong><span class="classifier">bool</span></dt><dd><p>Whether to overlay marker names at their centers. Defaults to True.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes or None</span></dt><dd><p>Axis to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new figure is created. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>show</strong><span class="classifier">bool</span></dt><dd><p>Show the figure if <code class="docutils literal notranslate"><span class="pre">True</span></code>. Defaults to True.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>fig</strong><span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>Figure instance containing the plot.</p>
+</dd>
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>Axis instance containing the plot.</p>
+</dd>
+<dt>layout: np.ndarray</dt><dd><p>The rendered marker layout as a 2D numpy array (grayscale image).</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -1454,6 +1530,7 @@ skipped. Defaults to 2.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.find_homographies"><code class="docutils literal notranslate"><span class="pre">find_homographies()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyneon.plot_marker_layout"><code class="docutils literal notranslate"><span class="pre">plot_marker_layout()</span></code></a></li>
 </ul>
   </nav></div>
 
@@ -1479,8 +1556,8 @@ skipped. Defaults to 2.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=0790524f97105ba85085"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1514,7 +1591,7 @@ skipped. Defaults to 2.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.18.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
 </p></div>
       
     </div>
