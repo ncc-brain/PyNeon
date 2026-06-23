@@ -132,8 +132,6 @@ def test_detect_markers_invalid_preprocess_preset():
 
 def test_preprocess_false_with_preprocess_params(synthetic_gray):
     """preprocess_params alone (preprocess=False) should still apply the params."""
-    from pyneon.video.marker import preprocess_marker_frame
-
     # When preprocess=False but preprocess_params is supplied to detect_markers,
     # the params dict is used directly (no preset baseline).
     # We can verify the plumbing by calling preprocess_marker_frame directly

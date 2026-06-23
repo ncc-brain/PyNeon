@@ -90,7 +90,9 @@ def preprocess_marker_frame(
     ----------
     gray_frame : numpy.ndarray
         Grayscale input image. ``uint8`` is expected; other numeric dtypes are
-        accepted and will be converted to ``uint8`` before processing.
+        accepted and will be converted to ``uint8`` before processing. Float
+        arrays are clipped to ``[0, 255]`` before conversion to prevent
+        wrap-around truncation for out-of-range values.
     clahe : bool, optional
         Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) for
         local contrast enhancement. Defaults to ``True``.
@@ -123,12 +125,18 @@ def preprocess_marker_frame(
         as ``gray_frame``.
     """
     if gray_frame.dtype != np.uint8:
+        # For float inputs, clip to [0, 255] before converting to avoid
+        # wrap-around truncation for out-of-range values.
+        if np.issubdtype(gray_frame.dtype, np.floating):
+            gray_frame = np.clip(gray_frame, 0, 255)
         gray_frame = gray_frame.astype(np.uint8)
 
     img = gray_frame.copy()
 
     if clip_highlights:
         high = np.percentile(img, highlight_percentile)
+        # Guard against a degenerate all-black image where the percentile
+        # would be 0, which would cause cv2.normalize to divide by zero.
         high = max(float(high), 1.0)
         img = np.clip(img, 0, high)
         img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
