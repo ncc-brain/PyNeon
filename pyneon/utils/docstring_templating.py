@@ -175,7 +175,8 @@ preprocess : str or None, optional
 
     Accepted values:
 
-    - ``"mild"`` (default): balanced general-purpose preset.
+    - ``"mild"`` (default): moderate CLAHE, highlight clipping, light blur,
+      and sharpening for general indoor recordings.
     - ``"strong_highlight_clipping"``: use stronger highlight compression
       before detection.
     - ``"strong_local_contrast"``: use stronger local contrast enhancement.

@@ -124,7 +124,13 @@ def test_detect_markers_invalid_preprocess_preset():
     from pyneon.video.marker import detect_markers
 
     mock_video = MagicMock()
-    with pytest.raises(ValueError, match="Unknown preprocess preset"):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Unknown preprocess preset.*Available presets:.*"
+            "Pass preprocess=None to disable preprocessing."
+        ),
+    ):
         detect_markers(mock_video, "36h11", preprocess="nonexistent_preset")
 
 

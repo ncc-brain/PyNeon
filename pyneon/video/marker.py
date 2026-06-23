@@ -80,7 +80,7 @@ def preprocess_marker_frame(
     1. Highlight clipping / compression (optional)
     2. Local contrast enhancement via CLAHE (optional)
     3. Mild Gaussian smoothing (optional, ``gaussian_blur_sigma > 0``)
-    4. Unsharp-mask sharpening (optional)
+    4. Unsharp mask sharpening (optional)
 
     Parameters
     ----------
@@ -98,7 +98,7 @@ def preprocess_marker_frame(
         ``clahe_clip_limit=None`` to skip the CLAHE step. Defaults to ``(8, 8)``.
     highlight_percentile : float or None, optional
         Upper percentile used to compress very bright highlights before
-        re-normalising to the full 0–255 range. Set to ``None`` to skip
+        renormalizing to the full 0–255 range. Set to ``None`` to skip
         highlight clipping. Defaults to ``99.5``.
     gaussian_blur_sigma : float or None, optional
         Standard deviation for mild Gaussian smoothing applied before
