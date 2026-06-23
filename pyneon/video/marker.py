@@ -89,7 +89,8 @@ def preprocess_marker_frame(
     Parameters
     ----------
     gray_frame : numpy.ndarray
-        Grayscale ``uint8`` input image.
+        Grayscale input image. ``uint8`` is expected; other numeric dtypes are
+        accepted and will be converted to ``uint8`` before processing.
     clahe : bool, optional
         Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) for
         local contrast enhancement. Defaults to ``True``.
