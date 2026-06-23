@@ -167,7 +167,7 @@ undistort : bool, optional
     If True, undistorts frames before detection, which can improve detection
     performance, then redistorts detected points. Returned coordinates remain
     in the original (distorted) video frame. Defaults to ``False``.
-preprocess : bool or str, optional
+preprocess : str or None, optional
     Enable a grayscale preprocessing stage applied after optional undistortion
     and before marker detection. Preprocessing can improve robustness under
     challenging conditions such as low contrast, uneven illumination, or
@@ -175,22 +175,30 @@ preprocess : bool or str, optional
 
     Accepted values:
 
-    - ``False`` (default): no preprocessing; current behaviour is preserved.
-    - ``True``: apply the ``"mild"`` preset (CLAHE + highlight clipping +
-      light blur + unsharp mask).
-    - ``"mild"``: balanced general-purpose preset.
-    - ``"ir"``: stronger highlight clipping for IR-emitter hotspots.
-    - ``"low_light"``: more aggressive CLAHE for dim scenes.
+    - ``"mild"`` (default): balanced general-purpose preset.
+    - ``"strong_highlight_clipping"``: use stronger highlight compression
+      before detection.
+    - ``"strong_local_contrast"``: use stronger local contrast enhancement.
+    - ``None``: disable preprocessing.
 
     Individual preprocessing parameters can be further overridden via
-    ``preprocess_params``. Defaults to ``False``.
+    ``preprocess_params``. Defaults to ``"mild"``.
 preprocess_params : dict or None, optional
     Keyword arguments forwarded to
     :func:`~pyneon.video.marker.preprocess_marker_frame` that override the
-    values of the active preset (or set values when ``preprocess=False``).
-    Allowed keys are: ``clahe``, ``clahe_clip_limit``,
-    ``clahe_tile_grid_size``, ``clip_highlights``, ``highlight_percentile``,
-    ``gaussian_blur_sigma``, ``sharpen``, ``sharpen_amount``.
+    values of the active preset (or define a fully custom configuration when
+    ``preprocess=None``). Allowed keys are:
+
+    - ``clahe_clip_limit``: CLAHE strength; set to ``None`` to skip CLAHE.
+    - ``clahe_tile_grid_size``: CLAHE tile size.
+    - ``highlight_percentile``: percentile used for highlight clipping; set
+      to ``None`` to skip highlight clipping.
+    - ``gaussian_blur_sigma``: Gaussian smoothing strength; set to ``None``
+      or ``0`` to skip smoothing.
+    - ``sharpen_amount``: unsharp-mask strength; set to ``None`` to skip
+      sharpening.
+
+    Use these parameters to tune preprocessing explicitly for a given dataset.
     Defaults to ``None``.
 """
 

@@ -24,37 +24,28 @@ if TYPE_CHECKING:
 #: Built-in preprocessing presets for :func:`detect_markers`.
 #:
 #: Each preset is a dict of keyword arguments forwarded to
-#: :func:`preprocess_marker_frame`.  Pass the preset name as
+#: :func:`preprocess_marker_frame`. Pass the preset name as
 #: ``preprocess="mild"`` (etc.) to :func:`detect_markers`.
 PREPROCESS_PRESETS: dict[str, dict] = {
     "mild": {
-        "clahe": True,
         "clahe_clip_limit": 2.0,
         "clahe_tile_grid_size": (8, 8),
-        "clip_highlights": True,
         "highlight_percentile": 99.5,
         "gaussian_blur_sigma": 0.8,
-        "sharpen": True,
         "sharpen_amount": 1.0,
     },
-    "ir": {
-        "clahe": True,
+    "strong_highlight_clipping": {
         "clahe_clip_limit": 2.0,
         "clahe_tile_grid_size": (8, 8),
-        "clip_highlights": True,
         "highlight_percentile": 99.0,
         "gaussian_blur_sigma": 1.0,
-        "sharpen": True,
         "sharpen_amount": 0.6,
     },
-    "low_light": {
-        "clahe": True,
+    "strong_local_contrast": {
         "clahe_clip_limit": 2.5,
         "clahe_tile_grid_size": (8, 8),
-        "clip_highlights": False,
-        "highlight_percentile": 99.5,
+        "highlight_percentile": None,
         "gaussian_blur_sigma": 0.6,
-        "sharpen": True,
         "sharpen_amount": 1.0,
     },
 }
@@ -63,14 +54,11 @@ PREPROCESS_PRESETS: dict[str, dict] = {
 def preprocess_marker_frame(
     gray_frame: np.ndarray,
     *,
-    clahe: bool = True,
-    clahe_clip_limit: float = 2.0,
-    clahe_tile_grid_size: tuple[int, int] = (8, 8),
-    clip_highlights: bool = True,
-    highlight_percentile: float = 99.5,
-    gaussian_blur_sigma: float = 0.8,
-    sharpen: bool = True,
-    sharpen_amount: float = 1.0,
+    clahe_clip_limit: float | None = 2.0,
+    clahe_tile_grid_size: tuple[int, int] | None = (8, 8),
+    highlight_percentile: float | None = 99.5,
+    gaussian_blur_sigma: float | None = 0.8,
+    sharpen_amount: float | None = 1.0,
 ) -> np.ndarray:
     """Preprocess a grayscale frame to improve AprilTag / ArUco detection.
 
@@ -93,30 +81,24 @@ def preprocess_marker_frame(
         accepted and will be converted to ``uint8`` before processing. Float
         arrays are clipped to ``[0, 255]`` before conversion to prevent
         wrap-around truncation for out-of-range values.
-    clahe : bool, optional
-        Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) for
-        local contrast enhancement. Defaults to ``True``.
-    clahe_clip_limit : float, optional
+    clahe_clip_limit : float or None, optional
         Clip limit for CLAHE. Higher values give stronger enhancement but
-        more noise amplification. Defaults to ``2.0``.
-    clahe_tile_grid_size : tuple[int, int], optional
-        Tile grid size for CLAHE. Defaults to ``(8, 8)``.
-    clip_highlights : bool, optional
-        Compress very bright highlights (e.g., IR emitter hotspots) by
-        clipping pixel values above ``highlight_percentile`` and
-        re-normalising to the full 0–255 range. Defaults to ``True``.
-    highlight_percentile : float, optional
-        Percentile used as the upper clip boundary when
-        ``clip_highlights=True``. Defaults to ``99.5``.
-    gaussian_blur_sigma : float, optional
+        more noise amplification. Set to ``None`` to skip the CLAHE step.
+        Defaults to ``2.0``.
+    clahe_tile_grid_size : tuple[int, int] or None, optional
+        Tile grid size for CLAHE. Set to ``None`` together with
+        ``clahe_clip_limit=None`` to skip the CLAHE step. Defaults to ``(8, 8)``.
+    highlight_percentile : float or None, optional
+        Upper percentile used to compress very bright highlights before
+        re-normalising to the full 0–255 range. Set to ``None`` to skip
+        highlight clipping. Defaults to ``99.5``.
+    gaussian_blur_sigma : float or None, optional
         Standard deviation for mild Gaussian smoothing applied before
-        sharpening. Set to ``0`` to disable. Defaults to ``0.8``.
-    sharpen : bool, optional
-        Apply unsharp masking to recover edge contrast after smoothing.
-        Defaults to ``True``.
-    sharpen_amount : float, optional
-        Strength of the unsharp mask (higher = more sharpening).
-        Defaults to ``1.0``.
+        sharpening. Set to ``None`` or ``0`` to skip smoothing.
+        Defaults to ``0.8``.
+    sharpen_amount : float or None, optional
+        Strength of the unsharp mask (higher = more sharpening). Set to
+        ``None`` to skip sharpening. Defaults to ``1.0``.
 
     Returns
     -------
@@ -133,7 +115,7 @@ def preprocess_marker_frame(
 
     img = gray_frame.copy()
 
-    if clip_highlights:
+    if highlight_percentile is not None:
         high = np.percentile(img, highlight_percentile)
         # Guard against a degenerate all-black image where the percentile
         # would be 0, which would cause cv2.normalize to divide by zero.
@@ -141,7 +123,7 @@ def preprocess_marker_frame(
         img = np.clip(img, 0, high)
         img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
-    if clahe:
+    if clahe_clip_limit is not None and clahe_tile_grid_size is not None:
         clahe_op = cv2.createCLAHE(
             clipLimit=clahe_clip_limit,
             tileGridSize=clahe_tile_grid_size,
@@ -149,10 +131,10 @@ def preprocess_marker_frame(
         img = clahe_op.apply(img)
 
     blurred = img
-    if gaussian_blur_sigma and gaussian_blur_sigma > 0:
+    if gaussian_blur_sigma is not None and gaussian_blur_sigma > 0:
         blurred = cv2.GaussianBlur(img, (0, 0), gaussian_blur_sigma)
 
-    if sharpen:
+    if sharpen_amount is not None:
         img_f = img.astype(np.float32)
         blurred_f = blurred.astype(np.float32)
         sharp = img_f + sharpen_amount * (img_f - blurred_f)
@@ -229,8 +211,8 @@ def detect_markers(
     processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
     undistort: bool = False,
-    preprocess: bool | str = False,
-    preprocess_params: Optional[dict] = None,
+    preprocess: str | None = "mild",
+    preprocess_params: dict | None = None,
 ) -> Stream:
     """
     Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
@@ -262,14 +244,14 @@ def detect_markers(
         raise ValueError("step must be >= 1")
 
     # Resolve preprocessing configuration
-    _pp_kwargs: Optional[dict] = None
-    if preprocess is not False:
-        preset_name = "mild" if preprocess is True else preprocess
+    _pp_kwargs: dict | None = None
+    if preprocess is not None:
+        preset_name = preprocess
         if preset_name not in PREPROCESS_PRESETS:
             raise ValueError(
                 f"Unknown preprocess preset '{preset_name}'. "
                 f"Available presets: {list(PREPROCESS_PRESETS)}. "
-                "Pass preprocess=False to disable preprocessing."
+                "Pass preprocess=None to disable preprocessing."
             )
         _pp_kwargs = dict(PREPROCESS_PRESETS[preset_name])
         if preprocess_params:

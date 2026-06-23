@@ -87,10 +87,11 @@ def test_preprocess_noop_preserves_image(synthetic_gray):
     """With all stages disabled the output should equal the input."""
     out = preprocess_marker_frame(
         synthetic_gray,
-        clahe=False,
-        clip_highlights=False,
-        gaussian_blur_sigma=0,
-        sharpen=False,
+        clahe_clip_limit=None,
+        clahe_tile_grid_size=None,
+        highlight_percentile=None,
+        gaussian_blur_sigma=None,
+        sharpen_amount=None,
     )
     np.testing.assert_array_equal(out, synthetic_gray)
 
@@ -106,13 +107,10 @@ def test_preprocess_all_presets(synthetic_gray, preset_name):
 def test_preprocess_custom_params(synthetic_gray):
     out = preprocess_marker_frame(
         synthetic_gray,
-        clahe=True,
         clahe_clip_limit=3.0,
         clahe_tile_grid_size=(4, 4),
-        clip_highlights=True,
         highlight_percentile=95.0,
         gaussian_blur_sigma=1.5,
-        sharpen=True,
         sharpen_amount=0.5,
     )
     assert out.shape == synthetic_gray.shape
@@ -130,13 +128,63 @@ def test_detect_markers_invalid_preprocess_preset():
         detect_markers(mock_video, "36h11", preprocess="nonexistent_preset")
 
 
-def test_preprocess_false_with_preprocess_params(synthetic_gray):
-    """preprocess_params alone (preprocess=False) should still apply the params."""
-    # When preprocess=False but preprocess_params is supplied to detect_markers,
+def test_preprocess_params_without_preset(synthetic_gray):
+    """preprocess_params alone (preprocess=None) should still apply the params."""
+    # When preprocess=None but preprocess_params is supplied to detect_markers,
     # the params dict is used directly (no preset baseline).
     # We can verify the plumbing by calling preprocess_marker_frame directly
     # with the same kwargs that would be forwarded in that code path.
-    params = {"clahe": True, "clip_highlights": False, "sharpen": False}
+    params = {
+        "clahe_clip_limit": 2.0,
+        "clahe_tile_grid_size": (8, 8),
+        "highlight_percentile": None,
+        "sharpen_amount": None,
+    }
     out = preprocess_marker_frame(synthetic_gray, **params)
     assert out.shape == synthetic_gray.shape
     assert out.dtype == np.uint8
+
+
+def test_detect_markers_defaults_to_mild_preprocessing(monkeypatch):
+    from pyneon.video import marker
+
+    class FakeDetector:
+        def detectMarkers(self, gray_frame):
+            corners = [
+                np.array(
+                    [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]],
+                    dtype=np.float32,
+                )
+            ]
+            ids = np.array([[1]], dtype=np.int32)
+            return corners, ids, None
+
+    class FakeVideo:
+        ts = np.array([123], dtype=np.int64)
+
+        def reset(self):
+            return None
+
+        def read_frame_at(self, frame_index):
+            return np.zeros((4, 4, 3), dtype=np.uint8)
+
+    captured_kwargs = {}
+
+    def fake_preprocess(gray_frame, **kwargs):
+        captured_kwargs.update(kwargs)
+        return gray_frame
+
+    monkeypatch.setattr(
+        marker, "marker_family_to_dict", lambda family: ("april", object())
+    )
+    monkeypatch.setattr(marker, "resolve_processing_window", lambda *args: (0, 0))
+    monkeypatch.setattr(marker, "preprocess_marker_frame", fake_preprocess)
+    monkeypatch.setattr(cv2.aruco, "ArucoDetector", lambda *args: FakeDetector())
+
+    marker.detect_markers(
+        FakeVideo(),
+        "36h11",
+        detector_parameters=object(),
+    )
+
+    assert captured_kwargs == PREPROCESS_PRESETS["mild"]

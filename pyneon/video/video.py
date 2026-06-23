@@ -630,8 +630,8 @@ Effective FPS: {self.fps:.2f}
         processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
         detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
         undistort: bool = False,
-        preprocess: bool | str = False,
-        preprocess_params: Optional[dict] = None,
+        preprocess: str | None = "mild",
+        preprocess_params: dict | None = None,
     ) -> Stream:
         """
         Detect fiducial markers (AprilTag or ArUco) in the video frames.
