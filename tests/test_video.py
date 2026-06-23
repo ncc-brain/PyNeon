@@ -155,7 +155,7 @@ def test_detect_markers_defaults_to_mild_preset(monkeypatch):
     from pyneon.video import marker
 
     class FakeDetector:
-        def detectMarkers(self, gray_frame):
+        def detect_markers(self, gray_frame):
             corners = [
                 np.array(
                     [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]],
@@ -164,6 +164,8 @@ def test_detect_markers_defaults_to_mild_preset(monkeypatch):
             ]
             ids = np.array([[1]], dtype=np.int32)
             return corners, ids, None
+
+        detectMarkers = detect_markers
 
     class FakeVideo:
         ts = np.array([123], dtype=np.int64)

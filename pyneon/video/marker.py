@@ -120,6 +120,8 @@ def preprocess_marker_frame(
     return img
 
 
+# Capture preprocess_marker_frame's literal defaults so the "mild" preset
+# stays aligned with the public API without duplicating those values manually.
 DEFAULT_PREPROCESS_PARAMS = {
     name: parameter.default
     for name, parameter in inspect.signature(preprocess_marker_frame).parameters.items()
@@ -249,7 +251,7 @@ def detect_markers(
         raise ValueError("step must be >= 1")
 
     # Resolve preprocessing configuration
-    preprocess_kwargs: dict | None = None
+    preprocessing_config: dict | None = None
     if preprocess is not None:
         preset_name = preprocess
         if preset_name not in PREPROCESS_PRESETS:
@@ -258,11 +260,11 @@ def detect_markers(
                 f"Available presets: {list(PREPROCESS_PRESETS)}. "
                 "Pass preprocess=None to disable preprocessing."
             )
-        preprocess_kwargs = dict(PREPROCESS_PRESETS[preset_name])
+        preprocessing_config = dict(PREPROCESS_PRESETS[preset_name])
         if preprocess_params:
-            preprocess_kwargs.update(preprocess_params)
+            preprocessing_config.update(preprocess_params)
     elif preprocess_params:
-        preprocess_kwargs = dict(preprocess_params)
+        preprocessing_config = dict(preprocess_params)
 
     start_frame_idx, end_frame_idx = resolve_processing_window(
         video,
@@ -323,8 +325,8 @@ def detect_markers(
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if undistort:
             gray_frame = video.undistort_frame(gray_frame)
-        if preprocess_kwargs is not None:
-            gray_frame = preprocess_marker_frame(gray_frame, **preprocess_kwargs)
+        if preprocessing_config is not None:
+            gray_frame = preprocess_marker_frame(gray_frame, **preprocessing_config)
         records = _process_frame(frame_index, gray_frame)
         detected_markers.extend(records)
 
