@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import pytest
 
+from pyneon.video.marker import PREPROCESS_PRESETS, preprocess_marker_frame
+
 
 @pytest.mark.parametrize(
     "dataset_fixture",
@@ -54,3 +56,75 @@ def test_video_basics(request, dataset_fixture):
                 eye_video.close()
             if video is not None:
                 video.close()
+
+
+# ---------------------------------------------------------------------------
+# Unit tests for preprocess_marker_frame
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def synthetic_gray():
+    """A deterministic synthetic grayscale uint8 image."""
+    rng = np.random.default_rng(42)
+    return rng.integers(0, 256, (480, 640), dtype=np.uint8)
+
+
+def test_preprocess_returns_uint8_same_shape(synthetic_gray):
+    out = preprocess_marker_frame(synthetic_gray)
+    assert out.shape == synthetic_gray.shape
+    assert out.dtype == np.uint8
+
+
+def test_preprocess_float_input_accepted(synthetic_gray):
+    img_float = synthetic_gray.astype(np.float32)
+    out = preprocess_marker_frame(img_float)
+    assert out.dtype == np.uint8
+    assert out.shape == synthetic_gray.shape
+
+
+def test_preprocess_noop_preserves_image(synthetic_gray):
+    """With all stages disabled the output should equal the input."""
+    out = preprocess_marker_frame(
+        synthetic_gray,
+        clahe=False,
+        clip_highlights=False,
+        gaussian_blur_sigma=0,
+        sharpen=False,
+    )
+    np.testing.assert_array_equal(out, synthetic_gray)
+
+
+@pytest.mark.parametrize("preset_name", list(PREPROCESS_PRESETS))
+def test_preprocess_all_presets(synthetic_gray, preset_name):
+    params = PREPROCESS_PRESETS[preset_name]
+    out = preprocess_marker_frame(synthetic_gray, **params)
+    assert out.shape == synthetic_gray.shape
+    assert out.dtype == np.uint8
+
+
+def test_preprocess_custom_params(synthetic_gray):
+    out = preprocess_marker_frame(
+        synthetic_gray,
+        clahe=True,
+        clahe_clip_limit=3.0,
+        clahe_tile_grid_size=(4, 4),
+        clip_highlights=True,
+        highlight_percentile=95.0,
+        gaussian_blur_sigma=1.5,
+        sharpen=True,
+        sharpen_amount=0.5,
+    )
+    assert out.shape == synthetic_gray.shape
+    assert out.dtype == np.uint8
+
+
+def test_detect_markers_invalid_preprocess_preset():
+    """detect_markers should raise for an unknown preset name."""
+    from unittest.mock import MagicMock
+
+    from pyneon.video.marker import detect_markers
+
+    mock_video = MagicMock()
+    with pytest.raises(ValueError, match="Unknown preprocess preset"):
+        detect_markers(mock_video, "36h11", preprocess="nonexistent_preset")

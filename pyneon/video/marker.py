@@ -21,6 +21,139 @@ if TYPE_CHECKING:
     from .video import Video
 
 
+#: Built-in preprocessing presets for :func:`detect_markers`.
+#:
+#: Each preset is a dict of keyword arguments forwarded to
+#: :func:`preprocess_marker_frame`.  Pass the preset name as
+#: ``preprocess="mild"`` (etc.) to :func:`detect_markers`.
+PREPROCESS_PRESETS: dict[str, dict] = {
+    "mild": {
+        "clahe": True,
+        "clahe_clip_limit": 2.0,
+        "clahe_tile_grid_size": (8, 8),
+        "clip_highlights": True,
+        "highlight_percentile": 99.5,
+        "gaussian_blur_sigma": 0.8,
+        "sharpen": True,
+        "sharpen_amount": 1.0,
+    },
+    "ir": {
+        "clahe": True,
+        "clahe_clip_limit": 2.0,
+        "clahe_tile_grid_size": (8, 8),
+        "clip_highlights": True,
+        "highlight_percentile": 99.0,
+        "gaussian_blur_sigma": 1.0,
+        "sharpen": True,
+        "sharpen_amount": 0.6,
+    },
+    "low_light": {
+        "clahe": True,
+        "clahe_clip_limit": 2.5,
+        "clahe_tile_grid_size": (8, 8),
+        "clip_highlights": False,
+        "highlight_percentile": 99.5,
+        "gaussian_blur_sigma": 0.6,
+        "sharpen": True,
+        "sharpen_amount": 1.0,
+    },
+}
+
+
+def preprocess_marker_frame(
+    gray_frame: np.ndarray,
+    *,
+    clahe: bool = True,
+    clahe_clip_limit: float = 2.0,
+    clahe_tile_grid_size: tuple[int, int] = (8, 8),
+    clip_highlights: bool = True,
+    highlight_percentile: float = 99.5,
+    gaussian_blur_sigma: float = 0.8,
+    sharpen: bool = True,
+    sharpen_amount: float = 1.0,
+) -> np.ndarray:
+    """Preprocess a grayscale frame to improve AprilTag / ArUco detection.
+
+    Applies a lightweight pipeline intended to help with low-contrast,
+    unevenly illuminated, or IR-contaminated scenes. All operations use
+    OpenCV/NumPy only and return a ``uint8`` grayscale image compatible
+    with :func:`cv2.aruco.ArucoDetector.detectMarkers`.
+
+    The processing order is:
+
+    1. Highlight clipping / compression (optional)
+    2. Local contrast enhancement via CLAHE (optional)
+    3. Mild Gaussian smoothing (optional, ``gaussian_blur_sigma > 0``)
+    4. Unsharp-mask sharpening (optional)
+
+    Parameters
+    ----------
+    gray_frame : numpy.ndarray
+        Grayscale ``uint8`` input image.
+    clahe : bool, optional
+        Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) for
+        local contrast enhancement. Defaults to ``True``.
+    clahe_clip_limit : float, optional
+        Clip limit for CLAHE. Higher values give stronger enhancement but
+        more noise amplification. Defaults to ``2.0``.
+    clahe_tile_grid_size : tuple[int, int], optional
+        Tile grid size for CLAHE. Defaults to ``(8, 8)``.
+    clip_highlights : bool, optional
+        Compress very bright highlights (e.g., IR emitter hotspots) by
+        clipping pixel values above ``highlight_percentile`` and
+        re-normalising to the full 0–255 range. Defaults to ``True``.
+    highlight_percentile : float, optional
+        Percentile used as the upper clip boundary when
+        ``clip_highlights=True``. Defaults to ``99.5``.
+    gaussian_blur_sigma : float, optional
+        Standard deviation for mild Gaussian smoothing applied before
+        sharpening. Set to ``0`` to disable. Defaults to ``0.8``.
+    sharpen : bool, optional
+        Apply unsharp masking to recover edge contrast after smoothing.
+        Defaults to ``True``.
+    sharpen_amount : float, optional
+        Strength of the unsharp mask (higher = more sharpening).
+        Defaults to ``1.0``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Preprocessed grayscale ``uint8`` image of the same spatial size
+        as ``gray_frame``.
+    """
+    if gray_frame.dtype != np.uint8:
+        gray_frame = gray_frame.astype(np.uint8)
+
+    img = gray_frame.copy()
+
+    if clip_highlights:
+        high = np.percentile(img, highlight_percentile)
+        high = max(float(high), 1.0)
+        img = np.clip(img, 0, high)
+        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+    if clahe:
+        clahe_op = cv2.createCLAHE(
+            clipLimit=clahe_clip_limit,
+            tileGridSize=clahe_tile_grid_size,
+        )
+        img = clahe_op.apply(img)
+
+    blurred = img
+    if gaussian_blur_sigma and gaussian_blur_sigma > 0:
+        blurred = cv2.GaussianBlur(img, (0, 0), gaussian_blur_sigma)
+
+    if sharpen:
+        img_f = img.astype(np.float32)
+        blurred_f = blurred.astype(np.float32)
+        sharp = img_f + sharpen_amount * (img_f - blurred_f)
+        img = np.clip(sharp, 0, 255).astype(np.uint8)
+    else:
+        img = blurred
+
+    return img
+
+
 def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
     # AprilTags
     if marker_family in APRILTAG_FAMILIES:
@@ -87,6 +220,8 @@ def detect_markers(
     processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
     undistort: bool = False,
+    preprocess: bool | str = False,
+    preprocess_params: Optional[dict] = None,
 ) -> Stream:
     """
     Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
@@ -116,6 +251,22 @@ def detect_markers(
 
     if step < 1:
         raise ValueError("step must be >= 1")
+
+    # Resolve preprocessing configuration
+    _pp_kwargs: Optional[dict] = None
+    if preprocess is not False:
+        preset_name = "mild" if preprocess is True else preprocess
+        if preset_name not in PREPROCESS_PRESETS:
+            raise ValueError(
+                f"Unknown preprocess preset '{preset_name}'. "
+                f"Available presets: {list(PREPROCESS_PRESETS)}. "
+                "Pass preprocess=False to disable preprocessing."
+            )
+        _pp_kwargs = dict(PREPROCESS_PRESETS[preset_name])
+        if preprocess_params:
+            _pp_kwargs.update(preprocess_params)
+    elif preprocess_params:
+        _pp_kwargs = dict(preprocess_params)
 
     start_frame_idx, end_frame_idx = resolve_processing_window(
         video,
@@ -176,6 +327,8 @@ def detect_markers(
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if undistort:
             gray_frame = video.undistort_frame(gray_frame)
+        if _pp_kwargs is not None:
+            gray_frame = preprocess_marker_frame(gray_frame, **_pp_kwargs)
         records = _process_frame(frame_index, gray_frame)
         detected_markers.extend(records)
 

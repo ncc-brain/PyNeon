@@ -15,7 +15,7 @@ See :class:`Video` documentation for details on using the ``_cap`` attribute saf
 from .detect_contour import detect_contour
 from .estimate_pose import estimate_camera_pose
 from .homography import find_homographies
-from .marker import detect_markers
+from .marker import PREPROCESS_PRESETS, detect_markers, preprocess_marker_frame
 from .scanpath import estimate_scanpath
 from .video import Video
 
@@ -23,6 +23,8 @@ __all__ = [
     "Video",
     "estimate_scanpath",
     "detect_markers",
+    "preprocess_marker_frame",
+    "PREPROCESS_PRESETS",
     "detect_contour",
     "estimate_camera_pose",
     "find_homographies",
