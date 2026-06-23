@@ -21,32 +21,40 @@ if TYPE_CHECKING:
     from .video import Video
 
 
+DEFAULT_CLAHE_CLIP_LIMIT = 2.0
+DEFAULT_CLAHE_TILE_GRID_SIZE = (8, 8)
+DEFAULT_HIGHLIGHT_PERCENTILE = 99.5
+DEFAULT_GAUSSIAN_BLUR_SIGMA = 0.8
+DEFAULT_SHARPEN_AMOUNT = 1.0
+
+DEFAULT_PREPROCESS_PARAMS = {
+    "clahe_clip_limit": DEFAULT_CLAHE_CLIP_LIMIT,
+    "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
+    "highlight_percentile": DEFAULT_HIGHLIGHT_PERCENTILE,
+    "gaussian_blur_sigma": DEFAULT_GAUSSIAN_BLUR_SIGMA,
+    "sharpen_amount": DEFAULT_SHARPEN_AMOUNT,
+}
+
 #: Built-in preprocessing presets for :func:`detect_markers`.
 #:
 #: Each preset is a dict of keyword arguments forwarded to
 #: :func:`preprocess_marker_frame`. Pass the preset name as
 #: ``preprocess="mild"`` (etc.) to :func:`detect_markers`.
 PREPROCESS_PRESETS: dict[str, dict] = {
-    "mild": {
-        "clahe_clip_limit": 2.0,
-        "clahe_tile_grid_size": (8, 8),
-        "highlight_percentile": 99.5,
-        "gaussian_blur_sigma": 0.8,
-        "sharpen_amount": 1.0,
-    },
+    "mild": dict(DEFAULT_PREPROCESS_PARAMS),
     "strong_highlight_clipping": {
-        "clahe_clip_limit": 2.0,
-        "clahe_tile_grid_size": (8, 8),
+        "clahe_clip_limit": DEFAULT_CLAHE_CLIP_LIMIT,
+        "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
         "highlight_percentile": 99.0,
         "gaussian_blur_sigma": 1.0,
         "sharpen_amount": 0.6,
     },
     "strong_local_contrast": {
         "clahe_clip_limit": 2.5,
-        "clahe_tile_grid_size": (8, 8),
+        "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
         "highlight_percentile": None,
         "gaussian_blur_sigma": 0.6,
-        "sharpen_amount": 1.0,
+        "sharpen_amount": DEFAULT_SHARPEN_AMOUNT,
     },
 }
 
@@ -54,11 +62,11 @@ PREPROCESS_PRESETS: dict[str, dict] = {
 def preprocess_marker_frame(
     gray_frame: np.ndarray,
     *,
-    clahe_clip_limit: float | None = 2.0,
-    clahe_tile_grid_size: tuple[int, int] | None = (8, 8),
-    highlight_percentile: float | None = 99.5,
-    gaussian_blur_sigma: float | None = 0.8,
-    sharpen_amount: float | None = 1.0,
+    clahe_clip_limit: float | None = DEFAULT_CLAHE_CLIP_LIMIT,
+    clahe_tile_grid_size: tuple[int, int] | None = DEFAULT_CLAHE_TILE_GRID_SIZE,
+    highlight_percentile: float | None = DEFAULT_HIGHLIGHT_PERCENTILE,
+    gaussian_blur_sigma: float | None = DEFAULT_GAUSSIAN_BLUR_SIGMA,
+    sharpen_amount: float | None = DEFAULT_SHARPEN_AMOUNT,
 ) -> np.ndarray:
     """Preprocess a grayscale frame to improve AprilTag / ArUco detection.
 
@@ -244,7 +252,7 @@ def detect_markers(
         raise ValueError("step must be >= 1")
 
     # Resolve preprocessing configuration
-    _pp_kwargs: dict | None = None
+    preprocess_kwargs: dict | None = None
     if preprocess is not None:
         preset_name = preprocess
         if preset_name not in PREPROCESS_PRESETS:
@@ -253,11 +261,11 @@ def detect_markers(
                 f"Available presets: {list(PREPROCESS_PRESETS)}. "
                 "Pass preprocess=None to disable preprocessing."
             )
-        _pp_kwargs = dict(PREPROCESS_PRESETS[preset_name])
+        preprocess_kwargs = dict(PREPROCESS_PRESETS[preset_name])
         if preprocess_params:
-            _pp_kwargs.update(preprocess_params)
+            preprocess_kwargs.update(preprocess_params)
     elif preprocess_params:
-        _pp_kwargs = dict(preprocess_params)
+        preprocess_kwargs = dict(preprocess_params)
 
     start_frame_idx, end_frame_idx = resolve_processing_window(
         video,
@@ -318,8 +326,8 @@ def detect_markers(
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if undistort:
             gray_frame = video.undistort_frame(gray_frame)
-        if _pp_kwargs is not None:
-            gray_frame = preprocess_marker_frame(gray_frame, **_pp_kwargs)
+        if preprocess_kwargs is not None:
+            gray_frame = preprocess_marker_frame(gray_frame, **preprocess_kwargs)
         records = _process_frame(frame_index, gray_frame)
         detected_markers.extend(records)
 

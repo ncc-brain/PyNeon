@@ -145,7 +145,9 @@ def test_preprocess_params_without_preset(synthetic_gray):
     assert out.dtype == np.uint8
 
 
-def test_detect_markers_defaults_to_mild_preprocessing(monkeypatch):
+def test_detect_markers_uses_mild_preprocessing_when_preset_not_specified(
+    monkeypatch,
+):
     from pyneon.video import marker
 
     class FakeDetector:
