@@ -1,3 +1,4 @@
+import inspect
 import re
 from typing import TYPE_CHECKING, Literal, Optional, Tuple
 
@@ -19,45 +20,6 @@ from .variables import (
 
 if TYPE_CHECKING:
     from .video import Video
-
-
-DEFAULT_CLAHE_CLIP_LIMIT = 2.0
-DEFAULT_CLAHE_TILE_GRID_SIZE = (8, 8)
-DEFAULT_HIGHLIGHT_PERCENTILE = 99.5
-DEFAULT_GAUSSIAN_BLUR_SIGMA = 0.8
-DEFAULT_SHARPEN_AMOUNT = 1.0
-
-# Keep this in sync with preprocess_marker_frame defaults.
-DEFAULT_PREPROCESS_PARAMS = {
-    "clahe_clip_limit": DEFAULT_CLAHE_CLIP_LIMIT,
-    "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
-    "highlight_percentile": DEFAULT_HIGHLIGHT_PERCENTILE,
-    "gaussian_blur_sigma": DEFAULT_GAUSSIAN_BLUR_SIGMA,
-    "sharpen_amount": DEFAULT_SHARPEN_AMOUNT,
-}
-
-#: Built-in preprocessing presets for :func:`detect_markers`.
-#:
-#: Each preset is a dict of keyword arguments forwarded to
-#: :func:`preprocess_marker_frame`. Pass the preset name as
-#: ``preprocess="mild"`` (etc.) to :func:`detect_markers`.
-PREPROCESS_PRESETS: dict[str, dict] = {
-    "mild": dict(DEFAULT_PREPROCESS_PARAMS),
-    "strong_highlight_clipping": {
-        "clahe_clip_limit": DEFAULT_CLAHE_CLIP_LIMIT,
-        "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
-        "highlight_percentile": 99.0,
-        "gaussian_blur_sigma": 1.0,
-        "sharpen_amount": 0.6,
-    },
-    "strong_local_contrast": {
-        "clahe_clip_limit": 2.5,
-        "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
-        "highlight_percentile": None,
-        "gaussian_blur_sigma": 0.6,
-        "sharpen_amount": DEFAULT_SHARPEN_AMOUNT,
-    },
-}
 
 
 def preprocess_marker_frame(
@@ -156,6 +118,36 @@ def preprocess_marker_frame(
         img = blurred
 
     return img
+
+
+DEFAULT_PREPROCESS_PARAMS = {
+    name: parameter.default
+    for name, parameter in inspect.signature(preprocess_marker_frame).parameters.items()
+    if name != "gray_frame"
+}
+
+#: Built-in preprocessing presets for :func:`detect_markers`.
+#:
+#: Each preset is a dict of keyword arguments forwarded to
+#: :func:`preprocess_marker_frame`. Pass the preset name as
+#: ``preprocess="mild"`` (etc.) to :func:`detect_markers`.
+PREPROCESS_PRESETS: dict[str, dict] = {
+    "mild": dict(DEFAULT_PREPROCESS_PARAMS),
+    "strong_highlight_clipping": {
+        "clahe_clip_limit": 2.0,
+        "clahe_tile_grid_size": (8, 8),
+        "highlight_percentile": 99.0,
+        "gaussian_blur_sigma": 1.0,
+        "sharpen_amount": 0.6,
+    },
+    "strong_local_contrast": {
+        "clahe_clip_limit": 2.5,
+        "clahe_tile_grid_size": (8, 8),
+        "highlight_percentile": None,
+        "gaussian_blur_sigma": 0.6,
+        "sharpen_amount": 1.0,
+    },
+}
 
 
 def marker_family_to_dict(marker_family: str) -> Tuple[str, cv2.aruco.Dictionary]:
