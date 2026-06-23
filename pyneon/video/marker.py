@@ -27,6 +27,7 @@ DEFAULT_HIGHLIGHT_PERCENTILE = 99.5
 DEFAULT_GAUSSIAN_BLUR_SIGMA = 0.8
 DEFAULT_SHARPEN_AMOUNT = 1.0
 
+# Keep this in sync with preprocess_marker_frame defaults.
 DEFAULT_PREPROCESS_PARAMS = {
     "clahe_clip_limit": DEFAULT_CLAHE_CLIP_LIMIT,
     "clahe_tile_grid_size": DEFAULT_CLAHE_TILE_GRID_SIZE,
@@ -62,11 +63,11 @@ PREPROCESS_PRESETS: dict[str, dict] = {
 def preprocess_marker_frame(
     gray_frame: np.ndarray,
     *,
-    clahe_clip_limit: float | None = DEFAULT_CLAHE_CLIP_LIMIT,
-    clahe_tile_grid_size: tuple[int, int] | None = DEFAULT_CLAHE_TILE_GRID_SIZE,
-    highlight_percentile: float | None = DEFAULT_HIGHLIGHT_PERCENTILE,
-    gaussian_blur_sigma: float | None = DEFAULT_GAUSSIAN_BLUR_SIGMA,
-    sharpen_amount: float | None = DEFAULT_SHARPEN_AMOUNT,
+    clahe_clip_limit: float | None = 2.0,
+    clahe_tile_grid_size: tuple[int, int] | None = (8, 8),
+    highlight_percentile: float | None = 99.5,
+    gaussian_blur_sigma: float | None = 0.8,
+    sharpen_amount: float | None = 1.0,
 ) -> np.ndarray:
     """Preprocess a grayscale frame to improve AprilTag / ArUco detection.
 
@@ -91,11 +92,15 @@ def preprocess_marker_frame(
         wrap-around truncation for out-of-range values.
     clahe_clip_limit : float or None, optional
         Clip limit for CLAHE. Higher values give stronger enhancement but
-        more noise amplification. Set to ``None`` to skip the CLAHE step.
-        Defaults to ``2.0``.
+        more noise amplification. CLAHE runs only when both
+        ``clahe_clip_limit`` and ``clahe_tile_grid_size`` are not ``None``.
+        Set either parameter to ``None`` to skip the CLAHE step. Defaults to
+        ``2.0``.
     clahe_tile_grid_size : tuple[int, int] or None, optional
-        Tile grid size for CLAHE. Set to ``None`` together with
-        ``clahe_clip_limit=None`` to skip the CLAHE step. Defaults to ``(8, 8)``.
+        Tile grid size for CLAHE. CLAHE runs only when both
+        ``clahe_clip_limit`` and ``clahe_tile_grid_size`` are not ``None``.
+        Set either parameter to ``None`` to skip the CLAHE step. Defaults to
+        ``(8, 8)``.
     highlight_percentile : float or None, optional
         Upper percentile used to compress very bright highlights before
         renormalizing to the full 0–255 range. Set to ``None`` to skip
