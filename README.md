@@ -67,17 +67,21 @@ uv pip install -e ".[dev]"
 ## Citing PyNeon
 
 If you use PyNeon in your research, please cite the
-[accompanying paper](https://osf.io/preprints/psyarxiv/y5jmg)
+[accompanying paper](https://doi.org/10.3758/s13428-026-03089-8)
 as follows:
 
 ```bibtex
-@misc{pyneon,
-    title={PyNeon: A Python package for the analysis of Neon multimodal mobile eye-tracking data},
-    url={osf.io/preprints/psyarxiv/y5jmg_v3},
-    DOI={10.31234/osf.io/y5jmg_v3},
-    publisher={PsyArXiv},
-    author={Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia},
-    year={2026},
-    month={Mar}
+@article{chu2026,
+  title = {PyNeon: A Python package for the analysis of Neon multimodal mobile eye-tracking data},
+  author = {Chu, Qian and Hartel, Jan-Gabriel and Lepauvre, Alex and Melloni, Lucia},
+  year = 2026,
+  month = jun,
+  journal = {Behavior Research Methods},
+  volume = 58,
+  number = 8,
+  pages = 209,
+  doi = {10.3758/s13428-026-03089-8},
+  issn = {1554-3528},
+  url = {https://doi.org/10.3758/s13428-026-03089-8},
 }
 ```
