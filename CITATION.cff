@@ -43,10 +43,9 @@ preferred-citation:
     - family-names: Melloni
       given-names: Lucia
       orcid: 'https://orcid.org/0000-0001-8743-5071'
-  doi: 10.31234/osf.io/y5jmg_v3
-  journal: PsyArXiv
-  month: 3
+  doi: 10.3758/s13428-026-03089-8
+  journal: Behavior Research Methods
+  month: 6
   title: >-
-    PyNeon: A Python package for the analysis of Neon multimodal mobile
-    eye-tracking data
+    PyNeon: A Python package for the analysis of Neon multimodal mobile eye-tracking data
   year: 2026
