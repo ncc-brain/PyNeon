@@ -22,6 +22,7 @@ def plot_frame(
     video: "Video",
     frame_index: int,
     grayscale: bool = False,
+    gaze: "Stream" | None = None,
     ax: Optional[plt.Axes] = None,
     show: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -37,6 +38,10 @@ def plot_frame(
     grayscale : bool, optional
         Whether to convert the frame to grayscale before plotting.
         Defaults to False.
+    gaze : Stream or None, optional
+        Gaze data to overlay on the frame. If provided, the average
+        gaze position (using ``Stream.window_average()`` with default
+        parameters) will be plotted as a red circle. Defaults to None.
     {ax_param}
     {show_param}
 
@@ -58,6 +63,9 @@ def plot_frame(
         ax.imshow(frame, cmap="gray")
     else:
         ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    if gaze:
+        frame_ts = np.array(video.ts[frame_index])
+        gaze_window = gaze.window_average(frame_ts, )
     ax.axis("off")
     if show:
         plt.show()
@@ -284,6 +292,55 @@ def overlay_detections(
         cv2.destroyAllWindows()
     video.reset()
 
+def overlay_gaze(
+    video: "Video",
+    gaze: Stream,
+    circle_radius: int = 10,
+    show_video: bool = False,
+    output_path: Path | str = None
+) -> None:
+    """
+    Overlay gaze data on the video frames and display or save the video with overlays.
+
+    Parameters
+    ----------
+    video : Video
+        Video instance to overlay the gaze data on.
+    gaze : Stream
+        Stream containing gaze data.
+    circle_radius : int
+        Radius of the gaze circles in pixels. Defaults to 10.
+    show_video : bool
+        Whether to display the video with gaze overlaid. Defaults to False.
+    output_path : pathlib.Path or str or None
+        Path to save the video with gaze overlaid. If None, the video is not saved.
+        If "default", saves gaze.mp4 to the derivatives folder under the
+        recording directory.
+    """
+    if output_path is None and not show_video:
+        raise ValueError("Either show_video=True or output_path must be provided.")
+    if output_path == "default":
+        output_path = video.video_file.parent / "derivatives" / "gaze.mp4"
+    
+    if not set(["gaze x [px]", "gaze y [px]"]).issubset(gaze.columns):
+        raise ValueError("Gaze stream must contain 'gaze x [px]' and 'gaze y [px]' columns.")
+    if not np.allclose(gaze.ts, video.ts):
+        gaze_window = gaze.window_average(video.ts)    
+
+    # Reset video to the beginning
+    video.reset()
+
+    # Initialize video capture and writer
+    out = None
+    if output_path is not None:
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        out = cv2.VideoWriter(
+            output_path, fourcc, video.fps, (video.width, video.height)
+        )
+    
+    
 
 def overlay_scanpath(
     video: "Video",

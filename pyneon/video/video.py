@@ -15,6 +15,7 @@ from ..utils.docstring_templating import fill_doc
 from ..utils.variables import default_camera_info
 from ..vis.video import (
     overlay_detections,
+    overlay_gaze,
     overlay_scanpath,
     plot_detections,
     plot_frame,
@@ -459,6 +460,7 @@ Effective FPS: {self.fps:.2f}
         self,
         frame_index: int,
         grayscale: bool = False,
+        gaze: Stream | None = None,
         ax: Optional[plt.Axes] = None,
         show: bool = True,
     ):
@@ -472,6 +474,10 @@ Effective FPS: {self.fps:.2f}
         grayscale : bool, optional
             Whether to convert the frame to grayscale before plotting.
             Defaults to False.
+        gaze : Stream or None, optional
+            Gaze data to overlay on the frame. If provided, the average
+            gaze position (using ``Stream.window_average()`` with a window
+            of 33 ms) will be plotted as a red circle. Defaults to None.
         {ax_param}
         {show_param}
 
@@ -479,7 +485,7 @@ Effective FPS: {self.fps:.2f}
         -------
         {fig_ax_returns}
         """
-        return plot_frame(self, frame_index, grayscale, ax, show)
+        return plot_frame(self, frame_index, grayscale, gaze, ax, show)
 
     def undistort_video(
         self,
@@ -788,6 +794,43 @@ Effective FPS: {self.fps:.2f}
             color=color,
             show_video=show_video,
             output_path=output_path,
+        )
+    
+    def overlay_gaze(
+        self,
+        gaze: Stream,
+        circle_radius: int = 10,
+        show_video: bool = False,
+        output_path: Path | str = None,
+    ) -> None:
+        """
+        Overlay gaze data on the video frames.
+
+        The resulting video can be displayed and/or saved.
+
+        Parameters
+        ----------
+        gaze : Stream
+            Stream containing gaze data.
+        circle_radius : int
+            Radius of the gaze circles in pixels. Defaults to 10.
+        show_video : bool
+            Whether to display the video with gaze overlaid. Defaults to False.
+        output_path : pathlib.Path or str or None
+            Path to save the video with gaze overlaid. If None, the video is not saved.
+            If "default", saves gaze.mp4 to the derivatives folder under the
+            recording directory.
+
+        Returns
+        -------
+        None
+        """
+        overlay_gaze(
+            self,
+            gaze,
+            circle_radius,
+            show_video,
+            output_path,
         )
 
     def overlay_scanpath(
