@@ -69,6 +69,7 @@ source/              # Sphinx documentation source
   ```python
   from .utils.docstring_templating import fill_doc
 
+
   @fill_doc
   def my_func(max_gap_ms: int = 500):
       """

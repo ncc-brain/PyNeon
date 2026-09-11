@@ -20,6 +20,7 @@ type: Feature
 ```python
 # example usage of the proposed feature
 from pyneon.some_module import new_feature
+
 new_feature(args)
 ```
 -->
