@@ -52,15 +52,8 @@ PyNeon mandates input type checking with `typeguard`. All public functions and m
 ### Policy on AI Assistance
 
 PyNeon permits the use of AI‑assisted tools in contributions. Contributors remain responsible for the scientific content, correctness, and integration of any such contributions. Familiarity with the PyNeon codebase, appropriate domain knowledge, and human judgment are required to ensure that contributions meet project standards. AI tools should be used as an aid to development and documentation, not as a substitute for authorial responsibility.
-Issues and pull requests may involve AI‑assisted work, provided that contributors disclose the model(s) used and the scope of their usage. This disclosure should be included in the issue or pull request description, or, where appropriate, in individual commits, and should be sufficiently specific to allow reviewers to assess the extent of AI involvement (e.g., "drafted the initial code implementation," "wrote the test cases," "drafted the documentation").
 
-Examples of acceptable disclosures (adapted from MNE‑Python) include:
-
-- "I implemented the code changes myself, and Claude Sonnet 4.6 wrote the test."
-- "I prompted Gemini 3.1 Pro to get a first draft implementation, then refined it manually until I was satisfied."
-- "I wrote the code and asked Kimi K2.5 to write the docstring for me."
-- "I fed GPT 5.4 the paper where the algorithm is described, and asked it to implement it for me. Then I had it write an example script using the `sample` dataset, and I wrote the narrative text of the tutorial myself."
-- "I gave Claude Sonnet 4.6 a prompt on the proposed feature and told it to write code, docstr, tests, and tutorials. I then reviewed the output and made some stylistic edits."
+Issues and pull requests involving AI‑assisted work should include a declaration using the [GAIDeT (Generative AI delegation taxonomy)](https://doi.org/10.1080/08989621.2025.2544331). Contributors are encouraged to create their declaration with the [GAIDeT declaration template](https://panbibliotekar.github.io/gaidet-declaration/) and include it in the issue or pull request description, or, where appropriate, in individual commits.
 
 All AI‑assisted contributions must be reviewed by a human contributor, who assumes full responsibility for their content, originality, and compliance with PyNeon’s standards. Contributors are also expected to engage directly with maintainers during the review process.
 
