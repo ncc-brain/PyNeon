@@ -1,4 +1,6 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/pyneon)
+![PyPI Downloads](https://img.shields.io/pypi/dm/pyneon)
+[![DOI](https://img.shields.io/badge/DOI-10.3758%2Fs13428--026--03089--8-blue)](https://doi.org/10.3758/s13428-026-03089-8)
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 ![GitHub License](https://img.shields.io/github/license/ncc-brain/PyNeon)
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fncc-brain.github.io%2FPyNeon%2F&up_message=online&label=Documentation)
