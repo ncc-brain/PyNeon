@@ -64,13 +64,29 @@ jobs:
 
       - name: Run tests
         if: matrix.os != 'windows-latest'
-        run: pytest tests -p no:cacheprovider -p no:faulthandler -p no:unraisableexception
+        run: |
+          mkdir -p "${{ github.workspace }}/test-reports"
+          pytest -vv --tb=long \
+            --junitxml="${{ github.workspace }}/test-reports/junit-${{ matrix.os }}-py${{ matrix.python-version }}.xml" \
+            tests -p no:cacheprovider -p no:faulthandler -p no:unraisableexception
 
       - name: Run tests (Windows, disable MSMF)
         if: matrix.os == 'windows-latest'
         env:
           OPENCV_VIDEOIO_PRIORITY_MSMF: "0"
-        run: pytest tests -p no:cacheprovider -p no:faulthandler -p no:unraisableexception
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ github.workspace }}/test-reports" | Out-Null
+          pytest -vv --tb=long `
+            --junitxml="${{ github.workspace }}/test-reports/junit-${{ matrix.os }}-py${{ matrix.python-version }}.xml" `
+            tests -p no:cacheprovider -p no:faulthandler -p no:unraisableexception
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-junit-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: ${{ github.workspace }}/test-reports/junit-${{ matrix.os }}-py${{ matrix.python-version }}.xml
 
   build-docs:
     runs-on: ubuntu-latest
