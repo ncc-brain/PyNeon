@@ -78,6 +78,11 @@ def generate_marker(
     return img
 
 
+def _normalize_marker_id(marker_id: int | np.ndarray) -> int:
+    """Normalize marker IDs returned by OpenCV across shape variants."""
+    return int(np.asarray(marker_id).reshape(-1)[0])
+
+
 @fill_doc
 def detect_markers(
     video: "Video",
@@ -133,6 +138,7 @@ def detect_markers(
 
             for corners, marker_id in zip(all_corners, all_ids):
                 corners = corners.reshape((4, 2))
+                marker_id_int = _normalize_marker_id(marker_id)
                 if fam_type == "april":
                     # For AprilTags, corners start with bottom right
                     # For ArUco, corners start with top left
@@ -147,8 +153,8 @@ def detect_markers(
                         "timestamp [ns]": video.ts[frame_idx],
                         "frame index": frame_idx,
                         "marker family": fam_name,
-                        "marker id": int(marker_id[0]),
-                        "marker name": f"{fam_name}_{marker_id[0]}",
+                        "marker id": marker_id_int,
+                        "marker name": f"{fam_name}_{marker_id_int}",
                         "top left x [px]": corners[0, 0],
                         "top left y [px]": corners[0, 1],
                         "top right x [px]": corners[1, 0],
