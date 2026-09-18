@@ -16,6 +16,13 @@ class _DummyVideo:
 
 
 @pytest.mark.parametrize("raw_marker_id", [7, np.array(7), np.array([7])])
+def test_normalize_marker_id_shapes(raw_marker_id):
+    normalized_marker_id = marker._normalize_marker_id(raw_marker_id)
+    assert isinstance(normalized_marker_id, int)
+    assert normalized_marker_id == 7
+
+
+@pytest.mark.parametrize("raw_marker_id", [7, np.array(7), np.array([7])])
 def test_detect_markers_normalizes_marker_id_shapes(monkeypatch, raw_marker_id):
     class _DummyDetector:
         def detectMarkers(self, gray_frame):
@@ -32,5 +39,5 @@ def test_detect_markers_normalizes_marker_id_shapes(monkeypatch, raw_marker_id):
 
     detections = marker.detect_markers(_DummyVideo(), marker_family="5x5_50")
 
-    assert int(detections.data.iloc[0]["marker id"]) == 7
+    assert detections.data.iloc[0]["marker id"] == "7"
     assert detections.data.iloc[0]["marker name"] == "5x5_50_7"
