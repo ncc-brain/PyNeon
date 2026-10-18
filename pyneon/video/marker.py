@@ -92,6 +92,7 @@ def detect_markers(
     processing_window_unit: Literal["frame", "time", "timestamp"] = "frame",
     detector_parameters: Optional[cv2.aruco.DetectorParameters] = None,
     undistort: bool = False,
+    apriltag_backend: Literal["opencv", "pupil-apriltags"] = "pupil-apriltags",
 ) -> Stream:
     """
     Detect fiducial markers (AprilTag or ArUco) in a video and report their data for every processed frame.
@@ -108,16 +109,39 @@ def detect_markers(
         marker_family if isinstance(marker_family, list) else [marker_family]
     )
 
+    has_apriltag = any(fam in APRILTAG_FAMILIES for fam in families)
+    pupil_detectors = {}
+    if apriltag_backend == "pupil-apriltags" and has_apriltag:
+        from pupil_apriltags import Detector as PupilAprilTagDetector
+
+        pupil_detectors = {
+            fam: PupilAprilTagDetector(
+                families=f"tag{fam}",
+                nthreads=1,
+                quad_decimate=1.0,
+                refine_edges=1,
+            )
+            for fam in families
+            if fam in APRILTAG_FAMILIES
+        }
+
     # Use provided detector_parameters or create a default instance
     if detector_parameters is None:
         detector_parameters = cv2.aruco.DetectorParameters()
 
-    detectors: list[tuple[str, str, cv2.aruco.ArucoDetector]] = []
+    detectors: list[tuple[str, str, Optional[cv2.aruco.ArucoDetector]]] = []
     for fam in families:
         fam_type, aruco_dict = marker_family_to_dict(fam)
-        detectors.append(
-            (fam, fam_type, cv2.aruco.ArucoDetector(aruco_dict, detector_parameters))
-        )
+        if fam_type == "april" and apriltag_backend == "pupil-apriltags":
+            detectors.append((fam, fam_type, None))
+        else:
+            detectors.append(
+                (
+                    fam,
+                    fam_type,
+                    cv2.aruco.ArucoDetector(aruco_dict, detector_parameters),
+                )
+            )
 
     if step < 1:
         raise ValueError("step must be >= 1")
@@ -132,14 +156,22 @@ def detect_markers(
         """Run detection on a single grayscale frame across all detectors."""
         records: list[dict] = []
         for fam_name, fam_type, det in detectors:
-            all_corners, all_ids, _ = det.detectMarkers(gray_frame)
-            if all_ids is None:
-                continue
+            if fam_type == "april" and apriltag_backend == "pupil-apriltags":
+                candidates = [
+                    (detection.corners, detection.tag_id)
+                    for detection in pupil_detectors[fam_name].detect(gray_frame)
+                ]
+            else:
+                assert det is not None
+                all_corners, all_ids, _ = det.detectMarkers(gray_frame)
+                if all_ids is None:
+                    continue
+                candidates = zip(all_corners, all_ids)
 
-            for corners, marker_id in zip(all_corners, all_ids):
+            for corners, marker_id in candidates:
                 corners = corners.reshape((4, 2))
                 marker_id_int = _normalize_marker_id(marker_id)
-                if fam_type == "april":
+                if fam_type == "april" and apriltag_backend == "opencv":
                     # For AprilTags, corners start with bottom right
                     # For ArUco, corners start with top left
                     # See https://stackoverflow.com/questions/79044142

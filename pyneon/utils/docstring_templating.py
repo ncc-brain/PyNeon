@@ -161,12 +161,20 @@ marker_family : str or list[str], optional
 {step_param}
 {window_params}
 detector_parameters : cv2.aruco.DetectorParameters, optional
-    Detector parameters to use for all marker families. If None, a default
-    DetectorParameters instance is created. Defaults to ``None``.
+    Detector parameters for families detected with OpenCV. This parameter does
+    not affect AprilTag families when ``apriltag_backend="pupil-apriltags"``.
+    If None, a default DetectorParameters instance is created. Defaults to
+    ``None``.
 undistort : bool, optional
     If True, undistorts frames before detection, which can improve detection
     performance, then redistorts detected points. Returned coordinates remain
     in the original (distorted) video frame. Defaults to ``False``.
+apriltag_backend : {"opencv", "pupil-apriltags"}, optional
+    Backend used for AprilTag families. ``"opencv"`` uses OpenCV's ArUco
+    AprilTag detector. ``"pupil-apriltags"`` uses the Pupil Labs AprilTags 3
+    detector. In mixed AprilTag and ArUco requests, this option selects the
+    AprilTag detector and OpenCV continues to detect ArUco families. Defaults
+    to ``"pupil-apriltags"``.
 """
 
 DOC["detect_contour_params"] = """

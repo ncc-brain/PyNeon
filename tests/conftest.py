@@ -1,8 +1,12 @@
 import re
 
+import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
+
+# Pytest runs in a headless environment; avoid GUI backends that require Tcl/Tk.
+matplotlib.use("Agg")
 
 from pyneon import Dataset, Events, Stream, get_sample_data
 from pyneon.utils.variables import nominal_sampling_rates

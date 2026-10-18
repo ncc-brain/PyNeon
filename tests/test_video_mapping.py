@@ -72,14 +72,14 @@ def test_mapping(request, dataset_fixture, tmp_path):
 
         if "april" in recording.recording_dir.name:
             layout = apriltag_layout
-            marker_detections = video.detect_markers("36h11", step=2, undistort=True)
+            marker_detections = video.detect_markers("36h11", step=5, undistort=True)
         elif "aruco" in recording.recording_dir.name:
             layout = aruco_layout
-            marker_detections = video.detect_markers("5x5_50", step=2, undistort=True)
+            marker_detections = video.detect_markers("5x5_50", step=5, undistort=True)
         else:
             raise ValueError("Unknown recording, cannot determine marker type")
 
-        contour_detections = video.detect_contour(step=2, undistort=True)
+        contour_detections = video.detect_contour(step=5, undistort=True)
 
         # Pick a random frame from detections to plot
         random_marker_ts = int(marker_detections.data.sample(n=1).index[0])

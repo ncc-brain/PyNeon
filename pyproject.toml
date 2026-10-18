@@ -30,6 +30,7 @@ dependencies = [
     "matplotlib",
     "scipy",
     "opencv-python>=4.7",
+    "pupil-apriltags",
     "joblib",
     "typeguard",
     "requests",
